@@ -1,30 +1,51 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY ?? "demo-api-key",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ?? "retro-rocket.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ?? "retro-rocket",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ?? "retro-rocket.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ?? "123456789",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID ?? "1:123456789:web:abcdef"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "demo-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "retro-rocket.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "retro-rocket",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "retro-rocket.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "1:123456789:web:abcdef"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Create mock Firebase functions
+const createMockFirestore = () => {
+  const mockDoc = {
+    get: () => Promise.resolve({ exists: false, data: () => null }),
+    set: () => Promise.resolve(),
+    update: () => Promise.resolve(),
+    delete: () => Promise.resolve(),
+    onSnapshot: () => () => { },
+  };
 
-// Initialize Firestore
-const db = getFirestore(app);
+  const mockCollection = {
+    doc: () => mockDoc,
+    add: () => Promise.resolve({ id: 'mock-id' }),
+    where: () => ({ onSnapshot: () => () => { } }),
+  };
 
-// Connect to Firestore emulator in development
-if (process.env.NODE_ENV === 'development' && !(globalThis as any).FIRESTORE_EMULATOR_CONNECTED) {
+  return {
+    collection: () => mockCollection,
+  };
+};
+
+// Initialize Firebase safely
+const initializeFirebase = () => {
   try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    (globalThis as any).FIRESTORE_EMULATOR_CONNECTED = true;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    console.log('Firebase initialized successfully');
+    return db;
   } catch (error) {
-    console.log('Firestore emulator connection failed or already connected');
+    console.error('Firebase initialization failed:', error);
+    return createMockFirestore();
   }
-}
+};
+
+const db = initializeFirebase();
 
 export { db };

@@ -110,8 +110,8 @@ const Home: React.FC = () => {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
                 >
-                    {features.map((feature, index) => (
-                        <Card key={index} hover className="text-center">
+                    {features.map((feature) => (
+                        <Card key={feature.title} hover className="text-center">
                             <div className="text-blue-600 mb-3 flex justify-center">
                                 {feature.icon}
                             </div>
