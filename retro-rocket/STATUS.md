@@ -101,28 +101,26 @@
 ## 🎯 PRÓXIMOS PASOS
 
 ### Inmediato
-1. **Iniciar servidor de desarrollo**
-   ```bash
-   cd /Users/fortizfe/Repositories/retrorocket/retro-rocket
-   npm run dev
+1. **✅ COMPLETADO - Configurar Firebase real**
+   - Proyecto: retrorocket (ID: retrorocket-3284d)
+   - Credenciales configuradas en .env
+   - API Key: AIzaSyBEW_QWejbAe9Hd0OQZwseeNmRBmtjaowI
+
+2. **⏳ PENDIENTE - Configurar Firestore Database**
+   ```
+   Ve a: https://console.firebase.google.com/project/retrorocket-3284d/firestore
+   - Crear base de datos en modo de prueba
+   - Configurar reglas de seguridad
    ```
 
-2. **Abrir en navegador**
-   - URL: http://localhost:3000
-   - Debería abrir automáticamente
-
-3. **Pruebas manuales**
+3. **Probar funcionalidades**
    - Crear una retrospectiva
    - Agregar tarjetas
-   - Probar votación
-   - Verificar tiempo real
+   - Verificar persistencia en Firebase
+   - Probar colaboración en tiempo real
 
 ### Opcional
-1. **Configurar Firebase real** (opcional)
-   - Seguir FIREBASE_SETUP.md
-   - Actualizar .env con credenciales reales
-
-2. **Deploy a producción**
+1. **Deploy a producción**
    ```bash
    npm run deploy
    ```
