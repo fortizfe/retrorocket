@@ -9,9 +9,25 @@ export default defineConfig({
     open: true,
     host: true,
   },
+  preview: {
+    port: 3000,
+    host: true,
+  },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false, // Disabled for production
+    minify: 'esbuild',
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          ui: ['framer-motion', 'lucide-react', 'clsx'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
   resolve: {
     alias: {
@@ -19,6 +35,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/firestore'],
+    include: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
   },
 });
