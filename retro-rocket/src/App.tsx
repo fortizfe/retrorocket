@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import RetrospectivePage from './pages/RetrospectivePage';
@@ -9,12 +10,22 @@ const App: React.FC = () => {
   return (
     <Router>
       <Layout>
-        <Switch>
-          <Route path="/" exact component={Home} />
-          <Route path="/retrospective" component={RetrospectivePage} />
-          <Route component={NotFound} />
-        </Switch>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/retrospective/:id" element={<RetrospectivePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Layout>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
     </Router>
   );
 };

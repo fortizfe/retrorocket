@@ -1,11 +1,26 @@
 import React from 'react';
-import Header from './Header';
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface LayoutProps {
+    children: React.ReactNode;
+    showHeader?: boolean;
+    className?: string;
+}
+
+const Layout: React.FC<LayoutProps> = ({
+    children,
+    showHeader = false,
+    className = ''
+}) => {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow">
+        <div className={`min-h-screen ${className}`}>
+            {showHeader && (
+                <header className="bg-white shadow-sm border-b">
+                    <div className="container mx-auto px-4 py-4">
+                        <h1 className="text-xl font-bold">RetroRocket</h1>
+                    </div>
+                </header>
+            )}
+            <main className="flex-1">
                 {children}
             </main>
         </div>
