@@ -53,7 +53,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cardClasses}
         {...motionProps}
-        {...props}
+        {...(props as any)}
       >
         {children}
       </CardComponent>

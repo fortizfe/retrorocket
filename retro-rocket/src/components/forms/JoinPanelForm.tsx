@@ -3,15 +3,35 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { useParticipants } from '../../hooks/useParticipants';
 
-const JoinPanelForm: React.FC = () => {
-    const [name, setName] = useState('');
-    const { addParticipant } = useParticipants();
+interface JoinPanelFormProps {
+    retrospectiveId: string;
+    onParticipantJoined?: (participantId: string, name: string) => void;
+}
 
-    const handleSubmit = (e: React.FormEvent) => {
+const JoinPanelForm: React.FC<JoinPanelFormProps> = ({
+    retrospectiveId,
+    onParticipantJoined
+}) => {
+    const [name, setName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { addParticipant } = useParticipants(retrospectiveId);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (name.trim()) {
-            addParticipant(name);
-            setName('');
+            setIsSubmitting(true);
+            try {
+                const participantId = await addParticipant({
+                    name: name.trim(),
+                    retrospectiveId
+                });
+                onParticipantJoined?.(participantId, name.trim());
+                setName('');
+            } catch (error) {
+                console.error('Error adding participant:', error);
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -24,7 +44,12 @@ const JoinPanelForm: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="mb-4"
             />
-            <Button type="submit" className="w-full">
+            <Button
+                type="submit"
+                className="w-full"
+                loading={isSubmitting}
+                disabled={!name.trim()}
+            >
                 Unirse al panel
             </Button>
         </form>

@@ -49,7 +49,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
         className={buttonClasses}
         disabled={disabled || loading}
-        {...props}
+        {...(props as any)}
       >
         {loading && (
           <svg

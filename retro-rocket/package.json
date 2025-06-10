@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "start": "./start.sh",
+    "lint": "eslint src --ext ts,tsx",
+    "deploy": "npm run build && vercel --prod"
   },
   "dependencies": {
     "@types/node": "^24.0.0",
