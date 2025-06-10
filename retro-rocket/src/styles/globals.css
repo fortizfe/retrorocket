@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-100 text-gray-800 font-sans;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-bold;
+}
+
+a {
+  @apply text-blue-600 hover:text-blue-800;
+}
+
+button {
+  @apply transition duration-200 ease-in-out;
+}
+
+.card {
+  @apply bg-white shadow-md rounded-lg p-4;
+}
+
+.column {
+  @apply flex flex-col space-y-4;
+}
+
+.loading {
+  @apply flex items-center justify-center h-full;
+}
+
+.error {
+  @apply text-red-500;
+}
+
+.empty-state {
+  @apply text-gray-500 text-center;
+}

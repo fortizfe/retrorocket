@@ -1,0 +1,12 @@
+import React from 'react';
+
+const Header: React.FC = () => {
+    return (
+        <header className="bg-blue-600 text-white p-4">
+            <h1 className="text-2xl font-bold">RetroRocket</h1>
+            <p className="text-sm">Manage your retrospectives collaboratively and fun!</p>
+        </header>
+    );
+};
+
+export default Header;
