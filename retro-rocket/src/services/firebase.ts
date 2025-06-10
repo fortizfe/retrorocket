@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -37,15 +38,52 @@ const initializeFirebase = () => {
   try {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     console.log('Firebase initialized successfully');
-    return db;
+    return { db, auth };
   } catch (error) {
     console.error('Firebase initialization failed:', error);
-    return createMockFirestore();
+    return { db: createMockFirestore(), auth: null };
   }
 };
 
-const db = initializeFirebase();
+const { db, auth } = initializeFirebase();
 
-export { db };
+// Auto-login with anonymous authentication
+const initializeAuth = async () => {
+  if (auth) {
+    try {
+      // Check if user is already signed in
+      return new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          unsubscribe();
+          if (user) {
+            console.log('User already authenticated:', user.uid);
+            resolve(user);
+          } else {
+            // Sign in anonymously if no user
+            signInAnonymously(auth)
+              .then((result) => {
+                console.log('Anonymous authentication successful:', result.user.uid);
+                resolve(result.user);
+              })
+              .catch((error) => {
+                console.error('Anonymous authentication failed:', error);
+                resolve(null);
+              });
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Authentication initialization failed:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Initialize authentication when module loads
+initializeAuth();
+
+export { db, auth };
