@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Smile, Plus } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import { EmojiReaction, GroupedReaction } from '../../types/card';
 
 interface EmojiReactionsProps {
@@ -224,7 +224,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                         aria-expanded={showPicker}
                         aria-haspopup="dialog"
                     >
-                        {showPicker ? <Smile size={16} /> : <Plus size={14} />}
+                        <Smile size={16} />
                     </motion.button>
                 </div>
             </div>
