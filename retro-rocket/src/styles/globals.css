@@ -52,6 +52,64 @@
   .gradient-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
+
+  /* Enhanced card color styling - ensures background colors are applied correctly */
+  .card-color-bg {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Force background colors to override any conflicting styles */
+  .card-color-bg.bg-white {
+    background-color: rgb(255 255 255) !important;
+  }
+
+  .card-color-bg.bg-green-50 {
+    background-color: rgb(240 253 244) !important;
+  }
+
+  .card-color-bg.bg-red-50 {
+    background-color: rgb(254 242 242) !important;
+  }
+
+  .card-color-bg.bg-yellow-50 {
+    background-color: rgb(254 252 232) !important;
+  }
+
+  .card-color-bg.bg-blue-50 {
+    background-color: rgb(239 246 255) !important;
+  }
+
+  .card-color-bg.bg-purple-50 {
+    background-color: rgb(250 245 255) !important;
+  }
+
+  .card-color-bg.bg-orange-50 {
+    background-color: rgb(255 247 237) !important;
+  }
+
+  .card-color-bg.bg-pink-50 {
+    background-color: rgb(253 242 248) !important;
+  }
+
+  .card-color-bg.bg-teal-50 {
+    background-color: rgb(240 253 250) !important;
+  }
+
+  .card-color-bg.bg-gray-50 {
+    background-color: rgb(249 250 251) !important;
+  }
+
+  /* Hover effects for better interactivity */
+  .card-color-bg:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Focus states for accessibility */
+  .card-color-bg:focus-within {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {

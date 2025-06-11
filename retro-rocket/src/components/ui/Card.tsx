@@ -7,6 +7,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   hover?: boolean;
   children: React.ReactNode;
+  customBackground?: boolean; // Add this prop to disable default background
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -14,17 +15,19 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     variant = 'default',
     padding = 'md',
     hover = false,
+    customBackground = false,
     className,
     children,
     ...props
   }, ref) => {
     const baseClasses = 'rounded-lg transition-all duration-200';
 
+    // If customBackground is true, don't include the default bg-white
     const variants = {
-      default: 'bg-white border border-gray-200',
-      outlined: 'bg-white border-2 border-gray-200',
-      elevated: 'bg-white shadow-md border border-gray-100',
-      filled: 'bg-gray-50 border border-gray-200'
+      default: customBackground ? 'border border-gray-200' : 'bg-white border border-gray-200',
+      outlined: customBackground ? 'border-2 border-gray-200' : 'bg-white border-2 border-gray-200',
+      elevated: customBackground ? 'shadow-md border border-gray-100' : 'bg-white shadow-md border border-gray-100',
+      filled: customBackground ? 'border border-gray-200' : 'bg-gray-50 border border-gray-200'
     };
 
     const paddings = {

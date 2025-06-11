@@ -4,9 +4,11 @@ import { Plus } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
+import ColorPicker from '../ui/ColorPicker';
 import DragDropColumn from './DragDropColumn';
-import { Card as CardType, CreateCardInput, EmojiReaction } from '../../types/card';
+import { Card as CardType, CreateCardInput, EmojiReaction, CardColor } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
+import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
 
 interface RetrospectiveColumnProps {
   column: ColumnConfig;
@@ -39,6 +41,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newCardContent, setNewCardContent] = useState('');
+  const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateCard = async () => {
@@ -50,11 +53,13 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
         content: newCardContent.trim(),
         column: column.id,
         createdBy: currentUser,
-        retrospectiveId
+        retrospectiveId,
+        color: selectedColor
       };
 
       await onCardCreate(cardInput);
       setNewCardContent('');
+      setSelectedColor(getSuggestedColorForColumn(column.title));
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating card:', error);
@@ -66,6 +71,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   const handleCancelCreate = () => {
     setIsCreating(false);
     setNewCardContent('');
+    setSelectedColor(getSuggestedColorForColumn(column.title));
   };
 
   return (
@@ -109,14 +115,30 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
               exit={{ opacity: 0, height: 0 }}
               className="mb-3"
             >
-              <Card variant="outlined" className="border-dashed border-2 border-gray-300">
+              <Card
+                variant="outlined"
+                customBackground={true}
+                className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)}`}
+              >
+                {/* Preview indicator */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-gray-500 italic">
+                    Vista previa del color
+                  </span>
+                  <ColorPicker
+                    selectedColor={selectedColor}
+                    onColorChange={setSelectedColor}
+                    size="sm"
+                  />
+                </div>
+
                 <Textarea
                   value={newCardContent}
                   onChange={(e) => setNewCardContent(e.target.value)}
                   placeholder={`¿Qué ${column.title.toLowerCase()}?`}
                   rows={3}
                   autoFocus
-                  className="mb-3"
+                  className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
                 />
                 <div className="flex items-center space-x-2">
                   <Button

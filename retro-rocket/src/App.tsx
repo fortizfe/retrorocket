@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import RetrospectivePage from './pages/RetrospectivePage';
 import NotFound from './pages/NotFound';
+import ColorSystemTest from './components/ColorSystemTest';
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/retrospective/:id" element={<RetrospectivePage />} />
+            <Route path="/color-test" element={<ColorSystemTest />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

@@ -3,6 +3,19 @@ import { ColumnType } from './retrospective';
 // Available emoji reactions
 export type EmojiReaction = '👍' | '❤️' | '😂' | '😮' | '😢' | '😡' | '🎉' | '🤔';
 
+// Card color palette - 10 beautiful pastel colors
+export type CardColor =
+    | 'pastelWhite'      // Base blanco suave
+    | 'pastelGreen'      // Verde menta
+    | 'pastelRed'        // Rosa coral suave
+    | 'pastelYellow'     // Amarillo mantequilla
+    | 'pastelBlue'       // Azul cielo suave
+    | 'pastelPurple'     // Lavanda
+    | 'pastelOrange'     // Melocotón
+    | 'pastelPink'       // Rosa suave
+    | 'pastelTeal'       // Verde azulado
+    | 'pastelGray';      // Gris perla
+
 // Individual like record
 export interface Like {
     userId: string;
@@ -33,6 +46,7 @@ export interface Card {
     createdAt: Date;
     updatedAt: Date;
     retrospectiveId: string;
+    color?: CardColor; // Card background color
     votes?: number; // Deprecated - keeping for backward compatibility
     likes?: Like[]; // New likes system
     reactions?: Reaction[]; // New reactions system
@@ -44,4 +58,5 @@ export interface CreateCardInput {
     column: ColumnType;
     createdBy: string;
     retrospectiveId: string;
+    color?: CardColor; // Optional color selection
 }

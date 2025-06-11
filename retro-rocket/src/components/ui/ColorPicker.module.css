@@ -1,0 +1,11 @@
+/* ColorPicker dynamic positioning styles */
+.dynamicPopup {
+    position: fixed;
+    z-index: 9999;
+}
+
+/* We need to use CSS custom properties for dynamic positioning */
+.dynamicPopup[data-dynamic="true"] {
+    top: var(--popup-top);
+    left: var(--popup-left);
+}

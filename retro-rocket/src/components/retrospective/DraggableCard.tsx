@@ -4,10 +4,12 @@ import { Trash2, ThumbsUp, Edit2, User, GripVertical } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
+import ColorPicker from '../ui/ColorPicker';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
-import { Card as CardType, EmojiReaction } from '../../types/card';
+import { Card as CardType, EmojiReaction, CardColor } from '../../types/card';
 import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '../../utils/cardHelpers';
+import { getCardStyling, validateColor } from '../../utils/cardColors';
 
 interface DraggableCardProps {
     card: CardType;
@@ -43,6 +45,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const isLiked = hasUserLiked(card.likes ?? [], currentUser);
     const userReaction = getUserReactionHelper(card.reactions ?? [], currentUser);
     const groupedReactions = groupReactions(card.reactions ?? []);
+
+    // Get card color styling with validation
+    const cardColor = validateColor(card.color);
+    const cardStyling = getCardStyling(cardColor);
 
     const handleSaveEdit = async () => {
         if (editContent.trim() && editContent !== card.content && onUpdate) {
@@ -98,6 +104,16 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
         }
     };
 
+    const handleColorChange = async (color: CardColor) => {
+        if (onUpdate) {
+            try {
+                await onUpdate(card.id, { color });
+            } catch (error) {
+                console.error('Error updating card color:', error);
+            }
+        }
+    };
+
     const isOwner = currentUser === card.createdBy;
     const canEditCard = canEdit && isOwner;
 
@@ -114,12 +130,20 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                 <Card
                     variant="elevated"
                     hover={!isEditing && !isDragging}
-                    className={`mb-3 group ${isDragging ? 'shadow-lg border-blue-300' : ''}`}
+                    customBackground={true}
+                    className={`mb-3 group relative transition-all duration-300 ${isDragging ? 'shadow-lg border-blue-300' : ''} ${cardStyling}`}
                 >
-                    {/* Drag handle */}
+                    {/* Drag handle and Color picker */}
                     {canEdit && !isEditing && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity cursor-grab active:cursor-grabbing">
-                            <GripVertical size={16} className="text-gray-400" />
+                        <div className="absolute top-2 right-2 flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ColorPicker
+                                selectedColor={cardColor}
+                                onColorChange={handleColorChange}
+                                size="sm"
+                            />
+                            <div className="cursor-grab active:cursor-grabbing">
+                                <GripVertical size={16} className="text-gray-400" />
+                            </div>
                         </div>
                     )}
 
