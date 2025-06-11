@@ -106,10 +106,11 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
 
       {/* Cards Container */}
       <div className="flex-1 space-y-0 overflow-y-auto">
+        {/* New Card Form - with AnimatePresence for smooth transitions */}
         <AnimatePresence>
-          {/* New Card Form */}
           {isCreating && (
             <motion.div
+              key="new-card-form"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -162,27 +163,32 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
               </Card>
             </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Cards with Drag & Drop */}
-          <DragDropColumn
-            cards={cards}
-            column={column.id}
-            onCardUpdate={onCardUpdate}
-            onCardDelete={onCardDelete}
-            onCardVote={onCardVote}
-            onCardLike={onCardLike}
-            onCardReaction={onCardReaction}
-            onCardReactionRemove={onCardReactionRemove}
-            onCardsReorder={onCardsReorder}
-            currentUser={currentUser}
-            canEdit={true}
-          />
+        {/* Cards with Drag & Drop - Outside AnimatePresence since cards have their own animations */}
+        <DragDropColumn
+          key={`cards-${column.id}`}
+          cards={cards}
+          column={column.id}
+          onCardUpdate={onCardUpdate}
+          onCardDelete={onCardDelete}
+          onCardVote={onCardVote}
+          onCardLike={onCardLike}
+          onCardReaction={onCardReaction}
+          onCardReactionRemove={onCardReactionRemove}
+          onCardsReorder={onCardsReorder}
+          currentUser={currentUser}
+          canEdit={true}
+        />
 
-          {/* Empty State */}
+        {/* Empty State - with AnimatePresence for smooth transitions */}
+        <AnimatePresence>
           {cards.length === 0 && !isCreating && (
             <motion.div
+              key="empty-state"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="text-center py-8"
             >
               <div className="text-4xl mb-2">{column.icon}</div>

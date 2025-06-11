@@ -59,9 +59,14 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
         })
     );
 
-    // Sort cards by order
+    // Sort cards by order and filter out any cards with invalid IDs
     const sortedCards = React.useMemo(() => {
-        return [...cards].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const validCards = cards.filter(card =>
+            card?.id &&
+            typeof card.id === 'string' &&
+            card.id.length > 0
+        );
+        return [...validCards].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }, [cards]);
 
     const handleDragStart = (event: DragStartEvent) => {
