@@ -6,7 +6,7 @@ import Loading from '../ui/Loading';
 import { useCards } from '../../hooks/useCards';
 import { useParticipants } from '../../hooks/useParticipants';
 import { Retrospective } from '../../types/retrospective';
-import { Card as CardType, CreateCardInput } from '../../types/card';
+import { Card as CardType, CreateCardInput, EmojiReaction } from '../../types/card';
 import { COLUMNS, COLUMN_ORDER } from '../../utils/constants';
 
 interface RetrospectiveBoardProps {
@@ -25,7 +25,11 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         createCard,
         updateCard,
         deleteCard,
-        voteCard
+        voteCard,
+        toggleLike,
+        addReaction,
+        removeReaction,
+        reorderCards
     } = useCards(retrospective.id);
 
     const {
@@ -47,6 +51,22 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
 
     const handleCardVote = async (cardId: string, increment: boolean) => {
         await voteCard(cardId, increment);
+    };
+
+    const handleCardLike = async (cardId: string, userId: string, username: string) => {
+        await toggleLike(cardId, userId, username);
+    };
+
+    const handleCardReaction = async (cardId: string, userId: string, username: string, emoji: EmojiReaction) => {
+        await addReaction(cardId, userId, username, emoji);
+    };
+
+    const handleCardReactionRemove = async (cardId: string, userId: string) => {
+        await removeReaction(cardId, userId);
+    };
+
+    const handleCardsReorder = async (updates: Array<{ cardId: string; order: number; column?: string }>) => {
+        await reorderCards(updates);
     };
 
     if (cardsLoading) {
@@ -137,6 +157,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                             onCardUpdate={handleCardUpdate}
                             onCardDelete={handleCardDelete}
                             onCardVote={handleCardVote}
+                            onCardLike={handleCardLike}
+                            onCardReaction={handleCardReaction}
+                            onCardReactionRemove={handleCardReactionRemove}
+                            onCardsReorder={handleCardsReorder}
                             currentUser={currentUser}
                             retrospectiveId={retrospective.id}
                         />

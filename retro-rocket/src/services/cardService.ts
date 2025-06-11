@@ -16,7 +16,7 @@ import { db } from './firebase';
 import { Card, CreateCardInput } from '../types/card';
 import { FIRESTORE_COLLECTIONS } from '../utils/constants';
 
-const cardsCollection = collection(db, FIRESTORE_COLLECTIONS.CARDS);
+const cardsCollection = collection(db as any, FIRESTORE_COLLECTIONS.CARDS);
 
 export const createCard = async (cardInput: CreateCardInput): Promise<string> => {
     try {
@@ -24,7 +24,10 @@ export const createCard = async (cardInput: CreateCardInput): Promise<string> =>
             ...cardInput,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            votes: 0
+            votes: 0,
+            likes: [],
+            reactions: [],
+            order: Date.now() // Use timestamp as simple ordering
         };
 
         const docRef = await addDoc(cardsCollection, cardData);
@@ -37,7 +40,7 @@ export const createCard = async (cardInput: CreateCardInput): Promise<string> =>
 
 export const updateCard = async (id: string, updates: Partial<Card>): Promise<void> => {
     try {
-        const cardRef = doc(db, FIRESTORE_COLLECTIONS.CARDS, id);
+        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, id);
         const updateData = {
             ...updates,
             updatedAt: serverTimestamp()
@@ -52,7 +55,7 @@ export const updateCard = async (id: string, updates: Partial<Card>): Promise<vo
 
 export const deleteCard = async (id: string): Promise<void> => {
     try {
-        const cardRef = doc(db, FIRESTORE_COLLECTIONS.CARDS, id);
+        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, id);
         await deleteDoc(cardRef);
     } catch (error) {
         console.error('Error deleting card:', error);
@@ -65,16 +68,23 @@ export const getCardsByRetrospective = async (retrospectiveId: string): Promise<
         const q = query(
             cardsCollection,
             where('retrospectiveId', '==', retrospectiveId),
+            orderBy('order', 'asc'),
             orderBy('createdAt', 'asc')
         );
 
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: (doc.data().createdAt as Timestamp)?.toDate() || new Date(),
-            updatedAt: (doc.data().updatedAt as Timestamp)?.toDate() || new Date()
-        } as Card));
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+                updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
+                likes: data.likes || [],
+                reactions: data.reactions || [],
+                order: data.order || 0
+            } as Card;
+        });
     } catch (error) {
         console.error('Error getting cards:', error);
         throw new Error('Failed to get cards');
@@ -107,7 +117,7 @@ export const subscribeToCards = (
 
 export const voteCard = async (cardId: string, increment: boolean = true): Promise<void> => {
     try {
-        const cardRef = doc(db, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
 
         // For simplicity, we'll get the current votes and update
         // In a production app, you might want to use increment() for atomic updates

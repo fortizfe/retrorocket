@@ -4,8 +4,8 @@ import { Plus } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
-import RetrospectiveCard from './RetrospectiveCard';
-import { Card as CardType, CreateCardInput } from '../../types/card';
+import DragDropColumn from './DragDropColumn';
+import { Card as CardType, CreateCardInput, EmojiReaction } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
 
 interface RetrospectiveColumnProps {
@@ -15,6 +15,10 @@ interface RetrospectiveColumnProps {
   onCardUpdate: (cardId: string, updates: Partial<CardType>) => Promise<void>;
   onCardDelete: (cardId: string) => Promise<void>;
   onCardVote: (cardId: string, increment: boolean) => Promise<void>;
+  onCardLike: (cardId: string, userId: string, username: string) => Promise<void>;
+  onCardReaction: (cardId: string, userId: string, username: string, emoji: EmojiReaction) => Promise<void>;
+  onCardReactionRemove: (cardId: string, userId: string) => Promise<void>;
+  onCardsReorder: (updates: Array<{ cardId: string; order: number; column?: string }>) => Promise<void>;
   currentUser?: string;
   retrospectiveId: string;
 }
@@ -26,6 +30,10 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   onCardUpdate,
   onCardDelete,
   onCardVote,
+  onCardLike,
+  onCardReaction,
+  onCardReactionRemove,
+  onCardsReorder,
   currentUser,
   retrospectiveId
 }) => {
@@ -133,17 +141,20 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
             </motion.div>
           )}
 
-          {/* Existing Cards */}
-          {cards.map((card) => (
-            <RetrospectiveCard
-              key={card.id}
-              card={card}
-              onDelete={onCardDelete}
-              onUpdate={onCardUpdate}
-              onVote={onCardVote}
-              currentUser={currentUser}
-            />
-          ))}
+          {/* Cards with Drag & Drop */}
+          <DragDropColumn
+            cards={cards}
+            column={column.id}
+            onCardUpdate={onCardUpdate}
+            onCardDelete={onCardDelete}
+            onCardVote={onCardVote}
+            onCardLike={onCardLike}
+            onCardReaction={onCardReaction}
+            onCardReactionRemove={onCardReactionRemove}
+            onCardsReorder={onCardsReorder}
+            currentUser={currentUser}
+            canEdit={true}
+          />
 
           {/* Empty State */}
           {cards.length === 0 && !isCreating && (
