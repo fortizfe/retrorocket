@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { Smile, Plus } from 'lucide-react';
 import { EmojiReaction, GroupedReaction } from '../../types/card';
 
@@ -12,7 +13,11 @@ interface EmojiReactionsProps {
     disabled?: boolean;
 }
 
-const AVAILABLE_EMOJIS: EmojiReaction[] = ['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '🤔'];
+const AVAILABLE_EMOJIS: EmojiReaction[] = [
+    '👍', '❤️', '😂', '😮',
+    '😢', '😡', '🎉', '🤔',
+    '✨', '🚀', '💡', '⚡'
+];
 
 const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     cardId,
@@ -23,6 +28,77 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     disabled = false
 }) => {
     const [showPicker, setShowPicker] = useState(false);
+    const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const pickerRef = useRef<HTMLDivElement>(null);
+
+    // Calculate picker position
+    const calculatePosition = () => {
+        if (!triggerRef.current) return;
+
+        const triggerRect = triggerRef.current.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Picker dimensions (approximate)
+        const pickerWidth = 240;
+        const pickerHeight = 140;
+
+        let left = triggerRect.left;
+        let top = triggerRect.bottom + 8;
+
+        // Adjust horizontal position if it would overflow
+        if (left + pickerWidth > viewportWidth) {
+            left = triggerRect.right - pickerWidth;
+        }
+
+        // Adjust vertical position if it would overflow
+        if (top + pickerHeight > viewportHeight) {
+            top = triggerRect.top - pickerHeight - 8;
+        }
+
+        setPickerPosition({ top, left });
+    };
+
+    // Handle outside clicks
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                pickerRef.current &&
+                triggerRef.current &&
+                !pickerRef.current.contains(event.target as Node) &&
+                !triggerRef.current.contains(event.target as Node)
+            ) {
+                setShowPicker(false);
+            }
+        };
+
+        if (showPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+            calculatePosition();
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showPicker]);
+
+    // Handle escape key
+    useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setShowPicker(false);
+            }
+        };
+
+        if (showPicker) {
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [showPicker]);
 
     const handleEmojiSelect = (emoji: EmojiReaction) => {
         if (userReaction === emoji) {
@@ -37,6 +113,64 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         if (disabled) return;
         setShowPicker(!showPicker);
     };
+
+    const popup = showPicker ? (
+        // eslint-disable-next-line react/forbid-dom-props
+        <div
+            ref={pickerRef}
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl p-3 animate-in fade-in-0 zoom-in-95 duration-200"
+            // eslint-disable-next-line react/forbid-dom-props
+            style={{
+                top: pickerPosition.top,
+                left: pickerPosition.left,
+            }}
+            role="dialog"
+            aria-label="Selector de reacciones emoji"
+        >
+            {/* Simple emoji grid */}
+            <div className="grid grid-cols-6 gap-2 max-w-[240px]">
+                {AVAILABLE_EMOJIS.map((emoji) => (
+                    <button
+                        key={emoji}
+                        onClick={() => handleEmojiSelect(emoji)}
+                        className={`
+                            p-2 rounded-lg text-xl transition-all duration-200
+                            hover:bg-gray-100 hover:scale-110 hover:shadow-md
+                            flex items-center justify-center
+                            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                            ${userReaction === emoji
+                                ? 'bg-blue-100 ring-2 ring-blue-300 scale-110'
+                                : ''
+                            }
+                        `}
+                        title={`Reaccionar con ${emoji}`}
+                        aria-label={`Reaccionar con ${emoji}${userReaction === emoji ? ' (seleccionado)' : ''}`}
+                    >
+                        {emoji}
+                    </button>
+                ))}
+            </div>
+
+            {/* Current reaction indicator */}
+            {userReaction && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Tu reacción: {userReaction}</span>
+                        <button
+                            onClick={() => {
+                                onRemoveReaction();
+                                setShowPicker(false);
+                            }}
+                            className="text-red-500 hover:text-red-700 underline"
+                            title="Quitar mi reacción"
+                        >
+                            Quitar
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    ) : null;
 
     return (
         <div className="relative">
@@ -71,6 +205,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                 {/* Add reaction button */}
                 <div className="relative">
                     <motion.button
+                        ref={triggerRef}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handlePickerToggle}
@@ -84,52 +219,18 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}
             `}
-                        title="Add reaction"
+                        title="Agregar reacción"
+                        aria-label={`Agregar reacción emoji${showPicker ? ' (abierto)' : ''}`}
+                        aria-expanded={showPicker}
+                        aria-haspopup="dialog"
                     >
                         {showPicker ? <Smile size={16} /> : <Plus size={14} />}
                     </motion.button>
-
-                    {/* Emoji picker */}
-                    <AnimatePresence>
-                        {showPicker && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.8, y: -10 }}
-                                className="absolute bottom-full mb-2 left-0 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-2"
-                                style={{ minWidth: '200px' }}
-                            >
-                                <div className="grid grid-cols-4 gap-1">
-                                    {AVAILABLE_EMOJIS.map((emoji) => (
-                                        <motion.button
-                                            key={emoji}
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={() => handleEmojiSelect(emoji)}
-                                            className={`
-                        p-2 rounded-md text-lg transition-all duration-200
-                        hover:bg-gray-100 flex items-center justify-center
-                        ${userReaction === emoji ? 'bg-blue-100 ring-2 ring-blue-300' : ''}
-                      `}
-                                            title={emoji}
-                                        >
-                                            {emoji}
-                                        </motion.button>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </div>
 
-            {/* Backdrop to close picker */}
-            {showPicker && (
-                <div
-                    className="fixed inset-0 z-0"
-                    onClick={() => setShowPicker(false)}
-                />
-            )}
+            {/* Portal for popup to ensure it appears above everything */}
+            {typeof document !== 'undefined' && createPortal(popup, document.body)}
         </div>
     );
 };

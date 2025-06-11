@@ -1,7 +1,7 @@
 import { ColumnType } from './retrospective';
 
 // Available emoji reactions
-export type EmojiReaction = '👍' | '❤️' | '😂' | '😮' | '😢' | '😡' | '🎉' | '🤔';
+export type EmojiReaction = '👍' | '❤️' | '😂' | '😮' | '😢' | '😡' | '🎉' | '🤔' | '✨' | '🚀' | '💡' | '⚡';
 
 // Card color palette - 10 beautiful pastel colors
 export type CardColor =

@@ -1,14 +1,51 @@
 import React, { useState } from 'react';
 import ColorPicker from './ui/ColorPicker';
-import { CardColor } from '../types/card';
+import EmojiReactions from './retrospective/EmojiReactions';
+import { CardColor, GroupedReaction, EmojiReaction } from '../types/card';
 import { getCardStyling, getDefaultColor, getAvailableColors } from '../utils/cardColors';
 
 const ColorSystemTest: React.FC = () => {
     const [selectedColor, setSelectedColor] = useState<CardColor>(getDefaultColor());
     const [testCardColor, setTestCardColor] = useState<CardColor>('pastelBlue');
 
+    // Estado para testing de emojis
+    const [testReactions, setTestReactions] = useState<GroupedReaction[]>([
+        { emoji: '👍', count: 3, users: ['Ana', 'Luis', 'María'] },
+        { emoji: '❤️', count: 1, users: ['Carlos'] }
+    ]);
+    const [userReaction, setUserReaction] = useState<EmojiReaction | null>(null);
+
     const colors = getAvailableColors();
     const cardStyling = getCardStyling(testCardColor);
+
+    // Handlers para emojis
+    const handleAddReaction = (emoji: EmojiReaction) => {
+        setUserReaction(emoji);
+        setTestReactions(prev => {
+            const existing = prev.find(r => r.emoji === emoji);
+            if (existing) {
+                return prev.map(r =>
+                    r.emoji === emoji
+                        ? { ...r, count: r.count + 1, users: [...r.users, 'Tú'] }
+                        : r
+                );
+            } else {
+                return [...prev, { emoji, count: 1, users: ['Tú'] }];
+            }
+        });
+    };
+
+    const handleRemoveReaction = () => {
+        if (!userReaction) return;
+        setTestReactions(prev =>
+            prev.map(r =>
+                r.emoji === userReaction
+                    ? { ...r, count: Math.max(0, r.count - 1), users: r.users.filter(u => u !== 'Tú') }
+                    : r
+            ).filter(r => r.count > 0)
+        );
+        setUserReaction(null);
+    };
 
     return (
         <div className="p-8 max-w-4xl mx-auto">
@@ -121,6 +158,49 @@ const ColorSystemTest: React.FC = () => {
                             </div>
                         );
                     })}
+                </div>
+            </section>
+
+            {/* Emoji Reactions Test */}
+            <section className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Emoji Reactions Test (Flotante)</h2>
+                <div className="flex items-start gap-4">
+                    <div className={`p-6 rounded-lg border-2 border-gray-200 min-w-[300px] transition-all duration-300 ${cardStyling}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-medium">Test Card con Emojis</h3>
+                            <ColorPicker
+                                selectedColor={testCardColor}
+                                onColorChange={setTestCardColor}
+                                size="sm"
+                            />
+                        </div>
+                        <p className="text-gray-700 mb-4">
+                            Esta tarjeta demuestra el sistema de emojis flotante. ¡Haz click en el botón + para agregar reacciones!
+                        </p>
+
+                        {/* Emoji Reactions Component */}
+                        <div className="mt-4">
+                            <EmojiReactions
+                                cardId="test-card"
+                                groupedReactions={testReactions}
+                                userReaction={userReaction}
+                                onAddReaction={handleAddReaction}
+                                onRemoveReaction={handleRemoveReaction}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-600">
+                    <p className="font-medium mb-2">Características del Emoji Picker Flotante:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                        <li>✅ Renderizado con Portal (aparece sobre todo)</li>
+                        <li>✅ Posicionamiento inteligente (evita bordes)</li>
+                        <li>✅ 12 emojis organizados en 3 categorías</li>
+                        <li>✅ Colores temáticos por categoría</li>
+                        <li>✅ Navegación por teclado (Escape para cerrar)</li>
+                        <li>✅ Click outside para cerrar</li>
+                        <li>✅ Estados visuales claros</li>
+                    </ul>
                 </div>
             </section>
         </div>
