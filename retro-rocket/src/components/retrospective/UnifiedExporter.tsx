@@ -58,9 +58,9 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
             pageSize: 'a4',
             orientation: 'portrait'
         },
-        docxOptions: {
-            includeTableOfContents: false,
-            headerStyle: 'simple'
+        txtOptions: {
+            encoding: 'utf-8',
+            lineEnding: 'unix'
         }
     });
 
@@ -117,7 +117,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
         switch (format) {
             case 'pdf':
                 return <File className="w-5 h-5" />;
-            case 'docx':
+            case 'txt':
                 return <FileText className="w-5 h-5" />;
             default:
                 return <Download className="w-5 h-5" />;
@@ -128,8 +128,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
         switch (format) {
             case 'pdf':
                 return 'bg-red-600 hover:bg-red-700';
-            case 'docx':
-                return 'bg-blue-600 hover:bg-blue-700';
+            case 'txt':
+                return 'bg-gray-600 hover:bg-gray-700';
             default:
                 return 'bg-gray-600 hover:bg-gray-700';
         }
@@ -157,19 +157,19 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                     </motion.button>
 
                     <motion.button
-                        onClick={() => handleQuickExport('docx')}
+                        onClick={() => handleQuickExport('txt')}
                         disabled={isExporting}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg active:scale-95"
+                        className="flex items-center gap-2 px-3 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg active:scale-95"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        title="Exportar rápido a Word"
+                        title="Exportar rápido a TXT"
                     >
-                        {isExporting && currentFormat === 'docx' ? (
+                        {isExporting && currentFormat === 'txt' ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                             <FileText className="w-4 h-4" />
                         )}
-                        <span className="hidden sm:inline">Word</span>
+                        <span className="hidden sm:inline">TXT</span>
                     </motion.button>
 
                     {/* Settings Button */}
@@ -297,8 +297,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                             key={format.value}
                                                             onClick={() => handleFormatChange(format.value)}
                                                             className={`p-4 rounded-lg border-2 text-left transition-all ${selectedFormat === format.value
-                                                                    ? 'border-blue-500 bg-blue-50'
-                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                ? 'border-blue-500 bg-blue-50'
+                                                                : 'border-gray-200 hover:border-gray-300'
                                                                 }`}
                                                             whileHover={{ scale: 1.02 }}
                                                             whileTap={{ scale: 0.98 }}
@@ -532,8 +532,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                         key={format.value}
                         onClick={() => handleFormatChange(format.value)}
                         className={`p-6 rounded-lg border-2 text-left transition-all ${selectedFormat === format.value
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
                             }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}

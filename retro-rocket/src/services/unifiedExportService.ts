@@ -1,6 +1,6 @@
 import { UnifiedExportOptions, UnifiedExportData, ExportFormat, SortOrder } from '../types/export';
 import { exportRetrospectiveToPdf, ExportOptions as PdfExportOptions } from './pdfExportService';
-import { exportRetrospectiveToDocx, DocxExportOptions } from './docxExportService';
+import { exportRetrospectiveToTxt, TxtExportOptions } from './txtExportService';
 import { Card } from '../types/card';
 
 export class UnifiedExportService {
@@ -19,8 +19,8 @@ export class UnifiedExportService {
             // Delegate to specific exporter based on format
             if (options.format === 'pdf') {
                 await this.exportToPdf(processedData, options);
-            } else if (options.format === 'docx') {
-                await this.exportToDocx(processedData, options);
+            } else if (options.format === 'txt') {
+                await this.exportToTxt(processedData, options);
             } else {
                 throw new Error(`Unsupported export format: ${options.format}`);
             }
@@ -108,20 +108,19 @@ export class UnifiedExportService {
     }
 
     /**
-     * Export to DOCX format
+     * Export to TXT format
      */
-    private async exportToDocx(data: UnifiedExportData, options: UnifiedExportOptions): Promise<void> {
-        const docxOptions: DocxExportOptions = {
+    private async exportToTxt(data: UnifiedExportData, options: UnifiedExportOptions): Promise<void> {
+        const txtOptions: TxtExportOptions = {
             includeParticipants: options.includeParticipants,
             includeStatistics: options.includeStatistics,
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
-            facilitatorNotes: options.facilitatorNotes,
-            ...options.docxOptions
+            facilitatorNotes: options.facilitatorNotes
         };
 
-        // Convert to DOCX service format
-        const docxData = {
+        // Convert to TXT service format
+        const txtData = {
             retrospective: {
                 ...data.retrospective,
                 title: options.customTitle ?? data.retrospective.title
@@ -131,7 +130,7 @@ export class UnifiedExportService {
             participants: data.participants
         };
 
-        await exportRetrospectiveToDocx(docxData, docxOptions);
+        await exportRetrospectiveToTxt(txtData, txtOptions);
     }
 
     /**
@@ -145,9 +144,9 @@ export class UnifiedExportService {
                 description: 'Documento portable, ideal para imprimir y archivar'
             },
             {
-                value: 'docx',
-                label: 'Word (.docx)',
-                description: 'Documento editable de Microsoft Word'
+                value: 'txt',
+                label: 'TXT',
+                description: 'Archivo de texto plano, simple y universal'
             }
         ];
     }
