@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Clock } from 'lucide-react';
 import GroupableColumn from './GroupableColumn';
+import PdfExporter from './PdfExporter';
 import Loading from '../ui/Loading';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
@@ -116,18 +117,31 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                             <p className="text-gray-600">{retrospective.description}</p>
                         )}
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                            <Users size={16} />
-                            <span>
-                                {participantsLoading ? '...' : participants.length} participantes
-                            </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                            <Clock size={16} />
-                            <span>
-                                {retrospective.createdAt && new Date(retrospective.createdAt).toLocaleDateString('es-ES')}
-                            </span>
+                    <div className="flex items-center space-x-4">
+                        {/* Export PDF Button */}
+                        <PdfExporter
+                            retrospective={retrospective}
+                            cards={cards}
+                            groups={groups}
+                            participants={participants}
+                            variant="button"
+                            className="hidden sm:flex"
+                        />
+
+                        {/* Stats */}
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex items-center space-x-1">
+                                <Users size={16} />
+                                <span>
+                                    {participantsLoading ? '...' : participants.length} participantes
+                                </span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                                <Clock size={16} />
+                                <span>
+                                    {retrospective.createdAt && new Date(retrospective.createdAt).toLocaleDateString('es-ES')}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

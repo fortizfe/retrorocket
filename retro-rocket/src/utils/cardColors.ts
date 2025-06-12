@@ -183,3 +183,21 @@ export const validateColor = (color: string | undefined | null): CardColor => {
     }
     return color;
 };
+
+// Get hex color for PDF export
+export const getCardColorHex = (color: CardColor): string => {
+    const colorHexMap: Record<CardColor, string> = {
+        pastelWhite: '#FFFFFF',
+        pastelGreen: '#F0FDF4',
+        pastelRed: '#FEF2F2',
+        pastelYellow: '#FEFCE8',
+        pastelBlue: '#EFF6FF',
+        pastelPurple: '#FAF5FF',
+        pastelPink: '#FDF2F8',
+        pastelOrange: '#FFF7ED',
+        pastelTeal: '#F0FDFA',
+        pastelGray: '#F9FAFB'
+    };
+
+    return colorHexMap[color] || colorHexMap.pastelWhite;
+};
