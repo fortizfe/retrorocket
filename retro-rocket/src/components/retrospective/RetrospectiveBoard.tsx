@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, Clock } from 'lucide-react';
 import GroupableColumn from './GroupableColumn';
 import PdfExporter from './PdfExporter';
+import DocxExporter from './DocxExporter';
 import Loading from '../ui/Loading';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
@@ -118,15 +119,25 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                         )}
                     </div>
                     <div className="flex items-center space-x-4">
-                        {/* Export PDF Button */}
-                        <PdfExporter
-                            retrospective={retrospective}
-                            cards={cards}
-                            groups={groups}
-                            participants={participants}
-                            variant="button"
-                            className="hidden sm:flex"
-                        />
+                        {/* Export Buttons */}
+                        <div className="flex items-center space-x-2">
+                            <PdfExporter
+                                retrospective={retrospective}
+                                cards={cards}
+                                groups={groups}
+                                participants={participants}
+                                variant="button"
+                                className="hidden sm:flex"
+                            />
+                            <DocxExporter
+                                retrospective={retrospective}
+                                cards={cards}
+                                groups={groups}
+                                participants={participants}
+                                variant="button"
+                                className="hidden sm:flex"
+                            />
+                        </div>
 
                         {/* Stats */}
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
