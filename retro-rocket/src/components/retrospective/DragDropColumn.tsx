@@ -33,6 +33,10 @@ interface DragDropColumnProps {
     currentUser?: string;
     canEdit?: boolean;
     children?: React.ReactNode;
+    // New props for grouping functionality
+    isGroupingMode?: boolean;
+    selectedCards?: Set<string>;
+    onCardSelect?: (cardId: string) => void;
 }
 
 const DragDropColumn: React.FC<DragDropColumnProps> = ({
@@ -47,7 +51,10 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
     onCardsReorder,
     currentUser,
     canEdit = true,
-    children
+    children,
+    isGroupingMode = false,
+    selectedCards = new Set(),
+    onCardSelect
 }) => {
     const [activeCard, setActiveCard] = React.useState<Card | null>(null);
 
@@ -144,6 +151,9 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                             onReactionRemove={onCardReactionRemove}
                             currentUser={currentUser}
                             canEdit={canEdit}
+                            isGroupingMode={isGroupingMode}
+                            isSelected={selectedCards.has(card.id)}
+                            onSelect={onCardSelect}
                         />
                     ))}
                 </div>

@@ -38,6 +38,7 @@ export const FIRESTORE_COLLECTIONS = {
   RETROSPECTIVES: "retrospectives",
   PARTICIPANTS: "participants",
   CARDS: "cards",
+  GROUPS: "groups",
 } as const;
 
 export const APP_NAME = 'RetroRocket';

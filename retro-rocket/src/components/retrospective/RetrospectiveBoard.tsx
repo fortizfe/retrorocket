@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Clock } from 'lucide-react';
-import RetrospectiveColumn from './RetrospectiveColumn';
+import GroupableColumn from './GroupableColumn';
 import Loading from '../ui/Loading';
 import { useCards } from '../../hooks/useCards';
+import { useCardGroups } from '../../hooks/useCardGroups';
 import { useParticipants } from '../../hooks/useParticipants';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction } from '../../types/card';
@@ -19,6 +20,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     currentUser
 }) => {
     const {
+        cards,
         cardsByColumn,
         loading: cardsLoading,
         error: cardsError,
@@ -31,6 +33,19 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         removeReaction,
         reorderCards
     } = useCards(retrospective.id);
+
+    const {
+        groups,
+        createGroup,
+        disbandGroup,
+        removeFromGroup,
+        toggleGroupCollapse,
+        findSuggestions
+    } = useCardGroups({
+        retrospectiveId: retrospective.id,
+        cards,
+        currentUser
+    });
 
     const {
         participants,
@@ -150,9 +165,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                         className="flex flex-col min-h-0"
                     >
-                        <RetrospectiveColumn
+                        <GroupableColumn
                             column={COLUMNS[columnId]}
                             cards={cardsByColumn[columnId] || []}
+                            groups={groups}
                             onCardCreate={handleCardCreate}
                             onCardUpdate={handleCardUpdate}
                             onCardDelete={handleCardDelete}
@@ -161,6 +177,15 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                             onCardReaction={handleCardReaction}
                             onCardReactionRemove={handleCardReactionRemove}
                             onCardsReorder={handleCardsReorder}
+                            onGroupCreate={createGroup}
+                            onGroupDisband={disbandGroup}
+                            onGroupToggleCollapse={toggleGroupCollapse}
+                            onCardRemoveFromGroup={removeFromGroup}
+                            onSuggestionGenerate={() => findSuggestions({
+                                threshold: 0.6,
+                                minGroupSize: 2,
+                                maxGroupSize: 6
+                            })}
                             currentUser={currentUser}
                             retrospectiveId={retrospective.id}
                         />

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, EmojiReaction } from '../../types/card';
-import DraggableCard from './DraggableCard';
+import SelectableCard from './SelectableCard';
 
 interface SortableCardProps {
     card: Card;
@@ -14,6 +14,9 @@ interface SortableCardProps {
     onReactionRemove: (cardId: string, userId: string) => Promise<void>;
     currentUser?: string;
     canEdit?: boolean;
+    isGroupingMode?: boolean;
+    isSelected?: boolean;
+    onSelect?: (cardId: string) => void;
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({
@@ -25,7 +28,10 @@ const SortableCard: React.FC<SortableCardProps> = ({
     onReaction,
     onReactionRemove,
     currentUser,
-    canEdit = true
+    canEdit = true,
+    isGroupingMode = false,
+    isSelected = false,
+    onSelect
 }) => {
     const {
         attributes,
@@ -55,7 +61,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
             {...attributes}
             {...listeners}
         >
-            <DraggableCard
+            <SelectableCard
                 card={card}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
@@ -66,6 +72,9 @@ const SortableCard: React.FC<SortableCardProps> = ({
                 currentUser={currentUser}
                 canEdit={canEdit}
                 isDragging={isDragging}
+                isGroupingMode={isGroupingMode}
+                isSelected={isSelected}
+                onSelect={onSelect}
             />
         </div>
     );
