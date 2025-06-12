@@ -2,8 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Clock } from 'lucide-react';
 import GroupableColumn from './GroupableColumn';
-import PdfExporter from './PdfExporter';
-import DocxExporter from './DocxExporter';
+import UnifiedExporter from './UnifiedExporter';
 import Loading from '../ui/Loading';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
@@ -121,15 +120,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                     <div className="flex items-center space-x-4">
                         {/* Export Buttons */}
                         <div className="flex items-center space-x-2">
-                            <PdfExporter
-                                retrospective={retrospective}
-                                cards={cards}
-                                groups={groups}
-                                participants={participants}
-                                variant="button"
-                                className="hidden sm:flex"
-                            />
-                            <DocxExporter
+                            <UnifiedExporter
                                 retrospective={retrospective}
                                 cards={cards}
                                 groups={groups}
