@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
     Users,
-    Sparkles,
     Check,
     X
 } from 'lucide-react';
@@ -11,12 +10,15 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
 import ColorPicker from '../ui/ColorPicker';
-import DragDropColumn from './DragDropColumn';
 import { GroupCard } from './GroupCard';
 import { GroupSuggestionModal } from './GroupSuggestionModal';
+import ColumnHeaderMenu from './ColumnHeaderMenu';
+import GroupedCardList from './GroupedCardList';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
+import { useColumnGrouping } from '../../hooks/useColumnGrouping';
+import { GroupingCriteria } from '../../types/columnGrouping';
 
 interface GroupableColumnProps {
     column: ColumnConfig;
@@ -69,10 +71,21 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
+    // Initialize grouping hook
+    const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping();
+
     // Filter cards and groups for this column
     const columnCards = cards.filter(card => card.column === column.id);
     const columnGroups = groups.filter(group => group.column === column.id);
     const ungroupedCards = columnCards.filter(card => !card.groupId);
+
+    // Get current column grouping state
+    const columnState = getColumnState(column.id);
+
+    // Process ungrouped cards with grouping - using useMemo to trigger re-render when state changes
+    const processedUngroupedCards = React.useMemo(() => {
+        return processCards(ungroupedCards, column.id);
+    }, [processCards, ungroupedCards, columnState.criteria, column.id]);
 
     const handleCreateCard = async () => {
         if (!newCardContent.trim() || !currentUser) return;
@@ -105,6 +118,10 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     };
 
     const handleToggleGroupingMode = () => {
+        if (isGroupingMode) {
+            // If exiting grouping mode without creating a group, restore previous state
+            restorePreviousState(column.id);
+        }
         setIsGroupingMode(!isGroupingMode);
         setSelectedCards(new Set());
     };
@@ -169,6 +186,12 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
             // Remove accepted suggestion from list
             setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
+
+            // Clear suggestions state if all accepted
+            if (suggestions.length <= 1) {
+                setShowSuggestions(false);
+                setSuggestions([]);
+            }
         } catch (error) {
             console.error('Error accepting suggestion:', error);
         }
@@ -176,6 +199,13 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     const handleRejectSuggestion = (suggestionId: string) => {
         setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+    };
+
+    const handleCloseSuggestions = () => {
+        // If closing suggestions without accepting any, restore previous state
+        restorePreviousState(column.id);
+        setShowSuggestions(false);
+        setSuggestions([]);
     };
 
     const totalItems = ungroupedCards.length + columnGroups.length;
@@ -206,30 +236,25 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         )}
                     </div>
                     <div className="flex items-center space-x-1">
-                        {/* Grouping Controls */}
-                        {ungroupedCards.length >= 2 && currentUser && (
-                            <>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={handleGenerateSuggestions}
-                                    loading={isGeneratingSuggestions}
-                                    className="flex items-center space-x-1"
-                                    title="Sugerir agrupaciones automáticas"
-                                >
-                                    <Sparkles size={14} />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant={isGroupingMode ? "primary" : "ghost"}
-                                    onClick={handleToggleGroupingMode}
-                                    className="flex items-center space-x-1"
-                                    title={isGroupingMode ? "Cancelar agrupación" : "Agrupar tarjetas manualmente"}
-                                >
-                                    <Users size={14} />
-                                </Button>
-                            </>
-                        )}
+                        {/* New Grouping Menu */}
+                        <ColumnHeaderMenu
+                            currentGrouping={columnState.criteria}
+                            onGroupingChange={(criteria: GroupingCriteria) => {
+                                setGroupingCriteria(column.id, criteria);
+
+                                // Handle special grouping modes
+                                if (criteria === 'custom') {
+                                    setIsGroupingMode(true);
+                                } else if (criteria === 'suggestions') {
+                                    handleGenerateSuggestions();
+                                } else {
+                                    setIsGroupingMode(false);
+                                }
+                            }}
+                            hasCards={ungroupedCards.length > 0}
+                            disabled={!currentUser}
+                        />
+
                         <Button
                             size="sm"
                             variant="ghost"
@@ -374,11 +399,10 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     );
                 })}
 
-                {/* Ungrouped Cards with Drag & Drop */}
-                <DragDropColumn
-                    key={`cards-${column.id}`}
-                    cards={ungroupedCards}
-                    column={column.id}
+                {/* Ungrouped Cards with New Grouping */}
+                <GroupedCardList
+                    groupedCards={processedUngroupedCards}
+                    groupBy={columnState.criteria}
                     onCardUpdate={onCardUpdate}
                     onCardDelete={onCardDelete}
                     onCardVote={onCardVote}
@@ -387,7 +411,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     onCardReactionRemove={onCardReactionRemove}
                     onCardsReorder={onCardsReorder}
                     currentUser={currentUser}
-                    canEdit={true}
                     isGroupingMode={isGroupingMode}
                     selectedCards={selectedCards}
                     onCardSelect={handleCardSelect}
@@ -426,7 +449,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
             {/* Group Suggestions Modal */}
             <GroupSuggestionModal
                 isOpen={showSuggestions}
-                onClose={() => setShowSuggestions(false)}
+                onClose={handleCloseSuggestions}
                 suggestions={suggestions}
                 cards={ungroupedCards}
                 onAcceptSuggestion={handleAcceptSuggestion}
