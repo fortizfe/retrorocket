@@ -8,10 +8,12 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
 import ColorPicker from '../ui/ColorPicker';
+import TypingPreview from '../ui/TypingPreview';
 import { GroupCard } from './GroupCard';
 import { GroupSuggestionModal } from './GroupSuggestionModal';
 import ColumnHeaderMenu from './ColumnHeaderMenu';
 import GroupedCardList from './GroupedCardList';
+import { useTypingContext } from '../../contexts/TypingProvider';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
@@ -67,6 +69,12 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
+    // Get typing context
+    const { startTyping, stopTyping, getTypingUsersForColumn } = useTypingContext();
+
+    // Get typing users for this column
+    const typingUsers = getTypingUsersForColumn(column.id);
+
     // Initialize grouping hook
     const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping(retrospectiveId);
 
@@ -85,6 +93,9 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     const handleCreateCard = async () => {
         if (!newCardContent.trim() || !currentUser) return;
+
+        // Stop typing when submitting
+        stopTyping(column.id);
 
         setIsSubmitting(true);
         try {
@@ -108,9 +119,30 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     };
 
     const handleCancelCreate = () => {
+        // Stop typing when canceling
+        stopTyping(column.id);
         setIsCreating(false);
         setNewCardContent('');
         setSelectedColor(getSuggestedColorForColumn(column.title));
+    };
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setNewCardContent(value);
+
+        // Start typing when user begins typing
+        if (value.length > 0) {
+            startTyping(column.id);
+        } else {
+            stopTyping(column.id);
+        }
+    };
+
+    const handleTextareaBlur = () => {
+        // Stop typing when textarea loses focus
+        setTimeout(() => {
+            stopTyping(column.id);
+        }, 1000); // Small delay to avoid flickering
     };
 
     const handleGenerateSuggestions = async () => {
@@ -242,7 +274,8 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
                                 <Textarea
                                     value={newCardContent}
-                                    onChange={(e) => setNewCardContent(e.target.value)}
+                                    onChange={handleTextareaChange}
+                                    onBlur={handleTextareaBlur}
                                     placeholder={`¿Qué ${column.title.toLowerCase()}?`}
                                     rows={3}
                                     autoFocus
@@ -271,6 +304,14 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Typing Preview */}
+                {typingUsers.length > 0 && (
+                    <TypingPreview
+                        typingUsers={typingUsers}
+                        className="mb-3"
+                    />
+                )}
 
                 {/* Groups */}
                 {columnGroups.map(group => {

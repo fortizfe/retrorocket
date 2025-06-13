@@ -279,7 +279,7 @@ const RetrospectivePage: React.FC = () => {
             <div className="container mx-auto px-4 py-6 h-full">
                 <RetrospectiveBoard
                     retrospective={retrospective}
-                    currentUser={participantName}
+                    currentUser={currentParticipantId ?? undefined}
                 />
             </div>
         </div>

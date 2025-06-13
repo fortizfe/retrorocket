@@ -1,3 +1,10 @@
+import {
+    doc,
+    getDoc,
+    updateDoc,
+    setDoc,
+    serverTimestamp
+} from 'firebase/firestore';
 import { db } from './firebase';
 import { ColumnGroupingStatesStore } from '../types/columnGrouping';
 
@@ -11,10 +18,10 @@ export const saveColumnGroupingState = async (
     columnGroupingStates: ColumnGroupingStatesStore
 ): Promise<void> => {
     try {
-        const docRef = (db as any).collection('retrospectives').doc(retrospectiveId);
-        await docRef.update({
+        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        await updateDoc(docRef, {
             columnGroupingStates,
-            updatedAt: new Date()
+            updatedAt: serverTimestamp()
         });
     } catch (error) {
         console.error('Error saving column grouping state:', error);
@@ -27,10 +34,10 @@ export const loadColumnGroupingState = async (
     retrospectiveId: string
 ): Promise<ColumnGroupingStatesStore> => {
     try {
-        const docRef = (db as any).collection('retrospectives').doc(retrospectiveId);
-        const docSnap = await docRef.get();
+        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists) {
+        if (docSnap.exists()) {
             const data = docSnap.data();
             return data?.columnGroupingStates ?? {};
         }
@@ -47,8 +54,8 @@ export const initializeColumnGroupingState = async (
     retrospectiveId: string
 ): Promise<void> => {
     try {
-        const docRef = (db as any).collection('retrospectives').doc(retrospectiveId);
-        await docRef.set({
+        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        await setDoc(docRef, {
             columnGroupingStates: {}
         }, { merge: true });
     } catch (error) {

@@ -5,7 +5,9 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
 import ColorPicker from '../ui/ColorPicker';
+import TypingPreview from '../ui/TypingPreview';
 import DragDropColumn from './DragDropColumn';
+import { useTypingContext } from '../../contexts/TypingProvider';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
@@ -44,8 +46,17 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get typing context
+  const { startTyping, stopTyping, getTypingUsersForColumn } = useTypingContext();
+
+  // Get typing users for this column
+  const typingUsers = getTypingUsersForColumn(column.id);
+
   const handleCreateCard = async () => {
     if (!newCardContent.trim() || !currentUser) return;
+
+    // Stop typing when submitting
+    stopTyping(column.id);
 
     setIsSubmitting(true);
     try {
@@ -69,9 +80,30 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   };
 
   const handleCancelCreate = () => {
+    // Stop typing when canceling
+    stopTyping(column.id);
     setIsCreating(false);
     setNewCardContent('');
     setSelectedColor(getSuggestedColorForColumn(column.title));
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setNewCardContent(value);
+
+    // Start typing when user begins typing
+    if (value.length > 0) {
+      startTyping(column.id);
+    } else {
+      stopTyping(column.id);
+    }
+  };
+
+  const handleTextareaBlur = () => {
+    // Stop typing when textarea loses focus
+    setTimeout(() => {
+      stopTyping(column.id);
+    }, 1000); // Small delay to avoid flickering
   };
 
   return (
@@ -135,7 +167,8 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
 
                 <Textarea
                   value={newCardContent}
-                  onChange={(e) => setNewCardContent(e.target.value)}
+                  onChange={handleTextareaChange}
+                  onBlur={handleTextareaBlur}
                   placeholder={`¿Qué ${column.title.toLowerCase()}?`}
                   rows={3}
                   autoFocus
@@ -164,6 +197,14 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Typing Preview */}
+        {typingUsers.length > 0 && (
+          <TypingPreview
+            typingUsers={typingUsers}
+            className="mb-3"
+          />
+        )}
 
         {/* Cards with Drag & Drop - Outside AnimatePresence since cards have their own animations */}
         <DragDropColumn

@@ -4,6 +4,7 @@ import { Users, Clock } from 'lucide-react';
 import GroupableColumn from './GroupableColumn';
 import UnifiedExporter from './UnifiedExporter';
 import Loading from '../ui/Loading';
+import { TypingProvider } from '../../contexts/TypingProvider';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useParticipants } from '../../hooks/useParticipants';
@@ -52,6 +53,13 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         participants,
         loading: participantsLoading
     } = useParticipants(retrospective.id);
+
+    // Get current user's name from participants
+    const currentParticipant = participants.find(p => p.id === currentUser);
+    const currentUsername = currentParticipant?.name ?? 'Usuario';
+
+    // Debug log to help troubleshoot
+    console.log('RetrospectiveBoard - currentUser:', currentUser, 'currentUsername:', currentUsername, 'participants:', participants.length);
 
     const handleCardCreate = async (cardInput: CreateCardInput) => {
         await createCard(cardInput);
@@ -105,110 +113,116 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     }
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Header with info */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                            {retrospective.title}
-                        </h1>
-                        {retrospective.description && (
-                            <p className="text-gray-600">{retrospective.description}</p>
-                        )}
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        {/* Export Buttons */}
-                        <div className="flex items-center space-x-2">
-                            <UnifiedExporter
-                                retrospective={retrospective}
-                                cards={cards}
-                                groups={groups}
-                                participants={participants}
-                                variant="button"
-                                className="hidden sm:flex"
-                            />
-                        </div>
-
-                        {/* Stats */}
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                            <div className="flex items-center space-x-1">
-                                <Users size={16} />
-                                <span>
-                                    {participantsLoading ? '...' : participants.length} participantes
-                                </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <Clock size={16} />
-                                <span>
-                                    {retrospective.createdAt && new Date(retrospective.createdAt).toLocaleDateString('es-ES')}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Participants list */}
-                {!participantsLoading && participants.length > 0 && (
-                    <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600">Participantes:</span>
-                        <div className="flex items-center space-x-2">
-                            {participants.slice(0, 5).map((participant) => (
-                                <span
-                                    key={participant.id}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                >
-                                    {participant.name}
-                                </span>
-                            ))}
-                            {participants.length > 5 && (
-                                <span className="text-xs text-gray-500">
-                                    +{participants.length - 5} más
-                                </span>
+        <TypingProvider
+            retrospectiveId={retrospective.id}
+            currentUserId={currentUser}
+            currentUsername={currentUsername}
+        >
+            <div className="h-full flex flex-col">
+                {/* Header with info */}
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                                {retrospective.title}
+                            </h1>
+                            {retrospective.description && (
+                                <p className="text-gray-600">{retrospective.description}</p>
                             )}
                         </div>
-                    </div>
-                )}
-            </div>
+                        <div className="flex items-center space-x-4">
+                            {/* Export Buttons */}
+                            <div className="flex items-center space-x-2">
+                                <UnifiedExporter
+                                    retrospective={retrospective}
+                                    cards={cards}
+                                    groups={groups}
+                                    participants={participants}
+                                    variant="button"
+                                    className="hidden sm:flex"
+                                />
+                            </div>
 
-            {/* Board Grid */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
-                {COLUMN_ORDER.map((columnId, index) => (
-                    <motion.div
-                        key={columnId}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="flex flex-col min-h-0"
-                    >
-                        <GroupableColumn
-                            column={COLUMNS[columnId]}
-                            cards={cardsByColumn[columnId] || []}
-                            groups={groups}
-                            onCardCreate={handleCardCreate}
-                            onCardUpdate={handleCardUpdate}
-                            onCardDelete={handleCardDelete}
-                            onCardVote={handleCardVote}
-                            onCardLike={handleCardLike}
-                            onCardReaction={handleCardReaction}
-                            onCardReactionRemove={handleCardReactionRemove}
-                            onCardsReorder={handleCardsReorder}
-                            onGroupCreate={createGroup}
-                            onGroupDisband={disbandGroup}
-                            onGroupToggleCollapse={toggleGroupCollapse}
-                            onCardRemoveFromGroup={removeFromGroup}
-                            onSuggestionGenerate={() => findSuggestions({
-                                threshold: 0.6,
-                                minGroupSize: 2,
-                                maxGroupSize: 6
-                            })}
-                            currentUser={currentUser}
-                            retrospectiveId={retrospective.id}
-                        />
-                    </motion.div>
-                ))}
+                            {/* Stats */}
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                <div className="flex items-center space-x-1">
+                                    <Users size={16} />
+                                    <span>
+                                        {participantsLoading ? '...' : participants.length} participantes
+                                    </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <Clock size={16} />
+                                    <span>
+                                        {retrospective.createdAt && new Date(retrospective.createdAt).toLocaleDateString('es-ES')}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Participants list */}
+                    {!participantsLoading && participants.length > 0 && (
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600">Participantes:</span>
+                            <div className="flex items-center space-x-2">
+                                {participants.slice(0, 5).map((participant) => (
+                                    <span
+                                        key={participant.id}
+                                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                    >
+                                        {participant.name}
+                                    </span>
+                                ))}
+                                {participants.length > 5 && (
+                                    <span className="text-xs text-gray-500">
+                                        +{participants.length - 5} más
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Board Grid */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+                    {COLUMN_ORDER.map((columnId, index) => (
+                        <motion.div
+                            key={columnId}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                            className="flex flex-col min-h-0"
+                        >
+                            <GroupableColumn
+                                column={COLUMNS[columnId]}
+                                cards={cardsByColumn[columnId] || []}
+                                groups={groups}
+                                onCardCreate={handleCardCreate}
+                                onCardUpdate={handleCardUpdate}
+                                onCardDelete={handleCardDelete}
+                                onCardVote={handleCardVote}
+                                onCardLike={handleCardLike}
+                                onCardReaction={handleCardReaction}
+                                onCardReactionRemove={handleCardReactionRemove}
+                                onCardsReorder={handleCardsReorder}
+                                onGroupCreate={createGroup}
+                                onGroupDisband={disbandGroup}
+                                onGroupToggleCollapse={toggleGroupCollapse}
+                                onCardRemoveFromGroup={removeFromGroup}
+                                onSuggestionGenerate={() => findSuggestions({
+                                    threshold: 0.6,
+                                    minGroupSize: 2,
+                                    maxGroupSize: 6
+                                })}
+                                currentUser={currentUser}
+                                retrospectiveId={retrospective.id}
+                            />
+                        </motion.div>
+                    ))}
+                </div>
             </div>
-        </div>
+        </TypingProvider>
     );
 };
 
