@@ -58,9 +58,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const currentParticipant = participants.find(p => p.id === currentUser);
     const currentUsername = currentParticipant?.name ?? 'Usuario';
 
-    // Debug log to help troubleshoot
-    console.log('RetrospectiveBoard - currentUser:', currentUser, 'currentUsername:', currentUsername, 'participants:', participants.length);
-
     const handleCardCreate = async (cardInput: CreateCardInput) => {
         await createCard(cardInput);
     };
