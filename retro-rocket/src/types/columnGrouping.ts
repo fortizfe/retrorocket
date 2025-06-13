@@ -50,6 +50,6 @@ export interface ColumnGroupingStatesStore {
 
 // Default state for any column
 export const DEFAULT_GROUPING_STATE: ColumnGroupingState = {
-    criteria: 'none',
+    criteria: 'user',
     activeGroups: []
 };

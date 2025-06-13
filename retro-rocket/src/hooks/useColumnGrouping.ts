@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card } from '../types/card';
 import {
     GroupingCriteria,
@@ -6,11 +6,31 @@ import {
     ColumnGroupingStatesStore,
     DEFAULT_GROUPING_STATE
 } from '../types/columnGrouping';
+import {
+    saveColumnGroupingState,
+    loadColumnGroupingState
+} from '../services/columnGroupingService';
 
 // Hook to manage column grouping state
-export const useColumnGrouping = () => {
+export const useColumnGrouping = (retrospectiveId?: string) => {
     const [columnStates, setColumnStates] = useState<ColumnGroupingStatesStore>({});
     const [previousStates, setPreviousStates] = useState<ColumnGroupingStatesStore>({});
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Load state from Firebase when retrospectiveId is available
+    useEffect(() => {
+        if (retrospectiveId && !isLoaded) {
+            loadColumnGroupingState(retrospectiveId)
+                .then((loadedStates) => {
+                    setColumnStates(loadedStates);
+                    setIsLoaded(true);
+                })
+                .catch((error) => {
+                    console.error('Failed to load column grouping state:', error);
+                    setIsLoaded(true);
+                });
+        }
+    }, [retrospectiveId, isLoaded]);
 
     // Get state for a specific column
     const getColumnState = useCallback((columnId: string): ColumnGroupingState => {
@@ -32,14 +52,24 @@ export const useColumnGrouping = () => {
             }));
         }
 
-        setColumnStates(prev => ({
-            ...prev,
+        const newStates = {
+            ...columnStates,
             [columnId]: {
                 ...currentState,
                 criteria
             }
-        }));
-    }, [getColumnState]);
+        };
+
+        setColumnStates(newStates);
+
+        // Persist to Firebase if retrospectiveId is available
+        if (retrospectiveId) {
+            saveColumnGroupingState(retrospectiveId, newStates)
+                .catch((error) => {
+                    console.error('Failed to save column grouping state:', error);
+                });
+        }
+    }, [getColumnState, columnStates, retrospectiveId]);
 
     // Group cards by criteria
     const groupCards = useCallback((cards: Card[], criteria: GroupingCriteria) => {

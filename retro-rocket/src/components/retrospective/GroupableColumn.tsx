@@ -72,7 +72,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
     // Initialize grouping hook
-    const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping();
+    const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping(retrospectiveId);
 
     // Filter cards and groups for this column
     const columnCards = cards.filter(card => card.column === column.id);
