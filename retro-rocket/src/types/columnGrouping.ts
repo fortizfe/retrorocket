@@ -1,7 +1,7 @@
 // Types for column grouping functionality
-import { LucideIcon, List, Users, Target, Sparkles } from 'lucide-react';
+import { LucideIcon, List, Users, Sparkles } from 'lucide-react';
 
-export type GroupingCriteria = 'none' | 'user' | 'custom' | 'suggestions';
+export type GroupingCriteria = 'none' | 'user' | 'suggestions';
 
 export interface GroupingOption {
     value: GroupingCriteria;
@@ -28,12 +28,6 @@ export const GROUPING_OPTIONS: GroupingOption[] = [
         label: 'Agrupar por usuario',
         icon: Users,
         description: 'Agrupa tarjetas por creador'
-    },
-    {
-        value: 'custom',
-        label: 'Agrupación personalizada',
-        icon: Target,
-        description: 'Selecciona tarjetas manualmente'
     },
     {
         value: 'suggestions',

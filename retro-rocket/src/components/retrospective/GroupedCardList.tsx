@@ -16,9 +16,6 @@ interface GroupedCardListProps {
     onCardReactionRemove: (cardId: string, userId: string) => Promise<void>;
     onCardsReorder: (updates: Array<{ cardId: string; order: number; column?: string }>) => Promise<void>;
     currentUser?: string;
-    isGroupingMode?: boolean;
-    selectedCards?: Set<string>;
-    onCardSelect?: (cardId: string) => void;
 }
 
 const GroupedCardList: React.FC<GroupedCardListProps> = ({
@@ -31,10 +28,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
     onCardReaction,
     onCardReactionRemove,
     onCardsReorder,
-    currentUser,
-    isGroupingMode = false,
-    selectedCards = new Set(),
-    onCardSelect
+    currentUser
 }) => {
     const groupNames = Object.keys(groupedCards);
 
@@ -55,9 +49,6 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                 onCardsReorder={onCardsReorder}
                 currentUser={currentUser}
                 canEdit={true}
-                isGroupingMode={isGroupingMode}
-                selectedCards={selectedCards}
-                onCardSelect={onCardSelect}
             />
         );
     }
@@ -114,9 +105,6 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                                     onCardsReorder={onCardsReorder}
                                     currentUser={currentUser}
                                     canEdit={true}
-                                    isGroupingMode={isGroupingMode}
-                                    selectedCards={selectedCards}
-                                    onCardSelect={onCardSelect}
                                 />
                             </div>
                         </motion.div>

@@ -95,7 +95,7 @@ export const useColumnGrouping = () => {
 
 #### **4. `columnGrouping.ts` (Types)**
 ```tsx
-export type GroupingCriteria = 'none' | 'user' | 'custom' | 'suggestions';
+export type GroupingCriteria = 'none' | 'user' | 'suggestions';
 export const GROUPING_OPTIONS: GroupingOption[];
 ```
 

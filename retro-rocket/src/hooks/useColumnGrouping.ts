@@ -41,11 +41,8 @@ export const useColumnGrouping = (retrospectiveId?: string) => {
     const setGroupingCriteria = useCallback((columnId: string, criteria: GroupingCriteria) => {
         const currentState = getColumnState(columnId);
 
-        // Store previous state only when moving to 'custom' or 'suggestions' from a different state
-        if ((criteria === 'custom' || criteria === 'suggestions') &&
-            currentState.criteria !== criteria &&
-            currentState.criteria !== 'custom' &&
-            currentState.criteria !== 'suggestions') {
+        // Store previous state only when moving to 'suggestions' from a different state
+        if (criteria === 'suggestions' && currentState.criteria !== 'suggestions') {
             setPreviousStates(prev => ({
                 ...prev,
                 [columnId]: currentState
@@ -101,8 +98,8 @@ export const useColumnGrouping = (retrospectiveId?: string) => {
             return sortedGroups;
         }
 
-        // For custom and suggestions, return ungrouped for now
-        // These will be handled by the existing group system
+        // For suggestions, return ungrouped for now
+        // This will be handled by the existing group system
         return { ungrouped: cards };
     }, []);
 

@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
-    Users,
-    Check,
-    X
+    Users
 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -65,8 +63,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [newCardContent, setNewCardContent] = useState('');
     const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title));
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isGroupingMode, setIsGroupingMode] = useState(false);
-    const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
@@ -115,55 +111,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
         setIsCreating(false);
         setNewCardContent('');
         setSelectedColor(getSuggestedColorForColumn(column.title));
-    };
-
-    const handleToggleGroupingMode = () => {
-        if (isGroupingMode) {
-            // If exiting grouping mode without creating a group, restore previous state
-            restorePreviousState(column.id);
-        }
-        setIsGroupingMode(!isGroupingMode);
-        setSelectedCards(new Set());
-    };
-
-    const handleCardSelect = (cardId: string) => {
-        if (!isGroupingMode) return;
-
-        const newSelected = new Set(selectedCards);
-        if (newSelected.has(cardId)) {
-            newSelected.delete(cardId);
-        } else {
-            newSelected.add(cardId);
-        }
-        setSelectedCards(newSelected);
-    };
-
-    const handleCreateGroup = async () => {
-        if (selectedCards.size < 2) {
-            console.warn('Cannot create group with less than 2 cards');
-            return;
-        }
-
-        const cardIds = Array.from(selectedCards);
-        const [headCardId, ...memberCardIds] = cardIds;
-
-        console.log('GroupableColumn.handleCreateGroup called with:', {
-            headCardId,
-            memberCardIds,
-            selectedCards: cardIds
-        });
-
-        try {
-            console.log('Calling onGroupCreate...');
-            await onGroupCreate(headCardId, memberCardIds);
-            console.log('Group created successfully, resetting state');
-            setSelectedCards(new Set());
-            setIsGroupingMode(false);
-        } catch (error) {
-            console.error('Error creating group in GroupableColumn:', error);
-            // Add user-visible error feedback
-            alert(`Failed to create group: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
     };
 
     const handleGenerateSuggestions = async () => {
@@ -243,12 +190,8 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                 setGroupingCriteria(column.id, criteria);
 
                                 // Handle special grouping modes
-                                if (criteria === 'custom') {
-                                    setIsGroupingMode(true);
-                                } else if (criteria === 'suggestions') {
+                                if (criteria === 'suggestions') {
                                     handleGenerateSuggestions();
-                                } else {
-                                    setIsGroupingMode(false);
                                 }
                             }}
                             hasCards={ungroupedCards.length > 0}
@@ -267,49 +210,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         </Button>
                     </div>
                 </div>
-
-                {/* Grouping Mode Controls */}
-                <AnimatePresence>
-                    {isGroupingMode && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="mt-3 pt-3 border-t border-gray-200"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-gray-600">
-                                    {selectedCards.size > 0 ? (
-                                        <span>
-                                            {selectedCards.size} tarjetas seleccionadas
-                                        </span>
-                                    ) : (
-                                        <span>Selecciona 2 o más tarjetas para agrupar</span>
-                                    )}
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={handleToggleGroupingMode}
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="primary"
-                                        onClick={handleCreateGroup}
-                                        disabled={selectedCards.size < 2}
-                                        className="flex items-center space-x-1"
-                                    >
-                                        <Check className="w-4 h-4" />
-                                        <span>Crear Grupo</span>
-                                    </Button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
             </Card>
 
             {/* Cards Container */}
@@ -411,9 +311,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     onCardReactionRemove={onCardReactionRemove}
                     onCardsReorder={onCardsReorder}
                     currentUser={currentUser}
-                    isGroupingMode={isGroupingMode}
-                    selectedCards={selectedCards}
-                    onCardSelect={handleCardSelect}
                 />
 
                 {/* Empty State */}
