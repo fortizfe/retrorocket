@@ -42,15 +42,54 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             throw new Error('Email is required');
         }
 
-        // Check if user profile already exists
+        // Get all providers from Firebase Auth
+        const firebaseProviders = firebaseUser.providerData.map(provider => {
+            switch (provider.providerId) {
+                case 'google.com':
+                    return 'google';
+                case 'github.com':
+                    return 'github';
+                case 'apple.com':
+                    return 'apple';
+                default:
+                    return 'google'; // fallback
+            }
+        }) as AuthProviderType[];
+
+        console.log('Firebase Auth providers for user:', firebaseProviders);
+
+        // Always get the latest user profile from Firestore first
         let userProfile = await userService.getUserProfile(firebaseUser.uid);
 
         if (userProfile) {
-            // User profile exists, just update the last accessed time
+            // User profile exists, synchronize providers and update the last accessed time
+
+            // Find any missing providers in Firestore that are present in Firebase Auth
+            const missingProviders = firebaseProviders.filter(provider =>
+                !userProfile!.providers.includes(provider)
+            );
+
+            if (missingProviders.length > 0) {
+                console.log('Found missing providers in Firestore, adding:', missingProviders);
+
+                // Add missing providers one by one
+                for (const provider of missingProviders) {
+                    try {
+                        await userService.addProviderToUser(firebaseUser.uid, provider);
+                    } catch (error) {
+                        console.warn(`Failed to add provider ${provider}:`, error);
+                    }
+                }
+            }
+
             await userService.updateUserProfile(firebaseUser.uid, {
                 updatedAt: new Date(),
             });
-            return userProfile;
+
+            // Fetch the profile again to ensure we have the most up-to-date data
+            // This is important after account linking operations
+            const latestProfile = await userService.getUserProfile(firebaseUser.uid);
+            return latestProfile || userProfile;
         }
 
         // User profile doesn't exist, create new one

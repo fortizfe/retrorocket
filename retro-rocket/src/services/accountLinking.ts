@@ -98,7 +98,22 @@ export class AccountLinkingService {
 
             // Update the providers list in Firestore
             try {
-                await userService.addProviderToUser(auth.currentUser.uid, providerType);
+                // Get the current user's providers before adding the new one
+                const currentUserProfile = await userService.getUserProfile(auth.currentUser.uid);
+
+                if (currentUserProfile) {
+                    // Check if the provider is already in the list
+                    if (!currentUserProfile.providers.includes(providerType)) {
+                        console.log(`Adding provider ${providerType} to current user ${auth.currentUser.uid}`);
+                        await userService.addProviderToUser(auth.currentUser.uid, providerType);
+                    } else {
+                        console.log(`Provider ${providerType} already exists for current user ${auth.currentUser.uid}`);
+                    }
+                } else {
+                    // If no profile exists, something is wrong, but try to add anyway
+                    console.warn('Current user profile not found, attempting to add provider anyway');
+                    await userService.addProviderToUser(auth.currentUser.uid, providerType);
+                }
             } catch (firestoreError) {
                 console.warn('Failed to update providers in Firestore:', firestoreError);
                 // Don't fail the whole operation if Firestore update fails
@@ -234,7 +249,29 @@ export class AccountLinkingService {
         try {
             // Get provider type from the credential
             const newProviderType = this.getProviderTypeFromCredential(pendingCredential);
-            await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
+
+            // Get the current user's providers before adding the new one
+            const currentUserProfile = await userService.getUserProfile(linkedUser.user.uid);
+
+            if (currentUserProfile) {
+                // Check if the new provider is already in the list
+                if (!currentUserProfile.providers.includes(newProviderType)) {
+                    console.log(`Adding provider ${newProviderType} to user ${linkedUser.user.uid}`);
+                    await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
+                } else {
+                    console.log(`Provider ${newProviderType} already exists for user ${linkedUser.user.uid}`);
+                }
+
+                // Also ensure the existing provider is in the list (in case the profile was created before the migration)
+                if (!currentUserProfile.providers.includes(existingProviderType)) {
+                    console.log(`Adding existing provider ${existingProviderType} to user ${linkedUser.user.uid} (migration fix)`);
+                    await userService.addProviderToUser(linkedUser.user.uid, existingProviderType);
+                }
+            } else {
+                // If no profile exists, something is wrong, but try to add anyway
+                console.warn('User profile not found, attempting to add provider anyway');
+                await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
+            }
         } catch (firestoreError) {
             console.warn('Failed to update providers in Firestore:', firestoreError);
             // Don't fail the whole operation if Firestore update fails
@@ -505,7 +542,28 @@ export class AccountLinkingService {
 
             // Update the providers list in Firestore
             try {
-                await userService.addProviderToUser(linkResult.user.uid, requestedProviderType);
+                // Get the current user's providers before adding the new one
+                const currentUserProfile = await userService.getUserProfile(linkResult.user.uid);
+
+                if (currentUserProfile) {
+                    // Check if the requested provider is already in the list
+                    if (!currentUserProfile.providers.includes(requestedProviderType)) {
+                        console.log(`Adding provider ${requestedProviderType} to user ${linkResult.user.uid}`);
+                        await userService.addProviderToUser(linkResult.user.uid, requestedProviderType);
+                    } else {
+                        console.log(`Provider ${requestedProviderType} already exists for user ${linkResult.user.uid}`);
+                    }
+
+                    // Also ensure the existing provider is in the list (in case the profile was created before the migration)
+                    if (!currentUserProfile.providers.includes(existingProviderType)) {
+                        console.log(`Adding existing provider ${existingProviderType} to user ${linkResult.user.uid} (migration fix)`);
+                        await userService.addProviderToUser(linkResult.user.uid, existingProviderType);
+                    }
+                } else {
+                    // If no profile exists, something is wrong, but try to add anyway
+                    console.warn('User profile not found, attempting to add provider anyway');
+                    await userService.addProviderToUser(linkResult.user.uid, requestedProviderType);
+                }
             } catch (firestoreError) {
                 console.warn('Failed to update providers in Firestore:', firestoreError);
             }

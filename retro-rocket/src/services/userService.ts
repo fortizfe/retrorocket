@@ -201,7 +201,8 @@ export class UserService {
 
         // Check if provider is already linked
         if (userProfile.providers.includes(newProvider)) {
-            throw new Error(`Provider ${newProvider} is already linked to this user`);
+            console.log(`Provider ${newProvider} is already linked to user ${uid}, skipping`);
+            return; // Don't throw error, just skip silently
         }
 
         // Add the new provider to the list
@@ -211,6 +212,8 @@ export class UserService {
             providers: updatedProviders,
             updatedAt: new Date(),
         });
+
+        console.log(`Successfully added provider ${newProvider} to user ${uid}. Providers now: [${updatedProviders.join(', ')}]`);
     }
 
     async removeProviderFromUser(uid: string, providerToRemove: AuthProviderType): Promise<void> {
