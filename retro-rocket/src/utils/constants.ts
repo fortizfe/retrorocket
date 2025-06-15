@@ -42,4 +42,4 @@ export const FIRESTORE_COLLECTIONS = {
 } as const;
 
 export const APP_NAME = 'RetroRocket';
-export const APP_DESCRIPTION = 'Herramienta moderna y colaborativa para retrospectivas de equipos Scrum';
+export const APP_DESCRIPTION = 'Transforma las retrospectivas de tu equipo en momentos de crecimiento real';

@@ -70,7 +70,7 @@ const LandingPage: React.FC = () => {
                             {APP_DESCRIPTION}
                         </p>
                         <p className="text-lg text-slate-500 dark:text-slate-400">
-                            Herramienta colaborativa moderna para equipos Scrum
+                            Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo
                         </p>
                     </motion.div>
 
@@ -83,23 +83,23 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Users className="w-8 h-8 text-primary-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Colaborativo</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Conecta equipos</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Trabaja en tiempo real con tu equipo, sin límites geográficos
+                                Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos
                             </p>
                         </div>
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Zap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Rápido</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Resultados inmediatos</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Configura y ejecuta retrospectivas en minutos, no horas
+                                Obtén insights valiosos y planes de acción en tiempo récord
                             </p>
                         </div>
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Heart className="w-8 h-8 text-sky-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Intuitivo</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Fácil de adoptar</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Interfaz limpia y accesible, enfocada en la experiencia del usuario
+                                Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje
                             </p>
                         </div>
                     </motion.div>
@@ -113,10 +113,10 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30">
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-                                Accede a tu cuenta
+                                Comienza tu próxima retrospectiva
                             </h2>
                             <p className="text-slate-600 dark:text-slate-300 mb-6">
-                                Inicia sesión para crear y gestionar tus retrospectivas
+                                Únete en segundos y descubre cómo mejorar en equipo
                             </p>
 
                             <AuthButtonGroup
@@ -134,7 +134,7 @@ const LandingPage: React.FC = () => {
                         className="mt-12 text-center"
                     >
                         <p className="text-slate-600 dark:text-slate-300 mb-4">
-                            ¿Ya tienes una cuenta? El botón de arriba te llevará directo a tus tableros
+                            ¿Listo para revolucionar tus retrospectivas? Accede directo a tus tableros
                         </p>
                     </motion.div>
                 </div>
@@ -145,7 +145,7 @@ const LandingPage: React.FC = () => {
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center text-slate-600 dark:text-slate-400">
                         <p className="text-sm">
-                            © 2024 {APP_NAME}. Hecho con ❤️ para equipos que buscan mejorar.
+                            © 2025 {APP_NAME}. Hecho con ❤️ para equipos que buscan mejorar.
                         </p>
                     </div>
                 </div>
