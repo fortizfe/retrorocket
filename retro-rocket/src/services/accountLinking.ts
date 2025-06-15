@@ -71,7 +71,7 @@ export class AccountLinkingService {
 
             // Handle account exists with different credential
             if (error.code === 'auth/account-exists-with-different-credential') {
-                return await this.handleAccountLinking(error as ProviderCredentialError);
+                return await this.handleAccountExistsError(error as ProviderCredentialError, providerType);
             }
 
             // Handle other errors
@@ -113,6 +113,11 @@ export class AccountLinkingService {
 
         } catch (error: any) {
             console.error('Error during provider linking:', error);
+
+            if (error.code === 'auth/account-exists-with-different-credential') {
+                return await this.handleAccountExistsError(error, providerType);
+            }
+
             return await this.handleProviderLinkingError(error, currentUserEmail, providerType);
         }
     }
@@ -122,7 +127,12 @@ export class AccountLinkingService {
      */
     private async handleProviderLinkingError(error: any, currentUserEmail: string, providerType: AuthProviderType): Promise<AccountLinkingResult> {
         if (error.code === 'auth/account-exists-with-different-credential') {
-            return await this.handleAccountExistsError(error, currentUserEmail);
+            // Create error object compatible with new method
+            const enhancedError = {
+                ...error,
+                email: error.email ?? currentUserEmail
+            };
+            return await this.handleAccountExistsError(enhancedError, providerType);
         }
 
         if (error.code === 'auth/credential-already-in-use') {
@@ -142,24 +152,6 @@ export class AccountLinkingService {
         }
 
         throw new Error(`Error al vincular ${this.getProviderName(providerType)}: ${error.message ?? 'Error desconocido'}`);
-    }
-
-    /**
-     * Handles account exists with different credential error
-     */
-    private async handleAccountExistsError(error: any, currentUserEmail: string): Promise<AccountLinkingResult> {
-        // Check if emails are different
-        if (error.email && error.email !== currentUserEmail) {
-            throw new Error(`No se puede vincular esta cuenta. El email de la nueva cuenta (${error.email}) es diferente al email de tu cuenta actual (${currentUserEmail}). Solo se pueden vincular cuentas con el mismo email.`);
-        }
-
-        // Use the current user's email for linking
-        const enhancedError = {
-            ...error,
-            email: currentUserEmail
-        };
-
-        return await this.handleAccountLinking(enhancedError);
     }
 
     /**
@@ -187,83 +179,96 @@ export class AccountLinkingService {
         }
 
         try {
-            const email = error.email;
+            const email = this.getEmailForLinking(error);
             const pendingCredential = error.credential;
-
-            if (!email) {
-                throw new Error('No se pudo obtener el email del error');
-            }
 
             if (!pendingCredential) {
                 throw new Error('No se pudo obtener la credencial pendiente');
             }
 
+            // If we can't get email, try alternative approach with current user
+            if (!email) {
+                console.log('Email not available, attempting direct linking to current user');
+                return await this.handleAccountLinkingWithoutEmail(pendingCredential);
+            }
+
             console.log('Account linking flow initiated for email:', email);
-
-            // Get existing sign-in methods for this email
-            const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-
-            if (signInMethods.length === 0) {
-                throw new Error('No se encontraron métodos de inicio de sesión para este email');
-            }
-
-            console.log('Existing sign-in methods:', signInMethods);
-
-            // Determine which provider to use for the existing account
-            const existingProviderType = this.getProviderTypeFromMethod(signInMethods[0]);
-            const existingProvider = this.getProvider(existingProviderType);
-
-            if (!existingProvider) {
-                throw new Error(`Proveedor ${existingProviderType} no soportado`);
-            }
-
-            // Sign in with the existing provider
-            console.log('Signing in with existing provider:', existingProviderType);
-            const existingUserResult = await signInWithPopup(auth, existingProvider);
-
-            // Link the new credential to the existing account
-            console.log('Linking new credential to existing account');
-            const linkedUser = await linkWithCredential(existingUserResult.user, pendingCredential);
-
-            // Update the providers list in Firestore
-            try {
-                // Get provider type from the credential
-                const newProviderType = this.getProviderTypeFromCredential(pendingCredential);
-                await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
-            } catch (firestoreError) {
-                console.warn('Failed to update providers in Firestore:', firestoreError);
-                // Don't fail the whole operation if Firestore update fails
-            }
-
-            return {
-                success: true,
-                user: linkedUser.user,
-                message: `Tu cuenta ha sido vinculada exitosamente. Ahora puedes iniciar sesión con ambos métodos.`,
-                wasLinked: true
-            };
+            return await this.performAccountLinking(email, pendingCredential);
 
         } catch (linkError: any) {
             console.error('Account linking failed:', linkError);
-
-            // If linking fails, provide helpful error message
-            if (linkError.code === 'auth/popup-closed-by-user') {
-                throw new Error('La vinculación fue cancelada');
-            }
-
-            if (linkError.code === 'auth/popup-blocked') {
-                throw new Error('El popup fue bloqueado. Por favor, permite popups para este sitio.');
-            }
-
-            if (linkError.code === 'auth/credential-already-in-use') {
-                throw new Error('Esta credencial ya está en uso por otra cuenta');
-            }
-
-            if (linkError.code === 'auth/missing-identifier') {
-                throw new Error('Error de identificación. Por favor, intenta cerrar sesión y volver a iniciar sesión.');
-            }
-
-            throw new Error('Error al vincular las cuentas: ' + (linkError.message ?? 'Error desconocido'));
+            throw this.handleLinkingError(linkError);
         }
+    }
+
+    /**
+     * Performs the actual account linking process
+     */
+    private async performAccountLinking(email: string, pendingCredential: AuthCredential): Promise<AccountLinkingResult> {
+        // Get existing sign-in methods for this email
+        const signInMethods = await fetchSignInMethodsForEmail(auth!, email);
+
+        if (signInMethods.length === 0) {
+            throw new Error('No se encontraron métodos de inicio de sesión para este email');
+        }
+
+        console.log('Existing sign-in methods:', signInMethods);
+
+        // Determine which provider to use for the existing account
+        const existingProviderType = this.getProviderTypeFromMethod(signInMethods[0]);
+        const existingProvider = this.getProvider(existingProviderType);
+
+        if (!existingProvider) {
+            throw new Error(`Proveedor ${existingProviderType} no soportado`);
+        }
+
+        // Sign in with the existing provider
+        console.log('Signing in with existing provider:', existingProviderType);
+        const existingUserResult = await signInWithPopup(auth!, existingProvider);
+
+        // Link the new credential to the existing account
+        console.log('Linking new credential to existing account');
+        const linkedUser = await linkWithCredential(existingUserResult.user, pendingCredential);
+
+        // Update the providers list in Firestore
+        try {
+            // Get provider type from the credential
+            const newProviderType = this.getProviderTypeFromCredential(pendingCredential);
+            await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
+        } catch (firestoreError) {
+            console.warn('Failed to update providers in Firestore:', firestoreError);
+            // Don't fail the whole operation if Firestore update fails
+        }
+
+        return {
+            success: true,
+            user: linkedUser.user,
+            message: `Tu cuenta ha sido vinculada exitosamente. Ahora puedes iniciar sesión con ambos métodos.`,
+            wasLinked: true
+        };
+    }
+
+    /**
+     * Handles linking errors with user-friendly messages
+     */
+    private handleLinkingError(linkError: any): Error {
+        if (linkError.code === 'auth/popup-closed-by-user') {
+            return new Error('La vinculación fue cancelada');
+        }
+
+        if (linkError.code === 'auth/popup-blocked') {
+            return new Error('El popup fue bloqueado. Por favor, permite popups para este sitio.');
+        }
+
+        if (linkError.code === 'auth/credential-already-in-use') {
+            return new Error('Esta credencial ya está en uso por otra cuenta');
+        }
+
+        if (linkError.code === 'auth/missing-identifier') {
+            return new Error('Error de identificación. Por favor, intenta cerrar sesión y volver a iniciar sesión.');
+        }
+
+        return new Error('Error al vincular las cuentas: ' + (linkError.message ?? 'Error desconocido'));
     }
 
     /**
@@ -368,6 +373,153 @@ export class AccountLinkingService {
         } catch (error) {
             console.error('Error fetching sign-in methods:', error);
             return [];
+        }
+    }
+
+    /**
+     * Attempts to extract email from credential for different providers
+     */
+    private async getEmailFromCredential(credential: AuthCredential, providerType: AuthProviderType): Promise<string | null> {
+        // For most OAuth providers, the email is not directly accessible from the credential
+        // This is a limitation of Firebase Auth for security reasons
+        // We return null and rely on other methods to get the email
+        console.log(`Cannot extract email from ${providerType} credential directly`);
+        return null;
+    }
+
+    /**
+     * Gets email for account linking from multiple sources
+     */
+    private getEmailForLinking(error: ProviderCredentialError): string | null {
+        // Try error.email first
+        if (error.email) {
+            console.log('Using email from error object:', error.email);
+            return error.email;
+        }
+
+        // Try current user email if authenticated
+        if (auth?.currentUser?.email) {
+            console.log('Using email from current authenticated user:', auth.currentUser.email);
+            return auth.currentUser.email;
+        }
+
+        console.warn('No email found in error object or current user');
+        return null;
+    }
+
+    /**
+     * Alternative method to handle account linking when email is not available in error
+     */
+    private async handleAccountLinkingWithoutEmail(credential: AuthCredential): Promise<AccountLinkingResult> {
+        if (!auth?.currentUser) {
+            throw new Error('Para vincular cuentas automáticamente, necesitas estar autenticado. Por favor, inicia sesión con tu cuenta principal primero.');
+        }
+
+        const currentUser = auth.currentUser;
+        console.log('Attempting to link credential to current user:', currentUser.uid);
+
+        try {
+            // Try to link directly to current user
+            const result = await linkWithCredential(currentUser, credential);
+
+            // Update the providers list in Firestore
+            try {
+                const newProviderType = this.getProviderTypeFromCredential(credential);
+                await userService.addProviderToUser(currentUser.uid, newProviderType);
+            } catch (firestoreError) {
+                console.warn('Failed to update providers in Firestore:', firestoreError);
+            }
+
+            return {
+                success: true,
+                user: result.user,
+                message: `Proveedor vinculado exitosamente a tu cuenta.`,
+                wasLinked: true
+            };
+
+        } catch (linkError: any) {
+            console.error('Direct linking failed:', linkError);
+            throw this.handleLinkingError(linkError);
+        }
+    }
+
+    /**
+     * Handles account exists error with multiple strategies
+     */
+    private async handleAccountExistsError(error: ProviderCredentialError, requestedProviderType: AuthProviderType): Promise<AccountLinkingResult> {
+        console.log('Handling account exists error for provider:', requestedProviderType);
+
+        // Strategy 1: Try traditional account linking if credential is available
+        if (error.credential) {
+            console.log('Credential available, attempting traditional linking');
+            return await this.handleAccountLinking(error);
+        }
+
+        // Strategy 2: No credential available, try alternative approach
+        console.log('No credential available, using alternative linking strategy');
+        return await this.handleAccountLinkingWithoutCredential(error, requestedProviderType);
+    }
+
+    /**
+     * Alternative linking strategy when no credential is available
+     */
+    private async handleAccountLinkingWithoutCredential(error: ProviderCredentialError, requestedProviderType: AuthProviderType): Promise<AccountLinkingResult> {
+        const email = this.getEmailForLinking(error);
+
+        if (!email) {
+            throw new Error('No se pudo obtener el email para vincular las cuentas. Intenta iniciar sesión con tu cuenta principal primero y luego vincular desde el perfil.');
+        }
+
+        console.log('Attempting alternative linking for email:', email);
+
+        try {
+            // Get existing sign-in methods for this email
+            const signInMethods = await fetchSignInMethodsForEmail(auth!, email);
+
+            if (signInMethods.length === 0) {
+                throw new Error('No se encontraron métodos de inicio de sesión para este email');
+            }
+
+            console.log('Existing sign-in methods:', signInMethods);
+
+            // Sign in with the existing provider first
+            const existingProviderType = this.getProviderTypeFromMethod(signInMethods[0]);
+            const existingProvider = this.getProvider(existingProviderType);
+
+            if (!existingProvider) {
+                throw new Error(`Proveedor ${existingProviderType} no soportado`);
+            }
+
+            console.log('Signing in with existing provider:', existingProviderType);
+            const existingUserResult = await signInWithPopup(auth!, existingProvider);
+
+            // Now try to link the requested provider to the authenticated user
+            console.log('Now linking requested provider:', requestedProviderType);
+            const requestedProvider = this.getProvider(requestedProviderType);
+
+            if (!requestedProvider) {
+                throw new Error(`Proveedor ${requestedProviderType} no soportado`);
+            }
+
+            const linkResult = await linkWithPopup(existingUserResult.user, requestedProvider);
+
+            // Update the providers list in Firestore
+            try {
+                await userService.addProviderToUser(linkResult.user.uid, requestedProviderType);
+            } catch (firestoreError) {
+                console.warn('Failed to update providers in Firestore:', firestoreError);
+            }
+
+            return {
+                success: true,
+                user: linkResult.user,
+                message: `Tu cuenta ha sido vinculada exitosamente con ${this.getProviderName(requestedProviderType)}. Ahora puedes iniciar sesión con ambos métodos.`,
+                wasLinked: true
+            };
+
+        } catch (linkError: any) {
+            console.error('Alternative linking failed:', linkError);
+            throw this.handleLinkingError(linkError);
         }
     }
 }
