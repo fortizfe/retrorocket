@@ -8,21 +8,34 @@ import {
     onSnapshot,
     serverTimestamp,
     Timestamp,
-    increment
+    increment,
+    query,
+    where,
+    getDocs
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, FIRESTORE_COLLECTIONS } from './firebase';
 import { Retrospective } from '../types/retrospective';
-import { FIRESTORE_COLLECTIONS } from '../utils/constants';
 
-const retrospectivesCollection = collection(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES);
+// Helper function to check if Firebase is available
+const ensureFirestore = () => {
+    if (!db) {
+        throw new Error('Firebase is not initialized. Please configure Firebase to use this feature.');
+    }
+    return db;
+};
 
 export interface CreateRetrospectiveInput {
     title: string;
     description?: string;
+    createdBy?: string;
+    createdByName?: string;
 }
 
 export const createRetrospective = async (data: CreateRetrospectiveInput): Promise<string> => {
     try {
+        const firestore = ensureFirestore();
+        const retrospectivesCollection = collection(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES);
+
         const retrospectiveData = {
             ...data,
             createdAt: serverTimestamp(),
@@ -41,7 +54,8 @@ export const createRetrospective = async (data: CreateRetrospectiveInput): Promi
 
 export const getRetrospective = async (id: string): Promise<Retrospective | null> => {
     try {
-        const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
+        const firestore = ensureFirestore();
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -63,7 +77,8 @@ export const getRetrospective = async (id: string): Promise<Retrospective | null
 
 export const updateRetrospective = async (id: string, updates: Partial<Retrospective>): Promise<void> => {
     try {
-        const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
+        const firestore = ensureFirestore();
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
         const updateData = {
             ...updates,
             updatedAt: serverTimestamp()
@@ -78,7 +93,8 @@ export const updateRetrospective = async (id: string, updates: Partial<Retrospec
 
 export const deleteRetrospective = async (id: string): Promise<void> => {
     try {
-        const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
+        const firestore = ensureFirestore();
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
         await deleteDoc(docRef);
     } catch (error) {
         console.error("Error deleting retrospective: ", error);
@@ -90,7 +106,8 @@ export const subscribeToRetrospective = (
     id: string,
     callback: (retrospective: Retrospective | null) => void
 ): (() => void) => {
-    const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
+    const firestore = ensureFirestore();
+    const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
 
     return onSnapshot(docRef, (doc) => {
         if (doc.exists()) {
@@ -114,7 +131,8 @@ export const subscribeToRetrospective = (
 
 export const incrementParticipantCount = async (retrospectiveId: string): Promise<void> => {
     try {
-        const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+        const firestore = ensureFirestore();
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
         await updateDoc(docRef, {
             participantCount: increment(1),
             updatedAt: serverTimestamp()
@@ -127,7 +145,8 @@ export const incrementParticipantCount = async (retrospectiveId: string): Promis
 
 export const decrementParticipantCount = async (retrospectiveId: string): Promise<void> => {
     try {
-        const docRef = doc(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+        const firestore = ensureFirestore();
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
         await updateDoc(docRef, {
             participantCount: increment(-1),
             updatedAt: serverTimestamp()
@@ -135,5 +154,55 @@ export const decrementParticipantCount = async (retrospectiveId: string): Promis
     } catch (error) {
         console.error("Error decrementing participant count: ", error);
         throw new Error("Could not update participant count");
+    }
+};
+
+export const deleteRetrospectiveCompletely = async (retrospectiveId: string, userId: string): Promise<void> => {
+    try {
+        const firestore = ensureFirestore();
+
+        // First, verify the user owns the retrospective
+        const retroDoc = await getRetrospective(retrospectiveId);
+        if (!retroDoc) {
+            throw new Error('Retrospective not found');
+        }
+
+        if (retroDoc.createdBy !== userId) {
+            throw new Error('You can only delete retrospectives you created');
+        }
+
+        // Delete related subcollections first
+        // Note: In production, you might want to use Firebase Functions for this
+        // to handle large datasets and ensure atomicity
+
+        // Delete participants
+        const participantsQuery = collection(firestore, FIRESTORE_COLLECTIONS.PARTICIPANTS);
+        const participantsSnapshot = await getDocs(
+            query(participantsQuery, where('retrospectiveId', '==', retrospectiveId))
+        );
+
+        const participantDeletions = participantsSnapshot.docs.map(doc =>
+            deleteDoc(doc.ref)
+        );
+        await Promise.all(participantDeletions);
+
+        // Delete cards (they might be in a subcollection or separate collection)
+        // If cards are in a subcollection under retrospectives, we'd need to query differently
+        const cardsQuery = collection(firestore, 'cards');
+        const cardsSnapshot = await getDocs(
+            query(cardsQuery, where('retrospectiveId', '==', retrospectiveId))
+        );
+
+        const cardDeletions = cardsSnapshot.docs.map(doc =>
+            deleteDoc(doc.ref)
+        );
+        await Promise.all(cardDeletions);
+
+        // Finally, delete the retrospective document itself
+        await deleteRetrospective(retrospectiveId);
+
+    } catch (error) {
+        console.error('Error deleting retrospective completely:', error);
+        throw error;
     }
 };

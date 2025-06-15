@@ -1,75 +1,100 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Copy, Share2, Users, ArrowLeft } from 'lucide-react';
+import { Copy, Share2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Card from '../components/ui/Card';
 import Loading from '../components/ui/Loading';
 import RetrospectiveBoard from '../components/retrospective/RetrospectiveBoard';
+import AuthWrapper from '../components/auth/AuthWrapper';
 import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
 
-const RetrospectivePage: React.FC = () => {
+const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [participantName, setParticipantName] = useState('');
     const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null);
     const [hasJoined, setHasJoined] = useState(false);
+    const [isJoining, setIsJoining] = useState(false);
+    const joinAttemptRef = useRef(false);
 
     const { retrospective, loading: retroLoading, error: retroError } = useRetrospective(id);
     const { addParticipant, setInactive } = useParticipants(id);
+    const { uid, fullName, isReady } = useCurrentUser();
 
-    // Load participant name from localStorage
+    // Auto-join when user is ready and hasn't joined yet
     useEffect(() => {
-        const savedName = localStorage.getItem('participantName');
-        if (savedName) {
-            setParticipantName(savedName);
-        }
-    }, []);
+        const autoJoinRetrospective = async () => {
+            if (!isReady || !id || !uid || !fullName || hasJoined || isJoining) {
+                return;
+            }
 
-    // Handle participant joining
-    const handleJoinRetrospective = async () => {
-        if (!participantName.trim() || !id) {
-            toast.error('Por favor ingresa tu nombre');
-            return;
-        }
+            // Prevent multiple simultaneous join attempts
+            if (joinAttemptRef.current) {
+                return;
+            }
 
-        try {
-            const participantId = await addParticipant({
-                name: participantName.trim(),
-                retrospectiveId: id
-            });
+            // Check if already joined (from localStorage)
+            const savedParticipantId = localStorage.getItem(`participant_${id}_${uid}`);
+            if (savedParticipantId) {
+                setCurrentParticipantId(savedParticipantId);
+                setHasJoined(true);
+                return;
+            }
 
-            await incrementParticipantCount(id);
+            // Auto-join
+            try {
+                joinAttemptRef.current = true;
+                setIsJoining(true);
 
-            setCurrentParticipantId(participantId);
-            setHasJoined(true);
-            localStorage.setItem('participantName', participantName.trim());
-            localStorage.setItem(`participant_${id}`, participantId);
+                const result = await addParticipant({
+                    name: fullName,
+                    userId: uid,
+                    retrospectiveId: id
+                });
 
-            toast.success(`¡Bienvenido ${participantName}!`);
-        } catch (error) {
-            console.error('Error joining retrospective:', error);
-            toast.error('Error al unirse a la retrospectiva');
-        }
-    };
+                // Only increment participant count if it's a new participant
+                if (result.isNew) {
+                    await incrementParticipantCount(id);
+                }
+
+                setCurrentParticipantId(result.id);
+                setHasJoined(true);
+                localStorage.setItem(`participant_${id}_${uid}`, result.id);
+
+                // Only show welcome message for new participants
+                if (result.isNew) {
+                    toast.success(`¡Bienvenido a la retrospectiva, ${fullName}!`);
+                } else {
+                    toast.success(`¡Bienvenido de nuevo, ${fullName}!`);
+                }
+            } catch (error) {
+                console.error('Error joining retrospective:', error);
+                toast.error('Error al unirse a la retrospectiva');
+            } finally {
+                setIsJoining(false);
+                joinAttemptRef.current = false;
+            }
+        };
+
+        autoJoinRetrospective();
+    }, [isReady, id, uid, fullName, hasJoined, isJoining]); // Removed addParticipant
 
     // Handle leaving retrospective
     const handleLeaveRetrospective = async () => {
-        if (currentParticipantId && id) {
+        if (currentParticipantId && id && uid) {
             try {
                 await setInactive(currentParticipantId);
                 await decrementParticipantCount(id);
 
                 setHasJoined(false);
                 setCurrentParticipantId(null);
-                localStorage.removeItem(`participant_${id}`);
+                localStorage.removeItem(`participant_${id}_${uid}`);
 
                 toast.success('Has salido de la retrospectiva');
-                navigate('/');
+                navigate('/dashboard');
             } catch (error) {
                 console.error('Error leaving retrospective:', error);
                 toast.error('Error al salir de la retrospectiva');
@@ -88,201 +113,169 @@ const RetrospectivePage: React.FC = () => {
     // Share retrospective
     const handleShare = () => {
         if (id) {
-            const url = `${window.location.origin}/retrospective/${id}`;
+            const url = `${window.location.origin}/retro/${id}`;
             navigator.clipboard.writeText(url);
             toast.success('Enlace copiado al portapapeles');
         }
     };
 
-    // Check if user has already joined (from localStorage)
+    // Check if participant exists on component mount
     useEffect(() => {
-        if (id) {
-            const savedParticipantId = localStorage.getItem(`participant_${id}`);
+        if (id && uid) {
+            const savedParticipantId = localStorage.getItem(`participant_${id}_${uid}`);
             if (savedParticipantId) {
                 setCurrentParticipantId(savedParticipantId);
                 setHasJoined(true);
             }
         }
-    }, [id]);
+    }, [id, uid]);
 
-    if (!id) {
+    // Loading state
+    if (retroLoading || !isReady) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 mb-4">ID de retrospectiva no válido</p>
-                    <Button onClick={() => navigate('/')}>Volver al inicio</Button>
-                </div>
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+                <Loading />
             </div>
         );
     }
 
-    if (retroLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loading size="lg" text="Cargando retrospectiva..." />
-            </div>
-        );
-    }
-
+    // Error state
     if (retroError || !retrospective) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-red-600 mb-4">
-                        {retroError || 'Retrospectiva no encontrada'}
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                        Retrospectiva no encontrada
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                        No se pudo encontrar la retrospectiva solicitada.
                     </p>
-                    <Button onClick={() => navigate('/')}>Volver al inicio</Button>
+                    <Button onClick={() => navigate('/dashboard')}>
+                        Volver al Dashboard
+                    </Button>
                 </div>
             </div>
         );
     }
 
-    if (!hasJoined) {
+    // Joining state
+    if (isJoining) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-md mx-4"
-                >
-                    <Card variant="elevated" padding="lg">
-                        <div className="text-center mb-6">
-                            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                                {retrospective.title}
-                            </h1>
-                            {retrospective.description && (
-                                <p className="text-gray-600 text-sm">{retrospective.description}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-4">
-                            <Input
-                                label="Tu nombre"
-                                value={participantName}
-                                onChange={(e) => setParticipantName(e.target.value)}
-                                placeholder="Ej: Juan Pérez"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && participantName.trim()) {
-                                        handleJoinRetrospective();
-                                    }
-                                }}
-                            />
-
-                            <Button
-                                variant="primary"
-                                onClick={handleJoinRetrospective}
-                                disabled={!participantName.trim()}
-                                className="w-full"
-                            >
-                                Unirse a la Retrospectiva
-                            </Button>
-
-                            <div className="flex items-center space-x-2 pt-4 border-t">
-                                <div className="flex-1">
-                                    <p className="text-xs text-gray-500 mb-1">ID de la retrospectiva:</p>
-                                    <div className="flex items-center space-x-2">
-                                        <code className="text-xs bg-gray-100 px-2 py-1 rounded flex-1 truncate">
-                                            {id}
-                                        </code>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={handleCopyId}
-                                        >
-                                            <Copy size={14} />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleShare}
-                                >
-                                    <Share2 size={14} />
-                                </Button>
-                            </div>
-
-                            <div className="text-center pt-2">
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => navigate('/')}
-                                    className="text-sm"
-                                >
-                                    <ArrowLeft size={14} className="mr-1" />
-                                    Volver al inicio
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                        Uniéndose a la retrospectiva...
+                    </h2>
+                    <p className="text-gray-600">
+                        Espera un momento mientras te conectamos.
+                    </p>
+                </div>
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="bg-white shadow-sm border-b">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
+    // Main retrospective view
+    if (hasJoined) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
+                <div className="container mx-auto px-4 py-6">
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm"
+                    >
+                        <div className="flex items-center gap-4">
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate('/')}
-                                className="flex items-center space-x-1"
+                                size="sm"
+                                onClick={() => navigate('/dashboard')}
+                                className="flex items-center gap-2"
                             >
-                                <ArrowLeft size={16} />
-                                <span>Salir</span>
+                                <ArrowLeft className="w-4 h-4" />
+                                Volver
                             </Button>
+                            <div>
+                                <h1 className="text-xl font-semibold text-gray-800">
+                                    {retrospective.title}
+                                </h1>
+                                <p className="text-sm text-gray-600">
+                                    Conectado como: {fullName}
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <Users size={16} />
-                                <span>Como: <strong>{participantName}</strong></span>
-                            </div>
-
-                            <div className="flex items-center space-x-1">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleCopyId}
-                                    className="flex items-center space-x-1"
-                                >
-                                    <Copy size={14} />
-                                    <span className="hidden sm:inline">ID</span>
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleShare}
-                                    className="flex items-center space-x-1"
-                                >
-                                    <Share2 size={14} />
-                                    <span className="hidden sm:inline">Compartir</span>
-                                </Button>
-                            </div>
-
+                        <div className="flex items-center gap-2">
                             <Button
+                                variant="outline"
                                 size="sm"
-                                variant="danger"
-                                onClick={handleLeaveRetrospective}
+                                onClick={handleCopyId}
+                                className="flex items-center gap-2"
                             >
+                                <Copy className="w-4 h-4" />
+                                Copiar ID
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleShare}
+                                className="flex items-center gap-2"
+                            >
+                                <Share2 className="w-4 h-4" />
+                                Compartir
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleLeaveRetrospective}
+                                className="flex items-center gap-2"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
                                 Salir
                             </Button>
                         </div>
-                    </div>
+                    </motion.div>
+
+                    {/* Main Board */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <RetrospectiveBoard
+                            retrospective={retrospective}
+                            currentUser={fullName}
+                        />
+                    </motion.div>
                 </div>
             </div>
+        );
+    }
 
-            {/* Main Content */}
-            <div className="container mx-auto px-4 py-6 h-full">
-                <RetrospectiveBoard
-                    retrospective={retrospective}
-                    currentUser={currentParticipantId ?? undefined}
-                />
+    // This should not happen with auto-join, but keeping as fallback
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                    Error de conexión
+                </h2>
+                <p className="text-gray-600 mb-6">
+                    No se pudo conectar a la retrospectiva. Inténtalo de nuevo.
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                    Reintentar
+                </Button>
             </div>
         </div>
+    );
+};
+
+const RetrospectivePage: React.FC = () => {
+    return (
+        <AuthWrapper requireAuth={true}>
+            <RetrospectivePageContent />
+        </AuthWrapper>
     );
 };
 

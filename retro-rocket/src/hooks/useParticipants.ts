@@ -13,7 +13,7 @@ interface UseParticipantsReturn {
     participants: Participant[];
     loading: boolean;
     error: string | null;
-    addParticipant: (participantInput: CreateParticipantInput) => Promise<string>;
+    addParticipant: (participantInput: CreateParticipantInput) => Promise<{ id: string; isNew: boolean }>;
     removeParticipant: (participantId: string) => Promise<void>;
     setInactive: (participantId: string) => Promise<void>;
     refetch: () => Promise<void>;
@@ -59,12 +59,12 @@ export const useParticipants = (retrospectiveId?: string): UseParticipantsReturn
         return () => unsubscribe();
     }, [retrospectiveId]);
 
-    const addParticipant = useCallback(async (participantInput: CreateParticipantInput): Promise<string> => {
+    const addParticipant = useCallback(async (participantInput: CreateParticipantInput): Promise<{ id: string; isNew: boolean }> => {
         try {
             setError(null);
-            const newParticipantId = await addParticipantService(participantInput);
+            const result = await addParticipantService(participantInput);
             // The subscription will handle updating the local state
-            return newParticipantId;
+            return result;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error adding participant';
             setError(errorMessage);

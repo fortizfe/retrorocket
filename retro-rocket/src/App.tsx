@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from './components/AuthGuard';
 import Layout from './components/layout/Layout';
-import Home from './pages/Home';
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import RetrospectivePage from './pages/RetrospectivePage';
 import NotFound from './pages/NotFound';
 import ColorSystemTest from './components/ColorSystemTest';
@@ -14,8 +16,12 @@ const App: React.FC = () => {
       <Router>
         <Layout>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/mis-tableros" element={<Dashboard />} />
+            <Route path="/perfil" element={<Profile />} />
             <Route path="/retrospective/:id" element={<RetrospectivePage />} />
+            <Route path="/retro/:id" element={<RetrospectivePage />} />
             <Route path="/color-test" element={<ColorSystemTest />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

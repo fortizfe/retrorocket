@@ -2,6 +2,7 @@ export interface Retrospective {
   id: string;
   title: string;
   description?: string;
+  createdBy: string; // user UID
   createdAt: Date;
   updatedAt: Date;
   participantCount: number;

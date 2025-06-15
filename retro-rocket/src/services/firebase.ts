@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, Auth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -12,29 +12,16 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "1:123456789:web:abcdef"
 };
 
-// Create mock Firebase functions
-const createMockFirestore = () => {
-  const mockDoc = {
-    get: () => Promise.resolve({ exists: false, data: () => null }),
-    set: () => Promise.resolve(),
-    update: () => Promise.resolve(),
-    delete: () => Promise.resolve(),
-    onSnapshot: () => () => { },
-  };
-
-  const mockCollection = {
-    doc: () => mockDoc,
-    add: () => Promise.resolve({ id: 'mock-id' }),
-    where: () => ({ onSnapshot: () => () => { } }),
-  };
-
-  return {
-    collection: () => mockCollection,
-  };
-};
+// Check if we're in development mode without Firebase config
+const isDevMode = !import.meta.env.VITE_FIREBASE_API_KEY;
 
 // Initialize Firebase safely
-const initializeFirebase = () => {
+const initializeFirebase = (): { db: Firestore | null; auth: Auth | null } => {
+  if (isDevMode) {
+    console.log('Firebase not configured, running in mock mode');
+    return { db: null, auth: null };
+  }
+
   try {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -44,46 +31,53 @@ const initializeFirebase = () => {
     return { db, auth };
   } catch (error) {
     console.error('Firebase initialization failed:', error);
-    return { db: createMockFirestore(), auth: null };
+    return { db: null, auth: null };
   }
 };
 
 const { db, auth } = initializeFirebase();
 
-// Auto-login with anonymous authentication
-const initializeAuth = async () => {
-  if (auth) {
-    try {
-      // Check if user is already signed in
-      return new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          unsubscribe();
-          if (user) {
-            console.log('User already authenticated:', user.uid);
-            resolve(user);
-          } else {
-            // Sign in anonymously if no user
-            signInAnonymously(auth)
-              .then((result) => {
-                console.log('Anonymous authentication successful:', result.user.uid);
-                resolve(result.user);
-              })
-              .catch((error) => {
-                console.error('Anonymous authentication failed:', error);
-                resolve(null);
-              });
-          }
-        });
-      });
-    } catch (error) {
-      console.error('Authentication initialization failed:', error);
-      return null;
-    }
+// Configure Google Auth Provider only if auth is available
+const googleProvider = auth ? new GoogleAuthProvider() : null;
+if (googleProvider) {
+  googleProvider.addScope('profile');
+  googleProvider.addScope('email');
+}
+
+// Auth helper functions
+export const signInWithGoogle = async () => {
+  if (!auth || !googleProvider) {
+    throw new Error('Firebase Auth is not initialized');
   }
-  return null;
+
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    console.error('Error signing in with Google:', error);
+    throw error;
+  }
 };
 
-// Initialize authentication when module loads
-initializeAuth();
+export const signOutUser = async () => {
+  if (!auth) {
+    throw new Error('Firebase Auth is not initialized');
+  }
 
-export { db, auth };
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('Error signing out:', error);
+    throw error;
+  }
+};
+
+// Export firestore constants
+export const FIRESTORE_COLLECTIONS = {
+  RETROSPECTIVES: 'retrospectives',
+  CARDS: 'cards',
+  PARTICIPANTS: 'participants',
+  USERS: 'users'
+} as const;
+
+export { db, auth, onAuthStateChanged, isDevMode };
