@@ -40,7 +40,7 @@ const ProfilePage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
+        <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
                 {/* Header */}
                 <motion.div
@@ -50,18 +50,18 @@ const ProfilePage: React.FC = () => {
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                <User className="w-8 h-8 text-purple-600" />
+                            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
+                                <User className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                                 Mi Perfil
                             </h1>
-                            <p className="text-gray-600 mt-2">
+                            <p className="text-slate-600 dark:text-slate-300 mt-2">
                                 Gestiona tu información personal y configuraciones de cuenta
                             </p>
                         </div>
                         <Button
                             onClick={handleSignOut}
                             variant="secondary"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 flex items-center gap-2"
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600 flex items-center gap-2"
                         >
                             <LogOut className="w-4 h-4" />
                             Cerrar Sesión
@@ -76,21 +76,21 @@ const ProfilePage: React.FC = () => {
                         animate={{ opacity: 1, x: 0 }}
                         className="lg:col-span-1"
                     >
-                        <Card className="p-6 bg-white/80 backdrop-blur-sm border border-white/20">
+                        <Card className="p-6 glass border border-slate-200/50 dark:border-slate-700/50">
                             <div className="text-center">
                                 {userProfile?.photoURL && (
                                     <img
                                         src={userProfile.photoURL}
                                         alt="Avatar"
-                                        className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white shadow-lg"
+                                        className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white dark:border-slate-700 shadow-soft"
                                     />
                                 )}
 
-                                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2">
                                     {userProfile?.displayName}
                                 </h2>
 
-                                <div className="space-y-3 text-sm text-gray-600">
+                                <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                                     <div className="flex items-center justify-center gap-2">
                                         <Mail className="w-4 h-4" />
                                         <span>{userProfile?.email}</span>
@@ -104,9 +104,9 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                    <div className="text-xs text-gray-500 mb-1">Proveedor de autenticación</div>
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium text-gray-700">
+                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Proveedor de autenticación</div>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300">
                                         {userProfile?.provider && getProviderName(userProfile.provider)}
                                     </div>
                                 </div>
@@ -124,7 +124,7 @@ const ProfilePage: React.FC = () => {
                             userProfile={userProfile}
                             onSave={updateDisplayName}
                             isFirstTime={false}
-                            className="bg-white/80 backdrop-blur-sm border border-white/20"
+                            className="glass border border-slate-200/50 dark:border-slate-700/50"
                         />
                     </motion.div>
                 </div>
@@ -136,16 +136,16 @@ const ProfilePage: React.FC = () => {
                     transition={{ delay: 0.2 }}
                     className="mt-8"
                 >
-                    <Card className="p-6 bg-white/80 backdrop-blur-sm border border-white/20">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    <Card className="p-6 glass border border-slate-200/50 dark:border-slate-700/50">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
                             Acciones de Cuenta
                         </h3>
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700">
                                 <div>
-                                    <h4 className="font-medium text-gray-800">Exportar Datos</h4>
-                                    <p className="text-sm text-gray-600">
+                                    <h4 className="font-medium text-slate-800 dark:text-slate-100">Exportar Datos</h4>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">
                                         Descarga todos tus datos de retrospectivas
                                     </p>
                                 </div>
@@ -154,14 +154,18 @@ const ProfilePage: React.FC = () => {
                                 </Button>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-100">
+                            <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/50">
                                 <div>
-                                    <h4 className="font-medium text-red-800">Eliminar Cuenta</h4>
-                                    <p className="text-sm text-red-600">
+                                    <h4 className="font-medium text-red-800 dark:text-red-300">Eliminar Cuenta</h4>
+                                    <p className="text-sm text-red-600 dark:text-red-400">
                                         Elimina permanentemente tu cuenta y todos los datos
                                     </p>
                                 </div>
-                                <Button variant="secondary" className="text-red-600 hover:text-red-700" disabled>
+                                <Button
+                                    variant="secondary"
+                                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                    disabled
+                                >
                                     Eliminar
                                 </Button>
                             </div>

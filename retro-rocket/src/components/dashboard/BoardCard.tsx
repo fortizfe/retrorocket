@@ -67,10 +67,10 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative"
             >
-                <Card className="p-6 border-2 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+                <Card className="p-6 border-2 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
                     <div className="text-center space-y-4">
                         <div className="flex justify-center">
-                            <AlertTriangle className="h-12 w-12 text-red-500" />
+                            <AlertTriangle className="h-12 w-12 text-red-500 dark:text-red-400" />
                         </div>
 
                         <div>
@@ -117,10 +117,10 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
             whileHover={{ y: -2 }}
             className="relative group"
         >
-            <Card className="p-6 h-full flex flex-col hover:shadow-lg transition-all duration-200">
+            <Card className="p-6 h-full flex flex-col hover:shadow-medium transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600">
                 {/* Header with title and delete button */}
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-2 flex-1 mr-2">
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 flex-1 mr-2">
                         {board.title}
                     </h3>
 
@@ -129,7 +129,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                             onClick={() => setShowDeleteConfirm(true)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 
                                      p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 
-                                     text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                                     text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
                             title="Eliminar tablero"
                         >
                             <Trash2 className="h-4 w-4" />
@@ -139,14 +139,14 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
                 {/* Description */}
                 {board.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2">
                         {board.description}
                     </p>
                 )}
 
                 {/* Metadata */}
                 <div className="flex-1 flex flex-col justify-end space-y-3">
-                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(board.createdAt)}</span>

@@ -112,17 +112,17 @@ const DashboardPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center transition-colors duration-300">
                 <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Cargando tus tableros...</p>
+                    <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 dark:text-slate-300">Cargando tus tableros...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
+        <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
                 {/* Header */}
                 <motion.div
@@ -132,17 +132,17 @@ const DashboardPage: React.FC = () => {
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                <LayoutGrid className="w-8 h-8 text-purple-600" />
+                            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
+                                <LayoutGrid className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                                 Mis Tableros
                             </h1>
-                            <p className="text-gray-600 mt-2">
+                            <p className="text-slate-600 dark:text-slate-300 mt-2">
                                 Gestiona y accede a todas tus retrospectivas
                             </p>
                         </div>
                         <Button
                             onClick={() => setShowCreateForm(true)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 py-3 flex items-center gap-2"
+                            className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
                         >
                             <Plus className="w-5 h-5" />
                             Nuevo Tablero
@@ -161,15 +161,15 @@ const DashboardPage: React.FC = () => {
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="bg-white rounded-xl p-6 w-full max-w-md"
+                            className="glass-strong rounded-xl p-6 w-full max-w-md shadow-medium"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h3 className="text-xl font-bold text-gray-800 mb-4">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">
                                 Crear Nuevo Tablero
                             </h3>
                             <form onSubmit={createBoardAndNavigate} className="space-y-4">
                                 <div>
-                                    <label htmlFor="boardTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label htmlFor="boardTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Título del tablero
                                     </label>
                                     <Input
@@ -195,7 +195,7 @@ const DashboardPage: React.FC = () => {
                                     <Button
                                         type="submit"
                                         disabled={!newBoardTitle.trim() || isCreating}
-                                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                                        className="flex-1 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
                                     >
                                         {isCreating ? 'Creando...' : 'Crear'}
                                     </Button>
@@ -212,18 +212,18 @@ const DashboardPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center py-16"
                     >
-                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <LayoutGrid className="w-8 h-8 text-gray-400" />
+                        <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <LayoutGrid className="w-8 h-8 text-slate-400 dark:text-slate-500" />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                        <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
                             No tienes tableros aún
                         </h3>
-                        <p className="text-gray-500 mb-6">
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
                             Crea tu primer tablero de retrospectiva para comenzar
                         </p>
                         <Button
                             onClick={() => setShowCreateForm(true)}
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 py-3 flex items-center gap-2 mx-auto"
+                            className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 mx-auto shadow-soft"
                         >
                             <Plus className="w-5 h-5" />
                             Crear mi primer tablero

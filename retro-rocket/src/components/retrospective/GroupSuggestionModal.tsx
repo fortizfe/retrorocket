@@ -81,31 +81,31 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+                    className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                    <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                    <Sparkles className="w-6 h-6 text-blue-600" />
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                    <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold text-gray-900">
+                                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                                         Sugerencias de Agrupación
                                     </h2>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">
                                         {suggestions.length} sugerencias encontradas automáticamente
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 title="Cerrar modal"
                             >
-                                <X className="w-5 h-5 text-gray-500" />
+                                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
                     </div>
@@ -114,16 +114,16 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                     <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                         {loading ? (
                             <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                <span className="ml-3 text-gray-600">Analizando similitudes...</span>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                                <span className="ml-3 text-slate-600 dark:text-slate-300">Analizando similitudes...</span>
                             </div>
                         ) : suggestions.length === 0 ? (
                             <div className="text-center py-12">
-                                <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                <Info className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+                                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
                                     No se encontraron sugerencias
                                 </h3>
-                                <p className="text-gray-500">
+                                <p className="text-slate-500 dark:text-slate-400">
                                     No hay suficientes tarjetas similares para crear grupos automáticamente.
                                 </p>
                             </div>

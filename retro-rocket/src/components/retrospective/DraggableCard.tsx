@@ -142,34 +142,34 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 size="sm"
                             />
                             <div className="cursor-grab active:cursor-grabbing">
-                                <GripVertical size={16} className="text-gray-400" />
+                                <GripVertical size={16} className="text-slate-400 dark:text-slate-500" />
                             </div>
                         </div>
                     )}
 
                     {/* Header with author */}
                     <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                             <User size={14} />
                             <span>{card.createdBy}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                             {/* Legacy vote buttons - keeping for backward compatibility */}
                             {(card.votes !== undefined && card.votes > 0) && (
-                                <div className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
+                                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
                                     <button
                                         onClick={() => handleVote(true)}
-                                        className="text-gray-600 hover:text-blue-600 transition-colors"
+                                        className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                         aria-label="Vote up"
                                     >
                                         <ThumbsUp size={14} />
                                     </button>
-                                    <span className="text-sm font-medium text-gray-700">
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                         {card.votes || 0}
                                     </span>
                                     <button
                                         onClick={() => handleVote(false)}
-                                        className="text-gray-600 hover:text-red-600 transition-colors"
+                                        className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                         aria-label="Vote down"
                                         disabled={!card.votes || card.votes === 0}
                                     >
@@ -192,7 +192,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 className="w-full"
                             />
                         ) : (
-                            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            <p className="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
                                 {card.content}
                             </p>
                         )}
@@ -224,7 +224,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 
                     {/* Footer */}
                     <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-slate-400 dark:text-slate-500">
                             {card.createdAt && new Date(card.createdAt).toLocaleDateString('es-ES', {
                                 day: 'numeric',
                                 month: 'short',
@@ -269,7 +269,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                             onClick={handleDelete}
                                             loading={isDeleting}
                                             aria-label="Delete card"
-                                            className="text-red-600 hover:text-red-700"
+                                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                                         >
                                             <Trash2 size={14} />
                                         </Button>

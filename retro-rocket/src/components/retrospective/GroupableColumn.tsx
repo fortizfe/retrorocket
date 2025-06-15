@@ -199,11 +199,11 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         <h2 className="text-lg font-semibold text-gray-800">
                             {column.title}
                         </h2>
-                        <p className="text-sm text-gray-600">{column.description}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">{column.description}</p>
                     </div>
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                         <span>
                             {totalItems} {totalItems === 1 ? 'elemento' : 'elementos'}
                         </span>
@@ -262,7 +262,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                 className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)}`}
                             >
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs text-gray-500 italic">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 italic">
                                         Vista previa del color
                                     </span>
                                     <ColorPicker
@@ -365,7 +365,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                             className="text-center py-8"
                         >
                             <div className="text-4xl mb-2">{column.icon}</div>
-                            <p className="text-gray-500 text-sm mb-3">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
                                 No hay tarjetas aún
                             </p>
                             {currentUser && (

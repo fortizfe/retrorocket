@@ -41,10 +41,10 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                     mass: 0.8
                 }}
                 className={`
-          bg-gradient-to-r from-blue-50 to-indigo-50 
-          border border-blue-200/50 
+          bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-950/50 dark:to-blue-950/50
+          border border-primary-200/50 dark:border-primary-700/50
           rounded-xl p-3 
-          shadow-sm shadow-blue-100/50
+          shadow-soft shadow-primary-100/50 dark:shadow-primary-900/20
           backdrop-blur-sm
           ${className}
         `}
@@ -61,10 +61,10 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                                 className="
                   relative inline-flex items-center justify-center 
                   w-6 h-6 
-                  bg-gradient-to-br from-blue-400 to-indigo-500
+                  bg-gradient-to-br from-primary-400 to-blue-500
                   text-white text-xs font-medium 
                   rounded-full 
-                  ring-2 ring-white
+                  ring-2 ring-white dark:ring-slate-800
                   shadow-sm
                 "
                                 title={user.username}
@@ -80,10 +80,10 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                                 className="
                   relative inline-flex items-center justify-center 
                   w-6 h-6 
-                  bg-gradient-to-br from-gray-400 to-gray-500
+                  bg-gradient-to-br from-slate-400 to-slate-500
                   text-white text-xs font-medium 
                   rounded-full 
-                  ring-2 ring-white
+                  ring-2 ring-white dark:ring-slate-800
                   shadow-sm
                 "
                                 title={`+${typingUsers.length - 3} más`}
@@ -125,7 +125,7 @@ const TypingDots: React.FC = () => {
                         delay: index * 0.2,
                         ease: "easeInOut",
                     }}
-                    className="w-1 h-1 bg-blue-500 rounded-full"
+                    className="w-1 h-1 bg-primary-500 dark:bg-primary-400 rounded-full"
                 />
             ))}
         </div>

@@ -257,26 +257,26 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                    className="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl"
+                                    className="relative transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl"
                                 >
                                     {/* Modal Header */}
-                                    <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                                    <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100">
-                                                <Download className="w-6 h-6 text-blue-600" />
+                                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                                <Download className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                                                     Exportar Retrospectiva
                                                 </h3>
-                                                <p className="text-sm text-gray-500">
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                                     Configura las opciones para tu documento
                                                 </p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => setShowModal(false)}
-                                            className="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                            className="rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                                             title="Cerrar modal"
                                             aria-label="Cerrar modal de exportación"
                                         >
@@ -288,7 +288,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                         {/* Format Selection */}
                                         <div>
                                             <fieldset className="space-y-3">
-                                                <legend className="text-sm font-medium text-gray-700 mb-3">
+                                                <legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                                                     Formato de exportación
                                                 </legend>
                                                 <div className="grid grid-cols-2 gap-3">
@@ -297,8 +297,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                             key={format.value}
                                                             onClick={() => handleFormatChange(format.value)}
                                                             className={`p-4 rounded-lg border-2 text-left transition-all ${selectedFormat === format.value
-                                                                ? 'border-blue-500 bg-blue-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                                                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
                                                                 }`}
                                                             whileHover={{ scale: 1.02 }}
                                                             whileTap={{ scale: 0.98 }}
@@ -307,7 +307,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                                 {getFormatIcon(format.value)}
                                                                 <span className="font-medium">{format.label}</span>
                                                             </div>
-                                                            <p className="text-sm text-gray-600">{format.description}</p>
+                                                            <p className="text-sm text-slate-600 dark:text-slate-400">{format.description}</p>
                                                         </motion.button>
                                                     ))}
                                                 </div>

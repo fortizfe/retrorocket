@@ -76,38 +76,38 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`relative rounded-xl border-2 border-dashed border-gray-300 bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden`}
+            className={`relative rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden shadow-sm`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Group Header */}
-            <div className="p-3 border-b border-gray-200 bg-white/50 backdrop-blur-sm">
+            <div className="p-3 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 flex-1">
                         <button
                             onClick={() => onToggleCollapse(group.id)}
-                            className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors group"
+                            className="flex items-center space-x-2 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors group"
                             disabled={isReadOnly}
                         >
                             {group.isCollapsed ? (
-                                <ChevronRight className="w-4 h-4 group-hover:text-blue-600" />
+                                <ChevronRight className="w-4 h-4 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                             ) : (
-                                <ChevronDown className="w-4 h-4 group-hover:text-blue-600" />
+                                <ChevronDown className="w-4 h-4 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                             )}
                             <Users className="w-4 h-4" />
                         </button>
 
                         <div className="flex-1">
                             {hasCustomTitle ? (
-                                <h3 className="text-sm font-medium text-gray-900 truncate">
+                                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                                     {group.title}
                                 </h3>
                             ) : (
-                                <h3 className="text-sm font-medium text-gray-700">
+                                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                     Grupo de {totalCards} tarjetas
                                 </h3>
                             )}
-                            <div className="flex items-center space-x-3 text-xs text-gray-500 mt-1">
+                            <div className="flex items-center space-x-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 <span className="flex items-center space-x-1">
                                     <span>📝</span>
                                     <span>{totalCards} tarjetas</span>
@@ -137,7 +137,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                         >
                             <button
                                 onClick={handleDisbandGroup}
-                                className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                                 title="Desagrupar tarjetas"
                             >
                                 <X className="w-4 h-4" />
@@ -163,7 +163,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                             <div className="relative">
                                 {totalCards > 1 && (
                                     <div className="absolute -top-2 -left-2 z-10">
-                                        <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
+                                        <div className="bg-blue-600 dark:bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
                                             <Sparkles className="w-3 h-3" />
                                             <span>Principal</span>
                                         </div>
@@ -195,8 +195,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                     className="ml-4 relative"
                                 >
                                     {/* Connection line */}
-                                    <div className="absolute -left-2 top-4 w-2 h-0.5 bg-gray-300"></div>
-                                    <div className="absolute -left-2 top-0 w-0.5 h-full bg-gray-300"></div>
+                                    <div className="absolute -left-2 top-4 w-2 h-0.5 bg-slate-300 dark:bg-slate-600"></div>
+                                    <div className="absolute -left-2 top-0 w-0.5 h-full bg-slate-300 dark:bg-slate-600"></div>
 
                                     <DraggableCard
                                         card={card}
@@ -220,12 +220,12 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             {/* Collapsed State Summary */}
             {group.isCollapsed && (
                 <div className="p-4">
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
                         <span className="flex items-center space-x-2">
                             <span>📝</span>
                             <span>{headCard.content.substring(0, 50)}{headCard.content.length > 50 ? '...' : ''}</span>
                         </span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-full">
                             +{memberCards.length} más
                         </span>
                     </div>

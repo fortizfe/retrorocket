@@ -31,8 +31,20 @@ const App: React.FC = () => {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
+              background: 'rgb(51 65 85)', // slate-700
               color: '#fff',
+              borderRadius: '8px',
+              border: '1px solid rgb(71 85 105)', // slate-600
+            },
+            success: {
+              style: {
+                background: 'rgb(34 197 94)', // green-500
+              },
+            },
+            error: {
+              style: {
+                background: 'rgb(239 68 68)', // red-500
+              },
             },
           }}
         />

@@ -22,9 +22,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const baseClasses = 'block w-full rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1';
 
     const variants = {
-      default: 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20',
-      outline: 'border-gray-300 bg-transparent focus:border-blue-500 focus:ring-blue-500/20',
-      filled: 'border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500/20 focus:bg-white'
+      default: 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-primary-500 focus:ring-primary-500/20 dark:focus:border-primary-400',
+      outline: 'border-slate-300 dark:border-slate-600 bg-transparent focus:border-primary-500 focus:ring-primary-500/20 dark:focus:border-primary-400',
+      filled: 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary-500 focus:ring-primary-500/20 focus:bg-white dark:focus:bg-slate-700'
     };
 
     const sizes = {
@@ -37,14 +37,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       baseClasses,
       variants[variant],
       sizes[size],
-      error && 'border-red-300 focus:border-red-500 focus:ring-red-500/20',
+      error && 'border-red-300 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400',
+      'text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400',
       className
     );
 
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             {label}
           </label>
         )}
@@ -54,10 +55,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helperText}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{helperText}</p>
         )}
       </div>
     );

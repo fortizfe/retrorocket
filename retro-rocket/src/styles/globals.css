@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +9,12 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-800 antialiased;
+    @apply bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800 antialiased transition-colors duration-300;
+  }
+
+  /* Dark mode body */
+  .dark body {
+    @apply bg-gradient-to-br from-slate-900 to-blue-950 text-slate-100;
   }
 
   h1,
@@ -21,18 +26,37 @@
     @apply font-semibold tracking-tight;
   }
 
-  /* Custom scrollbar */
+  /* Dark mode headings */
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark h5,
+  .dark h6 {
+    @apply text-slate-100;
+  }
+
+  /* Custom scrollbar - Light mode */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-full;
+    @apply bg-slate-100 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+  }
+
+  /* Custom scrollbar - Dark mode */
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-slate-800 rounded-full;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-600 rounded-full hover:bg-slate-500 transition-colors;
   }
 }
 
@@ -42,23 +66,55 @@
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+    @apply transition-all duration-300 hover:shadow-soft hover:scale-[1.02];
   }
 
   .input-focus {
-    @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
   }
 
-  .gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20;
   }
 
-  /* Enhanced card color styling - ensures background colors are applied correctly */
+  .glass-strong {
+    @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-white/30 dark:border-slate-700/30;
+  }
+
+  /* Button variants with new blue palette */
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white shadow-sm;
+    @apply dark:bg-primary-500 dark:hover:bg-primary-600;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-100 hover:bg-slate-200 text-slate-900 shadow-sm;
+    @apply dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100;
+  }
+
+  .btn-ghost {
+    @apply text-slate-700 hover:bg-slate-100;
+    @apply dark:text-slate-300 dark:hover:bg-slate-700;
+  }
+
+  /* Card styles with dark mode support */
+  .card {
+    @apply bg-white border border-slate-200 shadow-soft;
+    @apply dark:bg-slate-800 dark:border-slate-700;
+  }
+
+  .card-elevated {
+    @apply bg-white border border-slate-200 shadow-medium;
+    @apply dark:bg-slate-800 dark:border-slate-700 dark:shadow-slate-900/20;
+  }
+
+  /* Enhanced card color styling with dark mode support */
   .card-color-bg {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    @apply transition-all duration-300;
   }
 
-  /* Force background colors to override any conflicting styles */
+  /* Light mode card colors */
   .card-color-bg.bg-white {
     background-color: rgb(255 255 255) !important;
   }
@@ -99,10 +155,65 @@
     background-color: rgb(249 250 251) !important;
   }
 
+  /* Dark mode card colors */
+  .dark .card-color-bg.bg-white {
+    background-color: rgb(30 41 59) !important;
+    /* slate-800 */
+  }
+
+  .dark .card-color-bg.bg-green-50 {
+    background-color: rgb(22 101 52) !important;
+    /* green-800 */
+  }
+
+  .dark .card-color-bg.bg-red-50 {
+    background-color: rgb(153 27 27) !important;
+    /* red-800 */
+  }
+
+  .dark .card-color-bg.bg-yellow-50 {
+    background-color: rgb(133 77 14) !important;
+    /* yellow-800 */
+  }
+
+  .dark .card-color-bg.bg-blue-50 {
+    background-color: rgb(30 64 175) !important;
+    /* blue-800 */
+  }
+
+  .dark .card-color-bg.bg-purple-50 {
+    background-color: rgb(107 33 168) !important;
+    /* purple-800 */
+  }
+
+  .dark .card-color-bg.bg-orange-50 {
+    background-color: rgb(154 52 18) !important;
+    /* orange-800 */
+  }
+
+  .dark .card-color-bg.bg-pink-50 {
+    background-color: rgb(157 23 77) !important;
+    /* pink-800 */
+  }
+
+  .dark .card-color-bg.bg-teal-50 {
+    background-color: rgb(17 94 89) !important;
+    /* teal-800 */
+  }
+
+  .dark .card-color-bg.bg-gray-50 {
+    background-color: rgb(51 65 85) !important;
+    /* slate-700 */
+  }
+
   /* Hover effects for better interactivity */
   .card-color-bg:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  }
+
+  .dark .card-color-bg:hover {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
   }
 
   /* Focus states for accessibility */

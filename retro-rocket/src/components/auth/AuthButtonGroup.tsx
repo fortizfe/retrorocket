@@ -74,8 +74,8 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                         className={`
               w-full h-12 text-sm font-medium flex items-center justify-center gap-3
               ${provider.available
-                                ? '!bg-white !text-gray-900 border border-gray-300 hover:!bg-gray-50 hover:border-gray-400 hover:!text-gray-900'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                ? '!bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-slate-100 border border-slate-300 dark:border-slate-600 hover:!bg-slate-50 dark:hover:!bg-slate-700 hover:border-primary-400 dark:hover:border-primary-500'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                             }
               ${provider.id === 'google' && loading ? 'opacity-50' : ''}
             `}
@@ -85,7 +85,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                             {provider.id === 'google' && loading ? 'Iniciando sesión...' : provider.name}
                         </span>
                         {provider.comingSoon && (
-                            <span className="text-xs bg-gray-200 text-gray-500 px-2 py-1 rounded-full">
+                            <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-1 rounded-full">
                                 Pronto
                             </span>
                         )}
@@ -93,7 +93,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                 </motion.div>
             ))}
 
-            <div className="text-center text-xs text-gray-500 mt-4">
+            <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
                 Al continuar, aceptas nuestros términos y condiciones
             </div>
         </div>

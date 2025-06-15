@@ -86,7 +86,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
                         Email
                     </label>
@@ -94,15 +94,15 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         type="email"
                         value={userProfile?.email ?? ''}
                         disabled
-                        className="bg-gray-50 text-gray-500"
+                        className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         El email no puede ser modificado
                     </p>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <User className="w-4 h-4 inline mr-2" />
                         Nombre a mostrar *
                     </label>
@@ -112,9 +112,8 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder="Tu nombre completo"
                         required
-                        className="focus:ring-purple-500 focus:border-purple-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Este nombre aparecerá en los tableros que crees
                     </p>
                 </div>
@@ -122,7 +121,8 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                 <Button
                     type="submit"
                     disabled={!displayName.trim() || isLoading}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-3 flex items-center justify-center gap-2"
+                    variant="primary"
+                    className="w-full py-3 flex items-center justify-center gap-2"
                 >
                     {isLoading ? (
                         <>
@@ -139,7 +139,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
             </form>
 
             {isFirstTime && (
-                <div className="mt-4 text-center text-xs text-gray-500">
+                <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
                     Podrás editar esta información desde tu perfil en cualquier momento
                 </div>
             )}

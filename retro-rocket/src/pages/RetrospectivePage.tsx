@@ -161,13 +161,13 @@ const RetrospectivePageContent: React.FC = () => {
     // Joining state
     if (isJoining) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
+                <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
+                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
                         Uniéndose a la retrospectiva...
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-slate-600 dark:text-slate-300">
                         Espera un momento mientras te conectamos.
                     </p>
                 </div>
@@ -178,13 +178,13 @@ const RetrospectivePageContent: React.FC = () => {
     // Main retrospective view
     if (hasJoined) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
                 <div className="container mx-auto px-4 py-6">
                     {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm"
+                        className="flex items-center justify-between mb-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg p-4 shadow-sm"
                     >
                         <div className="flex items-center gap-4">
                             <Button
@@ -197,10 +197,10 @@ const RetrospectivePageContent: React.FC = () => {
                                 Volver
                             </Button>
                             <div>
-                                <h1 className="text-xl font-semibold text-gray-800">
+                                <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
                                     {retrospective.title}
                                 </h1>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
                                     Conectado como: {fullName}
                                 </p>
                             </div>
@@ -255,12 +255,12 @@ const RetrospectivePageContent: React.FC = () => {
 
     // This should not happen with auto-join, but keeping as fallback
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
+            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
+                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
                     Error de conexión
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-slate-600 dark:text-slate-300 mb-6">
                     No se pudo conectar a la retrospectiva. Inténtalo de nuevo.
                 </p>
                 <Button onClick={() => window.location.reload()}>
