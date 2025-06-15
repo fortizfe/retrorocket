@@ -4,32 +4,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir acceso a usuarios autenticados (incluyendo anónimos)
+    // Permitir acceso solo a usuarios autenticados NO anónimos
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
     
     // Reglas más específicas para las colecciones de RetroRocket
     match /retrospectives/{retrospectiveId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
       
       match /cards/{cardId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
       }
     }
     
     match /participants/{participantId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
     
     match /cards/{cardId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
     
     // Reglas para typing status (previsualización de escritura en tiempo real)
     match /typingStatus/{typingId} {
-      allow read, write: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      allow delete: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
   }
 }
