@@ -4,6 +4,7 @@ import { User, Mail, Calendar, LogOut } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import UserProfileForm from '../components/auth/UserProfileForm';
+import LinkedProvidersCard from '../components/auth/LinkedProvidersCard';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
@@ -74,7 +75,7 @@ const ProfilePage: React.FC = () => {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="lg:col-span-1"
+                        className="lg:col-span-1 space-y-6"
                     >
                         <Card className="p-6 glass border border-slate-200/50 dark:border-slate-700/50">
                             <div className="text-center">
@@ -105,13 +106,16 @@ const ProfilePage: React.FC = () => {
                                 </div>
 
                                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Proveedor de autenticación</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Proveedor principal</div>
                                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300">
                                         {userProfile?.provider && getProviderName(userProfile.provider)}
                                     </div>
                                 </div>
                             </div>
                         </Card>
+
+                        {/* Linked Providers */}
+                        <LinkedProvidersCard className="glass border border-slate-200/50 dark:border-slate-700/50" />
                     </motion.div>
 
                     {/* Edit Profile Form */}

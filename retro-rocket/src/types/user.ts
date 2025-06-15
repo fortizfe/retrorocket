@@ -16,6 +16,7 @@ export interface UserProfile {
     displayName: string;
     photoURL: string | null;
     provider: AuthProviderType;
+    linkedProviders?: AuthProviderType[]; // List of all linked providers
     joinedBoards: string[];
     createdAt: Date;
     updatedAt: Date;

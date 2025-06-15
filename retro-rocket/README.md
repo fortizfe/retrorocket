@@ -4,7 +4,7 @@ RetroRocket es una herramienta moderna y colaborativa diseñada para ayudar a eq
 
 ## ✨ Características
 
-- **🚫 Sin Registro**: Los usuarios pueden unirse simplemente ingresando su nombre
+- **🔐 Autenticación Unificada**: Sistema de vinculación automática de cuentas que permite usar múltiples proveedores (Google, GitHub) con un solo perfil
 - **👥 Colaboración en Tiempo Real**: Múltiples participantes pueden trabajar simultáneamente
 - **💾 Persistencia de Datos**: Toda la información se almacena en Firebase Firestore
 - **🎨 Interfaz Moderna**: Diseño limpio inspirado en Notion/Linear/Vercel
@@ -12,6 +12,7 @@ RetroRocket es una herramienta moderna y colaborativa diseñada para ayudar a eq
 - **📱 Responsive**: Funciona perfectamente en móviles y escritorio
 - **🗳️ Sistema de Votación**: Los participantes pueden votar en las tarjetas
 - **✏️ Edición en Tiempo Real**: Editar y eliminar tarjetas propias
+- **🔗 Vinculación de Proveedores**: Vincula automáticamente cuentas con el mismo email de diferentes proveedores
 
 ## 🛠️ Tecnologías
 
@@ -180,19 +181,6 @@ Si encuentras algún problema o tienes preguntas:
 ---
 
 **Hecho con ❤️ para equipos que quieren mejorar continuamente**
-│   ├── types
-│   ├── utils
-│   ├── pages
-│   ├── styles
-│   ├── App.tsx
-│   └── main.tsx
-├── public
-│   └── index.html
-├── package.json
-├── tsconfig.json
-├── tailwind.config.js
-└── vite.config.ts
-```
 
 ## Getting Started
 
@@ -228,3 +216,28 @@ Contributions are welcome! If you have suggestions for improvements or new featu
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+## 🔐 Sistema de Autenticación
+
+RetroRocket incluye un sistema avanzado de autenticación que permite a los usuarios:
+
+### Vinculación Automática de Cuentas
+
+- **Múltiples Proveedores**: Soporte para Google y GitHub (con preparación para Apple y otros)
+- **Email Único**: Un solo perfil por email, sin importar el proveedor usado
+- **Vinculación Automática**: Si intentas iniciar sesión con un proveedor diferente pero el mismo email, el sistema automáticamente vincula las cuentas
+- **Datos Preservados**: Todas las retrospectivas y configuraciones se mantienen al vincular cuentas
+
+### Flujo de Vinculación
+
+1. **Primera vez**: Usuario inicia sesión con Google → Se crea el perfil
+2. **Segunda vez**: Mismo usuario intenta iniciar sesión con GitHub → Sistema detecta email duplicado
+3. **Automático**: Sistema autentica con Google y vincula la credencial de GitHub
+4. **Resultado**: Usuario puede iniciar sesión con cualquiera de los dos métodos
+
+### Gestión de Proveedores
+
+En el perfil del usuario puedes:
+- Ver todos los proveedores vinculados a tu cuenta
+- Agregar nuevos métodos de autenticación
+- Recibir información de seguridad sobre la vinculación

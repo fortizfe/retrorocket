@@ -1,6 +1,6 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { AuthProviderType } from '../types/user';
-import { signInWithGoogle, signInWithGithub } from './firebase';
+import { accountLinkingService } from './accountLinking';
 
 export interface AuthProviderService {
     signIn(): Promise<FirebaseUser>;
@@ -15,11 +15,11 @@ class GoogleAuthProvider implements AuthProviderService {
     readonly displayName = 'Continuar con Google';
 
     async signIn(): Promise<FirebaseUser> {
-        const user = await signInWithGoogle();
-        if (!user) {
+        const result = await accountLinkingService.signInWithAccountLinking('google');
+        if (!result.success || !result.user) {
             throw new Error('Error al iniciar sesión con Google');
         }
-        return user;
+        return result.user;
     }
 }
 
@@ -29,11 +29,11 @@ class GithubAuthProvider implements AuthProviderService {
     readonly displayName = 'Continuar con GitHub';
 
     async signIn(): Promise<FirebaseUser> {
-        const user = await signInWithGithub();
-        if (!user) {
+        const result = await accountLinkingService.signInWithAccountLinking('github');
+        if (!result.success || !result.user) {
             throw new Error('Error al iniciar sesión con GitHub');
         }
-        return user;
+        return result.user;
     }
 }
 

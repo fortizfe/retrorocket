@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useMe
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth, onAuthStateChanged, signOutUser } from '../services/firebase';
 import { userService } from '../services/userService';
-import { authProviders } from '../services/authProvider';
+import { accountLinkingService } from '../services/accountLinking';
 import { UserProfile, AuthState, AuthProviderType } from '../types/user';
 import toast from 'react-hot-toast';
 
@@ -42,7 +42,19 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             throw new Error('Email is required');
         }
 
-        // Get provider info
+        // Check if user profile already exists
+        let userProfile = await userService.getUserProfile(firebaseUser.uid);
+
+        if (userProfile) {
+            // User profile exists, just update the last accessed time
+            await userService.updateUserProfile(firebaseUser.uid, {
+                updatedAt: new Date(),
+            });
+            return userProfile;
+        }
+
+        // User profile doesn't exist, create new one
+        // Get provider info from the first provider (primary one)
         const providerData = firebaseUser.providerData[0];
         let provider: AuthProviderType = 'google'; // default
 
@@ -52,10 +64,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             provider = 'apple';
         }
 
-        // Check if user profile already exists
-        let userProfile = await userService.getUserProfile(firebaseUser.uid);
-
-        userProfile ??= await userService.createUserProfile(firebaseUser.uid, {
+        userProfile = await userService.createUserProfile(firebaseUser.uid, {
             email: firebaseUser.email,
             displayName: firebaseUser.displayName ?? 'Usuario',
             photoURL: firebaseUser.photoURL,
@@ -69,16 +78,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         try {
             setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
-            const firebaseUser = await authProviders.google.signIn();
-            if (firebaseUser) {
-                const userProfile = await createOrUpdateUserProfile(firebaseUser);
+            const result = await accountLinkingService.signInWithAccountLinking('google');
+
+            if (result.success && result.user) {
+                const userProfile = await createOrUpdateUserProfile(result.user);
 
                 setAuthState({
                     user: {
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,
+                        uid: result.user.uid,
+                        email: result.user.email,
                         displayName: userProfile.displayName,
-                        photoURL: firebaseUser.photoURL,
+                        photoURL: result.user.photoURL,
                         provider: userProfile.provider,
                         createdAt: userProfile.createdAt,
                         updatedAt: userProfile.updatedAt,
@@ -88,6 +98,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                     error: null,
                     isAuthenticated: true,
                 });
+
+                // Show appropriate success message
+                if (result.wasLinked) {
+                    toast.success(result.message, {
+                        duration: 6000,
+                        style: {
+                            maxWidth: '450px',
+                        },
+                    });
+                } else {
+                    toast.success('Inicio de sesión exitoso');
+                }
+            } else {
+                throw new Error('Error en el proceso de autenticación');
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
@@ -97,17 +121,12 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 error: errorMessage,
             }));
 
-            // Show specific toast based on error type
-            if (errorMessage.includes('ya está asociada con otro método')) {
-                toast.error(errorMessage, {
-                    duration: 6000,
-                    style: {
-                        maxWidth: '400px',
-                    },
-                });
-            } else {
-                toast.error(errorMessage);
-            }
+            toast.error(errorMessage, {
+                duration: 6000,
+                style: {
+                    maxWidth: '400px',
+                },
+            });
         }
     };
 
@@ -115,16 +134,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         try {
             setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
-            const firebaseUser = await authProviders.github.signIn();
-            if (firebaseUser) {
-                const userProfile = await createOrUpdateUserProfile(firebaseUser);
+            const result = await accountLinkingService.signInWithAccountLinking('github');
+
+            if (result.success && result.user) {
+                const userProfile = await createOrUpdateUserProfile(result.user);
 
                 setAuthState({
                     user: {
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,
+                        uid: result.user.uid,
+                        email: result.user.email,
                         displayName: userProfile.displayName,
-                        photoURL: firebaseUser.photoURL,
+                        photoURL: result.user.photoURL,
                         provider: userProfile.provider,
                         createdAt: userProfile.createdAt,
                         updatedAt: userProfile.updatedAt,
@@ -134,6 +154,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                     error: null,
                     isAuthenticated: true,
                 });
+
+                // Show appropriate success message
+                if (result.wasLinked) {
+                    toast.success(result.message, {
+                        duration: 6000,
+                        style: {
+                            maxWidth: '450px',
+                        },
+                    });
+                } else {
+                    toast.success('Inicio de sesión exitoso');
+                }
+            } else {
+                throw new Error('Error en el proceso de autenticación');
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión con GitHub';
@@ -143,17 +177,12 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 error: errorMessage,
             }));
 
-            // Show specific toast based on error type
-            if (errorMessage.includes('ya está asociada con otro método')) {
-                toast.error(errorMessage, {
-                    duration: 6000,
-                    style: {
-                        maxWidth: '400px',
-                    },
-                });
-            } else {
-                toast.error(errorMessage);
-            }
+            toast.error(errorMessage, {
+                duration: 6000,
+                style: {
+                    maxWidth: '400px',
+                },
+            });
         }
     };
 
