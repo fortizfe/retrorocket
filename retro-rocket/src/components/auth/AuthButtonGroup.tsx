@@ -2,38 +2,23 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Github, Apple } from 'lucide-react';
 import Button from '../ui/Button';
-import { AuthProvider } from '../../types/user';
+import { AuthProvider, AuthProviderType } from '../../types/user';
+import { getAvailableProviders } from '../../services/authProvider';
 
 interface AuthButtonGroupProps {
-    onGoogleSignIn: () => void;
+    onProviderSignIn: (providerId: AuthProviderType) => void;
     loading?: boolean;
     className?: string;
 }
 
-const authProviders: AuthProvider[] = [
-    {
-        id: 'google',
-        name: 'Continuar con Google',
-        icon: 'google',
-        available: true,
-    },
-    {
-        id: 'github',
-        name: 'Próximamente: GitHub',
-        icon: 'github',
-        available: false,
-        comingSoon: true,
-    },
-    {
-        id: 'apple',
-        name: 'Próximamente: Apple',
-        icon: 'apple',
-        available: false,
-        comingSoon: true,
-    },
-];
+// Static configuration for providers UI
+const providerUIConfig: Record<AuthProviderType, { name: string; comingSoon?: boolean }> = {
+    google: { name: 'Continuar con Google' },
+    github: { name: 'Continuar con GitHub' },
+    apple: { name: 'Próximamente: Apple', comingSoon: true },
+};
 
-const getProviderIcon = (provider: string) => {
+const getProviderIcon = (provider: AuthProviderType) => {
     switch (provider) {
         case 'google':
             return (
@@ -53,14 +38,36 @@ const getProviderIcon = (provider: string) => {
     }
 };
 
+const getProviderStyles = (providerId: AuthProviderType) => {
+    // Todos los proveedores usan los mismos estilos base
+    return '!bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-slate-100 border border-slate-300 dark:border-slate-600 hover:!bg-slate-50 dark:hover:!bg-slate-700 hover:border-primary-400 dark:hover:border-primary-500';
+};
+
 const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
-    onGoogleSignIn,
+    onProviderSignIn,
     loading = false,
     className = '',
 }) => {
+    // Get available providers from service and combine with UI config
+    const availableProviders = getAvailableProviders();
+    const allProviders: AuthProviderType[] = ['google', 'github', 'apple'];
+
+    const providers = allProviders.map(providerId => {
+        const isAvailable = availableProviders.some(p => p.providerId === providerId);
+        const config = providerUIConfig[providerId];
+
+        return {
+            id: providerId,
+            name: config.name,
+            icon: providerId,
+            available: isAvailable,
+            comingSoon: config.comingSoon,
+        } as AuthProvider;
+    });
+
     return (
         <div className={`space-y-3 ${className}`}>
-            {authProviders.map((provider, index) => (
+            {providers.map((provider, index) => (
                 <motion.div
                     key={provider.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -68,21 +75,21 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                     transition={{ delay: index * 0.1 }}
                 >
                     <Button
-                        onClick={provider.id === 'google' ? onGoogleSignIn : undefined}
+                        onClick={provider.available ? () => onProviderSignIn(provider.id) : undefined}
                         disabled={!provider.available || loading}
                         variant="ghost"
                         className={`
               w-full h-12 text-sm font-medium flex items-center justify-center gap-3
               ${provider.available
-                                ? '!bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-slate-100 border border-slate-300 dark:border-slate-600 hover:!bg-slate-50 dark:hover:!bg-slate-700 hover:border-primary-400 dark:hover:border-primary-500'
+                                ? getProviderStyles(provider.id)
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                             }
-              ${provider.id === 'google' && loading ? 'opacity-50' : ''}
+              ${loading ? 'opacity-50' : ''}
             `}
                     >
-                        {getProviderIcon(provider.icon)}
+                        {getProviderIcon(provider.id)}
                         <span className="flex-1 text-center">
-                            {provider.id === 'google' && loading ? 'Iniciando sesión...' : provider.name}
+                            {loading ? 'Iniciando sesión...' : provider.name}
                         </span>
                         {provider.comingSoon && (
                             <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-1 rounded-full">

@@ -6,19 +6,30 @@ import AuthButtonGroup from '../components/auth/AuthButtonGroup';
 import UserProfileForm from '../components/auth/UserProfileForm';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import ThemeToggle from '../components/ui/ThemeToggle';
+import { AuthProviderType } from '../types/user';
 import { APP_NAME, APP_DESCRIPTION } from '../utils/constants';
 
 const LandingPage: React.FC = () => {
-    const { signInWithGoogle, loading, user, userProfile, updateDisplayName } = useUser();
+    const { signInWithGoogle, signInWithGithub, loading, user, userProfile, updateDisplayName } = useUser();
     const [showProfileForm, setShowProfileForm] = useState(false);
 
-    const handleGoogleSignIn = async () => {
+    const handleProviderSignIn = async (providerId: AuthProviderType) => {
         try {
-            await signInWithGoogle();
+            switch (providerId) {
+                case 'google':
+                    await signInWithGoogle();
+                    break;
+                case 'github':
+                    await signInWithGithub();
+                    break;
+                default:
+                    console.warn(`Provider ${providerId} not yet implemented`);
+                    return;
+            }
             // If this is first time (no displayName or default one), show profile form
             setShowProfileForm(true);
         } catch (error) {
-            console.error('Sign in error:', error);
+            console.error(`Sign in with ${providerId} error:`, error);
         }
     };
 
@@ -120,7 +131,7 @@ const LandingPage: React.FC = () => {
                             </p>
 
                             <AuthButtonGroup
-                                onGoogleSignIn={handleGoogleSignIn}
+                                onProviderSignIn={handleProviderSignIn}
                                 loading={loading}
                             />
                         </div>

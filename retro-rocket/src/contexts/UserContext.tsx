@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { auth, onAuthStateChanged, signInWithGoogle, signOutUser } from '../services/firebase';
+import { auth, onAuthStateChanged, signOutUser } from '../services/firebase';
 import { userService } from '../services/userService';
+import { authProviders } from '../services/authProvider';
 import { UserProfile, AuthState, AuthProviderType } from '../types/user';
 import toast from 'react-hot-toast';
 
 interface UserContextType extends AuthState {
     signInWithGoogle: () => Promise<void>;
+    signInWithGithub: () => Promise<void>;
     signOut: () => Promise<void>;
     updateDisplayName: (displayName: string) => Promise<void>;
     refreshUserProfile: () => Promise<void>;
@@ -67,7 +69,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         try {
             setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
-            const firebaseUser = await signInWithGoogle();
+            const firebaseUser = await authProviders.google.signIn();
             if (firebaseUser) {
                 const userProfile = await createOrUpdateUserProfile(firebaseUser);
 
@@ -86,8 +88,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                     error: null,
                     isAuthenticated: true,
                 });
-
-                // Removed duplicate welcome toast - it's shown in RetrospectivePage when joining
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
@@ -96,7 +96,64 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 loading: false,
                 error: errorMessage,
             }));
-            toast.error(errorMessage);
+
+            // Show specific toast based on error type
+            if (errorMessage.includes('ya está asociada con otro método')) {
+                toast.error(errorMessage, {
+                    duration: 6000,
+                    style: {
+                        maxWidth: '400px',
+                    },
+                });
+            } else {
+                toast.error(errorMessage);
+            }
+        }
+    };
+
+    const handleSignInWithGithub = async (): Promise<void> => {
+        try {
+            setAuthState(prev => ({ ...prev, loading: true, error: null }));
+
+            const firebaseUser = await authProviders.github.signIn();
+            if (firebaseUser) {
+                const userProfile = await createOrUpdateUserProfile(firebaseUser);
+
+                setAuthState({
+                    user: {
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        displayName: userProfile.displayName,
+                        photoURL: firebaseUser.photoURL,
+                        provider: userProfile.provider,
+                        createdAt: userProfile.createdAt,
+                        updatedAt: userProfile.updatedAt,
+                    },
+                    userProfile,
+                    loading: false,
+                    error: null,
+                    isAuthenticated: true,
+                });
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión con GitHub';
+            setAuthState(prev => ({
+                ...prev,
+                loading: false,
+                error: errorMessage,
+            }));
+
+            // Show specific toast based on error type
+            if (errorMessage.includes('ya está asociada con otro método')) {
+                toast.error(errorMessage, {
+                    duration: 6000,
+                    style: {
+                        maxWidth: '400px',
+                    },
+                });
+            } else {
+                toast.error(errorMessage);
+            }
         }
     };
 
@@ -213,10 +270,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const contextValue: UserContextType = useMemo(() => ({
         ...authState,
         signInWithGoogle: handleSignInWithGoogle,
+        signInWithGithub: handleSignInWithGithub,
         signOut: handleSignOut,
         updateDisplayName,
         refreshUserProfile,
-    }), [authState, handleSignInWithGoogle, handleSignOut, updateDisplayName, refreshUserProfile]);
+    }), [authState, handleSignInWithGoogle, handleSignInWithGithub, handleSignOut, updateDisplayName, refreshUserProfile]);
 
     return (
         <UserContext.Provider value={contextValue}>
