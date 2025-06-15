@@ -5,7 +5,8 @@ export interface User {
     email: string | null;
     displayName: string | null;
     photoURL: string | null;
-    provider: AuthProviderType;
+    providers: AuthProviderType[]; // Changed to array
+    primaryProvider: AuthProviderType; // The first provider used
     createdAt: Date;
     updatedAt: Date;
 }
@@ -15,8 +16,8 @@ export interface UserProfile {
     email: string;
     displayName: string;
     photoURL: string | null;
-    provider: AuthProviderType;
-    linkedProviders?: AuthProviderType[]; // List of all linked providers
+    providers: AuthProviderType[]; // Changed to array
+    primaryProvider: AuthProviderType; // The first provider used
     joinedBoards: string[];
     createdAt: Date;
     updatedAt: Date;

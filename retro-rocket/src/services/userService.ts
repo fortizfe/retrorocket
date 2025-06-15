@@ -32,7 +32,8 @@ export class UserService {
             email: userData.email,
             displayName: userData.displayName,
             photoURL: userData.photoURL || null,
-            provider: userData.provider,
+            providers: [userData.provider], // Initialize with single provider
+            primaryProvider: userData.provider, // Set as primary
             joinedBoards: [],
             createdAt: now,
             updatedAt: now,
@@ -60,7 +61,7 @@ export class UserService {
                 return {
                     ...data,
                     createdAt: data.createdAt?.toDate() || new Date(),
-                    updatedAt: data.updatedAt?.toDate() || new Date(),
+                    updatedAt: data.updatedAt?.toDate() ?? new Date(),
                 } as UserProfile;
             }
             return null;
@@ -153,7 +154,7 @@ export class UserService {
         return historySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            lastAccessed: doc.data().lastAccessed?.toDate() || new Date(),
+            lastAccessed: doc.data().lastAccessed?.toDate() ?? new Date(),
         })) as UserBoardHistory[];
     }
 
@@ -178,8 +179,75 @@ export class UserService {
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt?.toDate() || new Date(),
-            updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+            updatedAt: doc.data().updatedAt?.toDate() ?? new Date(),
         }));
+    }
+
+    async addProviderToUser(uid: string, newProvider: AuthProviderType): Promise<void> {
+        if (!db) {
+            throw new Error('Firestore is not initialized');
+        }
+
+        if (!this.isFirestoreInstance(db)) {
+            console.log('Mock: Added provider to user', uid, newProvider);
+            return;
+        }
+
+        // Get current user profile
+        const userProfile = await this.getUserProfile(uid);
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
+
+        // Check if provider is already linked
+        if (userProfile.providers.includes(newProvider)) {
+            throw new Error(`Provider ${newProvider} is already linked to this user`);
+        }
+
+        // Add the new provider to the list
+        const updatedProviders = [...userProfile.providers, newProvider];
+
+        await updateDoc(doc(db, 'users', uid), {
+            providers: updatedProviders,
+            updatedAt: new Date(),
+        });
+    }
+
+    async removeProviderFromUser(uid: string, providerToRemove: AuthProviderType): Promise<void> {
+        if (!db) {
+            throw new Error('Firestore is not initialized');
+        }
+
+        if (!this.isFirestoreInstance(db)) {
+            console.log('Mock: Removed provider from user', uid, providerToRemove);
+            return;
+        }
+
+        // Get current user profile
+        const userProfile = await this.getUserProfile(uid);
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
+
+        // Check if user has multiple providers
+        if (userProfile.providers.length <= 1) {
+            throw new Error('Cannot remove the only authentication provider');
+        }
+
+        // Remove the provider from the list
+        const updatedProviders = userProfile.providers.filter(p => p !== providerToRemove);
+
+        // Update primary provider if needed
+        let newPrimaryProvider = userProfile.primaryProvider;
+        if (userProfile.primaryProvider === providerToRemove) {
+            newPrimaryProvider = updatedProviders[0]; // Use the first remaining provider
+        }
+
+        await updateDoc(doc(db, 'users', uid), {
+            providers: updatedProviders,
+            primaryProvider: newPrimaryProvider,
+            updatedAt: new Date(),
+        });
     }
 }
 

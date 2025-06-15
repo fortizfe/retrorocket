@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { accountLinkingService } from '../services/accountLinking';
-import { useAuth } from './useAuth';
+import { useUser } from '../contexts/UserContext';
 import { AuthProviderType } from '../types/user';
 
 export interface LinkedProvidersInfo {
@@ -11,7 +11,7 @@ export interface LinkedProvidersInfo {
 }
 
 export const useLinkedProviders = (): LinkedProvidersInfo => {
-    const { user } = useAuth();
+    const { user, userProfile } = useUser();
     const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -23,8 +23,14 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
         setError(null);
 
         try {
-            const providers = await accountLinkingService.getLinkedProviders(user.email);
-            setLinkedProviders(providers);
+            // Use providers from user profile if available, otherwise fetch from Firebase
+            if (userProfile?.providers) {
+                const providerIds = userProfile.providers.map(provider => `${provider}.com`);
+                setLinkedProviders(providerIds);
+            } else {
+                const providers = await accountLinkingService.getLinkedProviders(user.email);
+                setLinkedProviders(providers);
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error al obtener proveedores vinculados';
             setError(errorMessage);
@@ -41,7 +47,7 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
             setLinkedProviders([]);
             setError(null);
         }
-    }, [user?.email]);
+    }, [user?.email, userProfile?.providers]);
 
     return {
         linkedProviders,

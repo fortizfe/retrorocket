@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { AuthProviderType } from '../types/user';
+import { userService } from './userService';
 
 export interface AccountLinkingResult {
     success: boolean;
@@ -94,6 +95,14 @@ export class AccountLinkingService {
         try {
             // Use linkWithPopup directly for authenticated users
             const result = await linkWithPopup(auth.currentUser, provider);
+
+            // Update the providers list in Firestore
+            try {
+                await userService.addProviderToUser(auth.currentUser.uid, providerType);
+            } catch (firestoreError) {
+                console.warn('Failed to update providers in Firestore:', firestoreError);
+                // Don't fail the whole operation if Firestore update fails
+            }
 
             return {
                 success: true,
@@ -216,6 +225,16 @@ export class AccountLinkingService {
             console.log('Linking new credential to existing account');
             const linkedUser = await linkWithCredential(existingUserResult.user, pendingCredential);
 
+            // Update the providers list in Firestore
+            try {
+                // Get provider type from the credential
+                const newProviderType = this.getProviderTypeFromCredential(pendingCredential);
+                await userService.addProviderToUser(linkedUser.user.uid, newProviderType);
+            } catch (firestoreError) {
+                console.warn('Failed to update providers in Firestore:', firestoreError);
+                // Don't fail the whole operation if Firestore update fails
+            }
+
             return {
                 success: true,
                 user: linkedUser.user,
@@ -283,6 +302,22 @@ export class AccountLinkingService {
                 return 'apple';
             default:
                 throw new Error(`Método de inicio de sesión no soportado: ${signInMethod}`);
+        }
+    }
+
+    /**
+     * Maps Firebase credential to our provider type
+     */
+    private getProviderTypeFromCredential(credential: AuthCredential): AuthProviderType {
+        switch (credential.providerId) {
+            case 'google.com':
+                return 'google';
+            case 'github.com':
+                return 'github';
+            case 'apple.com':
+                return 'apple';
+            default:
+                throw new Error(`Proveedor no soportado: ${credential.providerId}`);
         }
     }
 

@@ -108,7 +108,7 @@ const ProfilePage: React.FC = () => {
                                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                                     <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Proveedor principal</div>
                                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {userProfile?.provider && getProviderName(userProfile.provider)}
+                                        {userProfile?.primaryProvider && getProviderName(userProfile.primaryProvider)}
                                     </div>
                                 </div>
                             </div>
