@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LayoutGrid } from 'lucide-react';
+import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { userService } from '../services/userService';
 import { useRetrospective } from '../hooks/useRetrospective';
@@ -9,6 +9,7 @@ import { addParticipant } from '../services/participantService';
 import { incrementParticipantCount } from '../services/retrospectiveService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
+import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import toast from 'react-hot-toast';
@@ -22,6 +23,7 @@ interface Board {
     participantCount: number;
     isActive: boolean;
     createdBy: string;
+    isCreator?: boolean;
 }
 
 const DashboardPage: React.FC = () => {
@@ -29,6 +31,7 @@ const DashboardPage: React.FC = () => {
     const [boards, setBoards] = useState<Board[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showJoinModal, setShowJoinModal] = useState(false);
     const [newBoardTitle, setNewBoardTitle] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const navigate = useNavigate();
@@ -140,13 +143,23 @@ const DashboardPage: React.FC = () => {
                                 Gestiona y accede a todas tus retrospectivas
                             </p>
                         </div>
-                        <Button
-                            onClick={() => setShowCreateForm(true)}
-                            className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Nuevo Tablero
-                        </Button>
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => setShowJoinModal(true)}
+                                variant="outline"
+                                className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
+                            >
+                                <Users className="w-5 h-5" />
+                                Unirse a Retrospectiva
+                            </Button>
+                            <Button
+                                onClick={() => setShowCreateForm(true)}
+                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Nuevo Tablero
+                            </Button>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -205,6 +218,12 @@ const DashboardPage: React.FC = () => {
                     </motion.div>
                 )}
 
+                {/* Join Retrospective Modal */}
+                <JoinRetrospectiveModal
+                    isOpen={showJoinModal}
+                    onClose={() => setShowJoinModal(false)}
+                />
+
                 {/* Boards Grid */}
                 {boards.length === 0 ? (
                     <motion.div
@@ -219,15 +238,25 @@ const DashboardPage: React.FC = () => {
                             No tienes tableros aún
                         </h3>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Crea tu primer tablero de retrospectiva para comenzar
+                            Crea tu primer tablero de retrospectiva o únete a uno existente
                         </p>
-                        <Button
-                            onClick={() => setShowCreateForm(true)}
-                            className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 mx-auto shadow-soft"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Crear mi primer tablero
-                        </Button>
+                        <div className="flex gap-3 justify-center">
+                            <Button
+                                onClick={() => setShowJoinModal(true)}
+                                variant="outline"
+                                className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
+                            >
+                                <Users className="w-5 h-5" />
+                                Unirse a Retrospectiva
+                            </Button>
+                            <Button
+                                onClick={() => setShowCreateForm(true)}
+                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Crear mi primer tablero
+                            </Button>
+                        </div>
                     </motion.div>
                 ) : (
                     <motion.div

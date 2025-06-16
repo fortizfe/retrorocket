@@ -168,19 +168,60 @@ export class UserService {
             return [];
         }
 
-        const boardsQuery = query(
+        // Get user profile to access joinedBoards
+        const userProfile = await this.getUserProfile(userId);
+        const joinedBoardIds = userProfile?.joinedBoards || [];
+
+        // Get boards created by user
+        const createdBoardsQuery = query(
             collection(db, 'retrospectives'),
             where('createdBy', '==', userId),
             orderBy('createdAt', 'desc')
         );
 
-        const boardsSnapshot = await getDocs(boardsQuery);
-        return boardsSnapshot.docs.map(doc => ({
+        const createdBoardsSnapshot = await getDocs(createdBoardsQuery);
+        const createdBoards = createdBoardsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate() || new Date(),
+            createdAt: doc.data().createdAt?.toDate() ?? new Date(),
             updatedAt: doc.data().updatedAt?.toDate() ?? new Date(),
+            isCreator: true
         }));
+
+        // Get joined boards (excluding ones created by user)
+        const joinedBoards: any[] = [];
+        if (joinedBoardIds.length > 0) {
+            // Firestore 'in' queries have a limit of 10 items
+            const chunks = [];
+            for (let i = 0; i < joinedBoardIds.length; i += 10) {
+                chunks.push(joinedBoardIds.slice(i, i + 10));
+            }
+
+            for (const chunk of chunks) {
+                const joinedBoardsQuery = query(
+                    collection(db, 'retrospectives'),
+                    where('__name__', 'in', chunk),
+                    orderBy('updatedAt', 'desc')
+                );
+
+                const joinedBoardsSnapshot = await getDocs(joinedBoardsQuery);
+                const chunkBoards = joinedBoardsSnapshot.docs
+                    .filter(doc => doc.data().createdBy !== userId) // Exclude boards created by user
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        createdAt: doc.data().createdAt?.toDate() ?? new Date(),
+                        updatedAt: doc.data().updatedAt?.toDate() ?? new Date(),
+                        isCreator: false
+                    }));
+
+                joinedBoards.push(...chunkBoards);
+            }
+        }
+
+        // Combine and sort all boards by updated date
+        const allBoards = [...createdBoards, ...joinedBoards];
+        return allBoards.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
 
     async addProviderToUser(uid: string, newProvider: AuthProviderType): Promise<void> {
@@ -251,6 +292,66 @@ export class UserService {
             primaryProvider: newPrimaryProvider,
             updatedAt: new Date(),
         });
+    }
+
+    async addJoinedBoard(uid: string, boardId: string): Promise<void> {
+        if (!db) {
+            throw new Error('Firestore is not initialized');
+        }
+
+        if (!this.isFirestoreInstance(db)) {
+            console.log('Mock: Added joined board to user', uid, boardId);
+            return;
+        }
+
+        // Get current user profile
+        const userProfile = await this.getUserProfile(uid);
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
+
+        // Check if board is already in joined boards
+        if (userProfile.joinedBoards && userProfile.joinedBoards.includes(boardId)) {
+            console.log(`Board ${boardId} is already in user's joined boards, skipping`);
+            return; // Don't throw error, just skip silently
+        }
+
+        // Add the board to the joinedBoards array
+        const updatedJoinedBoards = [...(userProfile.joinedBoards || []), boardId];
+
+        await updateDoc(doc(db, 'users', uid), {
+            joinedBoards: updatedJoinedBoards,
+            updatedAt: new Date(),
+        });
+
+        console.log(`Successfully added board ${boardId} to user's joined boards`);
+    }
+
+    async removeJoinedBoard(uid: string, boardId: string): Promise<void> {
+        if (!db) {
+            throw new Error('Firestore is not initialized');
+        }
+
+        if (!this.isFirestoreInstance(db)) {
+            console.log('Mock: Removed joined board from user', uid, boardId);
+            return;
+        }
+
+        // Get current user profile
+        const userProfile = await this.getUserProfile(uid);
+        if (!userProfile) {
+            throw new Error('User profile not found');
+        }
+
+        // Remove the board from joinedBoards array
+        const updatedJoinedBoards = (userProfile.joinedBoards || []).filter(id => id !== boardId);
+
+        await updateDoc(doc(db, 'users', uid), {
+            joinedBoards: updatedJoinedBoards,
+            updatedAt: new Date(),
+        });
+
+        console.log(`Successfully removed board ${boardId} from user's joined boards`);
     }
 }
 

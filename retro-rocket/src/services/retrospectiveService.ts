@@ -129,10 +129,10 @@ export const subscribeToRetrospective = (
     });
 };
 
-export const incrementParticipantCount = async (retrospectiveId: string): Promise<void> => {
+export const incrementParticipantCount = async (id: string): Promise<void> => {
     try {
         const firestore = ensureFirestore();
-        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.RETROSPECTIVES, id);
         await updateDoc(docRef, {
             participantCount: increment(1),
             updatedAt: serverTimestamp()
@@ -140,6 +140,56 @@ export const incrementParticipantCount = async (retrospectiveId: string): Promis
     } catch (error) {
         console.error("Error incrementing participant count: ", error);
         throw new Error("Could not update participant count");
+    }
+};
+
+/**
+ * Joins a user to an existing retrospective by its ID
+ * @param boardId - The ID of the retrospective to join
+ * @param userId - The user ID of the person joining
+ * @param userName - The display name of the user joining
+ * @returns Promise<Retrospective> - The retrospective data if successful
+ * @throws Error if the retrospective doesn't exist or user can't join
+ */
+export const joinRetrospectiveById = async (
+    boardId: string,
+    userId: string,
+    userName: string
+): Promise<Retrospective> => {
+    try {
+        const firestore = ensureFirestore();
+
+        // First, verify the retrospective exists and is active
+        const retrospective = await getRetrospective(boardId);
+        if (!retrospective) {
+            throw new Error('El tablero especificado no existe o no está disponible');
+        }
+
+        if (!retrospective.isActive) {
+            throw new Error('Este tablero ya no está activo');
+        }
+
+        // Check if user is already a participant to avoid duplicates
+        const participantsQuery = query(
+            collection(firestore, FIRESTORE_COLLECTIONS.PARTICIPANTS),
+            where('retrospectiveId', '==', boardId),
+            where('userId', '==', userId)
+        );
+
+        const existingParticipants = await getDocs(participantsQuery);
+
+        if (!existingParticipants.empty) {
+            // User is already a participant, just return the retrospective
+            return retrospective;
+        }
+
+        return retrospective;
+    } catch (error) {
+        console.error("Error joining retrospective: ", error);
+        if (error instanceof Error) {
+            throw error; // Re-throw the original error with its message
+        }
+        throw new Error("No se pudo unir a la retrospectiva");
     }
 };
 
