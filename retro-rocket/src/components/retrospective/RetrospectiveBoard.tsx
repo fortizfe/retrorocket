@@ -5,6 +5,7 @@ import GroupableColumn from './GroupableColumn';
 import UnifiedExporter from './UnifiedExporter';
 import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
+import { ResponsiveParticipantDisplay } from '../participants';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useParticipants } from '../../hooks/useParticipants';
@@ -158,26 +159,11 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                         </div>
                     </div>
 
-                    {/* Participants list */}
+                    {/* Participants display */}
                     {!participantsLoading && participants.length > 0 && (
-                        <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-600 dark:text-slate-300">Participantes:</span>
-                            <div className="flex items-center space-x-2">
-                                {participants.slice(0, 5).map((participant) => (
-                                    <span
-                                        key={participant.id}
-                                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                                    >
-                                        {participant.name}
-                                    </span>
-                                ))}
-                                {participants.length > 5 && (
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                        +{participants.length - 5} más
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                        <ResponsiveParticipantDisplay
+                            participants={participants}
+                        />
                     )}
                 </div>
 
