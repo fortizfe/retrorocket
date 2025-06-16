@@ -61,7 +61,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
                         <UserAvatar
                             user={{
                                 name: participant.name,
-                                photoURL: null // Por ahora no tenemos photoURL en Participant
+                                photoURL: participant.photoURL
                             }}
                             size={size}
                             className="ring-2 ring-white dark:ring-slate-800"

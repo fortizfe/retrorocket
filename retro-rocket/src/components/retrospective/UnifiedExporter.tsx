@@ -244,7 +244,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                 {/* Unified Export Modal */}
                 <AnimatePresence>
                     {showModal && (
-                        <div className="fixed inset-0 z-50 overflow-y-auto">
+                        <div className="fixed inset-0 z-[9999] overflow-y-auto">
                             <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -257,7 +257,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                    className="relative transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl"
+                                    className="relative transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl z-[9999]"
                                 >
                                     {/* Modal Header */}
                                     <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">

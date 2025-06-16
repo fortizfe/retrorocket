@@ -50,7 +50,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                                 <UserAvatar
                                     user={{
                                         name: participant.name,
-                                        photoURL: null
+                                        photoURL: participant.photoURL
                                     }}
                                     size="md"
                                 />

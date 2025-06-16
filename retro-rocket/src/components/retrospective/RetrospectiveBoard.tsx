@@ -1,11 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Clock } from 'lucide-react';
 import GroupableColumn from './GroupableColumn';
-import UnifiedExporter from './UnifiedExporter';
 import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
-import { ResponsiveParticipantDisplay } from '../participants';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useParticipants } from '../../hooks/useParticipants';
@@ -51,8 +48,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     });
 
     const {
-        participants,
-        loading: participantsLoading
+        participants
     } = useParticipants(retrospective.id);
 
     // Get current user's name from participants
@@ -119,52 +115,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
             <div className="h-full flex flex-col">
                 {/* Header with info */}
                 <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-                                {retrospective.title}
-                            </h1>
-                            {retrospective.description && (
-                                <p className="text-slate-600 dark:text-slate-300">{retrospective.description}</p>
-                            )}
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            {/* Export Buttons */}
-                            <div className="flex items-center space-x-2">
-                                <UnifiedExporter
-                                    retrospective={retrospective}
-                                    cards={cards}
-                                    groups={groups}
-                                    participants={participants}
-                                    variant="button"
-                                    className="hidden sm:flex"
-                                />
-                            </div>
-
-                            {/* Stats */}
-                            <div className="flex items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
-                                <div className="flex items-center space-x-1">
-                                    <Users size={16} />
-                                    <span>
-                                        {participantsLoading ? '...' : participants.length} participantes
-                                    </span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                    <Clock size={16} />
-                                    <span>
-                                        {retrospective.createdAt && new Date(retrospective.createdAt).toLocaleDateString('es-ES')}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Participants display */}
-                    {!participantsLoading && participants.length > 0 && (
-                        <ResponsiveParticipantDisplay
-                            participants={participants}
-                        />
-                    )}
                 </div>
 
                 {/* Board Grid */}

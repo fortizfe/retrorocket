@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CompactAvatarGroup, ParticipantPopover } from './index';
 import { Participant } from '../../types/participant';
+import { useEnrichedParticipants } from '../../hooks/useEnrichedParticipants';
 
 interface ResponsiveParticipantDisplayProps {
     participants: Participant[];
@@ -13,6 +14,7 @@ const ResponsiveParticipantDisplay: React.FC<ResponsiveParticipantDisplayProps> 
 }) => {
     const [showPopover, setShowPopover] = useState(false);
     const [maxVisible, setMaxVisible] = useState(5);
+    const { enrichedParticipants } = useEnrichedParticipants(participants);
 
     // Update maxVisible based on screen size
     useEffect(() => {
@@ -39,16 +41,19 @@ const ResponsiveParticipantDisplay: React.FC<ResponsiveParticipantDisplayProps> 
         return null;
     }
 
+    // Use enriched participants if available, fallback to original
+    const displayParticipants = enrichedParticipants.length > 0 ? enrichedParticipants : participants;
+
     return (
         <div className={className}>
             <ParticipantPopover
-                participants={participants}
+                participants={displayParticipants}
                 isOpen={showPopover}
                 onClose={() => setShowPopover(false)}
                 position="bottom"
             >
                 <CompactAvatarGroup
-                    participants={participants}
+                    participants={displayParticipants}
                     maxVisible={maxVisible}
                     size="md"
                     showCount={true}

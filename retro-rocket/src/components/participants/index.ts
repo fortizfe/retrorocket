@@ -3,3 +3,4 @@ export { default as CompactAvatarGroup } from './CompactAvatarGroup';
 export { default as ParticipantList } from './ParticipantList';
 export { default as ParticipantPopover } from './ParticipantPopover';
 export { default as ResponsiveParticipantDisplay } from './ResponsiveParticipantDisplay';
+export { useEnrichedParticipants } from '../../hooks/useEnrichedParticipants';

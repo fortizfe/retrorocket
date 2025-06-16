@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 import RetrospectiveBoard from '../components/retrospective/RetrospectiveBoard';
+import ExportButtonGroup from '../components/retrospective/ExportButtonGroup';
+import { ResponsiveParticipantDisplay } from '../components/participants';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
@@ -21,7 +23,7 @@ const RetrospectivePageContent: React.FC = () => {
     const joinAttemptRef = useRef(false);
 
     const { retrospective, loading: retroLoading, error: retroError } = useRetrospective(id);
-    const { addParticipant, setInactive } = useParticipants(id);
+    const { addParticipant, setInactive, participants } = useParticipants(id);
     const { uid, fullName, isReady } = useCurrentUser();
 
     // Auto-join when user is ready and hasn't joined yet
@@ -196,17 +198,33 @@ const RetrospectivePageContent: React.FC = () => {
                                 <ArrowLeft className="w-4 h-4" />
                                 Volver
                             </Button>
-                            <div>
-                                <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                    {retrospective.title}
-                                </h1>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">
-                                    Conectado como: {fullName}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <div>
+                                    <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                        {retrospective.title}
+                                    </h1>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                                        Conectado como: {fullName}
+                                    </p>
+                                </div>
+                                {/* Lista de participantes al lado del título */}
+                                <div className="ml-4">
+                                    <ResponsiveParticipantDisplay
+                                        participants={participants || []}
+                                        className="flex items-center"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        </div>                        <div className="flex items-center gap-2">
+                            {/* Botón de exportación - primera posición */}
+                            <ExportButtonGroup
+                                retrospective={retrospective}
+                                cards={[]}
+                                groups={[]}
+                                participants={participants || []}
+                                className="flex items-center gap-2"
+                            />
 
-                        <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -216,6 +234,7 @@ const RetrospectivePageContent: React.FC = () => {
                                 <Copy className="w-4 h-4" />
                                 Copiar ID
                             </Button>
+
                             <Button
                                 variant="outline"
                                 size="sm"
