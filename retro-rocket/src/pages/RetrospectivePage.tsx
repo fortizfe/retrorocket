@@ -13,6 +13,7 @@ import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
+import { Card, CardGroup } from '../types/card';
 
 const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -25,6 +26,16 @@ const RetrospectivePageContent: React.FC = () => {
     const { retrospective, loading: retroLoading, error: retroError } = useRetrospective(id);
     const { addParticipant, setInactive, participants } = useParticipants(id);
     const { uid, fullName, isReady } = useCurrentUser();
+
+    // State for export data
+    const [exportCards, setExportCards] = useState<Card[]>([]);
+    const [exportGroups, setExportGroups] = useState<CardGroup[]>([]);
+
+    // Handle data changes from RetrospectiveBoard for export
+    const handleDataChange = (cards: Card[], groups: CardGroup[]) => {
+        setExportCards(cards);
+        setExportGroups(groups);
+    };
 
     // Auto-join when user is ready and hasn't joined yet
     useEffect(() => {
@@ -220,8 +231,8 @@ const RetrospectivePageContent: React.FC = () => {
                             {/* Botón de exportación - primera posición */}
                             <ExportButtonGroup
                                 retrospective={retrospective}
-                                cards={[]}
-                                groups={[]}
+                                cards={exportCards}
+                                groups={exportGroups}
                                 participants={participants || []}
                                 className="flex items-center gap-2"
                             />
@@ -266,6 +277,7 @@ const RetrospectivePageContent: React.FC = () => {
                         <RetrospectiveBoard
                             retrospective={retrospective}
                             currentUser={fullName}
+                            onDataChange={handleDataChange}
                         />
                     </motion.div>
                 </div>

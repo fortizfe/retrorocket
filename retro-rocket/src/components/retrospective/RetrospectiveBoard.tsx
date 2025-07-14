@@ -7,17 +7,19 @@ import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useParticipants } from '../../hooks/useParticipants';
 import { Retrospective } from '../../types/retrospective';
-import { Card as CardType, CreateCardInput, EmojiReaction } from '../../types/card';
+import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
 import { COLUMNS, COLUMN_ORDER } from '../../utils/constants';
 
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
+    onDataChange?: (cards: CardType[], groups: CardGroup[]) => void;
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     retrospective,
-    currentUser
+    currentUser,
+    onDataChange
 }) => {
     const {
         cards,
@@ -86,6 +88,13 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const handleCardsReorder = async (updates: Array<{ cardId: string; order: number; column?: string }>) => {
         await reorderCards(updates);
     };
+
+    // Notify parent component about data changes for export functionality
+    React.useEffect(() => {
+        if (onDataChange && cards && groups) {
+            onDataChange(cards, groups);
+        }
+    }, [cards, groups, onDataChange]);
 
     if (cardsLoading) {
         return (

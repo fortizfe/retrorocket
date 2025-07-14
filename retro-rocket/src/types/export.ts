@@ -1,5 +1,5 @@
 // Interfaces compartidas para exportación unificada
-export type ExportFormat = 'pdf' | 'txt';
+export type ExportFormat = 'pdf' | 'txt' | 'docx';
 
 export type SortOrder = 'original' | 'alphabetical' | 'votes' | 'likes';
 
@@ -35,6 +35,11 @@ export interface UnifiedExportOptions {
     txtOptions?: {
         encoding?: 'utf-8' | 'latin1';
         lineEnding?: 'unix' | 'windows';
+    };
+
+    docxOptions?: {
+        pageSize?: 'a4' | 'letter';
+        orientation?: 'portrait' | 'landscape';
     };
 }
 

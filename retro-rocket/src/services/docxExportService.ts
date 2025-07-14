@@ -23,6 +23,8 @@ import { getCardColorHex } from '../utils/cardColors';
 export interface DocxExportOptions {
     includeParticipants?: boolean;
     includeStatistics?: boolean;
+    includeCardAuthors?: boolean;
+    includeReactions?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
     facilitatorNotes?: string;
@@ -496,7 +498,7 @@ export class DocxExportService {
                     })
                 ] : []),
                 new TextRun({
-                    text: card.content,
+                    text: card.content?.trim() || '[Sin contenido]',
                     size: 20
                 })
             ],

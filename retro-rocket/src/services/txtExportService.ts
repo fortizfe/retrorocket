@@ -148,21 +148,18 @@ export class TxtExportService {
 
             lines.push(`${column.title.toUpperCase()}:`);
             lines.push('-'.repeat(column.title.length + 1));
+            lines.push(`${column.description}`);
+            lines.push(''); columnCards.forEach((card, index) => {
+                // Ensure card content exists and is not empty
+                const cardContent = card.content?.trim() || '[Sin contenido]';
 
-            columnCards.forEach((card, index) => {
-                lines.push(`${index + 1}. ${card.content}`);
+                lines.push(`${index + 1}. ${cardContent}`);
 
-                if (options.includeCardAuthors && card.createdBy) {
-                    lines.push(`   Autor: ${card.createdBy}`);
-                }
-
-                if (card.votes && card.votes > 0) {
-                    lines.push(`   Votos: ${card.votes}`);
-                }
-
-                if (card.likes && card.likes.length > 0) {
-                    lines.push(`   Likes: ${card.likes.length}`);
-                }
+                // Add metadata based on options
+                const metadata = this.buildCardMetadata(card, options);
+                metadata.forEach(meta => {
+                    lines.push(`   ${meta}`);
+                });
 
                 lines.push('');
             });
@@ -172,14 +169,48 @@ export class TxtExportService {
     }
 
     /**
+     * Build card metadata based on options
+     */
+    private buildCardMetadata(card: Card, options: TxtExportOptions): string[] {
+        const metadata: string[] = [];
+
+        // Author
+        if (options.includeCardAuthors && card.createdBy?.trim()) {
+            metadata.push(`Autor: ${card.createdBy}`);
+        }
+
+        // Votes
+        if (card.votes && card.votes > 0) {
+            metadata.push(`Votos: ${card.votes}`);
+        }
+
+        // Likes
+        const likesCount = card.likes?.length || 0;
+        if (likesCount > 0) {
+            metadata.push(`Likes: ${likesCount}`);
+        }
+
+        // Other reactions
+        const totalReactions = card.reactions?.length || 0;
+        const reactionsCount = totalReactions - likesCount;
+        if (reactionsCount > 0) {
+            metadata.push(`Otras reacciones: ${reactionsCount}`);
+        }
+
+        return metadata;
+    }
+
+    /**
      * Add groups section
      */
     private addGroups(lines: string[], data: RetrospectiveTxtData): void {
         lines.push('AGRUPACIONES:');
         lines.push('-'.repeat(20));
+        lines.push('');
 
         data.groups.forEach((group, index) => {
-            lines.push(`${index + 1}. ${group.title ?? 'Grupo sin título'}`);
+            const groupTitle = group.title?.trim() || `Grupo ${index + 1}`;
+            lines.push(`${index + 1}. ${groupTitle}`);
 
             // Get all cards in this group (head card + member cards)
             const allCardIds = [group.headCardId, ...group.memberCardIds];
@@ -187,10 +218,31 @@ export class TxtExportService {
                 allCardIds.includes(card.id)
             );
 
-            lines.push(`   Tarjetas (${groupCards.length}):`);
-            groupCards.forEach(card => {
-                lines.push(`   - ${card.content}`);
+            // Find head card
+            const headCard = groupCards.find(card => card.id === group.headCardId);
+            const memberCards = groupCards.filter(card => card.id !== group.headCardId);
+
+            lines.push(`   Tarjetas agrupadas: ${groupCards.length}`);
+
+            // Show head card first
+            if (headCard) {
+                const headContent = headCard.content?.trim() || '[Sin contenido]';
+                lines.push(`   ★ Principal: ${headContent}`);
+            }
+
+            // Show member cards
+            memberCards.forEach(card => {
+                const cardContent = card.content?.trim() || '[Sin contenido]';
+                lines.push(`   - ${cardContent}`);
             });
+
+            // Group statistics
+            const totalVotes = groupCards.reduce((sum, card) => sum + (card.votes || 0), 0);
+            const totalLikes = groupCards.reduce((sum, card) => sum + (card.likes?.length || 0), 0);
+
+            if (totalVotes > 0 || totalLikes > 0) {
+                lines.push(`   Estadísticas: ${totalVotes} votos, ${totalLikes} likes`);
+            }
 
             lines.push('');
         });

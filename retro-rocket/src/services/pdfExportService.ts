@@ -329,7 +329,7 @@ export class PdfExportService {
 
         // Add ungrouped cards
         ungroupedCards.forEach(card => {
-            this.addCardSection(card, false);
+            this.addCardSection(card, false, false, options);
         });
 
         this.currentY += 10;
@@ -380,12 +380,12 @@ export class PdfExportService {
 
         // Add head card first
         if (headCard) {
-            this.addCardSection(headCard, true, true);
+            this.addCardSection(headCard, true, true, options);
         }
 
         // Add member cards with indentation
         memberCards.forEach(card => {
-            this.addCardSection(card, true, false);
+            this.addCardSection(card, true, false, options);
         });
 
         this.currentY += 5;
@@ -394,7 +394,7 @@ export class PdfExportService {
     /**
      * Add a single card section
      */
-    private addCardSection(card: Card, isGrouped: boolean = false, isHeadCard: boolean = false): void {
+    private addCardSection(card: Card, isGrouped: boolean = false, isHeadCard: boolean = false, options: ExportOptions = {}): void {
         // Check if we need a new page
         if (this.currentY > this.pageHeight - 30) {
             this.pdf.addPage();
@@ -404,6 +404,14 @@ export class PdfExportService {
         const leftMargin = this.margin + (isGrouped ? (isHeadCard ? 10 : 20) : 0);
         const cardWidth = this.pageWidth - leftMargin - this.margin;
 
+        // Ensure card content exists and is not empty
+        const cardContent = card.content?.trim() || '[Sin contenido]';
+
+        // Calculate card height based on content and metadata
+        const contentLines = this.wrapText(cardContent, cardWidth - 10);
+        const metadata = this.buildCardMetadata(card, options);
+        const estimatedHeight = (contentLines.length * 4) + (metadata.length > 0 ? 8 : 0) + (isHeadCard ? 8 : 4) + 10;
+
         // Card background color
         const cardColor = card.color || 'pastelWhite';
         const hexColor = getCardColorHex(cardColor);
@@ -411,51 +419,78 @@ export class PdfExportService {
             const rgb = this.hexToRgb(hexColor);
             if (rgb) {
                 this.pdf.setFillColor(rgb.r, rgb.g, rgb.b);
-                this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, 15, 1, 1, 'F');
+                this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, estimatedHeight, 2, 2, 'F');
             }
         }
 
         // Card border
         this.pdf.setDrawColor(229, 231, 235);
-        this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, 15, 1, 1, 'D');
+        this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, estimatedHeight, 2, 2, 'D');
 
         // Head card indicator
         if (isHeadCard) {
             this.pdf.setFont('helvetica', 'bold');
             this.pdf.setFontSize(8);
             this.pdf.setTextColor(59, 130, 246);
-            this.addText('Principal', leftMargin, this.currentY - 1);
-            this.currentY += 3;
+            this.addText('★ Principal', leftMargin, this.currentY);
+            this.currentY += 6;
         }
 
-        // Card content
+        // Card content - Main content with better formatting
         this.pdf.setFont('helvetica', 'normal');
         this.pdf.setFontSize(10);
         this.pdf.setTextColor(0, 0, 0);
 
-        const contentLines = this.wrapText(card.content, cardWidth - 5);
         contentLines.forEach(line => {
-            this.addText(line, leftMargin, this.currentY);
+            this.addText(line, leftMargin + 2, this.currentY);
             this.currentY += 4;
         });
 
-        // Card metadata
-        this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setFontSize(8);
-        this.pdf.setTextColor(107, 114, 128);
+        // Add some space between content and metadata
+        this.currentY += 2;
 
-        const metadata = [];
-        if (card.createdBy) metadata.push(`${card.createdBy}`);
-        if (card.votes && card.votes > 0) metadata.push(`${card.votes} votos`);
-        if (card.likes && card.likes.length > 0) metadata.push(`${card.likes.length} likes`);
-        if (card.reactions && card.reactions.length > 0) metadata.push(`${card.reactions.length} reacciones`);
-
+        // Card metadata (only if options allow it)
         if (metadata.length > 0) {
-            this.addText(metadata.join(' - '), leftMargin, this.currentY);
+            this.pdf.setFont('helvetica', 'normal');
+            this.pdf.setFontSize(8);
+            this.pdf.setTextColor(107, 114, 128);
+            this.addText(metadata.join(' • '), leftMargin + 2, this.currentY);
             this.currentY += 4;
         }
 
         this.currentY += 6;
+    }
+
+    /**
+     * Build card metadata based on options
+     */
+    private buildCardMetadata(card: Card, options: ExportOptions): string[] {
+        const metadata = [];
+
+        // Author
+        if (card.createdBy?.trim()) {
+            metadata.push(`Por: ${card.createdBy}`);
+        }
+
+        // Votes
+        if (card.votes && card.votes > 0) {
+            metadata.push(`${card.votes} voto${card.votes !== 1 ? 's' : ''}`);
+        }
+
+        // Likes
+        const likesCount = card.likes?.length || 0;
+        if (likesCount > 0) {
+            metadata.push(`${likesCount} like${likesCount !== 1 ? 's' : ''}`);
+        }
+
+        // Other reactions count
+        const totalReactions = card.reactions?.length || 0;
+        const reactionsCount = totalReactions - likesCount;
+        if (reactionsCount > 0) {
+            metadata.push(`${reactionsCount} reaccion${reactionsCount !== 1 ? 'es' : ''}`);
+        }
+
+        return metadata;
     }
 
     /**

@@ -198,7 +198,8 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
 
     const formatIcons = {
         pdf: FileText,
-        txt: File
+        txt: File,
+        docx: FileText
     };
 
     return (
@@ -257,12 +258,13 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                     <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
                                         Formato de exportación
                                     </h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {(['pdf', 'txt'] as ExportFormat[]).map((format) => {
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {(['pdf', 'txt', 'docx'] as ExportFormat[]).map((format) => {
                                             const Icon = formatIcons[format];
                                             const descriptions = {
                                                 pdf: 'Documento portable, ideal para imprimir y archivar',
-                                                txt: 'Archivo de texto plano, simple y universal'
+                                                txt: 'Archivo de texto plano, simple y universal',
+                                                docx: 'Documento Word, editable y con formato avanzado'
                                             };
                                             return (
                                                 <button
