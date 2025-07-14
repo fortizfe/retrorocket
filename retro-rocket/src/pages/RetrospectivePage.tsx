@@ -187,6 +187,7 @@ const RetrospectivePageContent: React.FC = () => {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="flex items-center justify-between mb-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg p-4 shadow-sm"
+                        style={{ zIndex: 'auto' }}
                     >
                         <div className="flex items-center gap-4">
                             <Button

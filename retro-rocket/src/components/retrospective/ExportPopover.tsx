@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -42,6 +43,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
     const popoverRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLDivElement>(null);
     const [popoverPosition, setPopoverPosition] = useState(position);
+    const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
     const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
     const [options, setOptions] = useState<UnifiedExportOptions>({
         format: 'pdf',
@@ -100,33 +102,69 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
         };
     }, [isOpen, onClose]);
 
-    // Auto-adjust position based on viewport
+    // Auto-adjust position based on viewport and update on scroll
     useEffect(() => {
-        if (isOpen && popoverRef.current && triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            const popoverHeight = 600; // Estimated height for expanded export popover
-            const viewportHeight = window.innerHeight;
+        const updatePosition = () => {
+            if (isOpen && triggerRef.current) {
+                const rect = triggerRef.current.getBoundingClientRect();
+                setTriggerRect(rect);
+                const popoverHeight = 600; // Estimated height for expanded export popover
+                const viewportHeight = window.innerHeight;
 
-            // Check if there's enough space below
-            if (rect.bottom + popoverHeight > viewportHeight && rect.top > popoverHeight) {
-                setPopoverPosition('top');
-            } else {
-                setPopoverPosition('bottom');
+                // Check if there's enough space below
+                if (rect.bottom + popoverHeight > viewportHeight && rect.top > popoverHeight) {
+                    setPopoverPosition('top');
+                } else {
+                    setPopoverPosition('bottom');
+                }
             }
+        };
+
+        if (isOpen) {
+            updatePosition();
+
+            // Add scroll listeners to keep popover positioned correctly
+            window.addEventListener('scroll', updatePosition, true);
+            window.addEventListener('resize', updatePosition);
         }
+
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
     }, [isOpen]);
 
-    const getPositionClasses = () => {
+    const getPositionStyles = (): React.CSSProperties => {
+        if (!triggerRect) return {};
+
+        const left = triggerRect.left + triggerRect.width / 2;
+
         switch (popoverPosition) {
             case 'top':
-                return 'bottom-full mb-2 left-1/2 transform -translate-x-1/2';
+                return {
+                    top: triggerRect.top - 8,
+                    left: left,
+                    transform: 'translateX(-50%) translateY(-100%)'
+                };
             case 'left':
-                return 'right-full mr-2 top-1/2 transform -translate-y-1/2';
+                return {
+                    top: triggerRect.top + triggerRect.height / 2,
+                    left: triggerRect.left - 8,
+                    transform: 'translateX(-100%) translateY(-50%)'
+                };
             case 'right':
-                return 'left-full ml-2 top-1/2 transform -translate-y-1/2';
+                return {
+                    top: triggerRect.top + triggerRect.height / 2,
+                    left: triggerRect.right + 8,
+                    transform: 'translateY(-50%)'
+                };
             case 'bottom':
             default:
-                return 'top-full mt-2 left-1/2 transform -translate-x-1/2';
+                return {
+                    top: triggerRect.bottom + 8,
+                    left: left,
+                    transform: 'translateX(-50%)'
+                };
         }
     };
 
@@ -171,9 +209,12 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
             </div>
 
             {/* Popover */}
-            <AnimatePresence>
-                {isOpen && (
-                    <div className={`absolute z-[9999] ${getPositionClasses()}`}>
+            {isOpen && createPortal(
+                <AnimatePresence>
+                    <div
+                        className="fixed z-[99999]"
+                        style={triggerRect ? getPositionStyles() : {}}
+                    >
                         {/* Arrow */}
                         <div
                             className={`absolute w-0 h-0 border-4 ${getArrowClasses()}`}
@@ -499,8 +540,9 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                             </div>
                         </motion.div>
                     </div>
-                )}
-            </AnimatePresence>
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };
