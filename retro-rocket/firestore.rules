@@ -31,5 +31,24 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
       allow delete: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
+    
+    // Reglas para countdown timers - solo el creador del retrospective puede escribir
+    match /countdown_timers/{retrospectiveId} {
+      // Todos pueden leer el estado del temporizador
+      allow read: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      
+      // Solo el creador del retrospective puede crear/modificar el temporizador
+      allow create: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.createdBy;
+                   
+      allow update: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.createdBy;
+                   
+      allow delete: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.createdBy;
+    }
   }
 }

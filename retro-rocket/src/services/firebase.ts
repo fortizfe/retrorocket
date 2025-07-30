@@ -55,7 +55,8 @@ export const FIRESTORE_COLLECTIONS = {
   RETROSPECTIVES: 'retrospectives',
   CARDS: 'cards',
   PARTICIPANTS: 'participants',
-  USERS: 'users'
+  USERS: 'users',
+  COUNTDOWN_TIMERS: 'countdown_timers'
 } as const;
 
 export { db, auth, onAuthStateChanged, isDevMode };

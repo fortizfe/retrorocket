@@ -8,6 +8,7 @@ import Loading from '../components/ui/Loading';
 import RetrospectiveBoard from '../components/retrospective/RetrospectiveBoard';
 import ExportButtonGroup from '../components/retrospective/ExportButtonGroup';
 import { ResponsiveParticipantDisplay } from '../components/participants';
+import { CountdownTimer, FacilitatorControls } from '../components/countdown';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
@@ -227,7 +228,14 @@ const RetrospectivePageContent: React.FC = () => {
                                     />
                                 </div>
                             </div>
-                        </div>                        <div className="flex items-center gap-2">
+                        </div>
+
+                        {/* Countdown Timer - visible to all */}
+                        <div className="flex items-center">
+                            <CountdownTimer retrospectiveId={retrospective.id} />
+                        </div>
+
+                        <div className="flex items-center gap-2">
                             {/* Botón de exportación - primera posición */}
                             <ExportButtonGroup
                                 retrospective={retrospective}
@@ -268,11 +276,24 @@ const RetrospectivePageContent: React.FC = () => {
                         </div>
                     </motion.div>
 
+                    {/* Facilitator Controls - only visible to retrospective owner */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-6"
+                    >
+                        <FacilitatorControls
+                            retrospectiveId={retrospective.id}
+                            isOwner={retrospective.createdBy === uid}
+                        />
+                    </motion.div>
+
                     {/* Main Board */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
+                        transition={{ delay: 0.4 }}
                     >
                         <RetrospectiveBoard
                             retrospective={retrospective}
