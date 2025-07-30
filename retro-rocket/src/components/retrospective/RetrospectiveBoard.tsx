@@ -5,7 +5,7 @@ import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
-import { useParticipants } from '../../hooks/useParticipants';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
 import { COLUMNS, COLUMN_ORDER } from '../../utils/constants';
@@ -49,13 +49,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         currentUser
     });
 
-    const {
-        participants
-    } = useParticipants(retrospective.id);
-
-    // Get current user's name from participants
-    const currentParticipant = participants.find(p => p.id === currentUser);
-    const currentUsername = currentParticipant?.name ?? 'Usuario';
+    // Get current user's name using useCurrentUser hook for more reliable data
+    const { fullName, displayName, email } = useCurrentUser();
+    const currentUsername = fullName || displayName || email?.split('@')[0] || 'Usuario';
 
     const handleCardCreate = async (cardInput: CreateCardInput) => {
         await createCard(cardInput);

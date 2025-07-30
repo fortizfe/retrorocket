@@ -7,7 +7,7 @@ import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 
 const Header: React.FC = () => {
-    const { isAuthenticated, userProfile, signOut } = useUser();
+    const { isAuthenticated, user, userProfile, signOut } = useUser();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -80,7 +80,7 @@ const Header: React.FC = () => {
                                     </div>
                                 )}
                                 <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {userProfile?.displayName ?? 'Usuario'}
+                                    {userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Usuario'}
                                 </span>
                                 <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             </button>

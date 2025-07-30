@@ -105,7 +105,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
         userProfile = await userService.createUserProfile(firebaseUser.uid, {
             email: firebaseUser.email,
-            displayName: firebaseUser.displayName ?? 'Usuario',
+            displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Usuario',
             photoURL: firebaseUser.photoURL,
             provider,
         });

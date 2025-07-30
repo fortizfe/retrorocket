@@ -17,6 +17,6 @@ export const useCurrentUser = () => {
         loading,
         // Datos auxiliares para facilitar el uso
         isReady: !loading && isAuthenticated && userProfile,
-        fullName: userProfile?.displayName ?? user?.displayName ?? 'Usuario',
+        fullName: userProfile?.displayName ?? user?.displayName ?? user?.email?.split('@')[0] ?? 'Usuario',
     };
 };
