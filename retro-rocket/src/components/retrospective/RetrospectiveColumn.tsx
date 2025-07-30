@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Textarea from '../ui/Textarea';
+import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import ColorPicker from '../ui/ColorPicker';
 import TypingPreview from '../ui/TypingPreview';
 import DragDropColumn from './DragDropColumn';
@@ -165,7 +165,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   />
                 </div>
 
-                <Textarea
+                <TextareaWithEmoji
                   value={newCardContent}
                   onChange={handleTextareaChange}
                   onBlur={handleTextareaBlur}
@@ -173,6 +173,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   rows={3}
                   autoFocus
                   className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
+                  showEmojiPicker={true}
                 />
                 <div className="flex items-center space-x-2">
                   <Button

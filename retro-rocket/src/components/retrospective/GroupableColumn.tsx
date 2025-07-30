@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Textarea from '../ui/Textarea';
+import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import ColorPicker from '../ui/ColorPicker';
 import TypingPreview from '../ui/TypingPreview';
 import { GroupCard } from './GroupCard';
@@ -272,7 +272,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                     />
                                 </div>
 
-                                <Textarea
+                                <TextareaWithEmoji
                                     value={newCardContent}
                                     onChange={handleTextareaChange}
                                     onBlur={handleTextareaBlur}
@@ -280,6 +280,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                     rows={3}
                                     autoFocus
                                     className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
+                                    showEmojiPicker={true}
                                 />
                                 <div className="flex items-center space-x-2">
                                     <Button

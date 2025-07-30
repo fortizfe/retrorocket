@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ThumbsUp, Edit2, User, GripVertical } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Textarea from '../ui/Textarea';
+import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import ColorPicker from '../ui/ColorPicker';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
@@ -183,13 +183,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     {/* Content */}
                     <div className="mb-3">
                         {isEditing ? (
-                            <Textarea
+                            <TextareaWithEmoji
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
                                 placeholder="Escribe tu comentario..."
                                 rows={3}
                                 autoFocus
                                 className="w-full"
+                                showEmojiPicker={true}
                             />
                         ) : (
                             <p className="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">

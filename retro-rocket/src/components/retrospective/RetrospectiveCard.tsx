@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ThumbsUp, Edit2, User } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Textarea from '../ui/Textarea';
+import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import { Card as CardType } from '../../types/card';
 
 interface RetrospectiveCardProps {
@@ -111,13 +111,14 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
           {/* Content */}
           <div className="mb-3">
             {isEditing ? (
-              <Textarea
+              <TextareaWithEmoji
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 placeholder="Escribe tu comentario..."
                 rows={3}
                 autoFocus
                 className="w-full"
+                showEmojiPicker={true}
               />
             ) : (
               <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
