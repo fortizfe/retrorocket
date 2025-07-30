@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Smile } from 'lucide-react';
 import { EmojiReaction, GroupedReaction } from '../../types/card';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface EmojiReactionsProps {
     cardId: string;
@@ -31,6 +32,9 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
+
+    // Usar el hook para bloquear scroll cuando el picker esté abierto
+    const { restoreScroll } = useBodyScrollLock(showPicker);
 
     // Calculate picker position
     const calculatePosition = () => {
@@ -88,6 +92,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setShowPicker(false);
+                restoreScroll();
             }
         };
 
@@ -98,7 +103,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         return () => {
             document.removeEventListener('keydown', handleEscape);
         };
-    }, [showPicker]);
+    }, [showPicker, restoreScroll]);
 
     const handleEmojiSelect = (emoji: EmojiReaction) => {
         if (userReaction === emoji) {
@@ -107,11 +112,18 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             onAddReaction(emoji);
         }
         setShowPicker(false);
+        restoreScroll();
     };
 
     const handlePickerToggle = () => {
         if (disabled) return;
-        setShowPicker(!showPicker);
+        const newState = !showPicker;
+        setShowPicker(newState);
+
+        // Si se está cerrando el picker, restaurar scroll explícitamente
+        if (!newState) {
+            restoreScroll();
+        }
     };
 
     const popup = showPicker ? (

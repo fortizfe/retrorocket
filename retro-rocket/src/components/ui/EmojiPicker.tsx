@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smile } from 'lucide-react';
 import Button from './Button';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface EmojiPickerProps {
     onEmojiSelect: (emoji: string) => void;
@@ -65,6 +66,9 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
     const pickerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
+    // Usar el hook para bloquear scroll cuando el picker esté abierto
+    const { restoreScroll } = useBodyScrollLock(isOpen);
+
     // Cerrar el picker cuando se hace clic fuera
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -75,9 +79,30 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
 
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
-            return () => document.removeEventListener('mousedown', handleClickOutside);
+
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
         }
     }, [isOpen]);
+
+    // Handle escape key
+    useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsOpen(false);
+                restoreScroll();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [isOpen, restoreScroll]);
 
     // Calcular la posición del picker
     useEffect(() => {
@@ -111,12 +136,19 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
     }, [isOpen]);
 
     const handleToggle = () => {
-        setIsOpen(!isOpen);
+        const newState = !isOpen;
+        setIsOpen(newState);
+
+        // Si se está cerrando el picker, restaurar scroll explícitamente
+        if (!newState) {
+            restoreScroll();
+        }
     };
 
     const handleEmojiClick = (emoji: string) => {
         onEmojiSelect(emoji);
         setIsOpen(false);
+        restoreScroll();
     };
 
     const sizes = {
