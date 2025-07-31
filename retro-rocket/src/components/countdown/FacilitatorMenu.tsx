@@ -16,9 +16,10 @@ import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
+    isOwner: boolean;
 }
 
-const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId }) => {
+const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, isOwner }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
     const [inputs, setInputs] = useState({ minutes: 0, seconds: 0 });
@@ -127,6 +128,11 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId }) =>
     const canPause = timer && countdownState.isRunning;
     const canReset = timer && (countdownState.isRunning || countdownState.isPaused);
     const canDelete = timer;
+
+    // Solo mostrar el menú si el usuario es el propietario
+    if (!isOwner) {
+        return null;
+    }
 
     return (
         <div className="relative">
