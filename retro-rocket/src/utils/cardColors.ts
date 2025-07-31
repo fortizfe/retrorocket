@@ -25,23 +25,23 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         tooltip: 'Blanco clásico'
     },
     pastelGreen: {
-        name: 'Verde Menta',
+        name: 'Verde Menta Suave',
         value: 'pastelGreen',
         background: 'bg-green-50',
         border: 'border-green-200',
         text: 'text-green-800',
         preview: 'bg-green-100',
-        ariaLabel: 'Seleccionar color verde menta',
+        ariaLabel: 'Seleccionar color verde menta suave',
         tooltip: 'Verde menta suave - Ideal para aspectos positivos'
     },
     pastelRed: {
-        name: 'Rosa Coral',
+        name: 'Rosa Coral Suave',
         value: 'pastelRed',
         background: 'bg-red-50',
         border: 'border-red-200',
         text: 'text-red-800',
         preview: 'bg-red-100',
-        ariaLabel: 'Seleccionar color rosa coral',
+        ariaLabel: 'Seleccionar color rosa coral suave',
         tooltip: 'Rosa coral suave - Ideal para áreas de mejora'
     },
     pastelYellow: {
@@ -151,18 +151,32 @@ export const isValidColor = (color: string): color is CardColor => {
 // Get default color
 export const getDefaultColor = (): CardColor => 'pastelWhite';
 
-// Get suggested color for retrospective column
-export const getSuggestedColorForColumn = (columnTitle: string): CardColor => {
+// Get suggested color for retrospective column by ID (preferred) or title
+export const getSuggestedColorForColumn = (columnTitle: string, columnId?: string): CardColor => {
+    // First priority: map by specific column ID
+    if (columnId) {
+        const columnIdMap: Record<string, CardColor> = {
+            'helped': 'pastelGreen',     // Primera columna - Verde menta suave
+            'hindered': 'pastelRed',     // Segunda columna - Rosa coral suave
+            'improve': 'pastelYellow'    // Tercera columna - Amarillo mantequilla
+        };
+
+        if (columnIdMap[columnId]) {
+            return columnIdMap[columnId];
+        }
+    }
+
+    // Fallback: mapping by title for other retrospective formats
     const title = columnTitle.toLowerCase();
 
     // Mapping common retrospective column patterns to appropriate colors
-    if (title.includes('bien') || title.includes('good') || title.includes('went well') || title.includes('positivo')) {
+    if (title.includes('ayudó') || title.includes('bien') || title.includes('good') || title.includes('went well') || title.includes('positivo')) {
         return 'pastelGreen';
     }
-    if (title.includes('mal') || title.includes('bad') || title.includes('improve') || title.includes('mejorar') || title.includes('problema')) {
+    if (title.includes('retrasó') || title.includes('mal') || title.includes('bad') || title.includes('hindered') || title.includes('problema') || title.includes('obstáculo')) {
         return 'pastelRed';
     }
-    if (title.includes('accion') || title.includes('action') || title.includes('hacer') || title.includes('todo') || title.includes('next')) {
+    if (title.includes('mejor') || title.includes('improve') || title.includes('mejorar') || title.includes('accion') || title.includes('action') || title.includes('hacer') || title.includes('todo') || title.includes('next')) {
         return 'pastelYellow';
     }
     if (title.includes('idea') || title.includes('suggestion') || title.includes('innovar') || title.includes('creative')) {

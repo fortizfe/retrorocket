@@ -43,7 +43,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newCardContent, setNewCardContent] = useState('');
-  const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title));
+  const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title, column.id));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get typing context
@@ -70,7 +70,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
 
       await onCardCreate(cardInput);
       setNewCardContent('');
-      setSelectedColor(getSuggestedColorForColumn(column.title));
+      setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
       setIsCreating(false);
     } catch (error) {
       console.error('Error creating card:', error);
@@ -84,7 +84,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
     stopTyping(column.id);
     setIsCreating(false);
     setNewCardContent('');
-    setSelectedColor(getSuggestedColorForColumn(column.title));
+    setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
