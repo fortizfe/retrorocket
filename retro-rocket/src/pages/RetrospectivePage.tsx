@@ -8,7 +8,7 @@ import Loading from '../components/ui/Loading';
 import RetrospectiveBoard from '../components/retrospective/RetrospectiveBoard';
 import ExportButtonGroup from '../components/retrospective/ExportButtonGroup';
 import { ResponsiveParticipantDisplay } from '../components/participants';
-import { CountdownTimer, FacilitatorControls } from '../components/countdown';
+import { CountdownTimer, FacilitatorMenu } from '../components/countdown';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
@@ -236,7 +236,7 @@ const RetrospectivePageContent: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* Botón de exportación - primera posición */}
+                            {/* Botón de exportación */}
                             <ExportButtonGroup
                                 retrospective={retrospective}
                                 cards={exportCards}
@@ -273,20 +273,13 @@ const RetrospectivePageContent: React.FC = () => {
                                 <ArrowLeft className="w-4 h-4" />
                                 Salir
                             </Button>
-                        </div>
-                    </motion.div>
 
-                    {/* Facilitator Controls - only visible to retrospective owner */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="mt-6"
-                    >
-                        <FacilitatorControls
-                            retrospectiveId={retrospective.id}
-                            isOwner={retrospective.createdBy === uid}
-                        />
+                            {/* Menú de facilitador - a la derecha del botón de salir */}
+                            <FacilitatorMenu
+                                retrospectiveId={retrospective.id}
+                                isOwner={retrospective.createdBy === uid}
+                            />
+                        </div>
                     </motion.div>
 
                     {/* Main Board */}
