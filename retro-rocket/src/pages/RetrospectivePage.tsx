@@ -280,6 +280,7 @@ const RetrospectivePageContent: React.FC = () => {
                                 {/* Menú de facilitador - a la derecha del botón de salir */}
                                 <FacilitatorMenu
                                     retrospectiveId={retrospective.id}
+                                    facilitatorId={uid || ''}
                                     isOwner={retrospective.createdBy === uid}
                                 />
                             </div>

@@ -13,13 +13,15 @@ import {
 import Button from '../ui/Button';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { FacilitatorNotes } from '../facilitator/FacilitatorNotes';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
+    facilitatorId: string;
     isOwner: boolean;
 }
 
-const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, isOwner }) => {
+const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, facilitatorId, isOwner }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
     const [inputs, setInputs] = useState({ minutes: 0, seconds: 0 });
@@ -143,7 +145,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, isOw
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
                 title="Controles de Facilitador"
                 aria-label="Abrir controles de facilitador"
-                aria-expanded={isOpen}
+                aria-expanded={isOpen ? 'true' : 'false'}
                 aria-haspopup="true"
             >
                 {isOpen ? (
@@ -294,6 +296,14 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, isOw
                                     </div>
                                 </div>
                             )}
+
+                            {/* Facilitator Notes */}
+                            <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                                <FacilitatorNotes
+                                    retrospectiveId={retrospectiveId}
+                                    facilitatorId={facilitatorId}
+                                />
+                            </div>
 
                             {/* Status Info */}
                             <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-700">

@@ -50,5 +50,28 @@ service cloud.firestore {
                    request.auth.token.firebase.sign_in_provider != 'anonymous' &&
                    request.auth.uid == resource.data.createdBy;
     }
+    
+    // Reglas para notas del facilitador - solo el facilitador puede ver y modificar sus notas
+    match /facilitatorNotes/{noteId} {
+      // Solo el facilitador que creó la nota puede leerla
+      allow read: if request.auth != null && 
+                 request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                 request.auth.uid == resource.data.facilitatorId;
+                 
+      // Solo el facilitador puede crear notas
+      allow create: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == request.resource.data.facilitatorId;
+                   
+      // Solo el facilitador que creó la nota puede modificarla
+      allow update: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.facilitatorId;
+                   
+      // Solo el facilitador que creó la nota puede eliminarla
+      allow delete: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.facilitatorId;
+    }
   }
 }
