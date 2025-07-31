@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { Like } from '../../types/card';
 
 interface LikeButtonProps {
     cardId: string;
@@ -8,6 +9,7 @@ interface LikeButtonProps {
     isLiked: boolean;
     onToggleLike: () => void;
     disabled?: boolean;
+    likes?: Like[]; // Array of like objects with usernames
 }
 
 const LikeButton: React.FC<LikeButtonProps> = ({
@@ -15,8 +17,31 @@ const LikeButton: React.FC<LikeButtonProps> = ({
     likesCount,
     isLiked,
     onToggleLike,
-    disabled = false
+    disabled = false,
+    likes = []
 }) => {
+    // Create tooltip text showing usernames
+    const createTooltipText = () => {
+        if (likesCount === 0) {
+            return 'Dar like a esta tarjeta';
+        }
+
+        const usernames = likes.map(like => like.username);
+
+        if (likesCount === 1) {
+            return `${usernames[0]} le ha dado like`;
+        } else if (likesCount === 2) {
+            return `${usernames[0]} y ${usernames[1]} les ha dado like`;
+        } else if (likesCount <= 5) {
+            const allButLast = usernames.slice(0, -1).join(', ');
+            const last = usernames[usernames.length - 1];
+            return `${allButLast} y ${last} les ha dado like`;
+        } else {
+            const first3 = usernames.slice(0, 3).join(', ');
+            const remaining = likesCount - 3;
+            return `${first3} y ${remaining} más les ha dado like`;
+        }
+    };
     return (
         <motion.button
             whileHover={{ scale: disabled ? 1 : 1.05 }}
@@ -32,7 +57,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({
                 }
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}
       `}
-            title={isLiked ? 'Remove like' : 'Like this card'}
+            title={createTooltipText()}
         >
             <motion.div
                 animate={{

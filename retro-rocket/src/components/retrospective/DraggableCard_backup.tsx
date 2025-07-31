@@ -184,8 +184,9 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 isLiked={isLiked}
                                 onToggleLike={handleToggleLike}
                                 disabled={!onLike}
+                                likes={card.likes || []}
                             />
-                            
+
                             {/* Emoji Reactions */}
                             <EmojiReactions
                                 cardId={card.id}

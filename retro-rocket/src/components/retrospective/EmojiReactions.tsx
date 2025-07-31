@@ -111,6 +111,29 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         restoreScroll();
     };
 
+    // Create tooltip text for reactions
+    const createReactionTooltipText = (reaction: GroupedReaction) => {
+        const { emoji, count, users } = reaction;
+
+        if (count === 0) {
+            return `Reaccionar con ${emoji}`;
+        }
+
+        if (count === 1) {
+            return `${users[0]} reaccionó con ${emoji}`;
+        } else if (count === 2) {
+            return `${users[0]} y ${users[1]} reaccionaron con ${emoji}`;
+        } else if (count <= 5) {
+            const allButLast = users.slice(0, -1).join(', ');
+            const last = users[users.length - 1];
+            return `${allButLast} y ${last} reaccionaron con ${emoji}`;
+        } else {
+            const first3 = users.slice(0, 3).join(', ');
+            const remaining = count - 3;
+            return `${first3} y ${remaining} más reaccionaron con ${emoji}`;
+        }
+    };
+
     const handlePickerToggle = () => {
         if (disabled) return;
         const newState = !showPicker;
@@ -143,8 +166,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             key={category}
                             onClick={() => setActiveCategory(category)}
                             className={`px-2 py-1 text-xs rounded transition-colors ${activeCategory === category
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'hover:bg-gray-100 text-gray-600'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'hover:bg-gray-100 text-gray-600'
                                 }`}
                         >
                             {category}
@@ -229,7 +252,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
-                        title={`${reaction.emoji} ${reaction.users.join(', ')}`}
+                        title={createReactionTooltipText(reaction)}
                     >
                         <span className="text-sm">{reaction.emoji}</span>
                         <span className="font-medium">{reaction.count}</span>
