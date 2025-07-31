@@ -193,95 +193,102 @@ const RetrospectivePageContent: React.FC = () => {
     if (hasJoined) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
-                <div className="container mx-auto px-4 py-6">
-                    {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between mb-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg p-4 shadow-sm"
-                        style={{ zIndex: 'auto' }}
-                    >
-                        <div className="flex items-center gap-4">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate('/dashboard')}
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Volver
-                            </Button>
-                            <div className="flex items-center gap-3">
-                                <div>
-                                    <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                        {retrospective.title}
-                                    </h1>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                                        Conectado como: {fullName}
-                                    </p>
-                                </div>
-                                {/* Lista de participantes al lado del título */}
-                                <div className="ml-4">
-                                    <ResponsiveParticipantDisplay
-                                        participants={participants || []}
-                                        className="flex items-center"
-                                    />
+                {/* Sticky Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="sticky top-16 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 shadow-md transition-all duration-200"
+                >
+                    <div className="container mx-auto px-4 py-3">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate('/dashboard')}
+                                    className="flex items-center gap-2 flex-shrink-0"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Volver</span>
+                                </Button>
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="min-w-0">
+                                        <h1 className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                            {retrospective.title}
+                                        </h1>
+                                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 truncate">
+                                            Conectado como: {fullName}
+                                        </p>
+                                    </div>
+                                    {/* Lista de participantes al lado del título */}
+                                    <div className="hidden md:block ml-4 flex-shrink-0">
+                                        <ResponsiveParticipantDisplay
+                                            participants={participants || []}
+                                            className="flex items-center"
+                                        />
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Countdown Timer - visible to all */}
+                            <div className="flex items-center flex-shrink-0">
+                                <CountdownTimer retrospectiveId={retrospective.id} />
+                            </div>
+
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                {/* Botón de exportación */}
+                                <div className="hidden lg:block">
+                                    <ExportButtonGroup
+                                        retrospective={retrospective}
+                                        cards={exportCards}
+                                        groups={exportGroups}
+                                        participants={participants || []}
+                                        className="flex items-center gap-2"
+                                    />
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCopyId}
+                                    className="hidden sm:flex items-center gap-2"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                    <span className="hidden lg:inline">Copiar ID</span>
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleShare}
+                                    className="hidden sm:flex items-center gap-2"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span className="hidden lg:inline">Compartir</span>
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleLeaveRetrospective}
+                                    className="flex items-center gap-2"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Salir</span>
+                                </Button>
+
+                                {/* Menú de facilitador - a la derecha del botón de salir */}
+                                <FacilitatorMenu
+                                    retrospectiveId={retrospective.id}
+                                    isOwner={retrospective.createdBy === uid}
+                                />
+                            </div>
                         </div>
+                    </div>
+                </motion.div>
 
-                        {/* Countdown Timer - visible to all */}
-                        <div className="flex items-center">
-                            <CountdownTimer retrospectiveId={retrospective.id} />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {/* Botón de exportación */}
-                            <ExportButtonGroup
-                                retrospective={retrospective}
-                                cards={exportCards}
-                                groups={exportGroups}
-                                participants={participants || []}
-                                className="flex items-center gap-2"
-                            />
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopyId}
-                                className="flex items-center gap-2"
-                            >
-                                <Copy className="w-4 h-4" />
-                                Copiar ID
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleShare}
-                                className="flex items-center gap-2"
-                            >
-                                <Share2 className="w-4 h-4" />
-                                Compartir
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleLeaveRetrospective}
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Salir
-                            </Button>
-
-                            {/* Menú de facilitador - a la derecha del botón de salir */}
-                            <FacilitatorMenu
-                                retrospectiveId={retrospective.id}
-                                isOwner={retrospective.createdBy === uid}
-                            />
-                        </div>
-                    </motion.div>
-
+                {/* Main Content Area */}
+                <div className="container mx-auto px-4 pt-6 pb-6">
                     {/* Main Board */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
