@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { exportRetrospectiveToPdf, ExportOptions, RetrospectiveExportData } from '../services/pdfExportService';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
+import { FacilitatorNote } from '../types/facilitatorNotes';
 
 interface UseExportPdfProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    facilitatorNotes?: FacilitatorNote[];
 }
 
 interface UseExportPdfReturn {
@@ -20,7 +22,8 @@ export const useExportPdf = ({
     retrospective,
     cards,
     groups,
-    participants
+    participants,
+    facilitatorNotes
 }: UseExportPdfProps): UseExportPdfReturn => {
     const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,7 +40,8 @@ export const useExportPdf = ({
                 retrospective,
                 cards,
                 groups,
-                participants
+                participants,
+                facilitatorNotes
             };
 
             // Default options
@@ -45,6 +49,7 @@ export const useExportPdf = ({
                 includeParticipants: true,
                 includeStatistics: true,
                 includeGroupDetails: true,
+                includeFacilitatorNotes: false,
                 ...options
             };
 

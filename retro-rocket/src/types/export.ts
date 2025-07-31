@@ -48,6 +48,7 @@ export interface UnifiedExportData {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    facilitatorNotes?: FacilitatorNote[];
 }
 
 export interface UseUnifiedExportState {
@@ -60,3 +61,4 @@ export interface UseUnifiedExportState {
 
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
+import { FacilitatorNote } from '../types/facilitatorNotes';

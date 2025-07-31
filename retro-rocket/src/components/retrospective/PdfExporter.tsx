@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { FileDown, Settings, Check } from 'lucide-react';
 import Button from '../ui/Button';
 import { useExportPdf } from '../../hooks/useExportPdf';
+import { useFacilitatorNotes } from '../../hooks/useFacilitatorNotes';
+import { useAuth } from '../../hooks/useAuth';
 import { ExportOptions } from '../../services/pdfExportService';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
@@ -21,18 +23,23 @@ interface ExportSettingsModalProps {
     onClose: () => void;
     onExport: (options: ExportOptions) => void;
     isExporting: boolean;
+    isOwner: boolean;
+    hasFacilitatorNotes: boolean;
 }
 
 const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
     isOpen,
     onClose,
     onExport,
-    isExporting
+    isExporting,
+    isOwner,
+    hasFacilitatorNotes
 }) => {
     const [options, setOptions] = useState<ExportOptions>({
         includeParticipants: true,
         includeStatistics: true,
-        includeGroupDetails: true
+        includeGroupDetails: true,
+        includeFacilitatorNotes: false
     });
 
     const handleExport = () => {
@@ -124,6 +131,30 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                                 aria-describedby="includeGroupDetails-desc"
                             />
                         </div>
+
+                        {isOwner && hasFacilitatorNotes && (
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <label htmlFor="includeFacilitatorNotes" className="text-sm font-medium text-gray-700">
+                                        Notas del facilitador
+                                    </label>
+                                    <p id="includeFacilitatorNotes-desc" className="text-xs text-gray-500">
+                                        Incluir las notas tomadas durante la retrospectiva
+                                    </p>
+                                </div>
+                                <input
+                                    id="includeFacilitatorNotes"
+                                    type="checkbox"
+                                    checked={options.includeFacilitatorNotes}
+                                    onChange={(e) => setOptions(prev => ({
+                                        ...prev,
+                                        includeFacilitatorNotes: e.target.checked
+                                    }))}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    aria-describedby="includeFacilitatorNotes-desc"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-gray-200">
@@ -162,11 +193,18 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
     const [showSettings, setShowSettings] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    const { user } = useAuth();
+    const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
+
+    const isOwner = user?.uid === retrospective.createdBy;
+    const hasFacilitatorNotes = facilitatorNotes.length > 0;
+
     const { isExporting, error, exportToPdf } = useExportPdf({
         retrospective,
         cards,
         groups,
-        participants
+        participants,
+        facilitatorNotes
     });
 
     const handleQuickExport = async () => {
@@ -246,6 +284,8 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                     onClose={() => setShowSettings(false)}
                     onExport={handleExportWithOptions}
                     isExporting={isExporting}
+                    isOwner={isOwner}
+                    hasFacilitatorNotes={hasFacilitatorNotes}
                 />
             </>
         );
@@ -354,6 +394,8 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                 onClose={() => setShowSettings(false)}
                 onExport={handleExportWithOptions}
                 isExporting={isExporting}
+                isOwner={isOwner}
+                hasFacilitatorNotes={hasFacilitatorNotes}
             />
         </>
     );

@@ -1,6 +1,7 @@
 import { saveAs } from 'file-saver';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
+import { FacilitatorNote } from '../types/facilitatorNotes';
 import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
 
 export interface TxtExportOptions {
@@ -9,7 +10,6 @@ export interface TxtExportOptions {
     includeCardAuthors?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
-    facilitatorNotes?: string;
 }
 
 export interface RetrospectiveTxtData {
@@ -17,6 +17,7 @@ export interface RetrospectiveTxtData {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    facilitatorNotes?: FacilitatorNote[];
 }
 
 export class TxtExportService {
@@ -95,11 +96,21 @@ export class TxtExportService {
         }
 
         // Facilitator notes
-        if (options.includeFacilitatorNotes && options.facilitatorNotes) {
+        if (options.includeFacilitatorNotes && data.facilitatorNotes && data.facilitatorNotes.length > 0) {
             lines.push('NOTAS DEL FACILITADOR:');
             lines.push('-'.repeat(30));
-            lines.push(options.facilitatorNotes);
-            lines.push('');
+
+            data.facilitatorNotes.forEach((note, index) => {
+                lines.push(`${index + 1}. ${note.content}`);
+                lines.push(`   Fecha: ${note.timestamp.toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}`);
+                lines.push('');
+            });
         }
 
         // Footer

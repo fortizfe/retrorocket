@@ -14,6 +14,8 @@ import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
 import { UnifiedExportOptions, ExportFormat } from '../../types/export';
 import { useUnifiedExport } from '../../hooks/useUnifiedExport';
+import { useFacilitatorNotes } from '../../hooks/useFacilitatorNotes';
+import { useAuth } from '../../hooks/useAuth';
 import Button from '../ui/Button';
 
 interface ExportPopoverProps {
@@ -40,6 +42,12 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
     className = ''
 }) => {
     const { isExporting, progress, error, success, exportRetrospective } = useUnifiedExport();
+    const { user } = useAuth();
+    const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
+
+    // Verificar si el usuario es propietario del tablero
+    const isOwner = user?.uid === retrospective.createdBy;
+
     const popoverRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLDivElement>(null);
     const [popoverPosition, setPopoverPosition] = useState(position);
@@ -188,7 +196,8 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
             retrospective,
             cards,
             groups,
-            participants
+            participants,
+            facilitatorNotes
         };
         await exportRetrospective(exportData, finalOptions);
         if (success) {
@@ -473,29 +482,22 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Facilitator Notes */}
-                                <div>
-                                    <label className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={options.includeFacilitatorNotes}
-                                            onChange={(e) => setOptions({ ...options, includeFacilitatorNotes: e.target.checked })}
-                                            className="rounded border-slate-300 dark:border-slate-600"
-                                        />
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            Agregar notas del facilitador
-                                        </span>
-                                    </label>
-                                    {options.includeFacilitatorNotes && (
-                                        <textarea
-                                            value={options.facilitatorNotes ?? ''}
-                                            onChange={(e) => setOptions({ ...options, facilitatorNotes: e.target.value })}
-                                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                                            rows={3}
-                                            placeholder="Agregar comentarios o notas adicionales..."
-                                        />
-                                    )}
-                                </div>
+                                {/* Facilitator Notes - Solo visible para propietarios */}
+                                {isOwner && (
+                                    <div>
+                                        <label className="flex items-center gap-2 mb-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={options.includeFacilitatorNotes}
+                                                onChange={(e) => setOptions({ ...options, includeFacilitatorNotes: e.target.checked })}
+                                                className="rounded border-slate-300 dark:border-slate-600"
+                                            />
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                                Agregar notas del facilitador
+                                            </span>
+                                        </label>
+                                    </div>
+                                )}
 
                                 {/* Action Buttons */}
                                 <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">

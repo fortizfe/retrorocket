@@ -114,6 +114,7 @@ export class UnifiedExportService {
             includeParticipants: options.includeParticipants,
             includeStatistics: options.includeStatistics,
             includeGroupDetails: options.includeGroupDetails,
+            includeFacilitatorNotes: options.includeFacilitatorNotes,
             logoUrl: options.includeRetroRocketLogo ? '/rocket.svg' : undefined
         };
 
@@ -125,7 +126,8 @@ export class UnifiedExportService {
             },
             cards: data.cards,
             groups: data.groups,
-            participants: data.participants
+            participants: data.participants,
+            facilitatorNotes: data.facilitatorNotes
         };
 
         console.log(`Exporting ${pdfData.cards.length} cards to PDF`);
@@ -141,8 +143,7 @@ export class UnifiedExportService {
             includeStatistics: options.includeStatistics,
             includeCardAuthors: options.includeCardAuthors,
             includeGroupDetails: options.includeGroupDetails,
-            includeFacilitatorNotes: options.includeFacilitatorNotes,
-            facilitatorNotes: options.facilitatorNotes
+            includeFacilitatorNotes: options.includeFacilitatorNotes
         };
 
         // Convert to TXT service format
@@ -153,7 +154,8 @@ export class UnifiedExportService {
             },
             cards: data.cards,
             groups: data.groups,
-            participants: data.participants
+            participants: data.participants,
+            facilitatorNotes: data.facilitatorNotes
         };
 
         console.log(`Exporting ${txtData.cards.length} cards to TXT`);

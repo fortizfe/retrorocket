@@ -1,13 +1,31 @@
-import jsPDF from 'jspdf';
+import React from 'react';
+import {
+    Document,
+    Page,
+    Text,
+    View,
+    StyleSheet,
+    Font,
+    pdf,
+    Image
+} from '@react-pdf/renderer';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
+import { FacilitatorNote } from '../types/facilitatorNotes';
 import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { getCardColorHex } from '../utils/cardColors';
+
+// Registra la fuente de emojis (esto se hace una sola vez en tu aplicación)
+Font.registerEmojiSource({
+    format: 'png',
+    url: 'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/',
+});
 
 export interface ExportOptions {
     includeParticipants?: boolean;
     includeStatistics?: boolean;
     includeGroupDetails?: boolean;
+    includeFacilitatorNotes?: boolean;
     logoUrl?: string;
 }
 
@@ -16,560 +34,448 @@ export interface RetrospectiveExportData {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    facilitatorNotes?: FacilitatorNote[];
 }
 
-export class PdfExportService {
-    private pdf: jsPDF;
-    private pageWidth: number;
-    private pageHeight: number;
-    private margin: number;
-    private currentY: number;
-    private logoHeight: number = 20;
-
-    constructor() {
-        this.pdf = new jsPDF('portrait', 'mm', 'a4');
-        this.pageWidth = this.pdf.internal.pageSize.getWidth();
-        this.pageHeight = this.pdf.internal.pageSize.getHeight();
-        this.margin = 20;
-        this.currentY = this.margin;
+// Estilos para el PDF
+const styles = StyleSheet.create({
+    page: {
+        flexDirection: 'column',
+        backgroundColor: '#ffffff',
+        padding: 20,
+        fontFamily: 'Helvetica'
+    },
+    header: {
+        flexDirection: 'row',
+        marginBottom: 20,
+        borderBottom: '2 solid #e5e7eb',
+        paddingBottom: 15
+    },
+    logo: {
+        width: 40,
+        height: 40,
+        marginRight: 15
+    },
+    headerContent: {
+        flex: 1,
+        flexDirection: 'column'
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        marginBottom: 4
+    },
+    subtitle: {
+        fontSize: 12,
+        color: '#6b7280'
+    },
+    section: {
+        marginBottom: 20
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#374151',
+        marginBottom: 10,
+        borderBottom: '1 solid #d1d5db',
+        paddingBottom: 5
+    },
+    retrospectiveInfo: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 20,
+        marginBottom: 15
+    },
+    infoItem: {
+        flexDirection: 'column',
+        minWidth: 120
+    },
+    infoLabel: {
+        fontSize: 10,
+        color: '#6b7280',
+        marginBottom: 2
+    },
+    infoValue: {
+        fontSize: 12,
+        color: '#1f2937',
+        fontWeight: 'bold'
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        backgroundColor: '#f9fafb',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 15
+    },
+    statItem: {
+        flexDirection: 'column',
+        alignItems: 'center'
+    },
+    statNumber: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#3b82f6'
+    },
+    statLabel: {
+        fontSize: 10,
+        color: '#6b7280',
+        marginTop: 2
+    },
+    columnSection: {
+        marginBottom: 25
+    },
+    columnHeader: {
+        backgroundColor: '#f3f4f6',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10
+    },
+    columnTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#374151'
+    },
+    columnDescription: {
+        fontSize: 10,
+        color: '#6b7280',
+        marginTop: 2
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        border: '1 solid #e5e7eb',
+        borderRadius: 6,
+        padding: 8,
+        marginBottom: 6
+    },
+    cardContent: {
+        fontSize: 11,
+        color: '#374151',
+        lineHeight: 1.4
+    },
+    cardMeta: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 4,
+        fontSize: 9,
+        color: '#9ca3af'
+    },
+    groupSection: {
+        marginBottom: 15,
+        backgroundColor: '#f9fafb',
+        padding: 10,
+        borderRadius: 8
+    },
+    groupTitle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        marginBottom: 6
+    },
+    groupStats: {
+        flexDirection: 'row',
+        gap: 15,
+        marginBottom: 8,
+        fontSize: 10,
+        color: '#6b7280'
+    },
+    facilitatorNotesSection: {
+        backgroundColor: '#fef3c7',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 20
+    },
+    noteItem: {
+        marginBottom: 10,
+        padding: 8,
+        backgroundColor: '#ffffff',
+        borderRadius: 4,
+        border: '1 solid #fbbf24'
+    },
+    noteContent: {
+        fontSize: 11,
+        color: '#374151',
+        marginBottom: 4
+    },
+    noteTimestamp: {
+        fontSize: 9,
+        color: '#92400e'
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        textAlign: 'center',
+        fontSize: 10,
+        color: '#9ca3af',
+        borderTop: '1 solid #e5e7eb',
+        paddingTop: 10
     }
-
-    /**
-     * Sanitize text to ensure proper rendering in PDF
-     */
-    private sanitizeText(text: string): string {
-        return text
-            .replace(/[^\x00-\x7F]/g, (char) => {
-                // Replace common Spanish characters with ASCII equivalents
-                const replacements: { [key: string]: string } = {
-                    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-                    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
-                    'ñ': 'n', 'Ñ': 'N', 'ü': 'u', 'Ü': 'U',
-                    '¿': '?', '¡': '!', '–': '-', '—': '-'
-                };
-                return replacements[char] || char;
-            })
-            // Remove emojis and special symbols
-            .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-            // Clean up extra spaces
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-
-    /**
-     * Enhanced text method that sanitizes input
-     */
-    private addText(text: string, x: number, y: number): void {
-        const sanitizedText = this.sanitizeText(text);
-        // Debug: Log text transformations for troubleshooting
-        if (text !== sanitizedText) {
-            console.log(`Text sanitized: "${text}" → "${sanitizedText}"`);
-        }
-        this.pdf.text(sanitizedText, x, y);
-    }
-
-    /**
-     * Export complete retrospective to PDF
-     */
-    async exportRetrospective(
-        data: RetrospectiveExportData,
-        options: ExportOptions = {}
-    ): Promise<void> {
-        try {
-            console.log('Starting PDF export for retrospective:', data.retrospective.title);
-
-            // Reset PDF state
-            this.currentY = this.margin;
-
-            // Add header with logo and title
-            await this.addHeader(data.retrospective, options.logoUrl);
-
-            // Add retrospective info
-            this.addRetrospectiveInfo(data.retrospective, data.participants, options);
-
-            // Add statistics if requested
-            if (options.includeStatistics) {
-                this.addStatistics(data.cards, data.groups);
-            }
-
-            // Add columns with cards and groups
-            this.addColumnsContent(data.cards, data.groups, options);
-
-            // Add footer
-            this.addFooter();
-
-            // Generate filename with timestamp
-            const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `retrospectiva-${data.retrospective.title.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.pdf`;
-
-            // Save the PDF
-            this.pdf.save(filename);
-
-            console.log('PDF export completed successfully:', filename);
-        } catch (error) {
-            console.error('Error exporting PDF:', error);
-            throw new Error('Failed to export PDF');
-        }
-    }
-
-    /**
-     * Add header with logo and title
-     */
-    private async addHeader(retrospective: Retrospective, logoUrl?: string): Promise<void> {
-        // Add logo if provided
-        if (logoUrl) {
-            try {
-                // Note: In a real implementation, you'd need to handle image loading
-                this.currentY += this.logoHeight + 5;
-            } catch (error) {
-                console.warn('Could not load logo:', error);
-            }
-        }
-
-        // Add RetroRocket title
-        this.pdf.setFont('helvetica', 'bold');
-        this.pdf.setFontSize(24);
-        this.pdf.setTextColor(59, 130, 246); // Blue color
-        this.addText('RetroRocket', this.margin, this.currentY);
-        this.currentY += 10;
-
-        // Add retrospective title
-        this.pdf.setFontSize(20);
-        this.pdf.setTextColor(0, 0, 0);
-        const title = this.truncateText(retrospective.title, 60);
-        this.addText(title, this.margin, this.currentY);
-        this.currentY += 8;
-
-        // Add description if exists
-        if (retrospective.description) {
-            this.pdf.setFont('helvetica', 'normal');
-            this.pdf.setFontSize(12);
-            this.pdf.setTextColor(75, 85, 99); // Gray color
-            const lines = this.wrapText(retrospective.description, this.pageWidth - 2 * this.margin);
-            lines.forEach(line => {
-                this.addText(line, this.margin, this.currentY);
-                this.currentY += 5;
-            });
-        }
-
-        this.currentY += 10;
-    }
-
-    /**
-     * Add retrospective information
-     */
-    private addRetrospectiveInfo(
-        retrospective: Retrospective,
-        participants: Array<{ name: string; joinedAt: Date }>,
-        options: ExportOptions
-    ): void {
-        // Section title
-        this.pdf.setFont('helvetica', 'bold');
-        this.pdf.setFontSize(14);
-        this.pdf.setTextColor(0, 0, 0);
-        this.addText('Informacion de la Retrospectiva', this.margin, this.currentY);
-        this.currentY += 8;
-
-        // Info box
-        this.pdf.setDrawColor(229, 231, 235);
-        this.pdf.setFillColor(249, 250, 251);
-        this.pdf.roundedRect(this.margin, this.currentY - 5, this.pageWidth - 2 * this.margin, 25, 2, 2, 'FD');
-
-        this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setFontSize(10);
-        this.pdf.setTextColor(75, 85, 99);
-
-        // Date
-        const exportDate = new Date().toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        this.addText(`Fecha de exportacion: ${exportDate}`, this.margin + 5, this.currentY);
-        this.currentY += 5;
-
-        // Creation date
-        if (retrospective.createdAt) {
-            const createdDate = new Date(retrospective.createdAt).toLocaleDateString('es-ES');
-            this.addText(`Retrospectiva creada: ${createdDate}`, this.margin + 5, this.currentY);
-            this.currentY += 5;
-        }
-
-        // Participants
-        if (options.includeParticipants && participants.length > 0) {
-            this.addText(`Participantes: ${participants.length}`, this.margin + 5, this.currentY);
-            this.currentY += 5;
-
-            const participantNames = participants.map(p => p.name).join(', ');
-            const wrappedNames = this.wrapText(participantNames, this.pageWidth - 2 * this.margin - 10);
-            wrappedNames.forEach(line => {
-                this.addText(`    ${line}`, this.margin + 5, this.currentY);
-                this.currentY += 4;
-            });
-        }
-
-        this.currentY += 15;
-    }
-
-    /**
-     * Add statistics section
-     */
-    private addStatistics(cards: Card[], groups: CardGroup[]): void {
-        this.pdf.setFont('helvetica', 'bold');
-        this.pdf.setFontSize(14);
-        this.pdf.setTextColor(0, 0, 0);
-        this.addText('Estadisticas', this.margin, this.currentY);
-        this.currentY += 8;
-
-        // Calculate statistics
-        const totalCards = cards.length;
-        const totalGroups = groups.length;
-        const totalVotes = cards.reduce((sum, card) => sum + (card.votes || 0), 0);
-        const totalLikes = cards.reduce((sum, card) => sum + (card.likes?.length || 0), 0);
-        const totalReactions = cards.reduce((sum, card) => sum + (card.reactions?.length || 0), 0);
-
-        // Statistics by column
-        const columnStats = COLUMN_ORDER.map(columnId => {
-            const columnCards = cards.filter(card => card.column === columnId);
-            const columnGroups = groups.filter(group => group.column === columnId);
-            return {
-                column: COLUMNS[columnId],
-                cards: columnCards.length,
-                groups: columnGroups.length,
-                votes: columnCards.reduce((sum, card) => sum + (card.votes || 0), 0)
-            };
-        });
-
-        // Stats box
-        this.pdf.setDrawColor(229, 231, 235);
-        this.pdf.setFillColor(249, 250, 251);
-        this.pdf.roundedRect(this.margin, this.currentY - 5, this.pageWidth - 2 * this.margin, 35, 2, 2, 'FD');
-
-        this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setFontSize(10);
-        this.pdf.setTextColor(75, 85, 99);
-
-        // General stats
-        this.addText(`Total de tarjetas: ${totalCards}`, this.margin + 5, this.currentY);
-        this.addText(`Total de grupos: ${totalGroups}`, this.margin + 70, this.currentY);
-        this.currentY += 5;
-
-        this.addText(`Total de votos: ${totalVotes}`, this.margin + 5, this.currentY);
-        this.addText(`Total de likes: ${totalLikes}`, this.margin + 70, this.currentY);
-        this.currentY += 5;
-
-        this.addText(`Total de reacciones: ${totalReactions}`, this.margin + 5, this.currentY);
-        this.currentY += 8;
-
-        // Column statistics
-        columnStats.forEach((stat, index) => {
-            const x = this.margin + 5 + (index * 55);
-            this.addText(`${stat.column.title}:`, x, this.currentY);
-            this.addText(`   ${stat.cards} tarjetas`, x, this.currentY + 4);
-            if (stat.groups > 0) {
-                this.addText(`   ${stat.groups} grupos`, x, this.currentY + 8);
-            }
-        });
-
-        this.currentY += 20;
-    }
-
-    /**
-     * Add columns with cards and groups
-     */
-    private addColumnsContent(cards: Card[], groups: CardGroup[], options: ExportOptions): void {
-        COLUMN_ORDER.forEach((columnId, index) => {
-            const column = COLUMNS[columnId];
-            const columnCards = cards.filter(card => card.column === columnId);
-            const columnGroups = groups.filter(group => group.column === columnId);
-
-            if (columnCards.length === 0) return;
-
-            // Check if we need a new page
-            if (this.currentY > this.pageHeight - 60) {
-                this.pdf.addPage();
-                this.currentY = this.margin;
-            }
-
-            this.addColumnSection(column, columnCards, columnGroups, options);
-        });
-    }
-
-    /**
-     * Add a single column section
-     */
-    private addColumnSection(
-        column: any,
-        cards: Card[],
-        groups: CardGroup[],
-        options: ExportOptions
-    ): void {
-        // Column header
-        this.pdf.setFont('helvetica', 'bold');
-        this.pdf.setFontSize(16);
-        this.pdf.setTextColor(0, 0, 0);
-        this.addText(`${column.title}`, this.margin, this.currentY);
-        this.currentY += 8;
-
-        // Column description
-        this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setFontSize(10);
-        this.pdf.setTextColor(107, 114, 128);
-        this.addText(column.description, this.margin, this.currentY);
-        this.currentY += 10;
-
-        // Get ungrouped cards
-        const ungroupedCards = cards.filter(card => !card.groupId);
-
-        // Add groups first
-        groups.forEach(group => {
-            this.addGroupSection(group, cards, options);
-        });
-
-        // Add ungrouped cards
-        ungroupedCards.forEach(card => {
-            this.addCardSection(card, false, false, options);
-        });
-
-        this.currentY += 10;
-    }
-
-    /**
-     * Add a group section
-     */
-    private addGroupSection(group: CardGroup, allCards: Card[], options: ExportOptions): void {
-        const groupCards = allCards.filter(card =>
-            card.id === group.headCardId || group.memberCardIds.includes(card.id)
-        );
-
-        if (groupCards.length === 0) return;
-
-        // Check if we need a new page
-        if (this.currentY > this.pageHeight - 40) {
-            this.pdf.addPage();
-            this.currentY = this.margin;
-        }
-
-        // Group header
-        this.pdf.setFont('helvetica', 'bold');
-        this.pdf.setFontSize(12);
-        this.pdf.setTextColor(59, 130, 246); // Blue
-        const groupTitle = group.title || `Grupo de ${groupCards.length} tarjetas`;
-        this.addText(`${groupTitle}`, this.margin + 5, this.currentY);
-        this.currentY += 6;
-
-        // Group stats
-        if (options.includeGroupDetails) {
-            this.pdf.setFont('helvetica', 'normal');
-            this.pdf.setFontSize(9);
-            this.pdf.setTextColor(107, 114, 128);
-
-            const totalVotes = groupCards.reduce((sum, card) => sum + (card.votes || 0), 0);
-            const totalLikes = groupCards.reduce((sum, card) => sum + (card.likes?.length || 0), 0);
-
-            this.addText(`${groupCards.length} tarjetas - ${totalVotes} votos - ${totalLikes} likes`, this.margin + 10, this.currentY);
-            this.currentY += 6;
-        }
-
-        // Add group cards
-        const headCard = groupCards.find(card => card.id === group.headCardId);
-        const memberCards = groupCards.filter(card =>
-            card.id !== group.headCardId && group.memberCardIds.includes(card.id)
-        );
-
-        // Add head card first
-        if (headCard) {
-            this.addCardSection(headCard, true, true, options);
-        }
-
-        // Add member cards with indentation
-        memberCards.forEach(card => {
-            this.addCardSection(card, true, false, options);
-        });
-
-        this.currentY += 5;
-    }
-
-    /**
-     * Add a single card section
-     */
-    private addCardSection(card: Card, isGrouped: boolean = false, isHeadCard: boolean = false, options: ExportOptions = {}): void {
-        // Check if we need a new page
-        if (this.currentY > this.pageHeight - 30) {
-            this.pdf.addPage();
-            this.currentY = this.margin;
-        }
-
-        const leftMargin = this.margin + (isGrouped ? (isHeadCard ? 10 : 20) : 0);
-        const cardWidth = this.pageWidth - leftMargin - this.margin;
-
-        // Ensure card content exists and is not empty
-        const cardContent = card.content?.trim() || '[Sin contenido]';
-
-        // Calculate card height based on content and metadata
-        const contentLines = this.wrapText(cardContent, cardWidth - 10);
-        const metadata = this.buildCardMetadata(card, options);
-        const estimatedHeight = (contentLines.length * 4) + (metadata.length > 0 ? 8 : 0) + (isHeadCard ? 8 : 4) + 10;
-
-        // Card background color
-        const cardColor = card.color || 'pastelWhite';
-        const hexColor = getCardColorHex(cardColor);
-        if (hexColor && hexColor !== '#FFFFFF') {
-            const rgb = this.hexToRgb(hexColor);
-            if (rgb) {
-                this.pdf.setFillColor(rgb.r, rgb.g, rgb.b);
-                this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, estimatedHeight, 2, 2, 'F');
-            }
-        }
-
-        // Card border
-        this.pdf.setDrawColor(229, 231, 235);
-        this.pdf.roundedRect(leftMargin - 2, this.currentY - 4, cardWidth + 4, estimatedHeight, 2, 2, 'D');
-
-        // Head card indicator
-        if (isHeadCard) {
-            this.pdf.setFont('helvetica', 'bold');
-            this.pdf.setFontSize(8);
-            this.pdf.setTextColor(59, 130, 246);
-            this.addText('★ Principal', leftMargin, this.currentY);
-            this.currentY += 6;
-        }
-
-        // Card content - Main content with better formatting
-        this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setFontSize(10);
-        this.pdf.setTextColor(0, 0, 0);
-
-        contentLines.forEach(line => {
-            this.addText(line, leftMargin + 2, this.currentY);
-            this.currentY += 4;
-        });
-
-        // Add some space between content and metadata
-        this.currentY += 2;
-
-        // Card metadata (only if options allow it)
-        if (metadata.length > 0) {
-            this.pdf.setFont('helvetica', 'normal');
-            this.pdf.setFontSize(8);
-            this.pdf.setTextColor(107, 114, 128);
-            this.addText(metadata.join(' • '), leftMargin + 2, this.currentY);
-            this.currentY += 4;
-        }
-
-        this.currentY += 6;
-    }
-
-    /**
-     * Build card metadata based on options
-     */
-    private buildCardMetadata(card: Card, options: ExportOptions): string[] {
-        const metadata = [];
-
-        // Author
-        if (card.createdBy?.trim()) {
-            metadata.push(`Por: ${card.createdBy}`);
-        }
-
-        // Votes
-        if (card.votes && card.votes > 0) {
-            metadata.push(`${card.votes} voto${card.votes !== 1 ? 's' : ''}`);
-        }
-
-        // Likes
-        const likesCount = card.likes?.length || 0;
-        if (likesCount > 0) {
-            metadata.push(`${likesCount} like${likesCount !== 1 ? 's' : ''}`);
-        }
-
-        // Other reactions count
-        const totalReactions = card.reactions?.length || 0;
-        const reactionsCount = totalReactions - likesCount;
-        if (reactionsCount > 0) {
-            metadata.push(`${reactionsCount} reaccion${reactionsCount !== 1 ? 'es' : ''}`);
-        }
-
-        return metadata;
-    }
-
-    /**
-     * Add footer with page numbers and timestamp
-     */
-    private addFooter(): void {
-        const pageCount = this.pdf.internal.getNumberOfPages();
-
-        for (let i = 1; i <= pageCount; i++) {
-            this.pdf.setPage(i);
-
-            // Page number
-            this.pdf.setFont('helvetica', 'normal');
-            this.pdf.setFontSize(8);
-            this.pdf.setTextColor(107, 114, 128);
-            this.addText(
-                `Pagina ${i} de ${pageCount}`,
-                this.pageWidth - this.margin - 15,
-                this.pageHeight - 10
-            );
-
-            // Timestamp
-            const timestamp = new Date().toLocaleString('es-ES');
-            this.addText(
-                `Generado el ${timestamp} por RetroRocket`,
-                this.margin,
-                this.pageHeight - 10
-            );
-        }
-    }
-
-    /**
-     * Utility methods
-     */
-    private wrapText(text: string, maxWidth: number): string[] {
-        const words = text.split(' ');
-        const lines: string[] = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            const testLine = currentLine + (currentLine ? ' ' : '') + word;
-            const textWidth = this.pdf.getTextWidth(testLine);
-
-            if (textWidth > maxWidth && currentLine) {
-                lines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
-            }
-        });
-
-        if (currentLine) {
-            lines.push(currentLine);
-        }
-
-        return lines;
-    }
-
-    private truncateText(text: string, maxLength: number): string {
-        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-    }
-
-    private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
-    }
-}
+});
 
 /**
- * Main export function
+ * Crea el componente del documento PDF usando createElement
+ */
+const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOptions) => {
+    const getColumnCards = (columnType: string) => {
+        return data.cards.filter(card => card.column === columnType);
+    };
+
+    const getColumnGroups = (columnType: string) => {
+        return data.groups.filter(group => group.column === columnType);
+    };
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    // Función para obtener el estilo de una tarjeta con su color de fondo
+    const getCardStyle = (card: Card) => {
+        const backgroundColor = card.color ? getCardColorHex(card.color) : '#ffffff';
+        return {
+            ...styles.card,
+            backgroundColor
+        };
+    };
+
+    const calculateStatistics = () => {
+        const totalCards = data.cards.length;
+        const totalGroups = data.groups.length;
+        const totalParticipants = data.participants.length;
+        const totalVotes = data.cards.reduce((sum, card) => sum + (card.votes || 0), 0);
+        const totalReactions = data.cards.reduce((sum, card) => sum + (card.reactions?.length || 0), 0);
+
+        return {
+            totalCards,
+            totalGroups,
+            totalParticipants,
+            totalVotes,
+            totalReactions
+        };
+    };
+
+    const stats = calculateStatistics();
+
+    // Header
+    const headerElements = [
+        ...(options.logoUrl ? [React.createElement(Image, {
+            key: 'logo',
+            style: styles.logo,
+            src: options.logoUrl
+        })] : []),
+        React.createElement(View, { key: 'headerContent', style: styles.headerContent }, [
+            React.createElement(Text, { key: 'title', style: styles.title }, data.retrospective.title),
+            React.createElement(Text, { key: 'subtitle', style: styles.subtitle },
+                `Retrospectiva generada el ${formatDate(new Date())}`
+            )
+        ])
+    ];
+
+    // Información general
+    const infoElements = [
+        React.createElement(View, { key: 'created', style: styles.infoItem }, [
+            React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Fecha de creación'),
+            React.createElement(Text, { key: 'value', style: styles.infoValue }, formatDate(data.retrospective.createdAt))
+        ]),
+        React.createElement(View, { key: 'status', style: styles.infoItem }, [
+            React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Estado'),
+            React.createElement(Text, { key: 'value', style: styles.infoValue },
+                data.retrospective.isActive ? 'Activa' : 'Finalizada'
+            )
+        ]),
+        ...(data.retrospective.description ? [
+            React.createElement(View, { key: 'description', style: styles.infoItem }, [
+                React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Descripción'),
+                React.createElement(Text, { key: 'value', style: styles.infoValue }, data.retrospective.description)
+            ])
+        ] : [])
+    ];
+
+    // Estadísticas
+    const statsElements = options.includeStatistics ? [
+        React.createElement(View, { key: 'stats', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Estadísticas'),
+            React.createElement(View, { key: 'container', style: styles.statsContainer }, [
+                React.createElement(View, { key: 'cards', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalCards.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Tarjetas')
+                ]),
+                React.createElement(View, { key: 'groups', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalGroups.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Grupos')
+                ]),
+                React.createElement(View, { key: 'participants', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalParticipants.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Participantes')
+                ]),
+                React.createElement(View, { key: 'votes', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalVotes.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Votos')
+                ]),
+                React.createElement(View, { key: 'reactions', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalReactions.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Reacciones')
+                ])
+            ])
+        ])
+    ] : [];
+
+    // Participantes
+    const participantsElements = (options.includeParticipants && data.participants.length > 0) ? [
+        React.createElement(View, { key: 'participants', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle },
+                `Participantes (${data.participants.length})`
+            ),
+            ...data.participants.map((participant, index) =>
+                React.createElement(View, { key: `participant-${participant.name}-${index}`, style: styles.card }, [
+                    React.createElement(Text, { key: 'name', style: styles.cardContent }, participant.name),
+                    React.createElement(Text, { key: 'joined', style: styles.cardMeta },
+                        `Se unió: ${formatDate(participant.joinedAt)}`
+                    )
+                ])
+            )
+        ])
+    ] : [];
+
+    // Notas del facilitador
+    const facilitatorNotesElements = (options.includeFacilitatorNotes && data.facilitatorNotes && data.facilitatorNotes.length > 0) ? [
+        React.createElement(View, { key: 'facilitatorNotes', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Notas del Facilitador'),
+            React.createElement(View, { key: 'notesSection', style: styles.facilitatorNotesSection },
+                data.facilitatorNotes.map((note, index) =>
+                    React.createElement(View, { key: note.id || index, style: styles.noteItem }, [
+                        React.createElement(Text, { key: 'content', style: styles.noteContent }, note.content),
+                        React.createElement(Text, { key: 'timestamp', style: styles.noteTimestamp },
+                            formatDate(note.timestamp)
+                        )
+                    ])
+                )
+            )
+        ])
+    ] : [];
+
+    // Columnas
+    const columnElements = COLUMN_ORDER.map((columnType) => {
+        const column = COLUMNS[columnType];
+        const columnCards = getColumnCards(columnType);
+        const columnGroups = getColumnGroups(columnType);
+
+        if (columnCards.length === 0) return null;
+
+        const groupElements = options.includeGroupDetails ? columnGroups.map((group) => {
+            const groupCards = columnCards.filter(card => card.groupId === group.id);
+            if (groupCards.length === 0) return null;
+
+            return React.createElement(View, { key: group.id, style: styles.groupSection }, [
+                React.createElement(Text, { key: 'title', style: styles.groupTitle },
+                    `📁 ${group.title || 'Grupo sin título'}`
+                ),
+                React.createElement(View, { key: 'stats', style: styles.groupStats }, [
+                    React.createElement(Text, { key: 'count' }, `Tarjetas: ${groupCards.length}`),
+                    React.createElement(Text, { key: 'votes' },
+                        `Votos totales: ${groupCards.reduce((sum, card) => sum + (card.votes || 0), 0)}`
+                    )
+                ]),
+                ...groupCards.map((card) =>
+                    React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
+                        React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
+                        React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
+                            React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
+                            React.createElement(Text, { key: 'votes' }, `Votos: ${card.votes || 0}`)
+                        ])
+                    ])
+                )
+            ]);
+        }).filter(Boolean) : [];
+
+        const ungroupedCards = columnCards
+            .filter(card => !card.groupId || !options.includeGroupDetails)
+            .map((card) =>
+                React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
+                    React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
+                    React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
+                        React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
+                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.votes || 0}`)
+                    ])
+                ])
+            );
+
+        return React.createElement(View, { key: columnType, style: styles.columnSection }, [
+            React.createElement(View, { key: 'header', style: styles.columnHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.columnTitle },
+                    `${column.title} (${columnCards.length} tarjetas)`
+                ),
+                React.createElement(Text, { key: 'description', style: styles.columnDescription },
+                    column.description
+                )
+            ]),
+            ...groupElements,
+            ...ungroupedCards
+        ]);
+    }).filter(Boolean);
+
+    // Footer
+    const footer = React.createElement(Text, { style: styles.footer },
+        `Generado por Retro Rocket - ${formatDate(new Date())}`
+    );
+
+    // Construir página completa
+    const pageElements = [
+        React.createElement(View, { key: 'header', style: styles.header }, headerElements),
+        React.createElement(View, { key: 'info', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Información General'),
+            React.createElement(View, { key: 'infoContent', style: styles.retrospectiveInfo }, infoElements)
+        ]),
+        ...statsElements,
+        ...participantsElements,
+        ...facilitatorNotesElements,
+        ...columnElements,
+        footer
+    ];
+
+    return React.createElement(Document, {}, [
+        React.createElement(Page, { key: 'page', size: 'A4', style: styles.page }, pageElements)
+    ]);
+};
+
+/**
+ * Exporta la retrospectiva a PDF usando @react-pdf/renderer
  */
 export const exportRetrospectiveToPdf = async (
     data: RetrospectiveExportData,
     options: ExportOptions = {}
 ): Promise<void> => {
-    const service = new PdfExportService();
-    await service.exportRetrospective(data, options);
+    try {
+        // Crear el documento PDF
+        const document = createRetrospectivePDF(data, options);
+
+        // Generar el PDF
+        const blob = await pdf(document).toBlob();
+
+        // Crear link de descarga
+        const url = URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.download = `retrospectiva-${data.retrospective.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+        // Disparar descarga
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+
+        // Limpiar URL
+        URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error('Error exportando PDF:', error);
+        throw error;
+    }
 };
