@@ -1,7 +1,8 @@
 import { ColumnType } from './retrospective';
+import { ALL_EMOJIS } from '../utils/emojiConstants';
 
-// Available emoji reactions
-export type EmojiReaction = '👍' | '❤️' | '😂' | '😮' | '😢' | '😡' | '🎉' | '🤔' | '✨' | '🚀' | '💡' | '⚡';
+// Available emoji reactions - Now includes all available emojis
+export type EmojiReaction = typeof ALL_EMOJIS[number];
 
 // Card color palette - 10 beautiful pastel colors
 export type CardColor =

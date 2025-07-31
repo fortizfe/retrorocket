@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Smile } from 'lucide-react';
 import { EmojiReaction, GroupedReaction } from '../../types/card';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { EMOJI_CATEGORIES } from '../../utils/emojiConstants';
 
 interface EmojiReactionsProps {
     cardId: string;
@@ -14,12 +15,6 @@ interface EmojiReactionsProps {
     disabled?: boolean;
 }
 
-const AVAILABLE_EMOJIS: EmojiReaction[] = [
-    '👍', '❤️', '😂', '😮',
-    '😢', '😡', '🎉', '🤔',
-    '✨', '🚀', '💡', '⚡'
-];
-
 const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     cardId,
     groupedReactions,
@@ -29,6 +24,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     disabled = false
 }) => {
     const [showPicker, setShowPicker] = useState(false);
+    const [activeCategory, setActiveCategory] = useState('Emociones');
     const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
@@ -44,9 +40,9 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        // Picker dimensions (approximate)
-        const pickerWidth = 240;
-        const pickerHeight = 140;
+        // Picker dimensions (approximate) - larger for category-based picker
+        const pickerWidth = 320;
+        const pickerHeight = 400;
 
         let left = triggerRect.left;
         let top = triggerRect.bottom + 8;
@@ -130,7 +126,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         // eslint-disable-next-line react/forbid-dom-props
         <div
             ref={pickerRef}
-            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl p-3 animate-in fade-in-0 zoom-in-95 duration-200"
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
             // eslint-disable-next-line react/forbid-dom-props
             style={{
                 top: pickerPosition.top,
@@ -139,28 +135,54 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             role="dialog"
             aria-label="Selector de reacciones emoji"
         >
-            {/* Simple emoji grid */}
-            <div className="grid grid-cols-6 gap-2 max-w-[240px]">
-                {AVAILABLE_EMOJIS.map((emoji) => (
-                    <button
-                        key={emoji}
-                        onClick={() => handleEmojiSelect(emoji)}
-                        className={`
-                            p-2 rounded-lg text-xl transition-all duration-200
-                            hover:bg-gray-100 hover:scale-110 hover:shadow-md
-                            flex items-center justify-center
-                            focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
-                            ${userReaction === emoji
-                                ? 'bg-blue-100 ring-2 ring-blue-300 scale-110'
-                                : ''
-                            }
-                        `}
-                        title={`Reaccionar con ${emoji}`}
-                        aria-label={`Reaccionar con ${emoji}${userReaction === emoji ? ' (seleccionado)' : ''}`}
-                    >
-                        {emoji}
-                    </button>
-                ))}
+            {/* Header with categories */}
+            <div className="border-b border-gray-100 p-2">
+                <div className="flex flex-wrap gap-1">
+                    {Object.keys(EMOJI_CATEGORIES).map((category) => (
+                        <button
+                            key={category}
+                            onClick={() => setActiveCategory(category)}
+                            className={`px-2 py-1 text-xs rounded transition-colors ${activeCategory === category
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'hover:bg-gray-100 text-gray-600'
+                                }`}
+                        >
+                            {category}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Emoji Grid */}
+            <div className="p-2 max-h-64 overflow-y-auto">
+                <div className="grid grid-cols-8 gap-1">
+                    {EMOJI_CATEGORIES[activeCategory as keyof typeof EMOJI_CATEGORIES].map((emoji, index) => (
+                        <button
+                            key={`${emoji}-${index}`}
+                            onClick={() => handleEmojiSelect(emoji)}
+                            className={`
+                                w-8 h-8 flex items-center justify-center text-lg rounded transition-all duration-200
+                                hover:bg-gray-100 hover:scale-110 hover:shadow-md
+                                focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                                ${userReaction === emoji
+                                    ? 'bg-blue-100 ring-2 ring-blue-300 scale-110'
+                                    : ''
+                                }
+                            `}
+                            title={`Reaccionar con ${emoji}`}
+                            aria-label={`Reaccionar con ${emoji}${userReaction === emoji ? ' (seleccionado)' : ''}`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-100 p-2 text-center">
+                <p className="text-xs text-gray-500">
+                    Haz clic en un emoji para reaccionar
+                </p>
             </div>
 
             {/* Current reaction indicator */}
