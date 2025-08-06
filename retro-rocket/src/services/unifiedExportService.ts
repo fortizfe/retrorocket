@@ -115,6 +115,7 @@ export class UnifiedExportService {
             includeStatistics: options.includeStatistics,
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
+            includeActionItems: options.includeActionItems,
             logoUrl: options.includeRetroRocketLogo ? '/rocket.svg' : undefined
         };
 
@@ -127,7 +128,8 @@ export class UnifiedExportService {
             cards: data.cards,
             groups: data.groups,
             participants: data.participants,
-            facilitatorNotes: data.facilitatorNotes
+            facilitatorNotes: data.facilitatorNotes,
+            actionItems: data.actionItems
         };
 
         console.log(`Exporting ${pdfData.cards.length} cards to PDF`);
@@ -143,7 +145,8 @@ export class UnifiedExportService {
             includeStatistics: options.includeStatistics,
             includeCardAuthors: options.includeCardAuthors,
             includeGroupDetails: options.includeGroupDetails,
-            includeFacilitatorNotes: options.includeFacilitatorNotes
+            includeFacilitatorNotes: options.includeFacilitatorNotes,
+            includeActionItems: options.includeActionItems
         };
 
         // Convert to TXT service format
@@ -155,7 +158,8 @@ export class UnifiedExportService {
             cards: data.cards,
             groups: data.groups,
             participants: data.participants,
-            facilitatorNotes: data.facilitatorNotes
+            facilitatorNotes: data.facilitatorNotes,
+            actionItems: data.actionItems
         };
 
         console.log(`Exporting ${txtData.cards.length} cards to TXT`);
@@ -173,6 +177,7 @@ export class UnifiedExportService {
             includeReactions: options.includeReactions,
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
+            includeActionItems: options.includeActionItems,
             facilitatorNotes: options.facilitatorNotes
         };
 
@@ -184,7 +189,9 @@ export class UnifiedExportService {
             },
             cards: data.cards,
             groups: data.groups,
-            participants: data.participants
+            participants: data.participants,
+            facilitatorNotes: data.facilitatorNotes,
+            actionItems: data.actionItems
         };
 
         console.log(`Exporting ${docxData.cards.length} cards to DOCX`);

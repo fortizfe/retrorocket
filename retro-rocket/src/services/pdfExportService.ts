@@ -12,6 +12,7 @@ import {
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
+import { ActionItem } from '../types/actionItem';
 import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { getCardColorHex } from '../utils/cardColors';
 
@@ -26,6 +27,7 @@ export interface ExportOptions {
     includeStatistics?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
+    includeActionItems?: boolean;
     logoUrl?: string;
 }
 
@@ -35,6 +37,7 @@ export interface RetrospectiveExportData {
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
+    actionItems?: ActionItem[];
 }
 
 // Estilos para el PDF
@@ -422,6 +425,26 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         ]);
     }).filter(Boolean);
 
+    // Elementos de acción
+    const actionItemsElements = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ? [
+        React.createElement(View, { key: 'actionItems', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Elementos de Acción'),
+            React.createElement(View, { key: 'actionItemsSection', style: styles.facilitatorNotesSection },
+                data.actionItems.map((item, index) =>
+                    React.createElement(View, { key: item.id || index, style: styles.noteItem }, [
+                        React.createElement(Text, { key: 'content', style: styles.noteContent }, item.content),
+                        React.createElement(Text, { key: 'assignee', style: styles.noteTimestamp },
+                            `Asignado a: ${item.assignedTo || 'Sin asignar'}`
+                        ),
+                        React.createElement(Text, { key: 'created', style: styles.noteTimestamp },
+                            `Creado: ${formatDate(item.createdAt)}`
+                        )
+                    ])
+                )
+            )
+        ])
+    ] : [];
+
     // Footer
     const footer = React.createElement(Text, { style: styles.footer },
         `Generado por Retro Rocket - ${formatDate(new Date())}`
@@ -438,6 +461,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         ...participantsElements,
         ...facilitatorNotesElements,
         ...columnElements,
+        ...actionItemsElements,
         footer
     ];
 

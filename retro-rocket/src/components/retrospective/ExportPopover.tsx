@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
+import { ActionItem } from '../../types/actionItem';
 import { UnifiedExportOptions, ExportFormat } from '../../types/export';
 import { useUnifiedExport } from '../../hooks/useUnifiedExport';
 import { useFacilitatorNotes } from '../../hooks/useFacilitatorNotes';
@@ -23,6 +24,7 @@ interface ExportPopoverProps {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    actionItems?: ActionItem[];
     isOpen: boolean;
     onClose: () => void;
     children: React.ReactNode;
@@ -35,6 +37,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
     cards,
     groups,
     participants,
+    actionItems = [],
     isOpen,
     onClose,
     children,
@@ -63,6 +66,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
         includeCardAuthors: true,
         includeReactions: true,
         includeGroupDetails: true,
+        includeActionItems: true, // Incluir elementos de acción por defecto
         sortOrder: 'original',
         includeFacilitatorNotes: false,
         facilitatorNotes: ''
@@ -197,7 +201,8 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
             cards,
             groups,
             participants,
-            facilitatorNotes
+            facilitatorNotes,
+            actionItems
         };
         await exportRetrospective(exportData, finalOptions);
         if (success) {
@@ -392,6 +397,20 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
                                                 Detalles de agrupaciones de tarjetas
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div className="mt-2">
+                                        <label className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={options.includeActionItems}
+                                                onChange={(e) => setOptions({ ...options, includeActionItems: e.target.checked })}
+                                                className="rounded border-slate-300 dark:border-slate-600"
+                                            />
+                                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                                                Elementos de acción
                                             </span>
                                         </label>
                                     </div>

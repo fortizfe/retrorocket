@@ -10,12 +10,13 @@ import { useActionItems } from '../../hooks/useActionItems';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
+import { ActionItem } from '../../types/actionItem';
 import { COLUMNS, COLUMN_ORDER } from '../../utils/constants';
 
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
-    onDataChange?: (cards: CardType[], groups: CardGroup[]) => void;
+    onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
     participants?: any[]; // Necesitamos los participantes para el menú de conversión
 }
 
@@ -127,10 +128,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
 
     // Notify parent component about data changes for export functionality
     React.useEffect(() => {
-        if (onDataChange && cards && groups) {
-            onDataChange(cards, groups);
+        if (onDataChange && cards && groups && actionItems) {
+            onDataChange(cards, groups, actionItems);
         }
-    }, [cards, groups, onDataChange]);
+    }, [cards, groups, actionItems, onDataChange]);
 
     if (cardsLoading) {
         return (

@@ -3,12 +3,14 @@ import Button from '../ui/Button';
 import ExportPopover from './ExportPopover';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
+import { ActionItem } from '../../types/actionItem';
 
 interface ExportButtonGroupProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    actionItems?: ActionItem[];
     className?: string;
 }
 
@@ -17,6 +19,7 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
     cards,
     groups,
     participants,
+    actionItems = [],
     className = ''
 }) => {
     const [showPopover, setShowPopover] = useState(false);
@@ -27,6 +30,7 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
             cards={cards}
             groups={groups}
             participants={participants}
+            actionItems={actionItems}
             isOpen={showPopover}
             onClose={() => setShowPopover(false)}
             className={className}

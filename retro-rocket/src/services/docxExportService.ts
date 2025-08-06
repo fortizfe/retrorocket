@@ -17,6 +17,8 @@ import {
 import { saveAs } from 'file-saver';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
+import { FacilitatorNote } from '../types/facilitatorNotes';
+import { ActionItem } from '../types/actionItem';
 import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
 import { getCardColorHex } from '../utils/cardColors';
 
@@ -27,6 +29,7 @@ export interface DocxExportOptions {
     includeReactions?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
+    includeActionItems?: boolean;
     facilitatorNotes?: string;
 }
 
@@ -35,6 +38,8 @@ export interface RetrospectiveDocxData {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    facilitatorNotes?: FacilitatorNote[];
+    actionItems?: ActionItem[];
 }
 
 export class DocxExportService {
@@ -56,6 +61,8 @@ export class DocxExportService {
             const contentSections = this.createColumnsContent(data.cards, data.groups, options);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
+            const actionItemsSections = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ?
+                this.createActionItemsSection(data.actionItems) : [];
 
             // Flatten all sections into a single array
             const allSections = [
@@ -63,7 +70,8 @@ export class DocxExportService {
                 ...infoSections,
                 ...statsSections,
                 ...contentSections,
-                ...notesSections
+                ...notesSections,
+                ...actionItemsSections
             ];
 
             // Create the document
@@ -576,6 +584,76 @@ export class DocxExportService {
                 spacing: { after: 300 }
             })
         ];
+    }
+
+    /**
+     * Create action items section
+     */
+    private createActionItemsSection(actionItems: ActionItem[]): Paragraph[] {
+        const formatDate = (date: Date) => {
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        const sections: Paragraph[] = [
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'Elementos de Acción',
+                        bold: true,
+                        size: 24
+                    })
+                ],
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 400, after: 200 }
+            })
+        ];
+
+        actionItems.forEach((item, index) => {
+            sections.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `${index + 1}. `,
+                            bold: true,
+                            size: 20
+                        }),
+                        new TextRun({
+                            text: item.content,
+                            size: 20
+                        })
+                    ],
+                    spacing: { after: 100 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `   Asignado a: ${item.assignedTo || 'Sin asignar'}`,
+                            size: 18,
+                            color: '666666'
+                        })
+                    ],
+                    spacing: { after: 50 }
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `   Creado: ${formatDate(item.createdAt)}`,
+                            size: 18,
+                            color: '666666'
+                        })
+                    ],
+                    spacing: { after: 200 }
+                })
+            );
+        });
+
+        return sections;
     }
 }
 

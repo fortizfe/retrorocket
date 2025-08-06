@@ -2,6 +2,7 @@ import { saveAs } from 'file-saver';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
+import { ActionItem } from '../types/actionItem';
 import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
 
 export interface TxtExportOptions {
@@ -10,6 +11,7 @@ export interface TxtExportOptions {
     includeCardAuthors?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
+    includeActionItems?: boolean;
 }
 
 export interface RetrospectiveTxtData {
@@ -18,6 +20,7 @@ export interface RetrospectiveTxtData {
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
+    actionItems?: ActionItem[];
 }
 
 export class TxtExportService {
@@ -109,6 +112,29 @@ export class TxtExportService {
                     hour: '2-digit',
                     minute: '2-digit'
                 })}`);
+                lines.push('');
+            });
+        }
+
+        // Action Items
+        if (options.includeActionItems && data.actionItems && data.actionItems.length > 0) {
+            lines.push('ELEMENTOS DE ACCIÓN:');
+            lines.push('-'.repeat(30));
+
+            data.actionItems.forEach((actionItem, index) => {
+                const assignee = actionItem.assignedToName || 'Sin asignar';
+
+                lines.push(`${index + 1}. ${actionItem.content}`);
+                lines.push(`   Responsable: ${assignee}`);
+
+                if (actionItem.createdAt) {
+                    lines.push(`   Creado: ${new Date(actionItem.createdAt).toLocaleDateString('es-ES')}`);
+                }
+
+                if (actionItem.updatedAt && actionItem.updatedAt !== actionItem.createdAt) {
+                    lines.push(`   Actualizado: ${new Date(actionItem.updatedAt).toLocaleDateString('es-ES')}`);
+                }
+
                 lines.push('');
             });
         }

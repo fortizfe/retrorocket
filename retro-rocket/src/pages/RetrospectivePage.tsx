@@ -15,6 +15,7 @@ import { useParticipants } from '../hooks/useParticipants';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
 import { Card, CardGroup } from '../types/card';
+import { ActionItem } from '../types/actionItem';
 
 const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -31,11 +32,13 @@ const RetrospectivePageContent: React.FC = () => {
     // State for export data
     const [exportCards, setExportCards] = useState<Card[]>([]);
     const [exportGroups, setExportGroups] = useState<CardGroup[]>([]);
+    const [exportActionItems, setExportActionItems] = useState<ActionItem[]>([]);
 
     // Handle data changes from RetrospectiveBoard for export
-    const handleDataChange = (cards: Card[], groups: CardGroup[]) => {
+    const handleDataChange = (cards: Card[], groups: CardGroup[], actionItems: ActionItem[]) => {
         setExportCards(cards);
         setExportGroups(groups);
+        setExportActionItems(actionItems);
     };
 
     // Auto-join when user is ready and hasn't joined yet
@@ -243,6 +246,7 @@ const RetrospectivePageContent: React.FC = () => {
                                         cards={exportCards}
                                         groups={exportGroups}
                                         participants={participants || []}
+                                        actionItems={exportActionItems}
                                         className="flex items-center gap-2"
                                     />
                                 </div>

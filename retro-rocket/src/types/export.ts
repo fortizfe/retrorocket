@@ -18,6 +18,7 @@ export interface UnifiedExportOptions {
     includeCardAuthors: boolean;
     includeReactions: boolean;
     includeGroupDetails: boolean;
+    includeActionItems: boolean; // Nueva opción para elementos de acción
 
     // Ordenamiento
     sortOrder: SortOrder;
@@ -49,6 +50,7 @@ export interface UnifiedExportData {
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
+    actionItems?: ActionItem[]; // Añadir elementos de acción
 }
 
 export interface UseUnifiedExportState {
@@ -62,3 +64,4 @@ export interface UseUnifiedExportState {
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
+import { ActionItem } from '../types/actionItem';
