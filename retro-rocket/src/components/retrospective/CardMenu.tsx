@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreVertical, Target, X } from 'lucide-react';
+import { MoreVertical, Target } from 'lucide-react';
 import { Card } from '../../types/card';
 import { Participant } from '../../types/participant';
 
@@ -21,7 +21,6 @@ const CardMenu: React.FC<CardMenuProps> = ({
     className = ''
 }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [showAssignDialog, setShowAssignDialog] = useState(false);
     const [selectedAssignee, setSelectedAssignee] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -33,7 +32,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
             const rect = buttonRef.current.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
             const viewportWidth = window.innerWidth;
-            const menuHeight = 120; // Approximate menu height
+            const menuHeight = 200; // Approximate menu height
             const menuWidth = 280;
 
             let top = rect.bottom + 4;
@@ -63,14 +62,12 @@ const CardMenu: React.FC<CardMenuProps> = ({
                 !buttonRef.current.contains(event.target as Node)
             ) {
                 setIsOpen(false);
-                setShowAssignDialog(false);
             }
         };
 
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setIsOpen(false);
-                setShowAssignDialog(false);
             }
         };
 
@@ -86,24 +83,14 @@ const CardMenu: React.FC<CardMenuProps> = ({
     }, [isOpen]);
 
     const handleConvert = () => {
-        if (showAssignDialog) {
-            const selectedParticipant = participants.find(p => p.userId === selectedAssignee);
-            onConvertToAction(
-                card.content,
-                selectedAssignee || undefined,
-                selectedParticipant?.name || undefined
-            );
-            setIsOpen(false);
-            setShowAssignDialog(false);
-            setSelectedAssignee('');
-        } else {
-            setShowAssignDialog(true);
-        }
-    };
-
-    const handleDirectConvert = () => {
-        onConvertToAction(card.content);
+        const selectedParticipant = participants.find(p => p.userId === selectedAssignee);
+        onConvertToAction(
+            card.content,
+            selectedAssignee || undefined,
+            selectedParticipant?.name || undefined
+        );
         setIsOpen(false);
+        setSelectedAssignee('');
     };
 
     if (!canConvertToAction) {
@@ -125,102 +112,56 @@ const CardMenu: React.FC<CardMenuProps> = ({
                         zIndex: 9999,
                     }}
                     className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 
-                   min-w-[280px] overflow-hidden"
+                       min-w-[280px] overflow-hidden"
                 >
-                    {!showAssignDialog ? (
-                        // Main menu
-                        <div className="p-2">
-                            <div className="px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700 mb-2">
-                                Opciones de tarjeta
-                            </div>
-
-                            <button
-                                onClick={handleDirectConvert}
-                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left 
-                         hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors
-                         text-amber-700 dark:text-amber-300"
-                            >
-                                <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                <div>
-                                    <div className="font-medium">Convertir en elemento de acción</div>
-                                    <div className="text-xs text-amber-600 dark:text-amber-400 opacity-75">
-                                        Sin asignar responsable
-                                    </div>
-                                </div>
-                            </button>
-
-                            <button
-                                onClick={handleConvert}
-                                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left 
-                         hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors
-                         text-amber-700 dark:text-amber-300"
-                            >
-                                <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                <div>
-                                    <div className="font-medium">Convertir y asignar responsable</div>
-                                    <div className="text-xs text-amber-600 dark:text-amber-400 opacity-75">
-                                        Seleccionar participante
-                                    </div>
-                                </div>
-                            </button>
+                    <div className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                            <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                                Convertir en elemento de acción
+                            </h4>
                         </div>
-                    ) : (
-                        // Assignment dialog
-                        <div className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                                    Asignar responsable
-                                </h4>
-                                <button
-                                    onClick={() => setShowAssignDialog(false)}
-                                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
-                                    title="Cerrar"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
 
-                            <div className="mb-4">
-                                <label htmlFor={`assign-${card.id}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Responsable
-                                </label>
-                                <select
-                                    id={`assign-${card.id}`}
-                                    value={selectedAssignee}
-                                    onChange={(e) => setSelectedAssignee(e.target.value)}
-                                    title="Seleccionar responsable"
-                                    className="w-full p-2 text-sm border border-slate-200 dark:border-slate-600 
+                        <div className="mb-4">
+                            <label htmlFor={`assign-${card.id}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Asignar responsable (opcional)
+                            </label>
+                            <select
+                                id={`assign-${card.id}`}
+                                value={selectedAssignee}
+                                onChange={(e) => setSelectedAssignee(e.target.value)}
+                                title="Seleccionar responsable"
+                                className="w-full p-2 text-sm border border-slate-200 dark:border-slate-600 
                            rounded bg-white dark:bg-slate-800 
                            text-slate-900 dark:text-slate-100
                            focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                                >
-                                    <option value="">Sin asignar</option>
-                                    {participants.map((participant) => (
-                                        <option key={participant.id} value={participant.userId}>
-                                            {participant.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleConvert}
-                                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium 
-                           py-2 px-3 rounded transition-colors"
-                                >
-                                    Convertir
-                                </button>
-                                <button
-                                    onClick={() => setShowAssignDialog(false)}
-                                    className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 
-                           hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
+                            >
+                                <option value="">Sin asignar</option>
+                                {participants.map((participant) => (
+                                    <option key={participant.id} value={participant.userId}>
+                                        {participant.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                    )}
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleConvert}
+                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium 
+                           py-2 px-3 rounded transition-colors"
+                            >
+                                Convertir
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 
+                           hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -232,9 +173,9 @@ const CardMenu: React.FC<CardMenuProps> = ({
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 
-                   text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300
+                   text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400
                    transition-colors ${className}`}
-                title="Más opciones"
+                title="Convertir en elemento de acción"
             >
                 <MoreVertical className="w-4 h-4" />
             </button>

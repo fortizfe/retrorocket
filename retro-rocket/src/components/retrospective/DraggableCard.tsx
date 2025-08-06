@@ -163,17 +163,6 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                            {/* Card Menu (for converting to action item) */}
-                            {canConvertToAction && onConvertToAction && (
-                                <CardMenu
-                                    card={card}
-                                    participants={participants}
-                                    canConvertToAction={canConvertToAction}
-                                    onConvertToAction={onConvertToAction}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                />
-                            )}
-
                             {/* Legacy vote buttons - keeping for backward compatibility */}
                             {(card.votes !== undefined && card.votes > 0) && (
                                 <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
@@ -255,50 +244,65 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             })}
                         </div>
 
-                        {canEditCard && (
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {isEditing ? (
-                                    <>
-                                        <Button
-                                            size="sm"
-                                            variant="primary"
-                                            onClick={handleSaveEdit}
-                                            disabled={!editContent.trim()}
-                                        >
-                                            Guardar
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={handleCancelEdit}
-                                        >
-                                            Cancelar
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => setIsEditing(true)}
-                                            aria-label="Edit card"
-                                        >
-                                            <Edit2 size={14} />
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={handleDelete}
-                                            loading={isDeleting}
-                                            aria-label="Delete card"
-                                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                                        >
-                                            <Trash2 size={14} />
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                        <div className="flex items-center space-x-1">
+                            {/* Botones de edición para el propietario */}
+                            {canEditCard && (
+                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {isEditing ? (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="primary"
+                                                onClick={handleSaveEdit}
+                                                disabled={!editContent.trim()}
+                                            >
+                                                Guardar
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={handleCancelEdit}
+                                            >
+                                                Cancelar
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => setIsEditing(true)}
+                                                aria-label="Edit card"
+                                            >
+                                                <Edit2 size={14} />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={handleDelete}
+                                                loading={isDeleting}
+                                                aria-label="Delete card"
+                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                            >
+                                                <Trash2 size={14} />
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Card Menu para convertir a elemento de acción - disponible para facilitadores */}
+                            {canConvertToAction && onConvertToAction && !isEditing && (
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <CardMenu
+                                        card={card}
+                                        participants={participants}
+                                        canConvertToAction={canConvertToAction}
+                                        onConvertToAction={onConvertToAction}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </Card>
             </motion.div>
