@@ -39,6 +39,10 @@ interface GroupableColumnProps {
     onSuggestionGenerate: () => GroupSuggestion[];
     currentUser?: string;
     retrospectiveId: string;
+    // Props para elementos de acción
+    participants?: any[];
+    canConvertToAction?: boolean;
+    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const GroupableColumn: React.FC<GroupableColumnProps> = ({
@@ -59,7 +63,10 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     onCardRemoveFromGroup,
     onSuggestionGenerate,
     currentUser,
-    retrospectiveId
+    retrospectiveId,
+    participants = [],
+    canConvertToAction = false,
+    onConvertToAction
 }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [newCardContent, setNewCardContent] = useState('');
@@ -353,6 +360,9 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     onCardReactionRemove={onCardReactionRemove}
                     onCardsReorder={onCardsReorder}
                     currentUser={currentUser}
+                    participants={participants}
+                    canConvertToAction={canConvertToAction}
+                    onConvertToAction={onConvertToAction}
                 />
 
                 {/* Empty State */}

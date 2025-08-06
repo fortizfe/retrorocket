@@ -4,7 +4,9 @@ import { Trash2, ThumbsUp, Edit2, User } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import TextareaWithEmoji from '../ui/TextareaWithEmoji';
+import CardMenu from './CardMenu';
 import { Card as CardType } from '../../types/card';
+import { Participant } from '../../types/participant';
 
 interface RetrospectiveCardProps {
   card: CardType;
@@ -13,6 +15,10 @@ interface RetrospectiveCardProps {
   onVote: (cardId: string, increment: boolean) => void;
   currentUser?: string;
   canEdit?: boolean;
+  // Props para el menú de elementos de acción
+  participants?: Participant[];
+  canConvertToAction?: boolean;
+  onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
@@ -21,16 +27,19 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
   onUpdate,
   onVote,
   currentUser,
-  canEdit = true
+  canEdit = true,
+  participants = [],
+  canConvertToAction = false,
+  onConvertToAction
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(card.content);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = () => {
     if (editContent.trim() && editContent !== card.content) {
       try {
-        await onUpdate(card.id, { content: editContent.trim() });
+        onUpdate(card.id, { content: editContent.trim() });
         setIsEditing(false);
       } catch (error) {
         console.error('Error updating card:', error);
@@ -46,10 +55,10 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
     setEditContent(card.content);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setIsDeleting(true);
     try {
-      await onDelete(card.id);
+      onDelete(card.id);
     } catch (error) {
       console.error('Error deleting card:', error);
       setIsDeleting(false);
@@ -84,6 +93,17 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
               <span>{card.createdBy}</span>
             </div>
             <div className="flex items-center space-x-1">
+              {/* Card Menu (for converting to action item) */}
+              {canConvertToAction && onConvertToAction && (
+                <CardMenu
+                  card={card}
+                  participants={participants}
+                  canConvertToAction={canConvertToAction}
+                  onConvertToAction={onConvertToAction}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                />
+              )}
+
               {/* Vote buttons */}
               <div className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
                 <button

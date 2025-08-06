@@ -300,6 +300,7 @@ const RetrospectivePageContent: React.FC = () => {
                             retrospective={retrospective}
                             currentUser={fullName}
                             onDataChange={handleDataChange}
+                            participants={participants || []}
                         />
                     </motion.div>
                 </div>

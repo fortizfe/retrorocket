@@ -19,7 +19,7 @@ export interface RetrospectiveCard {
   votes?: number;
 }
 
-export type ColumnType = 'helped' | 'hindered' | 'improve';
+export type ColumnType = 'helped' | 'hindered' | 'improve' | 'actions';
 
 export interface ColumnConfig {
   id: ColumnType;

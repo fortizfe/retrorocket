@@ -73,5 +73,27 @@ service cloud.firestore {
                    request.auth.token.firebase.sign_in_provider != 'anonymous' &&
                    request.auth.uid == resource.data.facilitatorId;
     }
+    
+    // Reglas para elementos de acción - todos pueden leer, solo el facilitador puede escribir
+    match /actionItems/{actionItemId} {
+      // Todos pueden leer elementos de acción
+      allow read: if request.auth != null && 
+                 request.auth.token.firebase.sign_in_provider != 'anonymous';
+                 
+      // Solo el facilitador puede crear elementos de acción
+      allow create: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == request.resource.data.facilitatorId;
+                   
+      // Solo el facilitador puede modificar elementos de acción
+      allow update: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.facilitatorId;
+                   
+      // Solo el facilitador puede eliminar elementos de acción
+      allow delete: if request.auth != null && 
+                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+                   request.auth.uid == resource.data.facilitatorId;
+    }
   }
 }

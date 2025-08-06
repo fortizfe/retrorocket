@@ -2,6 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, EmojiReaction } from '../../types/card';
+import { Participant } from '../../types/participant';
 import SelectableCard from './SelectableCard';
 
 interface SortableCardProps {
@@ -17,6 +18,10 @@ interface SortableCardProps {
     isGroupingMode?: boolean;
     isSelected?: boolean;
     onSelect?: (cardId: string) => void;
+    // Props para elementos de acción
+    participants?: Participant[];
+    canConvertToAction?: boolean;
+    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({
@@ -31,7 +36,10 @@ const SortableCard: React.FC<SortableCardProps> = ({
     canEdit = true,
     isGroupingMode = false,
     isSelected = false,
-    onSelect
+    onSelect,
+    participants,
+    canConvertToAction,
+    onConvertToAction
 }) => {
     const {
         attributes,
@@ -75,6 +83,9 @@ const SortableCard: React.FC<SortableCardProps> = ({
                 isGroupingMode={isGroupingMode}
                 isSelected={isSelected}
                 onSelect={onSelect}
+                participants={participants}
+                canConvertToAction={canConvertToAction}
+                onConvertToAction={onConvertToAction}
             />
         </div>
     );

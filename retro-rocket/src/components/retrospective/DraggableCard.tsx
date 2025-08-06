@@ -7,7 +7,9 @@ import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import ColorPicker from '../ui/ColorPicker';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
+import CardMenu from './CardMenu';
 import { Card as CardType, EmojiReaction, CardColor } from '../../types/card';
+import { Participant } from '../../types/participant';
 import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '../../utils/cardHelpers';
 import { getCardStyling, validateColor } from '../../utils/cardColors';
 
@@ -22,6 +24,10 @@ interface DraggableCardProps {
     currentUser?: string;
     canEdit?: boolean;
     isDragging?: boolean;
+    // Props para elementos de acción
+    participants?: Participant[];
+    canConvertToAction?: boolean;
+    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -34,7 +40,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     onReactionRemove,
     currentUser = 'anonymous',
     canEdit = true,
-    isDragging = false
+    isDragging = false,
+    participants = [],
+    canConvertToAction = false,
+    onConvertToAction
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
@@ -154,6 +163,17 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
                         </div>
                         <div className="flex items-center space-x-1">
+                            {/* Card Menu (for converting to action item) */}
+                            {canConvertToAction && onConvertToAction && (
+                                <CardMenu
+                                    card={card}
+                                    participants={participants}
+                                    canConvertToAction={canConvertToAction}
+                                    onConvertToAction={onConvertToAction}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                />
+                            )}
+
                             {/* Legacy vote buttons - keeping for backward compatibility */}
                             {(card.votes !== undefined && card.votes > 0) && (
                                 <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">

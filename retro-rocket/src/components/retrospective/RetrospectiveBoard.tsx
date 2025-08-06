@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import GroupableColumn from './GroupableColumn';
+import ActionItemsColumn from './ActionItemsColumn';
 import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
 import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
+import { useActionItems } from '../../hooks/useActionItems';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
@@ -14,12 +16,14 @@ interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[]) => void;
+    participants?: any[]; // Necesitamos los participantes para el menú de conversión
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     retrospective,
     currentUser,
-    onDataChange
+    onDataChange,
+    participants = []
 }) => {
     const {
         cards,
@@ -49,9 +53,23 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         currentUser
     });
 
+    // Hook para elementos de acción
+    const {
+        actionItems,
+        loading: actionItemsLoading,
+        error: actionItemsError,
+        createActionItem,
+        updateActionItem,
+        deleteActionItem,
+        convertCardToActionItem
+    } = useActionItems(retrospective.id);
+
     // Get current user's name using useCurrentUser hook for more reliable data
-    const { fullName, displayName, email } = useCurrentUser();
+    const { fullName, displayName, email, uid } = useCurrentUser();
     const currentUsername = fullName || displayName || email?.split('@')[0] || 'Usuario';
+
+    // Check if current user is facilitator (owner of the retrospective)
+    const isFacilitator = uid === retrospective.createdBy;
 
     const handleCardCreate = async (cardInput: CreateCardInput) => {
         await createCard(cardInput);
@@ -83,6 +101,28 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
 
     const handleCardsReorder = async (updates: Array<{ cardId: string; order: number; column?: string }>) => {
         await reorderCards(updates);
+    };
+
+    // Handler para convertir tarjeta a elemento de acción
+    const handleConvertToActionItem = (cardContent: string, assignedTo?: string, assignedToName?: string) => {
+        if (uid) {
+            convertCardToActionItem(cardContent, uid, assignedTo, assignedToName);
+        }
+    };
+
+    // Handler para crear elemento de acción
+    const handleCreateActionItem = (input: any) => {
+        createActionItem(input);
+    };
+
+    // Handler para editar elemento de acción
+    const handleEditActionItem = (id: string, updates: any) => {
+        updateActionItem(id, updates);
+    };
+
+    // Handler para eliminar elemento de acción
+    const handleDeleteActionItem = (id: string) => {
+        deleteActionItem(id);
     };
 
     // Notify parent component about data changes for export functionality
@@ -122,8 +162,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                 <div className="mb-6">
                 </div>
 
-                {/* Board Grid */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+                {/* Board Grid - 3 columnas regulares + 1 columna de acciones */}
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+                    {/* Columnas regulares de retrospectiva */}
                     {COLUMN_ORDER.map((columnId, index) => (
                         <motion.div
                             key={columnId}
@@ -155,9 +196,34 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                 })}
                                 currentUser={currentUser}
                                 retrospectiveId={retrospective.id}
+                                // Props para elementos de acción
+                                participants={participants}
+                                canConvertToAction={isFacilitator}
+                                onConvertToAction={handleConvertToActionItem}
                             />
                         </motion.div>
                     ))}
+
+                    {/* Columna de Elementos de Acción */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                        className="flex flex-col min-h-0"
+                    >
+                        <ActionItemsColumn
+                            actionItems={actionItems}
+                            participants={participants}
+                            canEdit={isFacilitator}
+                            onCreateActionItem={handleCreateActionItem}
+                            onEditActionItem={handleEditActionItem}
+                            onDeleteActionItem={handleDeleteActionItem}
+                            loading={actionItemsLoading}
+                            error={actionItemsError}
+                            retrospectiveId={retrospective.id}
+                            facilitatorId={uid || ''}
+                        />
+                    </motion.div>
                 </div>
             </div>
         </TypingProvider>

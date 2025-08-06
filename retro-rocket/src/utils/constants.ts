@@ -23,6 +23,13 @@ export const COLUMNS: Record<ColumnType, ColumnConfig> = {
     description: 'Ideas y sugerencias para mejorar',
     color: 'bg-blue-50 border-blue-200',
     icon: '💡'
+  },
+  actions: {
+    id: 'actions',
+    title: 'Elementos de Acción',
+    description: 'Acciones específicas para implementar',
+    color: 'bg-amber-50 border-amber-200',
+    icon: '🎯'
   }
 };
 
@@ -32,6 +39,7 @@ export const RETROSPECTIVE_COLUMNS = [
   { id: "helped", title: "Qué me ayudó" },
   { id: "hindered", title: "Qué me retrasó" },
   { id: "improve", title: "Qué podemos hacer mejor" },
+  { id: "actions", title: "Elementos de Acción" },
 ];
 
 export const FIRESTORE_COLLECTIONS = {
@@ -39,6 +47,7 @@ export const FIRESTORE_COLLECTIONS = {
   PARTICIPANTS: "participants",
   CARDS: "cards",
   GROUPS: "groups",
+  ACTION_ITEMS: "actionItems",
 } as const;
 
 export const APP_NAME = 'RetroRocket';

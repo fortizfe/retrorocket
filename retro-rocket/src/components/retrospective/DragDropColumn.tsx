@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Card, EmojiReaction } from '../../types/card';
 import { ColumnType } from '../../types/retrospective';
+import { Participant } from '../../types/participant';
 import SortableCard from './SortableCard';
 import DraggableCard from './DraggableCard';
 
@@ -37,6 +38,10 @@ interface DragDropColumnProps {
     isGroupingMode?: boolean;
     selectedCards?: Set<string>;
     onCardSelect?: (cardId: string) => void;
+    // Props para elementos de acción
+    participants?: Participant[];
+    canConvertToAction?: boolean;
+    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const DragDropColumn: React.FC<DragDropColumnProps> = ({
@@ -54,7 +59,10 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
     children,
     isGroupingMode = false,
     selectedCards = new Set(),
-    onCardSelect
+    onCardSelect,
+    participants,
+    canConvertToAction,
+    onConvertToAction
 }) => {
     const [activeCard, setActiveCard] = React.useState<Card | null>(null);
 
@@ -154,6 +162,9 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                             isGroupingMode={isGroupingMode}
                             isSelected={selectedCards.has(card.id)}
                             onSelect={onCardSelect}
+                            participants={participants}
+                            canConvertToAction={canConvertToAction}
+                            onConvertToAction={onConvertToAction}
                         />
                     ))}
                 </div>

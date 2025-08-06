@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Hash } from 'lucide-react';
 import { Card as CardType, EmojiReaction } from '../../types/card';
 import { GroupingCriteria } from '../../types/columnGrouping';
+import { Participant } from '../../types/participant';
 import DragDropColumn from './DragDropColumn';
 
 interface GroupedCardListProps {
@@ -16,6 +17,10 @@ interface GroupedCardListProps {
     onCardReactionRemove: (cardId: string, userId: string) => Promise<void>;
     onCardsReorder: (updates: Array<{ cardId: string; order: number; column?: string }>) => Promise<void>;
     currentUser?: string;
+    // Props para elementos de acción
+    participants?: Participant[];
+    canConvertToAction?: boolean;
+    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const GroupedCardList: React.FC<GroupedCardListProps> = ({
@@ -28,7 +33,10 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
     onCardReaction,
     onCardReactionRemove,
     onCardsReorder,
-    currentUser
+    currentUser,
+    participants,
+    canConvertToAction,
+    onConvertToAction
 }) => {
     const groupNames = Object.keys(groupedCards);
 
@@ -49,6 +57,9 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                 onCardsReorder={onCardsReorder}
                 currentUser={currentUser}
                 canEdit={true}
+                participants={participants}
+                canConvertToAction={canConvertToAction}
+                onConvertToAction={onConvertToAction}
             />
         );
     }
@@ -105,6 +116,9 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                                     onCardsReorder={onCardsReorder}
                                     currentUser={currentUser}
                                     canEdit={true}
+                                    participants={participants}
+                                    canConvertToAction={canConvertToAction}
+                                    onConvertToAction={onConvertToAction}
                                 />
                             </div>
                         </motion.div>
