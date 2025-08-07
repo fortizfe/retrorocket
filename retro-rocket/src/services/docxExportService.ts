@@ -5,10 +5,6 @@ import {
     TextRun,
     HeadingLevel,
     AlignmentType,
-    Table,
-    TableRow,
-    TableCell,
-    WidthType,
     ShadingType,
     Header,
     Footer,
@@ -289,70 +285,69 @@ export class DocxExportService {
         const totalReactions = cards.reduce((sum, card) => sum + (card.reactions?.length ?? 0), 0);
         const totalActionItems = actionItems?.length ?? 0;
 
-        // Create statistics table
-        const statsTable = new Table({
-            width: { size: 100, type: WidthType.PERCENTAGE },
-            rows: [
-                // Header row
-                new TableRow({
-                    children: [
-                        new TableCell({
-                            children: [new Paragraph({
-                                children: [new TextRun({ text: 'Metrica', bold: true })]
-                            })],
-                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR }
-                        }),
-                        new TableCell({
-                            children: [new Paragraph({
-                                children: [new TextRun({ text: 'Valor', bold: true })]
-                            })],
-                            shading: { fill: 'F3F4F6', type: ShadingType.CLEAR }
-                        })
-                    ]
-                }),
-                // Data rows
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de tarjetas' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalCards.toString() })] })] })
-                    ]
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de grupos' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalGroups.toString() })] })] })
-                    ]
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de votos' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalVotes.toString() })] })] })
-                    ]
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de likes' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalLikes.toString() })] })] })
-                    ]
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de reacciones' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalReactions.toString() })] })] })
-                    ]
-                }),
-                new TableRow({
-                    children: [
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Elementos de acción' })] })] }),
-                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalActionItems.toString() })] })] })
-                    ]
-                })
-            ]
-        });
+        // Add statistics as simple paragraphs instead of a table
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Total de tarjetas: ' }),
+                    new TextRun({ text: totalCards.toString(), bold: true })
+                ],
+                spacing: { after: 100 }
+            })
+        );
 
         sections.push(
             new Paragraph({
-                children: [statsTable],
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Total de grupos: ' }),
+                    new TextRun({ text: totalGroups.toString(), bold: true })
+                ],
+                spacing: { after: 100 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Total de votos: ' }),
+                    new TextRun({ text: totalVotes.toString(), bold: true })
+                ],
+                spacing: { after: 100 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Total de likes: ' }),
+                    new TextRun({ text: totalLikes.toString(), bold: true })
+                ],
+                spacing: { after: 100 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Total de reacciones: ' }),
+                    new TextRun({ text: totalReactions.toString(), bold: true })
+                ],
+                spacing: { after: 100 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({ text: '• ', bold: true }),
+                    new TextRun({ text: 'Elementos de acción: ' }),
+                    new TextRun({ text: totalActionItems.toString(), bold: true })
+                ],
                 spacing: { after: 300 }
             })
         );
