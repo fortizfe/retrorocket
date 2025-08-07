@@ -57,7 +57,7 @@ export class DocxExportService {
             // Create document sections
             const headerSections = this.createDocumentHeader(data.retrospective);
             const infoSections = this.createRetrospectiveInfo(data.retrospective, data.participants, options);
-            const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups) : [];
+            const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups, data.actionItems) : [];
             const contentSections = this.createColumnsContent(data.cards, data.groups, options);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
@@ -266,7 +266,7 @@ export class DocxExportService {
     /**
      * Create statistics section
      */
-    private createStatisticsSection(cards: Card[], groups: CardGroup[]): Paragraph[] {
+    private createStatisticsSection(cards: Card[], groups: CardGroup[], actionItems?: ActionItem[]): Paragraph[] {
         const sections: Paragraph[] = [
             new Paragraph({
                 children: [
@@ -287,6 +287,7 @@ export class DocxExportService {
         const totalVotes = cards.reduce((sum, card) => sum + (card.votes ?? 0), 0);
         const totalLikes = cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
         const totalReactions = cards.reduce((sum, card) => sum + (card.reactions?.length ?? 0), 0);
+        const totalActionItems = actionItems?.length ?? 0;
 
         // Create statistics table
         const statsTable = new Table({
@@ -338,6 +339,12 @@ export class DocxExportService {
                     children: [
                         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Total de reacciones' })] })] }),
                         new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalReactions.toString() })] })] })
+                    ]
+                }),
+                new TableRow({
+                    children: [
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Elementos de acción' })] })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: totalActionItems.toString() })] })] })
                     ]
                 })
             ]
@@ -633,7 +640,7 @@ export class DocxExportService {
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: `   Asignado a: ${item.assignedTo || 'Sin asignar'}`,
+                            text: `   Asignado a: ${item.assignedToName || 'Sin asignar'}`,
                             size: 18,
                             color: '666666'
                         })

@@ -164,6 +164,10 @@ export class TxtExportService {
         lines.push(`Participantes: ${data.participants.length}`);
         lines.push(`Grupos formados: ${data.groups.length}`);
 
+        if (data.actionItems && data.actionItems.length > 0) {
+            lines.push(`Elementos de acción: ${data.actionItems.length}`);
+        }
+
         // Cards per column
         COLUMN_ORDER.forEach(columnId => {
             const columnCards = data.cards.filter(card => card.column === columnId);

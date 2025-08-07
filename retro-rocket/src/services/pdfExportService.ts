@@ -255,13 +255,15 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         const totalParticipants = data.participants.length;
         const totalVotes = data.cards.reduce((sum, card) => sum + (card.votes || 0), 0);
         const totalReactions = data.cards.reduce((sum, card) => sum + (card.reactions?.length || 0), 0);
+        const totalActionItems = data.actionItems?.length || 0;
 
         return {
             totalCards,
             totalGroups,
             totalParticipants,
             totalVotes,
-            totalReactions
+            totalReactions,
+            totalActionItems
         };
     };
 
@@ -326,6 +328,10 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                 React.createElement(View, { key: 'reactions', style: styles.statItem }, [
                     React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalReactions.toString()),
                     React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Reacciones')
+                ]),
+                React.createElement(View, { key: 'actionItems', style: styles.statItem }, [
+                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalActionItems.toString()),
+                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Elementos de Acción')
                 ])
             ])
         ])
@@ -434,7 +440,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                     React.createElement(View, { key: item.id || index, style: styles.noteItem }, [
                         React.createElement(Text, { key: 'content', style: styles.noteContent }, item.content),
                         React.createElement(Text, { key: 'assignee', style: styles.noteTimestamp },
-                            `Asignado a: ${item.assignedTo || 'Sin asignar'}`
+                            `Asignado a: ${item.assignedToName || 'Sin asignar'}`
                         ),
                         React.createElement(Text, { key: 'created', style: styles.noteTimestamp },
                             `Creado: ${formatDate(item.createdAt)}`
