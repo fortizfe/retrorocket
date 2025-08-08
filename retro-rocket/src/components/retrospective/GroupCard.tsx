@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Users, Sparkles, X } from 'lucide-react';
 import { CardGroup, Card, EmojiReaction } from '../../types/card';
 import DraggableCard from './DraggableCard';
 import { CARD_COLORS } from '../../utils/cardColors';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface GroupCardProps {
     group: CardGroup;
@@ -36,6 +37,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     currentUserId,
     isReadOnly = false
 }) => {
+    const { t } = useLanguage();
     const [isHovered, setIsHovered] = useState(false);
 
     // Find head card and member cards
@@ -56,7 +58,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     const colorConfig = CARD_COLORS[headCardColor];
 
     const handleDisbandGroup = () => {
-        if (window.confirm(`¿Estás seguro de que quieres desagrupar estas ${totalCards} tarjetas?`)) {
+        if (window.confirm(t('retrospective.groupCard.confirmUngroupCards', { totalCards }))) {
             onDisbandGroup(group.id);
         }
     };
@@ -104,24 +106,24 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                 </h3>
                             ) : (
                                 <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Grupo de {totalCards} tarjetas
+                                    {t('retrospective.groupCard.groupOfCards', { totalCards })}
                                 </h3>
                             )}
                             <div className="flex items-center space-x-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 <span className="flex items-center space-x-1">
                                     <span>📝</span>
-                                    <span>{totalCards} tarjetas</span>
+                                    <span>{t('retrospective.groupCard.cardsCount', { count: totalCards, totalCards })}</span>
                                 </span>
                                 {group.totalVotes && group.totalVotes > 0 && (
                                     <span className="flex items-center space-x-1">
                                         <span>👍</span>
-                                        <span>{group.totalVotes} votos</span>
+                                        <span>{t('retrospective.groupCard.votesCount', { count: group.totalVotes })}</span>
                                     </span>
                                 )}
                                 {group.totalLikes && group.totalLikes > 0 && (
                                     <span className="flex items-center space-x-1">
                                         <span>❤️</span>
-                                        <span>{group.totalLikes} likes</span>
+                                        <span>{t('retrospective.groupCard.likesCount', { count: group.totalLikes })}</span>
                                     </span>
                                 )}
                             </div>
@@ -138,7 +140,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                             <button
                                 onClick={handleDisbandGroup}
                                 className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                                title="Desagrupar tarjetas"
+                                title={t('retrospective.groupCard.ungroupCards')}
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -165,7 +167,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                     <div className="absolute -top-2 -left-2 z-10">
                                         <div className="bg-blue-600 dark:bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
                                             <Sparkles className="w-3 h-3" />
-                                            <span>Principal</span>
+                                            <span>{t('retrospective.groupCard.primaryCard')}</span>
                                         </div>
                                     </div>
                                 )}
@@ -226,7 +228,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                             <span>{headCard.content.substring(0, 50)}{headCard.content.length > 50 ? '...' : ''}</span>
                         </span>
                         <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-full">
-                            +{memberCards.length} más
+                            {t('retrospective.groupCard.moreCards', { count: memberCards.length })}
                         </span>
                     </div>
                 </div>

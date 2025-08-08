@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, X, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { useJoinRetrospective } from '../../hooks/useJoinRetrospective';
@@ -14,6 +15,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
     isOpen,
     onClose
 }) => {
+    const { t } = useLanguage();
     const [boardId, setBoardId] = useState('');
     const { isJoining, error, joinByIdAndNavigate, clearError } = useJoinRetrospective();
 
@@ -70,15 +72,15 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             <Users className="w-5 h-5 text-white" />
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                            Unirse a Retrospectiva
+                            {t('dashboard.joinModal.title')}
                         </h3>
                     </div>
                     <button
                         onClick={handleClose}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                         disabled={isJoining}
-                        title="Cerrar modal"
-                        aria-label="Cerrar modal"
+                        title={t('dashboard.joinModal.closeModal')}
+                        aria-label={t('dashboard.joinModal.closeModal')}
                     >
                         <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     </button>
@@ -86,8 +88,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
 
                 {/* Description */}
                 <p className="text-slate-600 dark:text-slate-300 mb-6">
-                    Introduce el ID del tablero de retrospectiva al que deseas unirte.
-                    El creador del tablero puede proporcionarte este ID.
+                    {t('dashboard.joinModal.description')}
                 </p>
 
                 {/* Form */}
@@ -97,21 +98,21 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             htmlFor="boardId"
                             className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                         >
-                            ID del Tablero
+                            {t('dashboard.joinModal.boardIdLabel')}
                         </label>
                         <Input
                             id="boardId"
                             type="text"
                             value={boardId}
                             onChange={handleInputChange}
-                            placeholder="Ej: abc123def456..."
+                            placeholder={t('dashboard.joinModal.boardIdPlaceholder')}
                             required
                             className="w-full"
                             autoFocus
                             disabled={isJoining}
                         />
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            El ID es una cadena única que identifica el tablero
+                            {t('dashboard.joinModal.boardIdHelp')}
                         </p>
                     </div>
 
@@ -138,14 +139,14 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             className="flex-1"
                             disabled={isJoining}
                         >
-                            Cancelar
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             type="submit"
                             disabled={!boardId.trim() || isJoining}
                             className="flex-1 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
                         >
-                            {isJoining ? 'Uniéndose...' : 'Unirse'}
+                            {isJoining ? t('dashboard.joinModal.joining') : t('dashboard.joinModal.join')}
                         </Button>
                     </div>
                 </form>
@@ -153,7 +154,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                 {/* Help Text */}
                 <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                        ¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo.
+                        {t('dashboard.joinModal.helpText')}
                     </p>
                 </div>
             </motion.div>

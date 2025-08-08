@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, User, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '../../contexts/UserContext';
 import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
+import LanguageSelector from '../ui/LanguageSelector';
 
 const Header: React.FC = () => {
     const { isAuthenticated, user, userProfile, signOut } = useUser();
+    const { t } = useTranslation();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const userMenuButtonRef = useRef<HTMLButtonElement>(null);
+    const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, left: 0 });
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -20,6 +26,41 @@ const Header: React.FC = () => {
             console.error('Error signing out:', error);
         }
     };
+
+    const calculateUserMenuPosition = () => {
+        if (!userMenuButtonRef.current) return;
+
+        const buttonRect = userMenuButtonRef.current.getBoundingClientRect();
+        const menuWidth = 224; // w-56 = 224px
+
+        let left = buttonRect.right - menuWidth;
+        if (left < 10) {
+            left = buttonRect.left;
+        }
+
+        setUserMenuPosition({
+            top: buttonRect.bottom + 8,
+            left: left
+        });
+    };
+
+    const handleUserMenuToggle = () => {
+        if (!showUserMenu) {
+            calculateUserMenuPosition();
+        }
+        setShowUserMenu(!showUserMenu);
+    };
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (showUserMenu) {
+                calculateUserMenuPosition();
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [showUserMenu]);
 
     const isActivePath = (path: string) => {
         return location.pathname === path;
@@ -53,19 +94,23 @@ const Header: React.FC = () => {
                                 }`}
                         >
                             <LayoutGrid className="w-4 h-4" />
-                            Mis Tableros
+                            {t('header.myBoards')}
                         </Link>
                     </nav>
 
                     {/* Right side actions */}
                     <div className="flex items-center gap-4">
+                        {/* Language Selector */}
+                        <LanguageSelector />
+
                         {/* Theme Toggle */}
                         <ThemeToggle />
 
                         {/* User Menu */}
-                        <div className="relative">
+                        <div>
                             <button
-                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                ref={userMenuButtonRef}
+                                onClick={handleUserMenuToggle}
                                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             >
                                 {userProfile?.photoURL ? (
@@ -80,11 +125,14 @@ const Header: React.FC = () => {
                                     </div>
                                 )}
                                 <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Usuario'}
+                                    {userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || t('header.user')}
                                 </span>
                                 <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             </button>
+                        </div>
 
+                        {/* User Menu Portal */}
+                        {typeof document !== 'undefined' && createPortal(
                             <AnimatePresence>
                                 {showUserMenu && (
                                     <>
@@ -92,7 +140,7 @@ const Header: React.FC = () => {
                                         <button
                                             className="fixed inset-0 z-40 bg-transparent border-none cursor-default"
                                             onClick={() => setShowUserMenu(false)}
-                                            aria-label="Cerrar menú"
+                                            aria-label={t('header.closeMenu')}
                                         />
 
                                         {/* Menu */}
@@ -101,7 +149,11 @@ const Header: React.FC = () => {
                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-medium border border-slate-200 dark:border-slate-700 py-2 z-50"
+                                            className="fixed z-50 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-medium border border-slate-200 dark:border-slate-700 py-2"
+                                            style={{
+                                                top: userMenuPosition.top,
+                                                left: userMenuPosition.left
+                                            }}
                                         >
                                             {/* User Info */}
                                             <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
@@ -136,7 +188,7 @@ const Header: React.FC = () => {
                                                     className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                                 >
                                                     <User className="w-4 h-4" />
-                                                    Mi Perfil
+                                                    {t('header.profile')}
                                                 </Link>
 
                                                 <Link
@@ -145,7 +197,7 @@ const Header: React.FC = () => {
                                                     className="md:hidden flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                                 >
                                                     <LayoutGrid className="w-4 h-4" />
-                                                    Mis Tableros
+                                                    {t('header.myBoards')}
                                                 </Link>
                                             </div>
 
@@ -159,14 +211,15 @@ const Header: React.FC = () => {
                                                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                                 >
                                                     <LogOut className="w-4 h-4" />
-                                                    Cerrar Sesión
+                                                    {t('header.signOut')}
                                                 </button>
                                             </div>
                                         </motion.div>
                                     </>
                                 )}
-                            </AnimatePresence>
-                        </div>
+                            </AnimatePresence>,
+                            document.body
+                        )}
                     </div>
                 </div>
             </div>

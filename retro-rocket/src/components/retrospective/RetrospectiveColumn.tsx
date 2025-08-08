@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import TextareaWithEmoji from '../ui/TextareaWithEmoji';
@@ -41,6 +42,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   currentUser,
   retrospectiveId
 }) => {
+  const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [newCardContent, setNewCardContent] = useState('');
   const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title, column.id));
@@ -121,7 +123,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-sm text-gray-500">
-            {cards.length} {cards.length === 1 ? 'tarjeta' : 'tarjetas'}
+            {t('retrospective.columns.cardsCount', { count: cards.length })}
           </span>
           <Button
             size="sm"
@@ -131,7 +133,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
             className="flex items-center space-x-1"
           >
             <Plus size={14} />
-            <span>Agregar</span>
+            <span>{t('retrospective.columns.add')}</span>
           </Button>
         </div>
       </Card>
@@ -156,7 +158,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                 {/* Preview indicator */}
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-gray-500 italic">
-                    Vista previa del color
+                    {t('retrospective.columns.colorPreview')}
                   </span>
                   <ColorPicker
                     selectedColor={selectedColor}
@@ -169,7 +171,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   value={newCardContent}
                   onChange={handleTextareaChange}
                   onBlur={handleTextareaBlur}
-                  placeholder={`¿Qué ${column.title.toLowerCase()}?`}
+                  placeholder={t('retrospective.columns.placeholder', { columnTitle: column.title.toLowerCase() })}
                   rows={3}
                   autoFocus
                   className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
@@ -183,7 +185,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                     loading={isSubmitting}
                     disabled={!newCardContent.trim()}
                   >
-                    Crear tarjeta
+                    {t('retrospective.columns.createCard')}
                   </Button>
                   <Button
                     size="sm"
@@ -191,7 +193,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                     onClick={handleCancelCreate}
                     disabled={isSubmitting}
                   >
-                    Cancelar
+                    {t('retrospective.columns.cancel')}
                   </Button>
                 </div>
               </Card>
@@ -235,7 +237,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
             >
               <div className="text-4xl mb-2">{column.icon}</div>
               <p className="text-gray-500 text-sm mb-3">
-                No hay tarjetas aún
+                {t('retrospective.columns.noCards')}
               </p>
               {currentUser && (
                 <Button
@@ -245,7 +247,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   className="flex items-center space-x-1 mx-auto"
                 >
                   <Plus size={14} />
-                  <span>Agregar primera tarjeta</span>
+                  <span>{t('retrospective.columns.addFirstCard')}</span>
                 </Button>
               )}
             </motion.div>

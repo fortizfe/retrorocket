@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Github, Apple } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 import Button from '../ui/Button';
 import { AuthProvider, AuthProviderType } from '../../types/user';
 import { getAvailableProviders } from '../../services/authProvider';
@@ -10,13 +11,6 @@ interface AuthButtonGroupProps {
     loading?: boolean;
     className?: string;
 }
-
-// Static configuration for providers UI
-const providerUIConfig: Record<AuthProviderType, { name: string; comingSoon?: boolean }> = {
-    google: { name: 'Continuar con Google' },
-    github: { name: 'Continuar con GitHub' },
-    apple: { name: 'Próximamente: Apple', comingSoon: true },
-};
 
 const getProviderIcon = (provider: AuthProviderType) => {
     switch (provider) {
@@ -48,20 +42,34 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
     loading = false,
     className = '',
 }) => {
+    const { t } = useLanguage();
+
     // Get available providers from service and combine with UI config
     const availableProviders = getAvailableProviders();
     const allProviders: AuthProviderType[] = ['google', 'github', 'apple'];
 
+    const getProviderName = (providerId: AuthProviderType): string => {
+        switch (providerId) {
+            case 'google':
+                return t('auth.authButtonGroup.continueWithGoogle');
+            case 'github':
+                return t('auth.authButtonGroup.continueWithGithub');
+            case 'apple':
+                return t('auth.authButtonGroup.comingSoon') + ': Apple';
+            default:
+                return '';
+        }
+    };
+
     const providers = allProviders.map(providerId => {
         const isAvailable = availableProviders.some(p => p.providerId === providerId);
-        const config = providerUIConfig[providerId];
 
         return {
             id: providerId,
-            name: config.name,
+            name: getProviderName(providerId),
             icon: providerId,
             available: isAvailable,
-            comingSoon: config.comingSoon,
+            comingSoon: providerId === 'apple',
         } as AuthProvider;
     });
 
@@ -89,11 +97,11 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                     >
                         {getProviderIcon(provider.id)}
                         <span className="flex-1 text-center">
-                            {loading ? 'Iniciando sesión...' : provider.name}
+                            {loading ? t('auth.authButtonGroup.signingIn') : provider.name}
                         </span>
                         {provider.comingSoon && (
                             <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-1 rounded-full">
-                                Pronto
+                                {t('auth.authButtonGroup.comingSoon')}
                             </span>
                         )}
                     </Button>
@@ -101,7 +109,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
             ))}
 
             <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
-                Al continuar, aceptas nuestros términos y condiciones
+                {t('auth.authButtonGroup.termsConditions')}
             </div>
         </div>
     );

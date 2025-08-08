@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Save } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { UserProfile } from '../../types/user';
@@ -18,6 +19,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
     isFirstTime = false,
     className = '',
 }) => {
+    const { t } = useLanguage();
     const [displayName, setDisplayName] = useState(userProfile?.displayName ?? '');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -55,10 +57,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         <User className="w-8 h-8 text-white" />
                     </motion.div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                        ¡Bienvenido a RetroRocket! 🚀
+                        {t('auth.userProfileForm.welcome')}
                     </h2>
                     <p className="text-gray-600">
-                        Completa tu perfil para comenzar a crear retrospectivas
+                        {t('auth.userProfileForm.welcomeSubtitle')}
                     </p>
                 </div>
             )}
@@ -66,10 +68,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
             {!isFirstTime && (
                 <div className="text-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                        Editar Perfil
+                        {t('auth.userProfileForm.editProfile')}
                     </h3>
                     <p className="text-gray-600">
-                        Actualiza tu información personal
+                        {t('auth.userProfileForm.editProfileSubtitle')}
                     </p>
                 </div>
             )}
@@ -88,7 +90,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
-                        Email
+                        {t('auth.userProfileForm.email')}
                     </label>
                     <Input
                         type="email"
@@ -97,24 +99,24 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        El email no puede ser modificado
+                        {t('auth.userProfileForm.emailNotEditable')}
                     </p>
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         <User className="w-4 h-4 inline mr-2" />
-                        Nombre a mostrar *
+                        {t('auth.userProfileForm.displayName')}
                     </label>
                     <Input
                         type="text"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Tu nombre completo"
+                        placeholder={t('auth.userProfileForm.displayNamePlaceholder')}
                         required
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Este nombre aparecerá en los tableros que crees
+                        {t('auth.userProfileForm.displayNameHelp')}
                     </p>
                 </div>
 
@@ -127,12 +129,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                     {isLoading ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Guardando...
+                            {t('auth.userProfileForm.saving')}
                         </>
                     ) : (
                         <>
                             <Save className="w-4 h-4" />
-                            {isFirstTime ? 'Continuar' : 'Guardar cambios'}
+                            {isFirstTime ? t('auth.userProfileForm.continue') : t('auth.userProfileForm.saveChanges')}
                         </>
                     )}
                 </Button>
@@ -140,7 +142,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             {isFirstTime && (
                 <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-                    Podrás editar esta información desde tu perfil en cualquier momento
+                    {t('auth.userProfileForm.editLaterNote')}
                 </div>
             )}
         </motion.div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Users, ArrowRight, Trash2, AlertTriangle, Crown, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../hooks/useLanguage';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { deleteRetrospectiveCompletely } from '../../services/retrospectiveService';
@@ -27,6 +28,7 @@ interface BoardCardProps {
 
 const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDeleted }) => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -42,12 +44,12 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
         setIsDeleting(true);
         try {
             await deleteRetrospectiveCompletely(board.id, currentUserId);
-            toast.success('Tablero eliminado correctamente');
+            toast.success(t('dashboard.boardCard.deleteSuccess'));
             onBoardDeleted(board.id);
             setShowDeleteConfirm(false);
         } catch (error) {
             console.error('Error deleting board:', error);
-            toast.error('Error al eliminar el tablero');
+            toast.error(t('dashboard.boardCard.deleteError'));
         } finally {
             setIsDeleting(false);
         }
@@ -76,13 +78,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
                         <div>
                             <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
-                                ¿Eliminar tablero?
+                                {t('dashboard.boardCard.deleteBoard')}
                             </h3>
                             <p className="text-sm text-red-700 dark:text-red-300 mb-1">
                                 <strong>"{board.title}"</strong>
                             </p>
                             <p className="text-xs text-red-600 dark:text-red-400">
-                                Esta acción no se puede deshacer. Se eliminarán todas las tarjetas y datos del tablero.
+                                {t('dashboard.boardCard.deleteConfirmation')}
                             </p>
                         </div>
 
@@ -93,7 +95,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                                 onClick={() => setShowDeleteConfirm(false)}
                                 disabled={isDeleting}
                             >
-                                Cancelar
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 variant="danger"
@@ -102,7 +104,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                                 loading={isDeleting}
                             >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
+                                {t('dashboard.boardCard.deleteButton')}
                             </Button>
                         </div>
                     </div>
@@ -130,13 +132,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                             {board.isCreator === false && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 mt-0.5">
                                     <UserPlus className="w-3 h-3 mr-1" />
-                                    Unido
+                                    {t('dashboard.boardCard.joined')}
                                 </span>
                             )}
                             {board.isCreator === true && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 mt-0.5">
                                     <Crown className="w-3 h-3 mr-1" />
-                                    Creador
+                                    {t('dashboard.boardCard.creator')}
                                 </span>
                             )}
                         </div>
@@ -148,7 +150,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                             className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 
                                      p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 
                                      text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
-                            title="Eliminar tablero"
+                            title={t('dashboard.boardCard.deleteTitle')}
                         >
                             <Trash2 className="h-4 w-4" />
                         </button>
@@ -172,7 +174,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
                         <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            <span>{board.participantCount} participantes</span>
+                            <span>{board.participantCount} {t('dashboard.boardCard.participants')}</span>
                         </div>
                     </div>
 
@@ -183,7 +185,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                         size="sm"
                         className="w-full"
                     >
-                        Abrir tablero
+                        {t('dashboard.boardCard.openBoard')}
                         <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                 </div>

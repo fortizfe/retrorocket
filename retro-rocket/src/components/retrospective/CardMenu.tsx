@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Target } from 'lucide-react';
 import { Card } from '../../types/card';
 import { Participant } from '../../types/participant';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface CardMenuProps {
     card: Card;
@@ -20,6 +21,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
     onConvertToAction,
     className = ''
 }) => {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [selectedAssignee, setSelectedAssignee] = useState('');
     const menuRef = useRef<HTMLDivElement>(null);
@@ -130,13 +132,13 @@ const CardMenu: React.FC<CardMenuProps> = ({
                                 id={`assign-${card.id}`}
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
-                                title="Seleccionar responsable"
+                                title={t('retrospective.cards.selectResponsible')}
                                 className="w-full p-2 text-sm border border-slate-200 dark:border-slate-600 
                            rounded bg-white dark:bg-slate-800 
                            text-slate-900 dark:text-slate-100
                            focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             >
-                                <option value="">Sin asignar</option>
+                                <option value="">{t('retrospective.cards.unassigned')}</option>
                                 {participants.map((participant) => (
                                     <option key={participant.id} value={participant.userId}>
                                         {participant.name}
@@ -151,14 +153,14 @@ const CardMenu: React.FC<CardMenuProps> = ({
                                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium 
                            py-2 px-3 rounded transition-colors"
                             >
-                                Convertir
+                                {t('retrospective.cards.convert')}
                             </button>
                             <button
                                 onClick={() => setIsOpen(false)}
                                 className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 
                            hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                             >
-                                Cancelar
+                                {t('common.cancel')}
                             </button>
                         </div>
                     </div>
@@ -175,7 +177,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
                 className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 
                    text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400
                    transition-colors ${className}`}
-                title="Convertir en elemento de acción"
+                title={t('retrospective.cards.convertToAction')}
             >
                 <MoreVertical className="w-4 h-4" />
             </button>

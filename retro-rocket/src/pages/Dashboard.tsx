@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '../contexts/UserContext';
 import { userService } from '../services/userService';
 import { useRetrospective } from '../hooks/useRetrospective';
@@ -28,6 +29,7 @@ interface Board {
 
 const DashboardPage: React.FC = () => {
     const { user, userProfile } = useUser();
+    const { t } = useTranslation();
     const [boards, setBoards] = useState<Board[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -137,10 +139,10 @@ const DashboardPage: React.FC = () => {
                         <div>
                             <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
                                 <LayoutGrid className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-                                Mis Tableros
+                                {t('dashboard.title')}
                             </h1>
                             <p className="text-slate-600 dark:text-slate-300 mt-2">
-                                Gestiona y accede a todas tus retrospectivas
+                                {t('dashboard.subtitle')}
                             </p>
                         </div>
                         <div className="flex gap-3">
@@ -150,14 +152,14 @@ const DashboardPage: React.FC = () => {
                                 className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
                             >
                                 <Users className="w-5 h-5" />
-                                Unirse a Retrospectiva
+                                {t('dashboard.joinRetro')}
                             </Button>
                             <Button
                                 onClick={() => setShowCreateForm(true)}
                                 className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
                             >
                                 <Plus className="w-5 h-5" />
-                                Nuevo Tablero
+                                {t('dashboard.newBoard')}
                             </Button>
                         </div>
                     </div>
@@ -178,19 +180,19 @@ const DashboardPage: React.FC = () => {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-                                Crear Nuevo Tablero
+                                {t('dashboard.createBoard')}
                             </h3>
                             <form onSubmit={createBoardAndNavigate} className="space-y-4">
                                 <div>
                                     <label htmlFor="boardTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Título del tablero
+                                        {t('dashboard.newBoardTitle')}
                                     </label>
                                     <Input
                                         id="boardTitle"
                                         type="text"
                                         value={newBoardTitle}
                                         onChange={(e) => setNewBoardTitle(e.target.value)}
-                                        placeholder="Retrospectiva Sprint 12"
+                                        placeholder={t('dashboard.placeholder_boardTitle')}
                                         required
                                         className="w-full"
                                         autoFocus
@@ -203,14 +205,14 @@ const DashboardPage: React.FC = () => {
                                         onClick={() => setShowCreateForm(false)}
                                         className="flex-1"
                                     >
-                                        Cancelar
+                                        {t('dashboard.cancel')}
                                     </Button>
                                     <Button
                                         type="submit"
                                         disabled={!newBoardTitle.trim() || isCreating}
                                         className="flex-1 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
                                     >
-                                        {isCreating ? 'Creando...' : 'Crear'}
+                                        {isCreating ? t('dashboard.creating') : t('dashboard.create')}
                                     </Button>
                                 </div>
                             </form>
@@ -235,10 +237,10 @@ const DashboardPage: React.FC = () => {
                             <LayoutGrid className="w-8 h-8 text-slate-400 dark:text-slate-500" />
                         </div>
                         <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            No tienes tableros aún
+                            {t('dashboard.noBoards')}
                         </h3>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Crea tu primer tablero de retrospectiva o únete a uno existente
+                            {t('dashboard.createFirst')}
                         </p>
                         <div className="flex gap-3 justify-center">
                             <Button
@@ -247,14 +249,14 @@ const DashboardPage: React.FC = () => {
                                 className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
                             >
                                 <Users className="w-5 h-5" />
-                                Unirse a Retrospectiva
+                                {t('dashboard.joinRetro')}
                             </Button>
                             <Button
                                 onClick={() => setShowCreateForm(true)}
                                 className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
                             >
                                 <Plus className="w-5 h-5" />
-                                Crear mi primer tablero
+                                {t('dashboard.createFirst_button')}
                             </Button>
                         </div>
                     </motion.div>

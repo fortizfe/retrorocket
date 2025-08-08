@@ -8,6 +8,7 @@ import {
     Download, Settings, CheckCircle
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
+import { useLanguage } from '../hooks/useLanguage';
 import AuthButtonGroup from '../components/auth/AuthButtonGroup';
 import UserProfileForm from '../components/auth/UserProfileForm';
 import AuthWrapper from '../components/auth/AuthWrapper';
@@ -17,6 +18,7 @@ import { APP_NAME, APP_DESCRIPTION } from '../utils/constants';
 
 const LandingPage: React.FC = () => {
     const { signInWithGoogle, signInWithGithub, loading, user, userProfile, updateDisplayName } = useUser();
+    const { t } = useLanguage();
     const [showProfileForm, setShowProfileForm] = useState(false);
 
     const handleProviderSignIn = async (providerId: AuthProviderType) => {
@@ -87,7 +89,7 @@ const LandingPage: React.FC = () => {
                             {APP_DESCRIPTION}
                         </p>
                         <p className="text-lg text-slate-500 dark:text-slate-400">
-                            Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo
+                            {t('landing.hero.tagline')}
                         </p>
                     </motion.div>
 
@@ -100,10 +102,10 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30">
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-center">
-                                Comienza ahora
+                                {t('landing.hero.cta.title')}
                             </h2>
                             <p className="text-slate-600 dark:text-slate-300 mb-6 text-center">
-                                Únete en segundos y crea tu primera retrospectiva
+                                {t('landing.hero.cta.subtitle')}
                             </p>
 
                             <AuthButtonGroup
@@ -113,10 +115,10 @@ const LandingPage: React.FC = () => {
 
                             <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-4">
                                 <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>Gratis para siempre</span>
+                                <span>{t('landing.hero.cta.freeForever')}</span>
                                 <span className="mx-2">•</span>
                                 <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>Sin límites</span>
+                                <span>{t('landing.hero.cta.noLimits')}</span>
                             </div>
                         </div>
                     </motion.div>
@@ -130,23 +132,23 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Users className="w-8 h-8 text-primary-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Conecta equipos</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.connectTeams.title')}</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos
+                                {t('landing.features.connectTeams.description')}
                             </p>
                         </div>
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Zap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Resultados inmediatos</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.immediateResults.title')}</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Obtén insights valiosos y planes de acción en tiempo récord
+                                {t('landing.features.immediateResults.description')}
                             </p>
                         </div>
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
                             <Heart className="w-8 h-8 text-sky-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Fácil de adoptar</h3>
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.easyToAdopt.title')}</h3>
                             <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje
+                                {t('landing.features.easyToAdopt.description')}
                             </p>
                         </div>
                     </motion.div>
@@ -160,10 +162,10 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-                                Todo lo que necesitas para retrospectivas exitosas
+                                {t('landing.mainFeatures.title')}
                             </h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-                                Una plataforma completa diseñada por y para equipos ágiles que buscan mejorar continuamente
+                                {t('landing.mainFeatures.subtitle')}
                             </p>
                         </div>
 
@@ -174,10 +176,10 @@ const LandingPage: React.FC = () => {
                                     <Shield className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Autenticación Avanzada
+                                    {t('landing.mainFeatures.advancedAuth.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder.
+                                    {t('landing.mainFeatures.advancedAuth.description')}
                                 </p>
                             </div>
 
@@ -187,10 +189,10 @@ const LandingPage: React.FC = () => {
                                     <Users className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Colaboración en Tiempo Real
+                                    {t('landing.mainFeatures.realTimeCollab.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones.
+                                    {t('landing.mainFeatures.realTimeCollab.description')}
                                 </p>
                             </div>
 
@@ -200,10 +202,10 @@ const LandingPage: React.FC = () => {
                                     <MessageSquare className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Sistema Completo de Tarjetas
+                                    {t('landing.mainFeatures.cardSystem.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    Tres columnas estructuradas con votación, reacciones y colores personalizables.
+                                    {t('landing.mainFeatures.cardSystem.description')}
                                 </p>
                             </div>
 
@@ -213,10 +215,10 @@ const LandingPage: React.FC = () => {
                                     <Group className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Agrupación Inteligente
+                                    {t('landing.mainFeatures.smartGrouping.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas.
+                                    {t('landing.mainFeatures.smartGrouping.description')}
                                 </p>
                             </div>
 
@@ -226,10 +228,10 @@ const LandingPage: React.FC = () => {
                                     <FileText className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Exportación Profesional
+                                    {t('landing.mainFeatures.professionalExport.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    PDF y DOCX optimizados para compartir con stakeholders y archivar resultados.
+                                    {t('landing.mainFeatures.professionalExport.description')}
                                 </p>
                             </div>
 
@@ -239,10 +241,10 @@ const LandingPage: React.FC = () => {
                                     <Palette className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                                    Experiencia Moderna
+                                    {t('landing.mainFeatures.modernUI.title')}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-300 text-sm">
-                                    Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo.
+                                    {t('landing.mainFeatures.modernUI.description')}
                                 </p>
                             </div>
                         </div>
@@ -257,10 +259,10 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-                                Cómo funciona RetroRocket
+                                {t('landing.howItWorks.title')}
                             </h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-                                De la idea a la acción en minutos. Simple para empezar, poderoso para crecer.
+                                {t('landing.howItWorks.subtitle')}
                             </p>
                         </div>
 
@@ -274,15 +276,15 @@ const LandingPage: React.FC = () => {
                                                 1
                                             </div>
                                             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                                Inicia sesión y crea
+                                                {t('landing.howItWorks.step1.title')}
                                             </h3>
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                            Accede con Google o GitHub en segundos. Crea una nueva retrospectiva con título y descripción.
+                                            {t('landing.howItWorks.step1.description')}
                                         </p>
                                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                             <Play className="w-4 h-4" />
-                                            <span>Menos de 30 segundos para empezar</span>
+                                            <span>{t('landing.howItWorks.step1.time')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -290,7 +292,7 @@ const LandingPage: React.FC = () => {
                                     <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30 text-center">
                                         <Globe className="w-16 h-16 text-primary-500 mx-auto mb-4" />
                                         <p className="text-slate-600 dark:text-slate-300">
-                                            Comparte el enlace con tu equipo y ¡listo!
+                                            {t('landing.howItWorks.step1.sharing')}
                                         </p>
                                     </div>
                                 </div>
@@ -305,15 +307,15 @@ const LandingPage: React.FC = () => {
                                                 2
                                             </div>
                                             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                                Colabora en tiempo real
+                                                {t('landing.howItWorks.step2.title')}
                                             </h3>
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                            Añade tarjetas en las tres columnas, vota ideas favoritas y agrupa conceptos similares.
+                                            {t('landing.howItWorks.step2.description')}
                                         </p>
                                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                             <Edit3 className="w-4 h-4" />
-                                            <span>Edita solo tus propias tarjetas</span>
+                                            <span>{t('landing.howItWorks.step2.tip')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -325,7 +327,7 @@ const LandingPage: React.FC = () => {
                                             <Heart className="w-12 h-12 text-red-500" />
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300">
-                                            Vota, reacciona y organiza ideas de forma visual
+                                            {t('landing.howItWorks.step2.actions')}
                                         </p>
                                     </div>
                                 </div>
@@ -340,15 +342,15 @@ const LandingPage: React.FC = () => {
                                                 3
                                             </div>
                                             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-                                                Exporta y actúa
+                                                {t('landing.howItWorks.step3.title')}
                                             </h3>
                                         </div>
                                         <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                            Genera reportes profesionales en PDF o Word con estadísticas completas y plan de acción.
+                                            {t('landing.howItWorks.step3.description')}
                                         </p>
                                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                             <Settings className="w-4 h-4" />
-                                            <span>Configuración avanzada de exportación</span>
+                                            <span>{t('landing.howItWorks.step3.tip')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -356,7 +358,7 @@ const LandingPage: React.FC = () => {
                                     <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30 text-center">
                                         <Download className="w-16 h-16 text-purple-500 mx-auto mb-4" />
                                         <p className="text-slate-600 dark:text-slate-300">
-                                            Comparte resultados con stakeholders
+                                            {t('landing.howItWorks.step3.sharing')}
                                         </p>
                                     </div>
                                 </div>
@@ -373,10 +375,10 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-                                Tecnología moderna y confiable
+                                {t('landing.technology.title')}
                             </h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-                                Construido con las mejores herramientas para garantizar rendimiento, seguridad y escalabilidad
+                                {t('landing.technology.subtitle')}
                             </p>
                         </div>
 
@@ -385,39 +387,39 @@ const LandingPage: React.FC = () => {
                                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Zap className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">React + TypeScript</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">Frontend moderno y tipado</p>
+                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.reactTypeScript')}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.reactTypeScript_desc')}</p>
                             </div>
 
                             <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Shield className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Firebase</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">Base de datos en tiempo real</p>
+                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.firebase')}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.firebase_desc')}</p>
                             </div>
 
                             <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Palette className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Tailwind CSS</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">Diseño responsive y moderno</p>
+                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.tailwind')}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.tailwind_desc')}</p>
                             </div>
 
                             <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Smartphone className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Mobile First</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">Funciona en cualquier dispositivo</p>
+                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.mobileFirst')}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.mobileFirst_desc')}</p>
                             </div>
                         </div>
 
                         <div className="text-center mt-8">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
                                 <CheckCircle className="w-4 h-4" />
-                                <span className="text-sm font-medium">100% Open Source</span>
+                                <span className="text-sm font-medium">{t('landing.technology.openSource')}</span>
                             </div>
                         </div>
                     </motion.div>
@@ -431,23 +433,19 @@ const LandingPage: React.FC = () => {
                     >
                         <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 max-w-xl mx-auto">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-3">
-                                ¿Ya tienes una cuenta?
+                                {t('landing.finalMessage.title')}
                             </h2>
                             <p className="text-slate-600 dark:text-slate-300 mb-4">
-                                Accede directamente arriba para continuar con tus retrospectivas
+                                {t('landing.finalMessage.subtitle')}
                             </p>
 
                             <div className="flex items-center justify-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                 <Github className="w-3 h-3" />
-                                <span>Open Source en GitHub</span>
+                                <span>{t('landing.finalMessage.githubLink')}</span>
                                 <ArrowRight className="w-3 h-3 ml-1" />
                             </div>
                         </div>
                     </motion.div>
-
-                    {/* Auth Section - Removed from here since it's now in CTA */}
-
-                    {/* CTA - Removed as it's now integrated above */}
                 </div>
             </div>
 
@@ -456,7 +454,7 @@ const LandingPage: React.FC = () => {
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center text-slate-600 dark:text-slate-400">
                         <p className="text-sm">
-                            © 2025 {APP_NAME}. Hecho con ❤️ para equipos que buscan mejorar.
+                            {t('landing.footer.copyright', { appName: APP_NAME })}
                         </p>
                     </div>
                 </div>

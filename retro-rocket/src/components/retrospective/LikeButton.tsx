@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { Like } from '../../types/card';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface LikeButtonProps {
     cardId: string;
@@ -20,26 +21,37 @@ const LikeButton: React.FC<LikeButtonProps> = ({
     disabled = false,
     likes = []
 }) => {
+    const { t } = useLanguage();
+
     // Create tooltip text showing usernames
     const createTooltipText = () => {
         if (likesCount === 0) {
-            return 'Dar like a esta tarjeta';
+            return t('retrospective.likeButton.likeCard');
         }
 
         const usernames = likes.map(like => like.username);
 
         if (likesCount === 1) {
-            return `${usernames[0]} le ha dado like`;
+            return t('retrospective.likeButton.singleLike', { username: usernames[0] });
         } else if (likesCount === 2) {
-            return `${usernames[0]} y ${usernames[1]} les ha dado like`;
+            return t('retrospective.likeButton.doubleLike', {
+                username1: usernames[0],
+                username2: usernames[1]
+            });
         } else if (likesCount <= 5) {
             const allButLast = usernames.slice(0, -1).join(', ');
             const last = usernames[usernames.length - 1];
-            return `${allButLast} y ${last} les ha dado like`;
+            return t('retrospective.likeButton.multipleLikes', {
+                usernames: allButLast,
+                lastUser: last
+            });
         } else {
             const first3 = usernames.slice(0, 3).join(', ');
             const remaining = likesCount - 3;
-            return `${first3} y ${remaining} más les ha dado like`;
+            return t('retrospective.likeButton.manyLikes', {
+                usernames: first3,
+                remaining
+            });
         }
     };
     return (

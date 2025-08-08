@@ -4,6 +4,7 @@ import ExportPopover from './ExportPopover';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface ExportButtonGroupProps {
     retrospective: Retrospective;
@@ -22,6 +23,7 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
     actionItems = [],
     className = ''
 }) => {
+    const { t } = useLanguage();
     const [showPopover, setShowPopover] = useState(false);
 
     return (
@@ -40,9 +42,9 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
                 size="sm"
                 onClick={() => setShowPopover(true)}
                 className="flex items-center gap-2"
-                title="Exportar retrospectiva"
+                title={t('retrospective.export.exportButton')}
             >
-                Exportar
+                {t('retrospective.export.exportText')}
             </Button>
         </ExportPopover>
     );

@@ -1,0 +1,497 @@
+{
+    "header": {
+        "myBoards": "My Boards",
+        "user": "User",
+        "closeMenu": "Close menu",
+        "closeLanguageSelector": "Close language selector",
+        "profile": "Profile",
+        "signOut": "Sign Out"
+    },
+    "dashboard": {
+        "title": "My Boards",
+        "subtitle": "Manage and access all your retrospectives",
+        "noBoards": "You don't have retrospectives yet",
+        "createFirst": "Create your first retrospective to start collaborating with your team",
+        "joinRetro": "Join Retrospective",
+        "createFirst_button": "Create my first board",
+        "createBoard": "Create Retrospective",
+        "newBoard": "New Board",
+        "newBoardTitle": "Retrospective title",
+        "placeholder_boardTitle": "Sprint 12 Retrospective",
+        "cancel": "Cancel",
+        "create": "Create",
+        "creating": "Creating...",
+        "boardCard": {
+            "deleteBoard": "Delete board?",
+            "deleteConfirmation": "This action cannot be undone. All cards and board data will be deleted.",
+            "deleteButton": "Delete",
+            "deleteSuccess": "Board deleted successfully",
+            "deleteError": "Error deleting board",
+            "openBoard": "Open board",
+            "participants": "participants",
+            "joined": "Joined",
+            "creator": "Creator",
+            "deleteTitle": "Delete board"
+        },
+        "joinModal": {
+            "title": "Join Retrospective",
+            "description": "Enter the ID of the retrospective board you want to join. The board creator can provide you with this ID.",
+            "boardIdLabel": "Board ID",
+            "boardIdPlaceholder": "Ex: abc123def456...",
+            "boardIdHelp": "The ID is a unique string that identifies the board",
+            "joining": "Joining...",
+            "join": "Join",
+            "closeModal": "Close modal",
+            "helpText": "Don't have the ID? Ask the retrospective organizer to share it with you."
+        }
+    },
+    "retrospective": {
+        "columns": {
+            "placeholder": "What {{columnTitle}}?",
+            "createCard": "Create card",
+            "cancel": "Cancel",
+            "colorPreview": "Color preview",
+            "cardsCount": "{{count}} cards",
+            "add": "Add",
+            "noCards": "No cards yet",
+            "addFirstCard": "Add first card"
+        },
+        "cards": {
+            "likes": "Likes",
+            "reactions": "Reactions",
+            "convertToAction": "Convert to action item",
+            "assignResponsible": "Assign responsible (optional)",
+            "selectResponsible": "Select responsible",
+            "unassigned": "Unassigned",
+            "convert": "Convert",
+            "created": "Created:",
+            "responsible": "Responsible:"
+        },
+        "actionItems": {
+            "title": "Action Items",
+            "newAction": "Describe the action to implement...",
+            "responsible": "Responsible (optional)",
+            "add": "Add",
+            "edit": "Edit",
+            "save": "Save",
+            "saving": "Saving...",
+            "cancel": "Cancel"
+        },
+        "export": {
+            "title": "Export Retrospective",
+            "options": "Export options",
+            "format": "Format",
+            "documentConfig": "Document configuration",
+            "customTitle": "Custom title",
+            "includeLogo": "Include RetroRocket logo",
+            "contentToInclude": "Content to include",
+            "statistics": "Statistics",
+            "cardAuthors": "Card authors",
+            "likesReactions": "Likes and reactions",
+            "groupDetails": "Card grouping details",
+            "actionItems": "Action items",
+            "facilitatorNotes": "Add facilitator notes",
+            "cardSorting": "Card sorting",
+            "originalOrder": "Original order",
+            "originalOrder_desc": "Keep the order they were created",
+            "alphabetical": "Alphabetical",
+            "alphabetical_desc": "Sort by card content",
+            "byLikes": "By likes",
+            "byLikes_desc": "Sort by number of likes (highest to lowest)",
+            "cancel": "Cancel",
+            "exportButton": "Export retrospective",
+            "exportText": "Export",
+            "export": "Export {{format}}",
+            "exporting": "Exporting...",
+            "progress": "Progress"
+        },
+        "groupCard": {
+            "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",
+            "groupOfCards": "Group of {{totalCards}} cards",
+            "cardsCount": "{{totalCards}} cards",
+            "votesCount": "{{count}} votes",
+            "likesCount": "{{count}} likes",
+            "ungroupCards": "Ungroup cards",
+            "primaryCard": "Primary",
+            "moreCards": "+{{count}} more"
+        },
+        "likeButton": {
+            "likeCard": "Like this card",
+            "singleLike": "{{username}} has liked this",
+            "doubleLike": "{{username1}} and {{username2}} have liked this",
+            "multipleLikes": "{{usernames}} and {{lastUser}} have liked this",
+            "manyLikes": "{{usernames}} and {{remaining}} more have liked this"
+        },
+        "actionItemCard": {
+            "confirmDelete": "Are you sure you want to delete this action item?",
+            "editAction": "Edit action item",
+            "deleteAction": "Delete action item",
+            "placeholder": "Describe the action to implement...",
+            "unassigned": "Unassigned",
+            "save": "Save",
+            "cancel": "Cancel",
+            "responsible": "Responsible",
+            "created": "Created"
+        },
+        "emojiReactions": {
+            "categories": {
+                "Emociones": "Emotions",
+                "Gestos": "Gestures",
+                "Objetos": "Objects",
+                "Celebración": "Celebration"
+            },
+            "picker": {
+                "ariaLabel": "Emoji reaction picker",
+                "addReaction": "Add reaction",
+                "addReactionButton": "Add emoji reaction",
+                "openPicker": " (open)"
+            },
+            "reactions": {
+                "reactWith": "React with {{emoji}}",
+                "removeReaction": "Remove my reaction",
+                "remove": "Remove",
+                "yourReaction": "Your reaction:",
+                "selected": " (selected)",
+                "tooltips": {
+                    "none": "React with {{emoji}}",
+                    "single": "{{user}} reacted with {{emoji}}",
+                    "double": "{{user1}} and {{user2}} reacted with {{emoji}}",
+                    "multiple": "{{users}} and {{lastUser}} reacted with {{emoji}}",
+                    "many": "{{users}} and {{remaining}} more reacted with {{emoji}}"
+                }
+            }
+        },
+        "facilitator": {
+            "menu": "Facilitator",
+            "countdown": {
+                "title": "Timer",
+                "create": "Create Timer",
+                "minutes": "min",
+                "seconds": "sec",
+                "creating": "Creating...",
+                "create_button": "Create",
+                "control": "Control Timer",
+                "start": "Start",
+                "pause": "Pause",
+                "stop": "Stop",
+                "restart": "Restart",
+                "delete": "Delete",
+                "status": {
+                    "finished": "Time's up",
+                    "paused": "Paused",
+                    "running": "Running",
+                    "stopped": "Stopped"
+                }
+            },
+            "notes": {
+                "title": "Facilitator Notes",
+                "placeholder": "Write your note here...",
+                "editPlaceholder": "Edit note...",
+                "save": "Save",
+                "cancel": "Cancel",
+                "delete": "Delete",
+                "edit": "Edit",
+                "add": "Add note",
+                "close": "Close",
+                "deleteConfirm": "Are you sure you want to delete this note?",
+                "editTitle": "Edit note",
+                "deleteTitle": "Delete note",
+                "noNotes": "No notes yet",
+                "noNotesSubtitle": "Add notes to track the retrospective",
+                "loading": "Loading notes..."
+            }
+        },
+        "grouping": {
+            "title": "Group cards",
+            "options": "Grouping options"
+        }
+    },
+    "participants": {
+        "title": "Participants",
+        "close": "Close",
+        "closeList": "Close participants list"
+    },
+    "typing": {
+        "single": "{{username}} is typing",
+        "double": "{{username1}} and {{username2}} are typing",
+        "multiple": "{{username}} and {{count}} more are typing"
+    },
+    "colors": {
+        "blue": "Sky Blue",
+        "blue_tooltip": "Soft sky blue - Perfect for ideas",
+        "blue_aria": "Select sky blue color",
+        "purple": "Lavender",
+        "purple_tooltip": "Soft lavender - Ideal for reflections",
+        "purple_aria": "Select lavender color",
+        "orange": "Peach",
+        "orange_tooltip": "Soft peach - Excellent for alerts",
+        "orange_aria": "Select peach color",
+        "pink": "Soft Pink",
+        "pink_tooltip": "Soft pink - Perfect for celebrations",
+        "pink_aria": "Select soft pink color",
+        "teal": "Teal",
+        "teal_tooltip": "Soft teal - Ideal for innovation",
+        "teal_aria": "Select teal color",
+        "gray": "Pearl Gray",
+        "gray_tooltip": "Neutral pearl gray - Versatile for any theme",
+        "gray_aria": "Select pearl gray color",
+        "green": "Mint Green",
+        "green_tooltip": "Fresh mint green - Perfect for achievements",
+        "green_aria": "Select mint green color",
+        "yellow": "Sun Yellow",
+        "yellow_tooltip": "Bright sun yellow - Ideal for important ideas",
+        "yellow_aria": "Select sun yellow color",
+        "red": "Soft Coral",
+        "red_tooltip": "Soft coral - Appropriate for problems",
+        "red_aria": "Select soft coral color"
+    },
+    "common": {
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "close": "Close",
+        "add": "Add",
+        "create": "Create",
+        "confirm": "Confirm",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "search": "Search",
+        "filter": "Filter",
+        "sort": "Sort",
+        "export": "Export",
+        "import": "Import",
+        "settings": "Settings",
+        "help": "Help",
+        "about": "About",
+        "more": "More",
+        "less": "Less",
+        "show": "Show",
+        "hide": "Hide",
+        "expand": "Expand",
+        "collapse": "Collapse",
+        "refresh": "Refresh",
+        "retry": "Retry"
+    },
+    "errors": {
+        "generic": "An error occurred",
+        "network": "Connection error",
+        "unauthorized": "Unauthorized",
+        "notFound": "Not found",
+        "serverError": "Server error",
+        "tryAgain": "Try again"
+    },
+    "success": {
+        "saved": "Saved successfully",
+        "created": "Created successfully",
+        "updated": "Updated successfully",
+        "deleted": "Deleted successfully",
+        "exported": "Exported successfully"
+    },
+    "countdown": {
+        "demo": {
+            "title": "Timer for Retrospectives",
+            "subtitle": "Full time control for facilitators",
+            "facilitator": {
+                "title": "For Facilitators",
+                "features": [
+                    "⏰ Create custom timers",
+                    "▶️ Start, pause and stop",
+                    "🔄 Restart easily",
+                    "🗑️ Delete completely",
+                    "🎛️ Exclusive control panel"
+                ]
+            },
+            "participants": {
+                "title": "For Participants",
+                "features": [
+                    "👀 See the timer in real time",
+                    "🚨 Visual alerts when time is up",
+                    "📱 Fully responsive",
+                    "🌙 Dark mode compatible"
+                ]
+            },
+            "states": {
+                "running": "Running",
+                "paused": "Paused",
+                "finished": "Finished"
+            },
+            "instructions": "How to use the timer",
+            "step1": "As facilitator, access the control panel",
+            "step2": "Set the time needed for each activity",
+            "step3": "Start the timer when the activity begins",
+            "step4": "All participants will see the remaining time"
+        }
+    },
+    "like": {
+        "single": "{{username}} liked this",
+        "double": "{{username1}} and {{username2}} liked this",
+        "multiple": "{{usernames}} and {{remaining}} more liked this"
+    },
+    "emoji": {
+        "reacted_single": "{{username}} reacted with {{emoji}}",
+        "reacted_double": "{{username1}} and {{username2}} reacted with {{emoji}}",
+        "reacted_multiple": "{{usernames}} and {{remaining}} more reacted with {{emoji}}"
+    },
+    "formats": {
+        "pdf": {
+            "name": "PDF",
+            "description": "Professional formatted document, ideal for sharing"
+        },
+        "docx": {
+            "name": "Word",
+            "description": "Editable Microsoft Word document"
+        },
+        "txt": {
+            "name": "Text",
+            "description": "Plain text format, simple and universal"
+        }
+    },
+    "landing": {
+        "hero": {
+            "tagline": "Facilitate retrospectives that really drive your team's growth",
+            "cta": {
+                "title": "Get started now",
+                "subtitle": "Join in seconds and create your first retrospective",
+                "freeForever": "Free forever",
+                "noLimits": "No limits"
+            }
+        },
+        "features": {
+            "connectTeams": {
+                "title": "Connect teams",
+                "description": "Bring your team together from anywhere to create better solutions together"
+            },
+            "immediateResults": {
+                "title": "Immediate results",
+                "description": "Get valuable insights and action plans in record time"
+            },
+            "easyToAdopt": {
+                "title": "Easy to adopt",
+                "description": "Your team will feel comfortable from the first minute, no learning curve"
+            }
+        },
+        "mainFeatures": {
+            "title": "Everything you need for successful retrospectives",
+            "subtitle": "A complete platform designed by and for agile teams looking to continuously improve",
+            "advancedAuth": {
+                "title": "Advanced Authentication",
+                "description": "Multiple providers with automatic linking. One profile, multiple ways to access."
+            },
+            "realTimeCollab": {
+                "title": "Real-time Collaboration",
+                "description": "See your team's changes instantly. Work together without interruptions."
+            },
+            "cardSystem": {
+                "title": "Complete Card System",
+                "description": "Three structured columns with voting, reactions and customizable colors."
+            },
+            "smartGrouping": {
+                "title": "Smart Grouping",
+                "description": "Drag and drop to organize ideas. Clear visual hierarchy and automatic statistics."
+            },
+            "professionalExport": {
+                "title": "Professional Export",
+                "description": "PDF and DOCX optimized for sharing with stakeholders and archiving results."
+            },
+            "modernUI": {
+                "title": "Modern Experience",
+                "description": "Responsive design, smooth animations and dark mode. Works on any device."
+            }
+        },
+        "howItWorks": {
+            "title": "How RetroRocket works",
+            "subtitle": "From idea to action in minutes. Simple to start, powerful to grow.",
+            "step1": {
+                "title": "Sign in and create",
+                "description": "Access with Google or GitHub in seconds. Create a new retrospective with title and description.",
+                "time": "Less than 30 seconds to start",
+                "sharing": "Share the link with your team and you're ready!"
+            },
+            "step2": {
+                "title": "Collaborate in real time",
+                "description": "Add cards in the three columns, vote on favorite ideas and group similar concepts.",
+                "tip": "Edit only your own cards",
+                "actions": "Vote, react and organize ideas visually"
+            },
+            "step3": {
+                "title": "Export and act",
+                "description": "Generate professional reports in PDF or Word with complete statistics and action plan.",
+                "tip": "Advanced export configuration",
+                "sharing": "Share results with stakeholders"
+            }
+        },
+        "technology": {
+            "title": "Modern and reliable technology",
+            "subtitle": "Built with the best tools to guarantee performance, security and scalability",
+            "reactTypeScript": "React + TypeScript",
+            "reactTypeScript_desc": "Modern and typed frontend",
+            "firebase": "Firebase",
+            "firebase_desc": "Real-time database",
+            "tailwind": "Tailwind CSS",
+            "tailwind_desc": "Responsive and modern design",
+            "mobileFirst": "Mobile First",
+            "mobileFirst_desc": "Works on any device",
+            "openSource": "100% Open Source"
+        },
+        "finalMessage": {
+            "title": "Already have an account?",
+            "subtitle": "Sign in directly above to continue with your retrospectives",
+            "githubLink": "Open Source on GitHub"
+        },
+        "footer": {
+            "copyright": "© 2025 {{appName}}. Made with ❤️ for teams looking to improve."
+        }
+    },
+    "profile": {
+        "title": "My Profile",
+        "subtitle": "Manage your personal information and account settings",
+        "signOut": "Sign Out",
+        "memberSince": "Member since",
+        "primaryProvider": "Primary provider",
+        "accountActions": {
+            "title": "Account Actions",
+            "exportData": {
+                "title": "Export Data",
+                "description": "Download all your retrospective data",
+                "button": "Coming soon"
+            },
+            "deleteAccount": {
+                "title": "Delete Account",
+                "description": "Permanently delete your account and all data",
+                "button": "Delete"
+            }
+        }
+    },
+    "notFound": {
+        "title": "404 - Not Found",
+        "message": "Oops! The page you are looking for does not exist.",
+        "goHome": "Go back to Home"
+    },
+    "auth": {
+        "userProfileForm": {
+            "welcome": "Welcome to RetroRocket! 🚀",
+            "welcomeSubtitle": "Complete your profile to start creating retrospectives",
+            "editProfile": "Edit Profile",
+            "editProfileSubtitle": "Update your personal information",
+            "email": "Email",
+            "emailNotEditable": "Email cannot be modified",
+            "displayName": "Display name *",
+            "displayNamePlaceholder": "Your full name",
+            "displayNameHelp": "This name will appear on the boards you create",
+            "saving": "Saving...",
+            "continue": "Continue",
+            "saveChanges": "Save changes",
+            "editLaterNote": "You can edit this information from your profile at any time"
+        },
+        "authButtonGroup": {
+            "continueWithGoogle": "Continue with Google",
+            "continueWithGithub": "Continue with GitHub",
+            "signingIn": "Signing in...",
+            "comingSoon": "Coming Soon",
+            "termsConditions": "By continuing, you accept our terms and conditions"
+        }
+    }
+}

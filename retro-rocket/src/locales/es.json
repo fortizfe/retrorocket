@@ -1,0 +1,497 @@
+{
+    "header": {
+        "myBoards": "Mis Tableros",
+        "user": "Usuario",
+        "closeMenu": "Cerrar menú",
+        "closeLanguageSelector": "Cerrar selector de idioma",
+        "profile": "Perfil",
+        "signOut": "Cerrar sesión"
+    },
+    "dashboard": {
+        "title": "Mis Tableros",
+        "subtitle": "Gestiona y accede a todas tus retrospectivas",
+        "noBoards": "Aún no tienes retrospectivas",
+        "createFirst": "Crea tu primera retrospectiva para comenzar a colaborar con tu equipo",
+        "joinRetro": "Unirse a Retrospectiva",
+        "createFirst_button": "Crear mi primer tablero",
+        "createBoard": "Crear Retrospectiva",
+        "newBoard": "Nuevo Tablero",
+        "newBoardTitle": "Título de la retrospectiva",
+        "placeholder_boardTitle": "Retrospectiva Sprint 12",
+        "cancel": "Cancelar",
+        "create": "Crear",
+        "creating": "Creando...",
+        "boardCard": {
+            "deleteBoard": "¿Eliminar tablero?",
+            "deleteConfirmation": "Esta acción no se puede deshacer. Se eliminarán todas las tarjetas y datos del tablero.",
+            "deleteButton": "Eliminar",
+            "deleteSuccess": "Tablero eliminado correctamente",
+            "deleteError": "Error al eliminar el tablero",
+            "openBoard": "Abrir tablero",
+            "participants": "participantes",
+            "joined": "Unido",
+            "creator": "Creador",
+            "deleteTitle": "Eliminar tablero"
+        },
+        "joinModal": {
+            "title": "Unirse a Retrospectiva",
+            "description": "Introduce el ID del tablero de retrospectiva al que deseas unirte. El creador del tablero puede proporcionarte este ID.",
+            "boardIdLabel": "ID del Tablero",
+            "boardIdPlaceholder": "Ej: abc123def456...",
+            "boardIdHelp": "El ID es una cadena única que identifica el tablero",
+            "joining": "Uniéndose...",
+            "join": "Unirse",
+            "closeModal": "Cerrar modal",
+            "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
+        }
+    },
+    "retrospective": {
+        "columns": {
+            "placeholder": "¿Qué {{columnTitle}}?",
+            "createCard": "Crear tarjeta",
+            "cancel": "Cancelar",
+            "colorPreview": "Vista previa del color",
+            "cardsCount": "{{count}} tarjetas",
+            "add": "Agregar",
+            "noCards": "No hay tarjetas aún",
+            "addFirstCard": "Agregar primera tarjeta"
+        },
+        "cards": {
+            "likes": "Me gusta",
+            "reactions": "Reacciones",
+            "convertToAction": "Convertir en elemento de acción",
+            "assignResponsible": "Asignar responsable (opcional)",
+            "selectResponsible": "Seleccionar responsable",
+            "unassigned": "Sin asignar",
+            "convert": "Convertir",
+            "created": "Creado:",
+            "responsible": "Responsable:"
+        },
+        "actionItems": {
+            "title": "Elementos de Acción",
+            "newAction": "Describe la acción a implementar...",
+            "responsible": "Responsable (opcional)",
+            "add": "Agregar",
+            "edit": "Editar",
+            "save": "Guardar",
+            "saving": "Guardando...",
+            "cancel": "Cancelar"
+        },
+        "export": {
+            "title": "Exportar Retrospectiva",
+            "options": "Opciones de exportación",
+            "format": "Formato",
+            "documentConfig": "Configuración del documento",
+            "customTitle": "Título personalizado",
+            "includeLogo": "Incluir logo de RetroRocket",
+            "contentToInclude": "Contenido a incluir",
+            "statistics": "Estadísticas",
+            "cardAuthors": "Autores de tarjetas",
+            "likesReactions": "Likes y reacciones",
+            "groupDetails": "Detalles de agrupaciones de tarjetas",
+            "actionItems": "Elementos de Acción",
+            "facilitatorNotes": "Agregar notas del facilitador",
+            "cardSorting": "Ordenamiento de tarjetas"
+        },
+        "groupCard": {
+            "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
+            "groupOfCards": "Grupo de {{totalCards}} tarjetas",
+            "cardsCount": "{{totalCards}} tarjetas",
+            "votesCount": "{{count}} votos",
+            "likesCount": "{{count}} likes",
+            "ungroupCards": "Desagrupar tarjetas",
+            "primaryCard": "Principal",
+            "moreCards": "+{{count}} más"
+        },
+        "likeButton": {
+            "likeCard": "Dar like a esta tarjeta",
+            "singleLike": "{{username}} le ha dado like",
+            "doubleLike": "{{username1}} y {{username2}} les ha dado like",
+            "multipleLikes": "{{usernames}} y {{lastUser}} les ha dado like",
+            "manyLikes": "{{usernames}} y {{remaining}} más les ha dado like"
+        },
+        "actionItemCard": {
+            "confirmDelete": "¿Estás seguro de que quieres eliminar este elemento de acción?",
+            "editAction": "Editar elemento de acción",
+            "deleteAction": "Eliminar elemento de acción",
+            "placeholder": "Describe la acción a implementar...",
+            "unassigned": "Sin asignar",
+            "save": "Guardar",
+            "cancel": "Cancelar",
+            "responsible": "Responsable",
+            "created": "Creado"
+        },
+        "emojiReactions": {
+            "categories": {
+                "Emociones": "Emociones",
+                "Gestos": "Gestos",
+                "Objetos": "Objetos",
+                "Celebración": "Celebración"
+            },
+            "picker": {
+                "ariaLabel": "Selector de reacciones emoji",
+                "addReaction": "Agregar reacción",
+                "addReactionButton": "Agregar reacción emoji",
+                "openPicker": " (abierto)"
+            },
+            "reactions": {
+                "reactWith": "Reaccionar con {{emoji}}",
+                "removeReaction": "Quitar mi reacción",
+                "remove": "Quitar",
+                "yourReaction": "Tu reacción:",
+                "selected": " (seleccionado)",
+                "tooltips": {
+                    "none": "Reaccionar con {{emoji}}",
+                    "single": "{{user}} reaccionó con {{emoji}}",
+                    "double": "{{user1}} y {{user2}} reaccionaron con {{emoji}}",
+                    "multiple": "{{users}} y {{lastUser}} reaccionaron con {{emoji}}",
+                    "many": "{{users}} y {{remaining}} más reaccionaron con {{emoji}}"
+                }
+            }
+        },
+        "originalOrder": "Orden original",
+        "originalOrder_desc": "Mantener el orden en que fueron creadas",
+        "alphabetical": "Alfabético",
+        "alphabetical_desc": "Ordenar por contenido de la tarjeta",
+        "byLikes": "Por likes",
+        "byLikes_desc": "Ordenar por cantidad de likes (mayor a menor)",
+        "cancel": "Cancelar",
+        "exportButton": "Exportar retrospectiva",
+        "exportText": "Exportar",
+        "exportFormat": "Exportar {{format}}",
+        "exporting": "Exportando...",
+        "progress": "Progreso"
+    },
+    "facilitator": {
+        "menu": "Facilitador",
+        "countdown": {
+            "title": "Temporizador",
+            "create": "Crear Temporizador",
+            "minutes": "min",
+            "seconds": "seg",
+            "creating": "Creando...",
+            "create_button": "Crear",
+            "control": "Controlar Temporizador",
+            "start": "Iniciar",
+            "pause": "Pausar",
+            "stop": "Detener",
+            "restart": "Reiniciar",
+            "delete": "Eliminar",
+            "status": {
+                "finished": "Tiempo terminado",
+                "paused": "Pausado",
+                "running": "En curso",
+                "stopped": "Detenido"
+            }
+        },
+        "notes": {
+            "title": "Notas del Facilitador",
+            "placeholder": "Escribe tu nota aquí...",
+            "editPlaceholder": "Editar nota...",
+            "save": "Guardar",
+            "cancel": "Cancelar",
+            "delete": "Borrar",
+            "edit": "Editar",
+            "add": "Añadir nota",
+            "close": "Cerrar",
+            "deleteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
+            "editTitle": "Editar nota",
+            "deleteTitle": "Eliminar nota",
+            "noNotes": "No hay notas aún",
+            "noNotesSubtitle": "Añade notas para hacer seguimiento de la retrospectiva",
+            "loading": "Cargando notas..."
+        }
+    },
+    "grouping": {
+        "title": "Agrupar tarjetas",
+        "options": "Opciones de agrupación"
+    },
+    "participants": {
+        "title": "Participantes",
+        "close": "Cerrar",
+        "closeList": "Cerrar lista de participantes"
+    },
+    "typing": {
+        "single": "{{username}} está escribiendo",
+        "double": "{{username1}} y {{username2}} están escribiendo",
+        "multiple": "{{username}} y {{count}} más están escribiendo"
+    },
+    "colors": {
+        "blue": "Azul cielo",
+        "blue_tooltip": "Azul cielo suave - Perfecto para ideas",
+        "blue_aria": "Seleccionar color azul cielo",
+        "purple": "Lavanda",
+        "purple_tooltip": "Lavanda suave - Ideal para reflexiones",
+        "purple_aria": "Seleccionar color lavanda",
+        "orange": "Melocotón",
+        "orange_tooltip": "Melocotón suave - Excelente para alertas",
+        "orange_aria": "Seleccionar color melocotón",
+        "pink": "Rosa Suave",
+        "pink_tooltip": "Rosa suave - Perfecto para celebraciones",
+        "pink_aria": "Seleccionar color rosa suave",
+        "teal": "Verde Azulado",
+        "teal_tooltip": "Verde azulado suave - Ideal para innovación",
+        "teal_aria": "Seleccionar color verde azulado",
+        "gray": "Gris Perla",
+        "gray_tooltip": "Gris perla neutro - Versátil para cualquier tema",
+        "gray_aria": "Seleccionar color gris perla",
+        "green": "Verde Menta",
+        "green_tooltip": "Verde menta fresco - Perfecto para logros",
+        "green_aria": "Seleccionar color verde menta",
+        "yellow": "Amarillo Sol",
+        "yellow_tooltip": "Amarillo sol brillante - Ideal para ideas importantes",
+        "yellow_aria": "Seleccionar color amarillo sol",
+        "red": "Coral Suave",
+        "red_tooltip": "Coral suave - Apropiado para problemas",
+        "red_aria": "Seleccionar color coral suave"
+    },
+    "common": {
+        "loading": "Cargando...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "close": "Cerrar",
+        "add": "Agregar",
+        "create": "Crear",
+        "confirm": "Confirmar",
+        "back": "Atrás",
+        "next": "Siguiente",
+        "previous": "Anterior",
+        "search": "Buscar",
+        "filter": "Filtrar",
+        "sort": "Ordenar",
+        "export": "Exportar",
+        "import": "Importar",
+        "settings": "Configuración",
+        "help": "Ayuda",
+        "about": "Acerca de",
+        "more": "Más",
+        "less": "Menos",
+        "show": "Mostrar",
+        "hide": "Ocultar",
+        "expand": "Expandir",
+        "collapse": "Contraer",
+        "refresh": "Actualizar",
+        "retry": "Reintentar"
+    },
+    "errors": {
+        "generic": "Ha ocurrido un error",
+        "network": "Error de conexión",
+        "unauthorized": "No autorizado",
+        "notFound": "No encontrado",
+        "serverError": "Error del servidor",
+        "tryAgain": "Inténtalo de nuevo"
+    },
+    "success": {
+        "saved": "Guardado correctamente",
+        "created": "Creado correctamente",
+        "updated": "Actualizado correctamente",
+        "deleted": "Eliminado correctamente",
+        "exported": "Exportado correctamente"
+    },
+    "countdown": {
+        "demo": {
+            "title": "Temporizador para Retrospectivas",
+            "subtitle": "Control total del tiempo para facilitadores",
+            "facilitator": {
+                "title": "Para Facilitadores",
+                "features": [
+                    "⏰ Crear temporizadores personalizados",
+                    "▶️ Iniciar, pausar y detener",
+                    "🔄 Reiniciar fácilmente",
+                    "🗑️ Eliminar completamente",
+                    "🎛️ Panel de control exclusivo"
+                ]
+            },
+            "participants": {
+                "title": "Para Participantes",
+                "features": [
+                    "👀 Ver el temporizador en tiempo real",
+                    "🚨 Alertas visuales cuando el tiempo termina",
+                    "📱 Totalmente responsive",
+                    "🌙 Compatible con modo oscuro"
+                ]
+            },
+            "states": {
+                "running": "En ejecución",
+                "paused": "Pausado",
+                "finished": "Terminado"
+            },
+            "instructions": "Cómo usar el temporizador",
+            "step1": "Como facilitador, accede al panel de control",
+            "step2": "Configura el tiempo necesario para cada actividad",
+            "step3": "Inicia el temporizador cuando comience la actividad",
+            "step4": "Todos los participantes verán el tiempo restante"
+        }
+    },
+    "like": {
+        "single": "A {{username}} le ha dado like",
+        "double": "A {{username1}} y {{username2}} les ha dado like",
+        "multiple": "A {{usernames}} y {{remaining}} más les ha dado like"
+    },
+    "emoji": {
+        "reacted_single": "{{username}} reaccionó con {{emoji}}",
+        "reacted_double": "{{username1}} y {{username2}} reaccionaron con {{emoji}}",
+        "reacted_multiple": "{{usernames}} y {{remaining}} más reaccionaron con {{emoji}}"
+    },
+    "formats": {
+        "pdf": {
+            "name": "PDF",
+            "description": "Documento con formato profesional, ideal para compartir"
+        },
+        "docx": {
+            "name": "Word",
+            "description": "Documento editable de Microsoft Word"
+        },
+        "txt": {
+            "name": "Texto",
+            "description": "Formato de texto plano, simple y universal"
+        }
+    },
+    "landing": {
+        "hero": {
+            "tagline": "Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo",
+            "cta": {
+                "title": "Comienza ahora",
+                "subtitle": "Únete en segundos y crea tu primera retrospectiva",
+                "freeForever": "Gratis para siempre",
+                "noLimits": "Sin límites"
+            }
+        },
+        "features": {
+            "connectTeams": {
+                "title": "Conecta equipos",
+                "description": "Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos"
+            },
+            "immediateResults": {
+                "title": "Resultados inmediatos",
+                "description": "Obtén insights valiosos y planes de acción en tiempo récord"
+            },
+            "easyToAdopt": {
+                "title": "Fácil de adoptar",
+                "description": "Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje"
+            }
+        },
+        "mainFeatures": {
+            "title": "Todo lo que necesitas para retrospectivas exitosas",
+            "subtitle": "Una plataforma completa diseñada por y para equipos ágiles que buscan mejorar continuamente",
+            "advancedAuth": {
+                "title": "Autenticación Avanzada",
+                "description": "Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder."
+            },
+            "realTimeCollab": {
+                "title": "Colaboración en Tiempo Real",
+                "description": "Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones."
+            },
+            "cardSystem": {
+                "title": "Sistema Completo de Tarjetas",
+                "description": "Tres columnas estructuradas con votación, reacciones y colores personalizables."
+            },
+            "smartGrouping": {
+                "title": "Agrupación Inteligente",
+                "description": "Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas."
+            },
+            "professionalExport": {
+                "title": "Exportación Profesional",
+                "description": "PDF y DOCX optimizados para compartir con stakeholders y archivar resultados."
+            },
+            "modernUI": {
+                "title": "Experiencia Moderna",
+                "description": "Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo."
+            }
+        },
+        "howItWorks": {
+            "title": "Cómo funciona RetroRocket",
+            "subtitle": "De la idea a la acción en minutos. Simple para empezar, poderoso para crecer.",
+            "step1": {
+                "title": "Inicia sesión y crea",
+                "description": "Accede con Google o GitHub en segundos. Crea una nueva retrospectiva con título y descripción.",
+                "time": "Menos de 30 segundos para empezar",
+                "sharing": "Comparte el enlace con tu equipo y ¡listo!"
+            },
+            "step2": {
+                "title": "Colabora en tiempo real",
+                "description": "Añade tarjetas en las tres columnas, vota ideas favoritas y agrupa conceptos similares.",
+                "tip": "Edita solo tus propias tarjetas",
+                "actions": "Vota, reacciona y organiza ideas de forma visual"
+            },
+            "step3": {
+                "title": "Exporta y actúa",
+                "description": "Genera reportes profesionales en PDF o Word con estadísticas completas y plan de acción.",
+                "tip": "Configuración avanzada de exportación",
+                "sharing": "Comparte resultados con stakeholders"
+            }
+        },
+        "technology": {
+            "title": "Tecnología moderna y confiable",
+            "subtitle": "Construido con las mejores herramientas para garantizar rendimiento, seguridad y escalabilidad",
+            "reactTypeScript": "React + TypeScript",
+            "reactTypeScript_desc": "Frontend moderno y tipado",
+            "firebase": "Firebase",
+            "firebase_desc": "Base de datos en tiempo real",
+            "tailwind": "Tailwind CSS",
+            "tailwind_desc": "Diseño responsive y moderno",
+            "mobileFirst": "Mobile First",
+            "mobileFirst_desc": "Funciona en cualquier dispositivo",
+            "openSource": "100% Open Source"
+        },
+        "finalMessage": {
+            "title": "¿Ya tienes una cuenta?",
+            "subtitle": "Accede directamente arriba para continuar con tus retrospectivas",
+            "githubLink": "Open Source en GitHub"
+        },
+        "footer": {
+            "copyright": "© 2025 {{appName}}. Hecho con ❤️ para equipos que buscan mejorar."
+        }
+    },
+    "profile": {
+        "title": "Mi Perfil",
+        "subtitle": "Gestiona tu información personal y configuraciones de cuenta",
+        "signOut": "Cerrar Sesión",
+        "memberSince": "Miembro desde",
+        "primaryProvider": "Proveedor principal",
+        "accountActions": {
+            "title": "Acciones de Cuenta",
+            "exportData": {
+                "title": "Exportar Datos",
+                "description": "Descarga todos tus datos de retrospectivas",
+                "button": "Próximamente"
+            },
+            "deleteAccount": {
+                "title": "Eliminar Cuenta",
+                "description": "Elimina permanentemente tu cuenta y todos los datos",
+                "button": "Eliminar"
+            }
+        }
+    },
+    "notFound": {
+        "title": "404 - No Encontrado",
+        "message": "¡Oops! La página que buscas no existe.",
+        "goHome": "Volver al Inicio"
+    },
+    "auth": {
+        "userProfileForm": {
+            "welcome": "¡Bienvenido a RetroRocket! 🚀",
+            "welcomeSubtitle": "Completa tu perfil para comenzar a crear retrospectivas",
+            "editProfile": "Editar Perfil",
+            "editProfileSubtitle": "Actualiza tu información personal",
+            "email": "Email",
+            "emailNotEditable": "El email no puede ser modificado",
+            "displayName": "Nombre a mostrar *",
+            "displayNamePlaceholder": "Tu nombre completo",
+            "displayNameHelp": "Este nombre aparecerá en los tableros que crees",
+            "saving": "Guardando...",
+            "continue": "Continuar",
+            "saveChanges": "Guardar cambios",
+            "editLaterNote": "Podrás editar esta información desde tu perfil en cualquier momento"
+        },
+        "authButtonGroup": {
+            "continueWithGoogle": "Continuar con Google",
+            "continueWithGithub": "Continuar con GitHub",
+            "signingIn": "Iniciando sesión...",
+            "comingSoon": "Pronto",
+            "termsConditions": "Al continuar, aceptas nuestros términos y condiciones"
+        }
+    }
+}

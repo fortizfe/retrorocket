@@ -5,6 +5,7 @@ import { ActionItem } from '../../types/actionItem';
 import { Participant } from '../../types/participant';
 import Button from '../ui/Button';
 import LinkifyText from '../ui/LinkifyText';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface ActionItemCardProps {
     actionItem: ActionItem;
@@ -23,6 +24,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
     onDelete,
     className = ''
 }) => {
+    const { t } = useLanguage();
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(actionItem.content);
     const [selectedAssignee, setSelectedAssignee] = useState(actionItem.assignedTo || '');
@@ -55,7 +57,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
     };
 
     const handleDelete = () => {
-        if (!window.confirm('¿Estás seguro de que quieres eliminar este elemento de acción?')) {
+        if (!window.confirm(t('retrospective.actionItemCard.confirmDelete'))) {
             return;
         }
 
@@ -95,7 +97,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                             disabled={isEditing || isDeleting}
                             className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-800/30 
                        text-amber-600 dark:text-amber-400 transition-colors"
-                            title="Editar elemento de acción"
+                            title={t('retrospective.actionItemCard.editAction')}
                         >
                             <Edit3 className="w-3 h-3" />
                         </button>
@@ -104,7 +106,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                             disabled={isEditing || isDeleting}
                             className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-800/30 
                        text-red-500 dark:text-red-400 transition-colors"
-                            title="Eliminar elemento de acción"
+                            title={t('retrospective.actionItemCard.deleteAction')}
                         >
                             <Trash2 className="w-3 h-3" />
                         </button>
@@ -130,7 +132,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                        text-slate-900 dark:text-slate-100 
                        focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             rows={3}
-                            placeholder="Describe la acción a implementar..."
+                            placeholder={t('retrospective.actionItemCard.placeholder')}
                             autoFocus
                         />
 
@@ -149,7 +151,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                          text-slate-900 dark:text-slate-100
                          focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             >
-                                <option value="">Sin asignar</option>
+                                <option value="">{t('retrospective.actionItemCard.unassigned')}</option>
                                 {participants.map((participant) => (
                                     <option key={participant.id} value={participant.userId}>
                                         {participant.name}
@@ -167,7 +169,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 className="h-7 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white"
                             >
                                 <Check className="w-3 h-3 mr-1" />
-                                Guardar
+                                {t('retrospective.actionItemCard.save')}
                             </Button>
                             <Button
                                 onClick={handleCancel}
@@ -177,7 +179,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 className="h-7 px-3 text-xs"
                             >
                                 <X className="w-3 h-3 mr-1" />
-                                Cancelar
+                                {t('retrospective.actionItemCard.cancel')}
                             </Button>
                         </div>
                     </motion.div>
@@ -199,14 +201,14 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                             rounded border border-amber-200 dark:border-amber-700">
                                 <User className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                                 <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                                    Responsable: {assignedParticipant.name}
+                                    {t('retrospective.actionItemCard.responsible')}: {assignedParticipant.name}
                                 </span>
                             </div>
                         )}
 
                         {/* Timestamp */}
                         <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            Creado: {actionItem.createdAt.toLocaleDateString('es-ES', {
+                            {t('retrospective.actionItemCard.created')}: {actionItem.createdAt.toLocaleDateString('es-ES', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 hour: '2-digit',

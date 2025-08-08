@@ -5,32 +5,39 @@ import { Smile } from 'lucide-react';
 import { EmojiReaction, GroupedReaction } from '../../types/card';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { EMOJI_CATEGORIES } from '../../utils/emojiConstants';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface EmojiReactionsProps {
     cardId: string;
     groupedReactions: GroupedReaction[];
-    userReaction: EmojiReaction | null;
-    onAddReaction: (emoji: EmojiReaction) => void;
+    currentUserId: string;
+    onReaction: (emoji: EmojiReaction) => void;
     onRemoveReaction: () => void;
     disabled?: boolean;
 }
 
 const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     cardId,
-    groupedReactions,
-    userReaction,
-    onAddReaction,
+    groupedReactions = [],
+    currentUserId,
+    onReaction,
     onRemoveReaction,
     disabled = false
 }) => {
+    const { t } = useLanguage();
     const [showPicker, setShowPicker] = useState(false);
-    const [activeCategory, setActiveCategory] = useState('Emociones');
+    const [activeCategory, setActiveCategory] = useState(t('retrospective.emojiReactions.categories.Emociones'));
     const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
     const triggerRef = useRef<HTMLButtonElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
 
     // Usar el hook para bloquear scroll cuando el picker esté abierto
     const { restoreScroll } = useBodyScrollLock(showPicker);
+
+    // Find current user's reaction
+    const userReaction = groupedReactions.find(reaction =>
+        reaction.users?.includes(currentUserId)
+    )?.emoji || null;
 
     // Calculate picker position
     const calculatePosition = () => {
@@ -105,7 +112,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         if (userReaction === emoji) {
             onRemoveReaction();
         } else {
-            onAddReaction(emoji);
+            onReaction(emoji);
         }
         setShowPicker(false);
         restoreScroll();
@@ -116,21 +123,36 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         const { emoji, count, users } = reaction;
 
         if (count === 0) {
-            return `Reaccionar con ${emoji}`;
+            return t('retrospective.emojiReactions.reactions.tooltips.none', { emoji });
         }
 
         if (count === 1) {
-            return `${users[0]} reaccionó con ${emoji}`;
+            return t('retrospective.emojiReactions.reactions.tooltips.single', {
+                user: users[0],
+                emoji
+            });
         } else if (count === 2) {
-            return `${users[0]} y ${users[1]} reaccionaron con ${emoji}`;
+            return t('retrospective.emojiReactions.reactions.tooltips.double', {
+                user1: users[0],
+                user2: users[1],
+                emoji
+            });
         } else if (count <= 5) {
             const allButLast = users.slice(0, -1).join(', ');
             const last = users[users.length - 1];
-            return `${allButLast} y ${last} reaccionaron con ${emoji}`;
+            return t('retrospective.emojiReactions.reactions.tooltips.multiple', {
+                users: allButLast,
+                lastUser: last,
+                emoji
+            });
         } else {
             const first3 = users.slice(0, 3).join(', ');
             const remaining = count - 3;
-            return `${first3} y ${remaining} más reaccionaron con ${emoji}`;
+            return t('retrospective.emojiReactions.reactions.tooltips.many', {
+                users: first3,
+                remaining,
+                emoji
+            });
         }
     };
 
@@ -156,7 +178,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                 left: pickerPosition.left,
             }}
             role="dialog"
-            aria-label="Selector de reacciones emoji"
+            aria-label={t('retrospective.emojiReactions.picker.ariaLabel')}
         >
             {/* Header with categories */}
             <div className="border-b border-gray-100 p-2">
@@ -170,7 +192,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                                 : 'hover:bg-gray-100 text-gray-600'
                                 }`}
                         >
-                            {category}
+                            {t(`retrospective.emojiReactions.categories.${category}`, category)}
                         </button>
                     ))}
                 </div>
@@ -192,8 +214,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                                     : ''
                                 }
                             `}
-                            title={`Reaccionar con ${emoji}`}
-                            aria-label={`Reaccionar con ${emoji}${userReaction === emoji ? ' (seleccionado)' : ''}`}
+                            title={t('retrospective.emojiReactions.reactions.reactWith', { emoji })}
+                            aria-label={`${t('retrospective.emojiReactions.reactions.reactWith', { emoji })}${userReaction === emoji ? t('retrospective.emojiReactions.reactions.selected') : ''}`}
                         >
                             {emoji}
                         </button>
@@ -212,16 +234,16 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             {userReaction && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Tu reacción: {userReaction}</span>
+                        <span>{t('retrospective.emojiReactions.reactions.yourReaction')} {userReaction}</span>
                         <button
                             onClick={() => {
                                 onRemoveReaction();
                                 setShowPicker(false);
                             }}
                             className="text-red-500 hover:text-red-700 underline"
-                            title="Quitar mi reacción"
+                            title={t('retrospective.emojiReactions.reactions.removeReaction')}
                         >
-                            Quitar
+                            {t('retrospective.emojiReactions.reactions.remove')}
                         </button>
                     </div>
                 </div>
@@ -276,8 +298,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}
             `}
-                        title="Agregar reacción"
-                        aria-label={`Agregar reacción emoji${showPicker ? ' (abierto)' : ''}`}
+                        title={t('retrospective.emojiReactions.picker.addReaction')}
+                        aria-label={`${t('retrospective.emojiReactions.picker.addReactionButton')}${showPicker ? t('retrospective.emojiReactions.picker.openPicker') : ''}`}
                         aria-expanded={showPicker}
                         aria-haspopup="dialog"
                     >
