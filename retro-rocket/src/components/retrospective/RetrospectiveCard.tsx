@@ -4,6 +4,7 @@ import { Trash2, ThumbsUp, Edit2, User } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import TextareaWithEmoji from '../ui/TextareaWithEmoji';
+import LinkifyText from '../ui/LinkifyText';
 import CardMenu from './CardMenu';
 import { Card as CardType } from '../../types/card';
 import { Participant } from '../../types/participant';
@@ -141,9 +142,10 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
                 showEmojiPicker={true}
               />
             ) : (
-              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                {card.content}
-              </p>
+              <LinkifyText
+                text={card.content}
+                className="text-gray-800 leading-relaxed whitespace-pre-wrap"
+              />
             )}
           </div>
 

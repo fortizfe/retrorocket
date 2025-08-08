@@ -5,6 +5,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import TextareaWithEmoji from '../ui/TextareaWithEmoji';
 import ColorPicker from '../ui/ColorPicker';
+import LinkifyText from '../ui/LinkifyText';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
 import CardMenu from './CardMenu';
@@ -202,9 +203,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 showEmojiPicker={true}
                             />
                         ) : (
-                            <p className="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
-                                {card.content}
-                            </p>
+                            <LinkifyText
+                                text={card.content}
+                                className="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap"
+                            />
                         )}
                     </div>
 

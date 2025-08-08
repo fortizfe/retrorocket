@@ -4,6 +4,7 @@ import { Edit3, Trash2, Check, X, User } from 'lucide-react';
 import { ActionItem } from '../../types/actionItem';
 import { Participant } from '../../types/participant';
 import Button from '../ui/Button';
+import LinkifyText from '../ui/LinkifyText';
 
 interface ActionItemCardProps {
     actionItem: ActionItem;
@@ -187,9 +188,10 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
-                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap">
-                            {actionItem.content}
-                        </p>
+                        <LinkifyText
+                            text={actionItem.content}
+                            className="text-sm text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap"
+                        />
 
                         {/* Responsable asignado */}
                         {assignedParticipant && (

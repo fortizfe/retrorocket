@@ -4,6 +4,7 @@ import { Trash2, ThumbsUp, Edit2, User, GripVertical } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
+import LinkifyText from '../ui/LinkifyText';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
 import { Card as CardType, EmojiReaction } from '../../types/card';
@@ -168,9 +169,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 className="w-full"
                             />
                         ) : (
-                            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                                {card.content}
-                            </p>
+                            <LinkifyText
+                                text={card.content}
+                                className="text-gray-800 leading-relaxed whitespace-pre-wrap"
+                            />
                         )}
                     </div>
 
