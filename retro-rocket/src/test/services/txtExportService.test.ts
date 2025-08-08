@@ -237,12 +237,23 @@ describe('TxtExportService', () => {
         });
 
         it('should handle errors during export', async () => {
+            // Store original implementation
+            const originalImplementation = vi.mocked(saveAs).getMockImplementation();
+
+            // Create a temporary mock for this test only
             vi.mocked(saveAs).mockImplementation(() => {
                 throw new Error('Export failed');
             });
 
             await expect(service.exportRetrospective(mockData)).rejects.toThrow('Export failed');
             expect(mockConsoleError).toHaveBeenCalledWith('Error exporting to TXT:', expect.any(Error));
+
+            // Restore the original implementation
+            if (originalImplementation) {
+                vi.mocked(saveAs).mockImplementation(originalImplementation);
+            } else {
+                vi.mocked(saveAs).mockRestore();
+            }
         });
 
         it('should include all statistics in statistics section', async () => {

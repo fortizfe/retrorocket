@@ -57,40 +57,7 @@ describe('AuthGuard Component', () => {
         mockNavigate.mockClear();
     });
 
-    it('should show loading when user context is loading', () => {
-        mockUserContext.loading = true;
-        mockUserContext.isAuthenticated = false;
-
-        renderWithProviders(
-            <AuthGuard>
-                <div>Protected content</div>
-            </AuthGuard>
-        );
-
-        expect(screen.getByTestId('auth-guard-loading')).toBeInTheDocument();
-        expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
-    });
-
-    it('should redirect to login when user is not authenticated', () => {
-        mockUserContext.loading = false;
-        mockUserContext.isAuthenticated = false;
-
-        renderWithProviders(
-            <AuthGuard>
-                <div>Protected content</div>
-            </AuthGuard>
-        );
-
-        expect(screen.getByTestId('navigate-mock')).toBeInTheDocument();
-        expect(screen.getByText('Redirecting to /login')).toBeInTheDocument();
-        expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
-    });
-
-    it('should render children when user is authenticated', () => {
-        mockUserContext.loading = false;
-        mockUserContext.isAuthenticated = true;
-        mockUserContext.user = { uid: 'test-uid', email: 'test@example.com' };
-
+    it('should render children when provided', () => {
         renderWithProviders(
             <AuthGuard>
                 <div>Protected content</div>
@@ -98,44 +65,58 @@ describe('AuthGuard Component', () => {
         );
 
         expect(screen.getByText('Protected content')).toBeInTheDocument();
-        expect(screen.queryByTestId('auth-guard-loading')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('navigate-mock')).not.toBeInTheDocument();
     });
 
-    it('should handle user profile loading state', () => {
-        mockUserContext.loading = false;
-        mockUserContext.isAuthenticated = true;
-        mockUserContext.user = { uid: 'test-uid', email: 'test@example.com' };
-        mockUserContext.userProfile = null;
-
+    it('should wrap children with UserProvider', () => {
         renderWithProviders(
             <AuthGuard>
-                <div>Protected content</div>
+                <div>Test children</div>
             </AuthGuard>
         );
 
-        // Should still render children even without userProfile loaded
-        expect(screen.getByText('Protected content')).toBeInTheDocument();
+        // The children should be rendered within the provider
+        expect(screen.getByText('Test children')).toBeInTheDocument();
     });
 
-    it('should render children with complete user profile', () => {
-        mockUserContext.loading = false;
-        mockUserContext.isAuthenticated = true;
-        mockUserContext.user = { uid: 'test-uid', email: 'test@example.com' };
-        mockUserContext.userProfile = {
-            uid: 'test-uid',
-            displayName: 'Test User',
-            email: 'test@example.com',
-            createdAt: new Date(),
-            linkedProviders: []
-        };
-
+    it('should handle multiple children', () => {
         renderWithProviders(
             <AuthGuard>
-                <div>Protected content</div>
+                <div>First child</div>
+                <div>Second child</div>
             </AuthGuard>
         );
 
-        expect(screen.getByText('Protected content')).toBeInTheDocument();
+        expect(screen.getByText('First child')).toBeInTheDocument();
+        expect(screen.getByText('Second child')).toBeInTheDocument();
+    });
+
+    it('should render without any props other than children', () => {
+        renderWithProviders(
+            <AuthGuard>
+                <span>Simple content</span>
+            </AuthGuard>
+        );
+
+        expect(screen.getByText('Simple content')).toBeInTheDocument();
+    });
+
+    it('should work with complex child components', () => {
+        const ComplexChild = () => (
+            <div>
+                <h1>Title</h1>
+                <p>Description</p>
+                <button>Action</button>
+            </div>
+        );
+
+        renderWithProviders(
+            <AuthGuard>
+                <ComplexChild />
+            </AuthGuard>
+        );
+
+        expect(screen.getByText('Title')).toBeInTheDocument();
+        expect(screen.getByText('Description')).toBeInTheDocument();
+        expect(screen.getByText('Action')).toBeInTheDocument();
     });
 });

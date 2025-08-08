@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Mock react-hot-toast
+// Mock react-hot-toast with simple mock
 vi.mock('react-hot-toast', () => ({
     default: {
         success: vi.fn(),
@@ -9,7 +9,7 @@ vi.mock('react-hot-toast', () => ({
         loading: vi.fn(),
         dismiss: vi.fn(),
     },
-    Toaster: () => null,
+    Toaster: vi.fn(() => null),
     toast: {
         success: vi.fn(),
         error: vi.fn(),
@@ -156,3 +156,14 @@ Object.defineProperty(window, 'console', {
         log: vi.fn(),
     },
 });
+
+// Polyfill for Blob.text() method that jsdom doesn't provide
+if (typeof Blob !== 'undefined' && !Blob.prototype.text) {
+    Blob.prototype.text = function () {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsText(this);
+        });
+    };
+}

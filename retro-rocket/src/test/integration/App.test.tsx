@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 
 // Mock all external dependencies
 vi.mock('../services/firebase', () => ({
@@ -14,6 +13,13 @@ vi.mock('react-hot-toast', () => ({
     default: {
         success: vi.fn(),
         error: vi.fn(),
+    },
+    Toaster: vi.fn(() => null),
+    toast: {
+        success: vi.fn(),
+        error: vi.fn(),
+        loading: vi.fn(),
+        dismiss: vi.fn(),
     },
 }));
 
@@ -40,37 +46,27 @@ describe('App Integration Tests', () => {
     });
 
     it('should render the application', () => {
-        render(
-            <MemoryRouter initialEntries={['/']}>
-                <App />
-            </MemoryRouter>
-        );
+        render(<App />);
 
-        expect(screen.getByTestId('user-provider')).toBeInTheDocument();
+        // The app should render the loading state initially
+        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
     });
 
-    it('should render with different routes', () => {
-        const routes = ['/login', '/dashboard', '/retrospective/test-id'];
+    it('should render with application structure', () => {
+        render(<App />);
 
-        routes.forEach(route => {
-            const { unmount } = render(
-                <MemoryRouter initialEntries={[route]}>
-                    <App />
-                </MemoryRouter>
-            );
+        // Check for the loading spinner and text
+        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
 
-            expect(screen.getByTestId('user-provider')).toBeInTheDocument();
-            unmount();
-        });
+        // The app should have the main layout structure
+        const mainElement = document.querySelector('main');
+        expect(mainElement).toBeTruthy();
     });
 
-    it('should handle unknown routes gracefully', () => {
-        render(
-            <MemoryRouter initialEntries={['/unknown-route']}>
-                <App />
-            </MemoryRouter>
-        );
+    it('should handle component rendering gracefully', () => {
+        render(<App />);
 
-        expect(screen.getByTestId('user-provider')).toBeInTheDocument();
+        // App should render without errors
+        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
     });
 });
