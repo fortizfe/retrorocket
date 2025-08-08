@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users } from 'lucide-react';
 import ParticipantList from './ParticipantList';
+import { useLanguage } from '../../hooks/useLanguage';
 import { Participant } from '../../types/participant';
 
 interface ParticipantPopoverProps {
@@ -26,6 +27,9 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
     const triggerRef = useRef<HTMLDivElement>(null);
     const [popoverPosition, setPopoverPosition] = useState(position);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+
+    // Get language context
+    const { t } = useLanguage();
 
     // Handle click outside to close
     useEffect(() => {
@@ -182,14 +186,14 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
                                 <div className="flex items-center gap-2">
                                     <Users className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                                     <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                                        Participantes
+                                        {t('participants.title')}
                                     </h3>
                                 </div>
                                 <button
                                     onClick={onClose}
                                     className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                    title="Cerrar"
-                                    aria-label="Cerrar lista de participantes"
+                                    title={t('participants.close')}
+                                    aria-label={t('participants.closeList')}
                                 >
                                     <X className="w-4 h-4" />
                                 </button>

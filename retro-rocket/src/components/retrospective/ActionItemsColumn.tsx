@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Target, AlertCircle } from 'lucide-react';
 import ActionItemCard from './ActionItemCard';
 import Button from '../ui/Button';
+import { useLanguage } from '../../hooks/useLanguage';
 import { ActionItem, CreateActionItemInput } from '../../types/actionItem';
 import { Participant } from '../../types/participant';
 
@@ -34,6 +35,9 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     const [isCreating, setIsCreating] = useState(false);
     const [newContent, setNewContent] = useState('');
     const [selectedAssignee, setSelectedAssignee] = useState('');
+
+    // Get language context
+    const { t } = useLanguage();
 
     const handleCreate = () => {
         if (!newContent.trim()) return;
@@ -67,7 +71,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                 <div className="flex items-center gap-3 mb-2">
                     <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <h3 className="font-semibold text-amber-900 dark:text-amber-100">
-                        Elementos de Acción
+                        {t('retrospective.actionItems.title')}
                     </h3>
                     <div className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 
                          text-xs px-2 py-1 rounded-full font-medium">
@@ -75,12 +79,12 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                     </div>
                 </div>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Acciones específicas para implementar
+                    {t('retrospective.actionItems.description')}
                 </p>
 
                 {!canEdit && (
                     <div className="mt-2 text-xs text-amber-600 dark:text-amber-400 italic">
-                        Solo el facilitador puede crear elementos de acción
+                        {t('retrospective.facilitator.onlyFacilitatorCanCreateActions')}
                     </div>
                 )}
             </div>
@@ -206,11 +210,11 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                 {actionItems.length === 0 && !loading && (
                     <div className="text-center py-8 text-amber-600 dark:text-amber-400">
                         <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm font-medium">No hay elementos de acción</p>
+                        <p className="text-sm font-medium">{t('retrospective.facilitator.noActionItems')}</p>
                         <p className="text-xs mt-1 opacity-75">
                             {canEdit
-                                ? 'Crea el primer elemento de acción o convierte una tarjeta existente'
-                                : 'El facilitador puede crear elementos de acción'
+                                ? t('retrospective.facilitator.createFirstActionOrConvert')
+                                : t('retrospective.facilitator.facilitatorCanCreateActions')
                             }
                         </p>
                     </div>
@@ -220,7 +224,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                 {loading && actionItems.length === 0 && (
                     <div className="text-center py-8 text-amber-600 dark:text-amber-400">
                         <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                        <p className="text-sm">Cargando elementos de acción...</p>
+                        <p className="text-sm">{t('retrospective.facilitator.loadingActionItems')}</p>
                     </div>
                 )}
             </div>

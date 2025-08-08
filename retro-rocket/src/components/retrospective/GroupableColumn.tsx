@@ -14,6 +14,7 @@ import { GroupSuggestionModal } from './GroupSuggestionModal';
 import ColumnHeaderMenu from './ColumnHeaderMenu';
 import GroupedCardList from './GroupedCardList';
 import { useTypingContext } from '../../contexts/TypingProvider';
+import { useLanguage } from '../../hooks/useLanguage';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '../../types/card';
 import { ColumnConfig } from '../../types/retrospective';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
@@ -78,6 +79,9 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     // Get typing context
     const { startTyping, stopTyping, getTypingUsersForColumn } = useTypingContext();
+
+    // Get language context
+    const { t } = useLanguage();
 
     // Get typing users for this column
     const typingUsers = getTypingUsersForColumn(column.id);
@@ -212,12 +216,12 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                         <span>
-                            {totalItems} {totalItems === 1 ? 'elemento' : 'elementos'}
+                            {totalItems} {totalItems === 1 ? t('retrospective.columns.element') : t('retrospective.columns.elements')}
                         </span>
                         {columnGroups.length > 0 && (
                             <span className="flex items-center space-x-1">
                                 <Users className="w-3 h-3" />
-                                <span>{columnGroups.length} grupos</span>
+                                <span>{t('retrospective.columns.groupsCount', { count: columnGroups.length })}</span>
                             </span>
                         )}
                     </div>
@@ -245,7 +249,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                             className="flex items-center space-x-1"
                         >
                             <Plus size={14} />
-                            <span>Agregar</span>
+                            <span>{t('retrospective.columns.add')}</span>
                         </Button>
                     </div>
                 </div>
@@ -377,7 +381,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         >
                             <div className="text-4xl mb-2">{column.icon}</div>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
-                                No hay tarjetas aún
+                                {t('retrospective.columns.noCards')}
                             </p>
                             {currentUser && (
                                 <Button
@@ -387,7 +391,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                     className="flex items-center space-x-1 mx-auto"
                                 >
                                     <Plus size={14} />
-                                    <span>Agregar primera tarjeta</span>
+                                    <span>{t('retrospective.columns.addFirstCard')}</span>
                                 </Button>
                             )}
                         </motion.div>

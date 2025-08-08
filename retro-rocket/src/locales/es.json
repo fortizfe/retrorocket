@@ -54,7 +54,20 @@
             "cardsCount": "{{count}} tarjetas",
             "add": "Agregar",
             "noCards": "No hay tarjetas aún",
-            "addFirstCard": "Agregar primera tarjeta"
+            "addFirstCard": "Agregar primera tarjeta",
+            "element": "elemento",
+            "elements": "elementos",
+            "groupsCount": "{{count}} grupos",
+            "titles": {
+                "whatHelped": "Qué me ayudó",
+                "whatHindered": "Qué me retrasó",
+                "whatToImprove": "Qué podemos hacer mejor"
+            },
+            "descriptions": {
+                "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
+                "whatHindered": "Obstáculos o problemas que encontramos",
+                "whatToImprove": "Ideas y sugerencias para mejorar"
+            }
         },
         "cards": {
             "likes": "Me gusta",
@@ -69,13 +82,15 @@
         },
         "actionItems": {
             "title": "Elementos de Acción",
+            "description": "Acciones específicas para implementar",
             "newAction": "Describe la acción a implementar...",
             "responsible": "Responsable (opcional)",
             "add": "Agregar",
             "edit": "Editar",
             "save": "Guardar",
             "saving": "Guardando...",
-            "cancel": "Cancelar"
+            "cancel": "Cancelar",
+            "elementsCount": "{{count}} elementos"
         },
         "export": {
             "title": "Exportar Retrospectiva",
@@ -91,7 +106,21 @@
             "groupDetails": "Detalles de agrupaciones de tarjetas",
             "actionItems": "Elementos de Acción",
             "facilitatorNotes": "Agregar notas del facilitador",
-            "cardSorting": "Ordenamiento de tarjetas"
+            "cardSorting": "Ordenamiento de tarjetas",
+            "originalOrder": "Orden original",
+            "originalOrder_desc": "Mantener el orden en que fueron creadas",
+            "alphabetical": "Alfabético",
+            "alphabetical_desc": "Ordenar por contenido de la tarjeta",
+            "byVotes": "Por votos",
+            "byVotes_desc": "Ordenar por cantidad de votos (mayor a menor)",
+            "byLikes": "Por likes",
+            "byLikes_desc": "Ordenar por cantidad de likes (mayor a menor)",
+            "cancel": "Cancelar",
+            "exportButton": "Exportar retrospectiva",
+            "exportText": "Exportar",
+            "export": "Exportar {{format}}",
+            "exporting": "Exportando...",
+            "progress": "Progreso"
         },
         "groupCard": {
             "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
@@ -149,21 +178,19 @@
                 }
             }
         },
-        "originalOrder": "Orden original",
-        "originalOrder_desc": "Mantener el orden en que fueron creadas",
-        "alphabetical": "Alfabético",
-        "alphabetical_desc": "Ordenar por contenido de la tarjeta",
-        "byLikes": "Por likes",
-        "byLikes_desc": "Ordenar por cantidad de likes (mayor a menor)",
-        "cancel": "Cancelar",
-        "exportButton": "Exportar retrospectiva",
-        "exportText": "Exportar",
-        "exportFormat": "Exportar {{format}}",
-        "exporting": "Exportando...",
         "progress": "Progreso"
     },
     "facilitator": {
         "menu": "Facilitador",
+        "controls": "Controles de Facilitador",
+        "configureTime": "Configurar tiempo",
+        "create": "Crear",
+        "onlyYouCanSee": "Solo tú puedes ver y controlar este panel como facilitador",
+        "onlyFacilitatorCanCreateActions": "Solo el facilitador puede crear elementos de acción",
+        "facilitatorCanCreateActions": "El facilitador puede crear elementos de acción",
+        "createFirstActionOrConvert": "Crea el primer elemento de acción o convierte una tarjeta existente",
+        "noActionItems": "No hay elementos de acción",
+        "loadingActionItems": "Cargando elementos de acción...",
         "countdown": {
             "title": "Temporizador",
             "create": "Crear Temporizador",
@@ -204,12 +231,24 @@
     },
     "grouping": {
         "title": "Agrupar tarjetas",
-        "options": "Opciones de agrupación"
+        "options": "Opciones de agrupación",
+        "noGrouping": "Sin agrupación",
+        "groupByUser": "Agrupar por usuario",
+        "suggestedGroupings": "Agrupaciones sugeridas",
+        "traditionalListView": "Vista de lista tradicional",
+        "groupCardsByCreator": "Agrupa tarjetas por creador",
+        "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
+    },
+    "groupSuggestion": {
+        "group": "Grupo",
+        "cardsInGroup": "{{count}} tarjetas"
     },
     "participants": {
         "title": "Participantes",
         "close": "Cerrar",
-        "closeList": "Cerrar lista de participantes"
+        "closeList": "Cerrar lista de participantes",
+        "totalParticipants": "Total de participantes",
+        "connectedNow": "Conectados ahora"
     },
     "typing": {
         "single": "{{username}} está escribiendo",
@@ -493,5 +532,13 @@
             "comingSoon": "Pronto",
             "termsConditions": "Al continuar, aceptas nuestros términos y condiciones"
         }
+    },
+    "retrospectivePage": {
+        "copyId": "Copiar ID",
+        "share": "Compartir",
+        "back": "Volver",
+        "exit": "Salir",
+        "connectedAs": "Conectado como:",
+        "backToDashboard": "Volver al Dashboard"
     }
 }

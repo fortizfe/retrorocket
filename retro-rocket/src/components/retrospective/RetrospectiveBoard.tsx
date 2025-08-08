@@ -8,10 +8,11 @@ import { useCards } from '../../hooks/useCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useActionItems } from '../../hooks/useActionItems';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
+import { useLanguage } from '../../hooks/useLanguage';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
-import { COLUMNS, COLUMN_ORDER } from '../../utils/constants';
+import { getColumns, COLUMN_ORDER } from '../../utils/constants';
 
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
@@ -26,6 +27,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     onDataChange,
     participants = []
 }) => {
+    // Get language context to trigger re-render when language changes
+    useLanguage();
+
+    // Get dynamic columns based on current language
+    const COLUMNS = getColumns();
+
     const {
         cards,
         cardsByColumn,

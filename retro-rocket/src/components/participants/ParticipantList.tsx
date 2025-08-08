@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, UserCheck } from 'lucide-react';
 import UserAvatar from './UserAvatar';
+import { useLanguage } from '../../hooks/useLanguage';
 import { Participant } from '../../types/participant';
 
 interface ParticipantListProps {
@@ -14,6 +15,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
     className = '',
     maxHeight = 'max-h-64'
 }) => {
+    const { t } = useLanguage();
     const formatJoinTime = (joinedAt: Date) => {
         const now = new Date();
         const diffInMinutes = Math.floor((now.getTime() - joinedAt.getTime()) / (1000 * 60));
@@ -81,11 +83,11 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
             {/* Summary */}
             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                    <span>Total de participantes</span>
+                    <span>{t('participants.totalParticipants')}</span>
                     <span className="font-medium">{participants.length}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    <span>Conectados ahora</span>
+                    <span>{t('participants.connectedNow')}</span>
                     <span className="font-medium text-green-600 dark:text-green-400">
                         {participants.filter(p => p.isActive).length}
                     </span>

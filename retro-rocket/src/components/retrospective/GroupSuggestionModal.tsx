@@ -12,6 +12,7 @@ import {
 import { GroupSuggestion, Card } from '../../types/card';
 import DraggableCard from './DraggableCard';
 import Button from '../ui/Button';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface GroupSuggestionModalProps {
     isOpen: boolean;
@@ -34,6 +35,9 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 }) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(null);
     const [previewMode, setPreviewMode] = useState<{ [key: string]: boolean }>({});
+
+    // Get language context
+    const { t } = useLanguage();
 
     if (!isOpen) return null;
 
@@ -153,10 +157,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         <div className="flex items-center space-x-2">
                                                             <Users className="w-5 h-5 text-gray-600" />
                                                             <span className="font-medium text-gray-900">
-                                                                Grupo {index + 1}
+                                                                {t('retrospective.groupSuggestion.group')} {index + 1}
                                                             </span>
                                                             <span className="text-sm text-gray-500">
-                                                                ({suggestion.cardIds.length} tarjetas)
+                                                                ({t('retrospective.groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
                                                             </span>
                                                         </div>
 

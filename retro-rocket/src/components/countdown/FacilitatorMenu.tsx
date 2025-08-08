@@ -13,6 +13,7 @@ import {
 import Button from '../ui/Button';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { useLanguage } from '../../hooks/useLanguage';
 import { FacilitatorNotes } from '../facilitator/FacilitatorNotes';
 
 interface FacilitatorMenuProps {
@@ -22,6 +23,7 @@ interface FacilitatorMenuProps {
 }
 
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, facilitatorId, isOwner }) => {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
     const [inputs, setInputs] = useState({ minutes: 0, seconds: 0 });
@@ -143,9 +145,9 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                 ref={buttonRef}
                 onClick={handleToggle}
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
-                title="Controles de Facilitador"
-                aria-label="Abrir controles de facilitador"
-                aria-expanded={isOpen ? 'true' : 'false'}
+                title={t('retrospective.facilitator.controls')}
+                aria-label={t('retrospective.facilitator.controls')}
+                aria-expanded={isOpen}
                 aria-haspopup="true"
             >
                 {isOpen ? (
@@ -172,7 +174,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                                 <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                    Controles de Facilitador
+                                    {t('retrospective.facilitator.controls')}
                                 </span>
                             </div>
                             <button
@@ -192,7 +194,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                                         <Settings className="w-4 h-4" />
-                                        Configurar Tiempo
+                                        {t('retrospective.facilitator.configureTime')}
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -227,7 +229,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                                             size="sm"
                                             className="ml-2"
                                         >
-                                            {isCreating ? 'Creando...' : 'Crear'}
+                                            {isCreating ? t('retrospective.facilitator.countdown.creating') : t('retrospective.facilitator.create')}
                                         </Button>
                                     </div>
                                 </div>
@@ -238,7 +240,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                                         <Settings className="w-4 h-4" />
-                                        Controlar Temporizador
+                                        {t('retrospective.facilitator.countdown.control')}
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2">
@@ -307,7 +309,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
 
                             {/* Status Info */}
                             <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-700">
-                                Solo tú puedes ver y controlar este panel como facilitador
+                                {t('retrospective.facilitator.onlyYouCanSee')}
                             </div>
                         </div>
                     </motion.div>

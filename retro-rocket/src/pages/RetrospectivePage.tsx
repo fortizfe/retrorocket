@@ -13,6 +13,7 @@ import AuthWrapper from '../components/auth/AuthWrapper';
 import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useLanguage } from '../hooks/useLanguage';
 import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
 import { Card, CardGroup } from '../types/card';
 import { ActionItem } from '../types/actionItem';
@@ -20,6 +21,7 @@ import { ActionItem } from '../types/actionItem';
 const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null);
     const [hasJoined, setHasJoined] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
@@ -168,7 +170,7 @@ const RetrospectivePageContent: React.FC = () => {
                         No se pudo encontrar la retrospectiva solicitada.
                     </p>
                     <Button onClick={() => navigate('/dashboard')}>
-                        Volver al Dashboard
+                        {t('retrospectivePage.backToDashboard')}
                     </Button>
                 </div>
             </div>
@@ -212,7 +214,7 @@ const RetrospectivePageContent: React.FC = () => {
                                     className="flex items-center gap-2 flex-shrink-0"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Volver</span>
+                                    <span className="hidden sm:inline">{t('retrospectivePage.back')}</span>
                                 </Button>
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="min-w-0">
@@ -220,7 +222,7 @@ const RetrospectivePageContent: React.FC = () => {
                                             {retrospective.title}
                                         </h1>
                                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 truncate">
-                                            Conectado como: {fullName}
+                                            {t('retrospectivePage.connectedAs')} {fullName}
                                         </p>
                                     </div>
                                     {/* Lista de participantes al lado del título */}
@@ -258,7 +260,7 @@ const RetrospectivePageContent: React.FC = () => {
                                     className="hidden sm:flex items-center gap-2"
                                 >
                                     <Copy className="w-4 h-4" />
-                                    <span className="hidden lg:inline">Copiar ID</span>
+                                    <span className="hidden lg:inline">{t('retrospectivePage.copyId')}</span>
                                 </Button>
 
                                 <Button
@@ -268,7 +270,7 @@ const RetrospectivePageContent: React.FC = () => {
                                     className="hidden sm:flex items-center gap-2"
                                 >
                                     <Share2 className="w-4 h-4" />
-                                    <span className="hidden lg:inline">Compartir</span>
+                                    <span className="hidden lg:inline">{t('retrospectivePage.share')}</span>
                                 </Button>
 
                                 <Button
@@ -278,7 +280,7 @@ const RetrospectivePageContent: React.FC = () => {
                                     className="flex items-center gap-2"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Salir</span>
+                                    <span className="hidden sm:inline">{t('retrospectivePage.exit')}</span>
                                 </Button>
 
                                 {/* Menú de facilitador - a la derecha del botón de salir */}

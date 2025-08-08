@@ -10,6 +10,7 @@ import {
     AlertCircle,
     Loader2
 } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
@@ -47,6 +48,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
     const { isExporting, progress, error, success, exportRetrospective } = useUnifiedExport();
     const { user } = useAuth();
     const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
+    const { t } = useLanguage();
 
     // Verificar si el usuario es propietario del tablero
     const isOwner = user?.uid === retrospective.createdBy;
@@ -246,20 +248,22 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-                                <div className="flex items-center gap-2">
-                                    <Download className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                                        Exportar Retrospectiva
-                                    </h3>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                        <Download className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                            {t('retrospective.export.title')}
+                                        </h3>
+                                    </div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                        {t('retrospective.export.options')}
+                                    </p>
                                 </div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    Configura las opciones para tu documento
-                                </p>
                                 <button
                                     onClick={onClose}
                                     className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                    title="Cerrar"
-                                    aria-label="Cerrar opciones de exportación"
+                                    title={t('common.close')}
+                                    aria-label={t('common.close')}
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
@@ -270,15 +274,15 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                 {/* Format Selection */}
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
-                                        Formato de exportación
+                                        {t('retrospective.export.format')}
                                     </h4>
                                     <div className="grid grid-cols-3 gap-3">
                                         {(['pdf', 'txt', 'docx'] as ExportFormat[]).map((format) => {
                                             const Icon = formatIcons[format];
                                             const descriptions = {
-                                                pdf: 'Documento portable, ideal para imprimir y archivar',
-                                                txt: 'Archivo de texto plano, simple y universal',
-                                                docx: 'Documento Word, editable y con formato avanzado'
+                                                pdf: t('formats.pdf.description'),
+                                                txt: t('formats.txt.description'),
+                                                docx: t('formats.docx.description')
                                             };
                                             return (
                                                 <button
@@ -307,12 +311,12 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                 {/* Document Configuration */}
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
-                                        Configuración del documento
+                                        {t('retrospective.export.documentConfig')}
                                     </h4>
                                     <div className="space-y-3">
                                         <div>
                                             <div className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                                Título personalizado
+                                                {t('retrospective.export.customTitle')}
                                             </div>
                                             <input
                                                 type="text"
@@ -330,7 +334,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Incluir logo de RetroRocket
+                                                {t('retrospective.export.includeLogo')}
                                             </span>
                                         </label>
                                     </div>
@@ -339,7 +343,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                 {/* Content to Include */}
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
-                                        Contenido a incluir
+                                        {t('retrospective.export.contentToInclude')}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-2">
                                         <label className="flex items-center gap-2">
@@ -350,7 +354,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Lista de participantes
+                                                {t('participants.title')}
                                             </span>
                                         </label>
                                         <label className="flex items-center gap-2">
@@ -361,7 +365,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Estadísticas
+                                                {t('retrospective.export.statistics')}
                                             </span>
                                         </label>
                                         <label className="flex items-center gap-2">
@@ -372,7 +376,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Autores de tarjetas
+                                                {t('retrospective.export.cardAuthors')}
                                             </span>
                                         </label>
                                         <label className="flex items-center gap-2">
@@ -383,7 +387,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Likes y reacciones
+                                                {t('retrospective.export.likesReactions')}
                                             </span>
                                         </label>
                                     </div>
@@ -396,7 +400,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Detalles de agrupaciones de tarjetas
+                                                {t('retrospective.export.groupDetails')}
                                             </span>
                                         </label>
                                     </div>
@@ -410,7 +414,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
-                                                Elementos de acción
+                                                {t('retrospective.export.actionItems')}
                                             </span>
                                         </label>
                                     </div>
@@ -419,7 +423,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                 {/* Card Sorting */}
                                 <div>
                                     <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
-                                        Ordenamiento de tarjetas
+                                        {t('retrospective.export.cardSorting')}
                                     </h4>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="flex items-center gap-2">
@@ -434,10 +438,10 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                             />
                                             <label htmlFor="sort-original">
                                                 <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                    Orden original
+                                                    {t('retrospective.export.originalOrder')}
                                                 </div>
                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Mantener el orden en que fueron creadas
+                                                    {t('retrospective.export.originalOrder_desc')}
                                                 </div>
                                             </label>
                                         </div>
@@ -453,10 +457,10 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                             />
                                             <label htmlFor="sort-alphabetical">
                                                 <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                    Alfabético
+                                                    {t('retrospective.export.alphabetical')}
                                                 </div>
                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Ordenar por contenido de la tarjeta
+                                                    {t('retrospective.export.alphabetical_desc')}
                                                 </div>
                                             </label>
                                         </div>
@@ -472,10 +476,10 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                             />
                                             <label htmlFor="sort-votes">
                                                 <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                    Por votos
+                                                    {t('retrospective.export.byVotes')}
                                                 </div>
                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Ordenar por cantidad de votos (mayor a menor)
+                                                    {t('retrospective.export.byVotes_desc')}
                                                 </div>
                                             </label>
                                         </div>
@@ -491,10 +495,10 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                             />
                                             <label htmlFor="sort-likes">
                                                 <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                    Por likes
+                                                    {t('retrospective.export.byLikes')}
                                                 </div>
                                                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Ordenar por cantidad de likes (mayor a menor)
+                                                    {t('retrospective.export.byLikes_desc')}
                                                 </div>
                                             </label>
                                         </div>
@@ -512,7 +516,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 className="rounded border-slate-300 dark:border-slate-600"
                                             />
                                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                Agregar notas del facilitador
+                                                {t('retrospective.export.facilitatorNotes')}
                                             </span>
                                         </label>
                                     </div>
@@ -525,7 +529,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                         onClick={onClose}
                                         className="flex-1"
                                     >
-                                        Cancelar
+                                        {t('retrospective.export.cancel')}
                                     </Button>
                                     <Button
                                         onClick={handleExport}
@@ -535,12 +539,12 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                         {isExporting ? (
                                             <>
                                                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                {progress ? `${Math.round(progress)}%` : 'Exportando...'}
+                                                {progress ? `${Math.round(progress)}%` : t('retrospective.export.exporting')}
                                             </>
                                         ) : (
                                             <>
                                                 <Download className="w-4 h-4 mr-2" />
-                                                Exportar {selectedFormat.toUpperCase()}
+                                                {t('retrospective.export.export', { format: selectedFormat.toUpperCase() })}
                                             </>
                                         )}
                                     </Button>
@@ -557,7 +561,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                 {success && (
                                     <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                         <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                        <span className="text-sm text-green-700 dark:text-green-300">¡Exportación completada!</span>
+                                        <span className="text-sm text-green-700 dark:text-green-300">{t('success.exported')}</span>
                                     </div>
                                 )}
                             </div>

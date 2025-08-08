@@ -54,7 +54,20 @@
             "cardsCount": "{{count}} cards",
             "add": "Add",
             "noCards": "No cards yet",
-            "addFirstCard": "Add first card"
+            "addFirstCard": "Add first card",
+            "element": "element",
+            "elements": "elements",
+            "groupsCount": "{{count}} groups",
+            "titles": {
+                "whatHelped": "What helped",
+                "whatHindered": "What hindered",
+                "whatToImprove": "What to improve"
+            },
+            "descriptions": {
+                "whatHelped": "Things that worked well and helped us",
+                "whatHindered": "Obstacles or problems we encountered",
+                "whatToImprove": "Ideas and suggestions for improvement"
+            }
         },
         "cards": {
             "likes": "Likes",
@@ -69,13 +82,15 @@
         },
         "actionItems": {
             "title": "Action Items",
+            "description": "Specific actions to implement",
             "newAction": "Describe the action to implement...",
             "responsible": "Responsible (optional)",
             "add": "Add",
             "edit": "Edit",
             "save": "Save",
             "saving": "Saving...",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "elementsCount": "{{count}} elements"
         },
         "export": {
             "title": "Export Retrospective",
@@ -96,6 +111,8 @@
             "originalOrder_desc": "Keep the order they were created",
             "alphabetical": "Alphabetical",
             "alphabetical_desc": "Sort by card content",
+            "byVotes": "By votes",
+            "byVotes_desc": "Sort by number of votes (highest to lowest)",
             "byLikes": "By likes",
             "byLikes_desc": "Sort by number of likes (highest to lowest)",
             "cancel": "Cancel",
@@ -163,6 +180,15 @@
         },
         "facilitator": {
             "menu": "Facilitator",
+            "controls": "Facilitator Controls",
+            "configureTime": "Configure time",
+            "create": "Create",
+            "onlyYouCanSee": "Only you can see and control this panel as facilitator",
+            "onlyFacilitatorCanCreateActions": "Only the facilitator can create action items",
+            "facilitatorCanCreateActions": "The facilitator can create action items",
+            "createFirstActionOrConvert": "Create the first action item or convert an existing card",
+            "noActionItems": "No action items",
+            "loadingActionItems": "Loading action items...",
             "countdown": {
                 "title": "Timer",
                 "create": "Create Timer",
@@ -203,13 +229,25 @@
         },
         "grouping": {
             "title": "Group cards",
-            "options": "Grouping options"
+            "options": "Grouping options",
+            "noGrouping": "No grouping",
+            "groupByUser": "Group by user",
+            "suggestedGroupings": "Suggested groupings",
+            "traditionalListView": "Traditional list view",
+            "groupCardsByCreator": "Group cards by creator",
+            "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity"
+        },
+        "groupSuggestion": {
+            "group": "Group",
+            "cardsInGroup": "{{count}} cards"
         }
     },
     "participants": {
         "title": "Participants",
         "close": "Close",
-        "closeList": "Close participants list"
+        "closeList": "Close participants list",
+        "totalParticipants": "Total participants",
+        "connectedNow": "Connected now"
     },
     "typing": {
         "single": "{{username}} is typing",
@@ -493,5 +531,13 @@
             "comingSoon": "Coming Soon",
             "termsConditions": "By continuing, you accept our terms and conditions"
         }
+    },
+    "retrospectivePage": {
+        "copyId": "Copy ID",
+        "share": "Share",
+        "back": "Back",
+        "exit": "Exit",
+        "connectedAs": "Connected as:",
+        "backToDashboard": "Back to Dashboard"
     }
 }
