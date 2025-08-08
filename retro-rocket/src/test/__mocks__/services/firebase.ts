@@ -1,31 +1,140 @@
 // Mock for src/services/firebase.ts
 
-export const auth = {
-    currentUser: null,
-    onAuthStateChanged: jest.fn(),
-    signOut: jest.fn().mockResolvedValue(undefined),
-    signInWithPopup: jest.fn(),
+// Mock collection reference
+const mockCollectionRef = {
+    type: 'collection',
+    id: 'cards'
 };
 
-export const db = {
-    collection: jest.fn(),
-    doc: jest.fn(),
-    getDoc: jest.fn(),
-    setDoc: jest.fn(),
-    updateDoc: jest.fn(),
-    deleteDoc: jest.fn(),
-    addDoc: jest.fn(),
-    getDocs: jest.fn(),
-    query: jest.fn(),
-    where: jest.fn(),
-    orderBy: jest.fn(),
-    onSnapshot: jest.fn(),
+// Mock document reference  
+const mockDocRef = {
+    type: 'document',
+    id: 'mock-doc-ref'
 };
+
+// Mock query object
+const mockQuery = 'mock-query';
+
+export const auth = {
+    currentUser: {
+        uid: 'test-user-id',
+        email: 'test@example.com',
+        displayName: 'Test User'
+    },
+    onAuthStateChanged: jest.fn((callback) => {
+        callback({
+            uid: 'test-user-id',
+            email: 'test@example.com'
+        });
+        return jest.fn();
+    }),
+    signOut: jest.fn().mockResolvedValue(undefined),
+    signInWithPopup: jest.fn().mockResolvedValue({
+        user: {
+            uid: 'test-user-id',
+            email: 'test@example.com'
+        }
+    }),
+};
+
+export const db = mockCollectionRef;
+
+// Firebase functions that need to be mocked at module level
+export const collection = jest.fn().mockReturnValue(mockCollectionRef);
+
+export const doc = jest.fn().mockReturnValue(mockDocRef);
+
+export const addDoc = jest.fn().mockResolvedValue({ id: 'mock-doc-id' });
+
+export const updateDoc = jest.fn().mockResolvedValue(undefined);
+
+export const deleteDoc = jest.fn().mockResolvedValue(undefined);
+
+export const getDocs = jest.fn().mockResolvedValue({
+    docs: [{
+        id: 'mock-card-id',
+        data: () => ({
+            content: 'Test card',
+            column: 'helped',
+            votes: 0,
+            likes: [],
+            reactions: [],
+            order: 1234567890,
+            retrospectiveId: 'test-retro-id',
+            createdBy: 'test-user-id',
+            createdAt: {
+                toDate: () => new Date('2023-01-01')
+            },
+            updatedAt: {
+                toDate: () => new Date('2023-01-01')
+            }
+        })
+    }],
+    empty: false
+});
+
+export const getDoc = jest.fn().mockResolvedValue({
+    id: 'mock-card-id',
+    exists: () => true,
+    data: () => ({
+        content: 'Test card',
+        column: 'helped',
+        votes: 5,
+        likes: [],
+        reactions: [],
+        order: 1234567890,
+        retrospectiveId: 'test-retro-id',
+        createdBy: 'test-user-id',
+        createdAt: {
+            toDate: () => new Date('2023-01-01')
+        },
+        updatedAt: {
+            toDate: () => new Date('2023-01-01')
+        }
+    })
+});
+
+export const setDoc = jest.fn().mockResolvedValue(undefined);
+
+export const query = jest.fn().mockReturnValue(mockQuery);
+
+export const where = jest.fn().mockReturnValue(mockQuery);
+
+export const orderBy = jest.fn().mockReturnValue(mockQuery);
+
+export const onSnapshot = jest.fn((queryObj, callback, errorCallback) => {
+    // Simulate snapshot callback
+    setTimeout(() => {
+        callback({
+            docs: [{
+                id: 'mock-card-id',
+                data: () => ({
+                    content: 'Test card',
+                    column: 'helped',
+                    votes: 0,
+                    likes: [],
+                    reactions: [],
+                    order: 1234567890,
+                    retrospectiveId: 'test-retro-id',
+                    createdBy: 'test-user-id',
+                    createdAt: {
+                        toDate: () => new Date('2023-01-01')
+                    },
+                    updatedAt: {
+                        toDate: () => new Date('2023-01-01')
+                    }
+                })
+            }]
+        });
+    }, 0);
+
+    // Return unsubscribe function
+    return jest.fn();
+});
 
 export const serverTimestamp = jest.fn(() => ({
-    seconds: Math.floor(Date.now() / 1000),
-    nanoseconds: 0,
-    toDate: () => new Date()
+    seconds: 1234567890,
+    nanoseconds: 0
 }));
 
 export const Timestamp = {

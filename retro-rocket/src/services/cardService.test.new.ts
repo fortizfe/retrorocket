@@ -216,19 +216,11 @@ describe('CardService', () => {
                 docs: [
                     {
                         id: 'card-1',
-                        data: () => ({
-                            ...mockCards[0],
-                            createdAt: { toDate: () => mockCards[0].createdAt },
-                            updatedAt: { toDate: () => mockCards[0].updatedAt }
-                        }),
+                        data: () => ({ ...mockCards[0], createdAt: { toDate: () => mockCards[0].createdAt } }),
                     },
                     {
                         id: 'card-2',
-                        data: () => ({
-                            ...mockCards[1],
-                            createdAt: { toDate: () => mockCards[1].createdAt },
-                            updatedAt: { toDate: () => mockCards[1].updatedAt }
-                        }),
+                        data: () => ({ ...mockCards[1], createdAt: { toDate: () => mockCards[1].createdAt } }),
                     }
                 ]
             });

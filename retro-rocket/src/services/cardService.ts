@@ -5,6 +5,7 @@ import {
     deleteDoc,
     doc,
     getDocs,
+    getDoc,
     query,
     where,
     orderBy,
@@ -121,10 +122,10 @@ export const voteCard = async (cardId: string, increment: boolean = true): Promi
 
         // For simplicity, we'll get the current votes and update
         // In a production app, you might want to use increment() for atomic updates
-        const cardDoc = await getDocs(query(cardsCollection, where('__name__', '==', cardId)));
+        const cardDoc = await getDoc(cardRef);
 
-        if (!cardDoc.empty) {
-            const currentCard = cardDoc.docs[0].data() as Card;
+        if (cardDoc.exists()) {
+            const currentCard = cardDoc.data() as Card;
             const newVotes = (currentCard.votes || 0) + (increment ? 1 : -1);
 
             await updateDoc(cardRef, {
