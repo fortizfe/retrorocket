@@ -67,4 +67,9 @@ export const FIRESTORE_COLLECTIONS = {
 } as const;
 
 export const APP_NAME = 'RetroRocket';
-export const APP_DESCRIPTION = 'Transforma las retrospectivas de tu equipo en momentos de crecimiento real';
+
+// Function to get translated app description
+export const getAppDescription = () => {
+  const t = i18n.getFixedT(i18n.language);
+  return t('landing.hero.description');
+};

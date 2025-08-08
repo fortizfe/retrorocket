@@ -389,6 +389,7 @@
     },
     "landing": {
         "hero": {
+            "description": "Transform your team's retrospectives into real growth moments",
             "tagline": "Facilitate retrospectives that really drive your team's growth",
             "cta": {
                 "title": "Get started now",

@@ -390,6 +390,7 @@
     },
     "landing": {
         "hero": {
+            "description": "Transforma las retrospectivas de tu equipo en momentos de crecimiento real",
             "tagline": "Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo",
             "cta": {
                 "title": "Comienza ahora",

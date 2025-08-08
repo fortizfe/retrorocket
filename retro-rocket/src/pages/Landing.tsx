@@ -14,7 +14,7 @@ import UserProfileForm from '../components/auth/UserProfileForm';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { AuthProviderType } from '../types/user';
-import { APP_NAME, APP_DESCRIPTION } from '../utils/constants';
+import { APP_NAME } from '../utils/constants';
 
 const LandingPage: React.FC = () => {
     const { signInWithGoogle, signInWithGithub, loading, user, userProfile, updateDisplayName } = useUser();
@@ -86,7 +86,7 @@ const LandingPage: React.FC = () => {
                             </h1>
                         </div>
                         <p className="text-xl text-slate-600 dark:text-slate-300 mb-2">
-                            {APP_DESCRIPTION}
+                            {t('landing.hero.description')}
                         </p>
                         <p className="text-lg text-slate-500 dark:text-slate-400">
                             {t('landing.hero.tagline')}
