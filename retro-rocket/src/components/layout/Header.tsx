@@ -121,7 +121,7 @@ const Header: React.FC = () => {
                                     />
                                 ) : (
                                     <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                                        <User className="w-4 h-4 text-white" />
+                                        <User className="w-4 h-4 text-white" data-testid="user-icon" />
                                     </div>
                                 )}
                                 <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
