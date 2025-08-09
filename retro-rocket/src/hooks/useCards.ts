@@ -70,7 +70,7 @@ export const useCards = (retrospectiveId?: string): UseCardsReturn => {
         const unsubscribe = subscribeToCards(retrospectiveId, (fetchedCards) => {
             setCards(fetchedCards);
             setLoading(false);
-            setError(null);
+            // Don't reset error here - let operations handle their own error state
         });
 
         return () => unsubscribe();
@@ -189,7 +189,8 @@ export const useCards = (retrospectiveId?: string): UseCardsReturn => {
     const cardsByColumn: Record<ColumnType, Card[]> = {
         helped: cards.filter(card => card.column === 'helped'),
         hindered: cards.filter(card => card.column === 'hindered'),
-        improve: cards.filter(card => card.column === 'improve')
+        improve: cards.filter(card => card.column === 'improve'),
+        actions: cards.filter(card => card.column === 'actions')
     };
 
     return {

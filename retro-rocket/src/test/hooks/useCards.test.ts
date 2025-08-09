@@ -72,9 +72,9 @@ describe('useCards Hook', () => {
         // Mock default behavior
         mockCardService.getCardsByRetrospective.mockResolvedValue(mockCards);
         mockCardService.subscribeToCards.mockImplementation((id: string, callback: Function) => {
-            // Use a minimal timeout to allow initial state to be observed
-            setTimeout(() => callback(mockCards), 10);
-            return vi.fn(); // unsubscribe function
+            // Use immediate callback to avoid timing issues
+            const timeoutId = setTimeout(() => callback(mockCards), 0);
+            return () => clearTimeout(timeoutId); // Return proper cleanup function
         });
         mockCardService.createCard.mockResolvedValue('new-card-id');
         mockCardService.updateCard.mockResolvedValue(undefined);
@@ -89,6 +89,7 @@ describe('useCards Hook', () => {
 
     afterEach(() => {
         vi.resetAllMocks();
+        vi.clearAllTimers();
     });
 
     describe('Initialization', () => {
@@ -183,7 +184,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.createCard(newCardInput)).rejects.toThrow(errorMessage);
             });
 
-            expect(result.current.error).toBe(errorMessage);
+            await waitFor(() => {
+                expect(result.current.error).toBe(errorMessage);
+            });
         });
 
         it('should update a card', async () => {
@@ -209,7 +212,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.updateCard('card-1', {})).rejects.toThrow(errorMessage);
             });
 
-            expect(result.current.error).toBe(errorMessage);
+            await waitFor(() => {
+                expect(result.current.error).toBe(errorMessage);
+            });
         });
 
         it('should delete a card', async () => {
@@ -270,7 +275,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.voteCard('card-1')).rejects.toThrow(errorMessage);
             });
 
-            expect(result.current.error).toBe(errorMessage);
+            await waitFor(() => {
+                expect(result.current.error).toBe(errorMessage);
+            });
         });
     });
 
@@ -370,7 +377,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.reorderCards(updates)).rejects.toThrow(errorMessage);
             });
 
-            expect(result.current.error).toBe(errorMessage);
+            await waitFor(() => {
+                expect(result.current.error).toBe(errorMessage);
+            });
         });
     });
 
@@ -434,7 +443,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.toggleLike('card-1', mockUserId, mockUsername)).rejects.toThrow(errorMessage);
             });
 
-            expect(result.current.error).toBe(errorMessage);
+            await waitFor(() => {
+                expect(result.current.error).toBe(errorMessage);
+            });
         });
 
         it('should handle non-Error exceptions', async () => {
@@ -453,7 +464,9 @@ describe('useCards Hook', () => {
                 await expect(result.current.createCard(newCardInput)).rejects.toThrow('Error creating card');
             });
 
-            expect(result.current.error).toBe('Error creating card');
+            await waitFor(() => {
+                expect(result.current.error).toBe('Error creating card');
+            });
         });
     });
 });
