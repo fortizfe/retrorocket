@@ -22,7 +22,7 @@ describe('PdfExportService', () => {
         it('should cleanup resources after export', () => {
             // Mock cleanup behavior
             const mockElement = {
-                remove: () => {},
+                remove: () => { },
                 href: '',
                 download: ''
             };
