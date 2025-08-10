@@ -62,28 +62,34 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     const calculatePosition = () => {
         if (!triggerRef.current) return;
 
-        const triggerRect = triggerRef.current.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        try {
+            const triggerRect = triggerRef.current.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
 
-        // Popup dimensions (approximate)
-        const popupWidth = 260;
-        const popupHeight = 120;
+            // Popup dimensions (approximate)
+            const popupWidth = 260;
+            const popupHeight = 120;
 
-        let left = triggerRect.left;
-        let top = triggerRect.bottom + 8;
+            let left = triggerRect.left;
+            let top = triggerRect.bottom + 8;
 
-        // Adjust horizontal position if it would overflow
-        if (left + popupWidth > viewportWidth) {
-            left = triggerRect.right - popupWidth;
+            // Adjust horizontal position if it would overflow
+            if (left + popupWidth > viewportWidth) {
+                left = triggerRect.right - popupWidth;
+            }
+
+            // Adjust vertical position if it would overflow
+            if (top + popupHeight > viewportHeight) {
+                top = triggerRect.top - popupHeight - 8;
+            }
+
+            setPopupPosition({ top, left });
+        } catch (error) {
+            // Fallback to default position if getBoundingClientRect fails
+            console.warn('Failed to calculate position:', error);
+            setPopupPosition({ top: 8, left: 0 });
         }
-
-        // Adjust vertical position if it would overflow
-        if (top + popupHeight > viewportHeight) {
-            top = triggerRect.top - popupHeight - 8;
-        }
-
-        setPopupPosition({ top, left });
     };
 
     // Handle outside clicks
@@ -133,7 +139,9 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     };
 
     const handleColorSelect = (color: CardColor) => {
-        onColorChange(color);
+        if (onColorChange && typeof onColorChange === 'function') {
+            onColorChange(color);
+        }
         setIsOpen(false);
     };
 
