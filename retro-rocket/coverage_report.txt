@@ -1,0 +1,2648 @@
+
+> retro-rocket@1.0.0 test:coverage
+> vitest run --coverage --config vitest.config.ts
+
+
+ RUN  v3.2.4 /Users/fortizfe/Repositories/retrorocket/retro-rocket
+      Coverage enabled with v8
+
+ ✓ src/test/components/ui/Textarea.test.tsx (42 tests) 339ms
+ ✓ src/test/components/retrospective/ActionItemCard.test.tsx (33 tests) 262ms
+ ✓ src/test/components/ui/EmojiPicker.test.tsx (28 tests) 514ms
+ ✓ src/test/integration/RetrospectiveWorkflow.test.tsx (8 tests) 316ms
+ ✓ src/test/components/ui/ColorPicker.test.tsx (44 tests) 676ms
+ ✓ src/test/components/ui/ColorPickerClean.test.tsx (44 tests) 681ms
+ ✓ src/test/components/retrospective/GroupCard.test.tsx (32 tests) 272ms
+ ✓ src/test/hooks/useCards.test.ts (28 tests) 299ms
+ ✓ src/test/components/ui/ThemeToggle.test.tsx (21 tests) 186ms
+ ✓ src/test/components/retrospective/DraggableCard.test.tsx (32 tests) 229ms
+ ✓ src/test/components/ui/Input.test.tsx (37 tests) 214ms
+ ✓ src/test/components/retrospective/RetrospectiveColumn.test.tsx (28 tests) 197ms
+ ✓ src/test/components/ui/Loading.test.tsx (125 tests) 195ms
+ ✓ src/test/components/ui/Button.test.tsx (11 tests) 163ms
+ ✓ src/test/components/ui/LanguageSelector.test.tsx (9 tests) 146ms
+ ✓ src/test/components/retrospective/ActionItemsColumn.test.tsx (31 tests) 213ms
+ ✓ src/test/components/facilitator/FacilitatorMenu.test.tsx (9 tests) 173ms
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx (12 tests | 7 failed) 2175ms
+   × LinkedProvidersCard > renders correctly with default props 46ms
+     → Unable to find an element with the text: Cuentas Vinculadas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   × LinkedProvidersCard > applies custom className when provided 5ms
+     → Unable to find an element with the text: Cuentas Vinculadas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 custom-class"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   ✓ LinkedProvidersCard > shows loading state when isLoading is true 5ms
+   ✓ LinkedProvidersCard > displays error message when error exists 2ms
+   ✓ LinkedProvidersCard > displays available providers when none are linked 9ms
+   × LinkedProvidersCard > displays linked providers correctly 9ms
+     → Unable to find an element with the text: Vinculado. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"[39m
+        [36m>[39m
+          [0mMétodos vinculados[0m
+        [36m</h4>[39m
+        [36m<div[39m
+          [33manimate[39m=[32m"[object Object]"[39m
+          [33mclass[39m=[32m"flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"[39m
+          [33minitial[39m=[32m"[object Object]"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center"[39m
+            [36m>[39m
+              [0m🔐[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-medium text-green-800 dark:text-green-300"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-green-600 dark:text-green-400"[39m
+              [36m>[39m
+                [0mVinculado y activo[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-green-600 dark:text-green-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"20 6 9 17 4 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   ✓ LinkedProvidersCard > handles successful provider linking 67ms
+   × LinkedProvidersCard > handles failed provider linking 1012ms
+     → expected "spy" to be called with arguments: [ 'Linking failed' ][90m
+
+Number of calls: [1m0[22m
+[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 "[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+          [36m>[39m
+            [0mMétodos de Inicio de Sesión[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+        [36m>[39m
+          [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2"[39m
+          [36m>[39m
+            [36m<h4[39m
+              [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+            [36m>[39m
+              [0mVincular método adicional[0m
+            [36m</h4>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                      [33mfill[39m=[32m"#4285F4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                      [33mfill[39m=[32m"#34A853"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                      [33mfill[39m=[32m"#FBBC05"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                      [33mfill[39m=[32m"#EA4335"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGoogle[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGitHub[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+              [36m>[39m
+                [36m<strong>[39m
+                  [0mSeguridad:[0m
+                [36m</strong>[39m
+                [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+   × LinkedProvidersCard > handles provider linking error 1008ms
+     → expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[32m-   "Error al vincular la cuenta: Network error",[90m
+[31m+   "Network error",[90m
+[31m+   {[90m
+[31m+     "duration": 6000,[90m
+[31m+     "style": {[90m
+[31m+       "maxWidth": "400px",[90m
+[31m+     },[90m
+[31m+   },[90m
+[2m  ][22m
+[39m[90m
+
+Number of calls: [1m1[22m
+[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 "[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+          [36m>[39m
+            [0mMétodos de Inicio de Sesión[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+        [36m>[39m
+          [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2"[39m
+          [36m>[39m
+            [36m<h4[39m
+              [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+            [36m>[39m
+              [0mVincular método adicional[0m
+            [36m</h4>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                      [33mfill[39m=[32m"#4285F4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                      [33mfill[39m=[32m"#34A853"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                      [33mfill[39m=[32m"#FBBC05"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                      [33mfill[39m=[32m"#EA4335"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGoogle[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGitHub[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+              [36m>[39m
+                [36m<strong>[39m
+                  [0mSeguridad:[0m
+                [36m</strong>[39m
+                [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+   × LinkedProvidersCard > shows correct icons for each provider 3ms
+     → [2mexpect([22m[31mreceived[39m[2m).toBeInTheDocument()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+   ✓ LinkedProvidersCard > handles when not logged in correctly 4ms
+   × LinkedProvidersCard > disables buttons during linking operation 4ms
+     → [2mexpect([22m[31melement[39m[2m).toBeDisabled()[22m
+
+Received element is not disabled:
+  [31m<button
+  class="flex items-center gap-2"
+/>[39m
+ ✓ src/test/hooks/useRetrospective.test.ts (21 tests) 157ms
+ ✓ src/test/services/cardGroupService.test.ts (16 tests) 25ms
+ ✓ src/test/services/firebase.test.ts (14 tests) 112ms
+ ✓ src/test/apps/SimpleApp.test.tsx (5 tests) 83ms
+ ✓ src/test/services/similarityService.test.ts (35 tests) 64ms
+ ✓ src/test/hooks/useCountdown.test.ts (25 tests) 65ms
+ ✓ src/test/components/retrospective/RetrospectiveCard.test.tsx (27 tests) 192ms
+ ✓ src/test/hooks/useColumnGrouping.test.ts (22 tests) 167ms
+ ✓ src/test/hooks/useCardGroups.test.ts (22 tests) 70ms
+ ✓ src/test/components/AuthGuard.test.tsx (5 tests) 41ms
+ ✓ src/test/apps/MinimalApp.test.tsx (6 tests) 39ms
+ ✓ src/test/hooks/useActionItems.test.ts (13 tests) 44ms
+ ✓ src/test/services/txtExportService.test.ts (11 tests) 29ms
+ ✓ src/test/services/cardService.test.ts (23 tests) 31ms
+ ✓ src/test/services/retrospectiveService.test.ts (28 tests) 15ms
+ ✓ src/test/services/facilitatorNotesService.test.ts (25 tests) 18ms
+ ✓ src/test/utils/helpers.test.ts (16 tests) 26ms
+ ✓ src/test/utils/emojiConstants.test.ts (15 tests) 27ms
+ ✓ src/test/types/export.test.ts (19 tests) 34ms
+ ✓ src/test/services/countdownService.test.ts (20 tests) 9ms
+ ✓ src/test/integration/App.test.tsx (3 tests) 36ms
+ ✓ src/test/types/participant.test.ts (11 tests) 14ms
+ ✓ src/test/utils/helpers-basic.test.ts (6 tests) 19ms
+ ✓ src/test/services/columnGroupingService.test.ts (18 tests) 7ms
+ ✓ src/test/services/cardInteractionService.test.ts (29 tests) 10ms
+ ✓ src/test/services/actionItemsService.test.ts (17 tests) 16ms
+ ✓ src/test/types/facilitatorNotes.test.ts (16 tests) 12ms
+ ✓ src/test/services/userService.test.ts (24 tests) 9ms
+ ✓ src/test/services/typingStatusService.test.ts (18 tests) 17ms
+ ✓ src/test/types/typing.test.ts (19 tests) 8ms
+ ✓ src/test/services/participantService.test.ts (20 tests) 11ms
+ ✓ src/test/utils/constants.test.ts (11 tests) 5ms
+ ✓ src/test/types/columnGrouping.test.ts (19 tests) 6ms
+ ✓ src/test/types/retrospective.test.ts (18 tests) 6ms
+ ✓ src/test/services/accountLinking-simple.test.ts (3 tests) 7ms
+ ✓ src/test/types/actionItem.test.ts (15 tests) 5ms
+ ✓ src/test/types/card.test.ts (22 tests) 5ms
+ ✓ src/test/utils/cardColors.test.ts (14 tests) 10ms
+ ✓ src/test/types/countdown.test.ts (21 tests) 7ms
+ ✓ src/test/types/user.test.ts (23 tests) 6ms
+ ✓ src/test/services/accountLinking.test.ts (2 tests) 3ms
+ ✓ src/test/services/docxExportService.test.ts (3 tests) 3ms
+ ✓ src/test/services/docxExportService-simple.test.ts (3 tests) 3ms
+ ✓ src/test/services/pdfExportService-simple.test.ts (4 tests) 2ms
+ ✓ src/test/services/pdfExportService.test.ts (4 tests) 3ms
+ ✓ src/test/basic.test.ts (2 tests) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > renders correctly with default props
+TestingLibraryElementError: Unable to find an element with the text: Cuentas Vinculadas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:73:23
+     71|         render(<LinkedProvidersCard />);
+     72|         
+     73|         expect(screen.getByText('Cuentas Vinculadas')).toBeInTheDocume…
+       |                       ^
+     74|         expect(screen.getByText('Vincula múltiples cuentas para mayor …
+     75|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > applies custom className when provided
+TestingLibraryElementError: Unable to find an element with the text: Cuentas Vinculadas. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 custom-class"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:81:29
+     79|         render(<LinkedProvidersCard className={customClass} />);
+     80|         
+     81|         const card = screen.getByText('Cuentas Vinculadas').closest('d…
+       |                             ^
+     82|         expect(card).toHaveClass(customClass);
+     83|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > displays linked providers correctly
+TestingLibraryElementError: Unable to find an element with the text: Vinculado. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"p-6 "[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mheight[39m=[32m"24"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"24"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+        [36m>[39m
+          [0mMétodos de Inicio de Sesión[0m
+        [36m</h3>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+      [36m>[39m
+        [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<h4[39m
+          [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"[39m
+        [36m>[39m
+          [0mMétodos vinculados[0m
+        [36m</h4>[39m
+        [36m<div[39m
+          [33manimate[39m=[32m"[object Object]"[39m
+          [33mclass[39m=[32m"flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"[39m
+          [33minitial[39m=[32m"[object Object]"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center"[39m
+            [36m>[39m
+              [0m🔐[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-medium text-green-800 dark:text-green-300"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-green-600 dark:text-green-400"[39m
+              [36m>[39m
+                [0mVinculado y activo[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-green-600 dark:text-green-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"20 6 9 17 4 12"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2"[39m
+        [36m>[39m
+          [36m<h4[39m
+            [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+          [36m>[39m
+            [0mVincular método adicional[0m
+          [36m</h4>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                    [33mfill[39m=[32m"#4285F4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                    [33mfill[39m=[32m"#34A853"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                    [33mfill[39m=[32m"#FBBC05"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                    [33mfill[39m=[32m"#EA4335"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGoogle[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33manimate[39m=[32m"[object Object]"[39m
+            [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+            [33minitial[39m=[32m"[object Object]"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-center"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                [36m>[39m
+                  [0mGitHub[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                [36m>[39m
+                  [0mNo vinculado[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"flex items-center gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 5v14"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mVincular[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+            [36m>[39m
+              [36m<strong>[39m
+                [0mSeguridad:[0m
+              [36m</strong>[39m
+              [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:128:23
+    126|         render(<LinkedProvidersCard />);
+    127|         
+    128|         expect(screen.getByText('Vinculado')).toBeInTheDocument();
+       |                       ^
+    129|     });
+    130| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > handles failed provider linking
+AssertionError: expected "spy" to be called with arguments: [ 'Linking failed' ][90m
+
+Number of calls: [1m0[22m
+[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 "[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+          [36m>[39m
+            [0mMétodos de Inicio de Sesión[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+        [36m>[39m
+          [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2"[39m
+          [36m>[39m
+            [36m<h4[39m
+              [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+            [36m>[39m
+              [0mVincular método adicional[0m
+            [36m</h4>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                      [33mfill[39m=[32m"#4285F4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                      [33mfill[39m=[32m"#34A853"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                      [33mfill[39m=[32m"#FBBC05"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                      [33mfill[39m=[32m"#EA4335"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGoogle[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGitHub[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+              [36m>[39m
+                [36m<strong>[39m
+                  [0mSeguridad:[0m
+                [36m</strong>[39m
+                [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:172:37
+    170| 
+    171|         await waitFor(() => {
+    172|             expect(mockToast.error).toHaveBeenCalledWith('Linking fail…
+       |                                     ^
+    173|         });
+    174|     });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > handles provider linking error
+AssertionError: expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[32m-   "Error al vincular la cuenta: Network error",[90m
+[31m+   "Network error",[90m
+[31m+   {[90m
+[31m+     "duration": 6000,[90m
+[31m+     "style": {[90m
+[31m+       "maxWidth": "400px",[90m
+[31m+     },[90m
+[31m+   },[90m
+[2m  ][22m
+[39m[90m
+
+Number of calls: [1m1[22m
+[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"p-6 "[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-3 mb-4"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33mclass[39m=[32m"w-5 h-5 text-primary-600 dark:text-primary-400"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"24"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"24"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-lg font-semibold text-slate-800 dark:text-slate-100"[39m
+          [36m>[39m
+            [0mMétodos de Inicio de Sesión[0m
+          [36m</h3>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-slate-600 dark:text-slate-300 mb-6"[39m
+        [36m>[39m
+          [0mAdministra los métodos de autenticación vinculados a tu cuenta. Puedes iniciar sesión con cualquiera de estos proveedores.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-2"[39m
+          [36m>[39m
+            [36m<h4[39m
+              [33mclass[39m=[32m"text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 pt-2"[39m
+            [36m>[39m
+              [0mVincular método adicional[0m
+            [36m</h4>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"[39m
+                      [33mfill[39m=[32m"#4285F4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"[39m
+                      [33mfill[39m=[32m"#34A853"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"[39m
+                      [33mfill[39m=[32m"#FBBC05"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"[39m
+                      [33mfill[39m=[32m"#EA4335"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGoogle[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33manimate[39m=[32m"[object Object]"[39m
+              [33mclass[39m=[32m"flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700"[39m
+              [33minitial[39m=[32m"[object Object]"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center justify-center"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33mclass[39m=[32m"w-5 h-5"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"24"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"24"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M9 18c-4.51 2-5-2-7-2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-medium text-slate-800 dark:text-slate-200"[39m
+                  [36m>[39m
+                    [0mGitHub[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs text-slate-500 dark:text-slate-400"[39m
+                  [36m>[39m
+                    [0mNo vinculado[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-4 h-4"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 5v14"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mVincular[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-start gap-2"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-xs text-blue-800 dark:text-blue-300"[39m
+              [36m>[39m
+                [36m<strong>[39m
+                  [0mSeguridad:[0m
+                [36m</strong>[39m
+                [0m Vincular múltiples métodos te permite acceder a tu cuenta de diferentes formas. Todos los métodos vinculados comparten la misma información de usuario y retrospectivas.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:187:37
+    185| 
+    186|         await waitFor(() => {
+    187|             expect(mockToast.error).toHaveBeenCalledWith(
+       |                                     ^
+    188|                 'Error al vincular la cuenta: Network error'
+    189|             );
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > shows correct icons for each provider
+Error: [2mexpect([22m[31mreceived[39m[2m).toBeInTheDocument()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:198:28
+    196|         // Google icon should be present (SVG)
+    197|         const googleIcon = screen.getByText('Google').previousElementS…
+    198|         expect(googleIcon).toBeInTheDocument();
+       |                            ^
+    199|         
+    200|         // GitHub icon should be present
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/test/components/auth/LinkedProvidersCard.test.tsx > LinkedProvidersCard > disables buttons during linking operation
+Error: [2mexpect([22m[31melement[39m[2m).toBeDisabled()[22m
+
+Received element is not disabled:
+  [31m<button
+  class="flex items-center gap-2"
+/>[39m
+ ❯ src/test/components/auth/LinkedProvidersCard.test.tsx:233:28
+    231| 
+    232|         // Button should be disabled during operation
+    233|         expect(linkButton).toBeDisabled();
+       |                            ^
+    234| 
+    235|         // Resolve the promise to complete the operation
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed | 63 passed (64)
+      Tests  7 failed | 1280 passed (1287)
+   Start at  07:19:19
+   Duration  8.22s (transform 1.90s, setup 3.84s, collect 8.66s, tests 8.73s, environment 18.57s, prepare 4.33s)
+

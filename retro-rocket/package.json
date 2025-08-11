@@ -14,7 +14,10 @@
     "test": "vitest --config vitest.config.ts",
     "test:ui": "vitest --ui --config vitest.config.ts",
     "test:run": "vitest run --config vitest.config.ts",
-    "test:coverage": "vitest run --coverage --config vitest.config.ts"
+    "test:coverage": "vitest run --coverage --config vitest.config.ts",
+    "test:coverage:watch": "vitest --coverage --watch --config vitest.config.ts",
+    "test:coverage:ui": "vitest --coverage --ui --config vitest.config.ts",
+    "test:threshold": "vitest run --coverage --reporter=verbose --config vitest.config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
