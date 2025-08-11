@@ -37,11 +37,42 @@ vi.mock('../../../components/retrospective/GroupSuggestionModal', () => ({
     GroupSuggestionModal: () => <div data-testid="group-suggestion-modal">Modal</div>
 }));
 
-vi.mock('../../../components/retrospective/GroupedCardList', () => ({
-    default: () => <div data-testid="grouped-card-list">Grouped Card List</div>
+// Mock DragDropColumn to prevent actual rendering
+vi.mock('../../../components/retrospective/DragDropColumn', () => ({
+    default: vi.fn(({ cards = [] }: { cards?: any[] }) => (
+        <div data-testid="drag-drop-column">
+            {Array.isArray(cards) && cards.map((card: any, index: number) => (
+                <div key={card?.id || index} data-testid={`card-${card?.id || index}`}>
+                    {card?.content || 'Test Card'}
+                </div>
+            ))}
+        </div>
+    ))
 }));
 
-// Mock the TypingProvider and hook
+// Mock GroupedCardList
+vi.mock('../../../components/retrospective/GroupedCardList', () => ({
+    default: vi.fn(({ groupedCards = {} }: { groupedCards?: any }) => {
+        // Handle the grouped cards structure
+        if (typeof groupedCards === 'object' && groupedCards !== null) {
+            const groupEntries = Object.entries(groupedCards || {});
+            return (
+                <div data-testid="grouped-card-list">
+                    {groupEntries.map(([groupName, cards]) => (
+                        <div key={groupName} data-testid={`group-${groupName}`}>
+                            {Array.isArray(cards) && cards.map((card: any, index: number) => (
+                                <div key={card?.id || index} data-testid="group-card">
+                                    {card?.content || 'Test Card'}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        return <div data-testid="grouped-card-list">No cards</div>;
+    })
+}));// Mock the TypingProvider and hook
 vi.mock('../../../contexts/TypingProvider', () => ({
     TypingProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useTypingContext: () => ({
@@ -60,18 +91,32 @@ vi.mock('../../../hooks/useTypingContext', () => ({
         typingUsers: [],
         getTypingUsersForColumn: vi.fn(() => [])
     })
-})); vi.mock('../../../hooks/useLanguage', () => ({
+}));
+
+vi.mock('../../../hooks/useLanguage', () => ({
     useLanguage: () => ({
         t: (key: string) => key
     })
 }));
 
+// Mock hooks
 vi.mock('../../../hooks/useColumnGrouping', () => ({
     useColumnGrouping: () => ({
-        isGroupingEnabled: false,
-        toggleGrouping: vi.fn(),
-        groupCards: vi.fn(),
-        ungroupCards: vi.fn()
+        columnState: {
+            criteria: 'none',
+            isGrouped: false
+        },
+        getColumnState: vi.fn(() => ({
+            criteria: 'none',
+            isGrouped: false
+        })),
+        processCards: vi.fn((cards = []) => {
+            // Return cards in the expected format for GroupedCardList
+            if (Array.isArray(cards) && cards.length > 0) {
+                return { ungrouped: cards };
+            }
+            return { ungrouped: [] };
+        })
     })
 }));
 
@@ -85,7 +130,14 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('lucide-react', () => ({
     Plus: () => <div data-testid="plus-icon">+</div>,
-    Users: () => <div data-testid="users-icon">Users</div>
+    Hash: () => <div data-testid="hash-icon">#</div>,
+    Users: () => <div data-testid="users-icon">Users</div>,
+    ChevronUp: () => <div data-testid="chevron-up-icon">^</div>,
+    ChevronDown: () => <div data-testid="chevron-down-icon">v</div>,
+    Palette: () => <div data-testid="palette-icon">🎨</div>,
+    Lightbulb: () => <div data-testid="lightbulb-icon">💡</div>,
+    MoreHorizontal: () => <div data-testid="more-horizontal-icon">...</div>,
+    X: () => <div data-testid="x-icon">×</div>
 }));
 
 describe('GroupableColumn Basic Tests', () => {

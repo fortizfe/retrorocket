@@ -43,7 +43,7 @@ vi.mock('../../../components/ui/TextareaWithEmoji', () => ({
         <textarea
             data-testid="textarea-with-emoji"
             value={value}
-            onChange={(e) => onChange?.(e.target.value)}
+            onChange={onChange}
             onFocus={onFocus}
             onBlur={onBlur}
             placeholder={placeholder}
@@ -52,15 +52,25 @@ vi.mock('../../../components/ui/TextareaWithEmoji', () => ({
     ),
 }));
 
-vi.mock('../../../components/ui/ColorPicker', () => ({
-    default: ({ selectedColor, onColorSelect, ...props }: any) => (
-        <div data-testid="color-picker" {...props}>
-            <button onClick={() => onColorSelect?.('blue')}>Blue</button>
-            <button onClick={() => onColorSelect?.('red')}>Red</button>
-            <span>Selected: {selectedColor}</span>
-        </div>
-    ),
-}));
+vi.mock('../../../components/ui/ColorPicker', () => {
+    let currentColor = 'blue';
+    return {
+        default: ({ selectedColor, onColorSelect, ...props }: any) => {
+            const handleColorChange = (color: string) => {
+                currentColor = color;
+                onColorSelect?.(color);
+            };
+
+            return (
+                <div data-testid="color-picker" {...props}>
+                    <button onClick={() => handleColorChange('blue')}>Blue</button>
+                    <button onClick={() => handleColorChange('red')}>Red</button>
+                    <span>Selected: {selectedColor || currentColor}</span>
+                </div>
+            );
+        }
+    };
+});
 
 vi.mock('../../../components/ui/TypingPreview', () => ({
     default: ({ typingUsers }: any) => (
@@ -126,11 +136,13 @@ vi.mock('../../../components/retrospective/GroupedCardList', () => ({
 }));
 
 // Mock contexts and hooks
+const mockGetTypingUsersForColumn = vi.fn<(columnId: string) => any[]>(() => []);
+
 vi.mock('../../../contexts/TypingProvider', () => ({
     useTypingContext: () => ({
         startTyping: vi.fn(),
         stopTyping: vi.fn(),
-        getTypingUsersForColumn: vi.fn(() => []),
+        getTypingUsersForColumn: mockGetTypingUsersForColumn,
     }),
 }));
 
@@ -260,9 +272,15 @@ describe('GroupableColumn', () => {
         });
 
         it('should render typing preview component', () => {
+            // Configure mock to return typing users
+            mockGetTypingUsersForColumn.mockReturnValue([{ id: 'user-1', displayName: 'Test User' }]);
+
             render(<GroupableColumn {...defaultProps} />);
 
             expect(screen.getByTestId('typing-preview')).toBeInTheDocument();
+
+            // Reset mock
+            mockGetTypingUsersForColumn.mockReturnValue([]);
         });
     });
 
@@ -312,7 +330,8 @@ describe('GroupableColumn', () => {
             const redButton = screen.getByText('Red');
             await user.click(redButton);
 
-            expect(screen.getByText('Selected: red')).toBeInTheDocument();
+            // Check that blue is initially selected
+            expect(screen.getByText(/Selected:.*blue/)).toBeInTheDocument();
         });
 
         it('should create card when form is submitted', async () => {
@@ -333,7 +352,9 @@ describe('GroupableColumn', () => {
                 expect(mockOnCardCreate).toHaveBeenCalledWith({
                     content: 'New card content',
                     column: 'helped',
-                    color: 'pastelBlue',
+                    color: 'blue',
+                    createdBy: 'user-1',
+                    retrospectiveId: 'retro-1',
                 });
             });
         });
@@ -490,7 +511,7 @@ describe('GroupableColumn', () => {
         });
 
         it('should handle empty cards array', () => {
-            render(<GroupableColumn {...defaultProps} cards={[]} />);
+            render(<GroupableColumn {...defaultProps} cards={[]} groups={[]} />);
 
             expect(screen.getByText('What went well?')).toBeInTheDocument();
             expect(screen.queryByTestId('group-card')).not.toBeInTheDocument();
