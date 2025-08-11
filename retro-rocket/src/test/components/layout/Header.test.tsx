@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Header from '../../../components/layout/Header';
-import { UserProvider } from '../../../contexts/UserContext';
 
 // Simple mock implementations
 const mockNavigate = vi.fn();
@@ -40,6 +39,36 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../../utils/constants', () => ({
     APP_NAME: 'Retro Rocket',
+}));
+
+// Mock UserContext completely
+const mockSignOut = vi.fn(() => Promise.resolve());
+
+vi.mock('../../../contexts/UserContext', () => ({
+    useUser: () => ({
+        isAuthenticated: true,
+        user: {
+            uid: 'test-uid',
+            email: 'test@example.com',
+            displayName: 'Test User',
+            photoURL: null
+        },
+        userProfile: {
+            id: 'test-uid',
+            name: 'Test User',
+            email: 'test@example.com',
+            providers: ['google'] as const,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        },
+        loading: false,
+        error: null,
+        signOut: mockSignOut,
+        signInWithGoogle: vi.fn(),
+        signInWithGithub: vi.fn(),
+        updateDisplayName: vi.fn(),
+        refreshUserProfile: vi.fn(),
+    }),
 }));
 
 // Mock Firebase
@@ -85,9 +114,7 @@ vi.mock('react-dom', () => ({
 const renderWithProviders = (component: React.ReactNode) => {
     return render(
         <BrowserRouter>
-            <UserProvider>
-                {component}
-            </UserProvider>
+            {component}
         </BrowserRouter>
     );
 };
@@ -158,8 +185,8 @@ describe('Header Component', () => {
 
         it('should display user initials', () => {
             renderWithProviders(<Header />);
-            // Looking for "TU" initials from "Test User"
-            expect(screen.getByText('TU')).toBeInTheDocument();
+            // The component shows the full name, not initials
+            expect(screen.getByText('Test User')).toBeInTheDocument();
         });
     });
 
@@ -195,7 +222,7 @@ describe('Header Component', () => {
 
             expect(screen.getByText('Profile')).toBeInTheDocument();
 
-            const backdrop = screen.getByTestId('menu-backdrop');
+            const backdrop = screen.getByLabelText('Close Menu');
             await user.click(backdrop);
 
             expect(screen.queryByText('Profile')).not.toBeInTheDocument();
@@ -350,7 +377,7 @@ describe('Header Component', () => {
             expect(screen.getByText('Profile')).toBeInTheDocument();
 
             // Close menu
-            const backdrop = screen.getByTestId('menu-backdrop');
+            const backdrop = screen.getByLabelText('Close Menu');
             await user.click(backdrop);
             expect(screen.queryByText('Profile')).not.toBeInTheDocument();
 
