@@ -282,8 +282,10 @@ Este plan debería llevarnos sistemáticamente del 38.29% actual al objetivo del
 3. **src/components/forms/CreateCardForm.tsx** - 31 tests, 100% coverage
 4. **src/components/forms/JoinPanelForm.tsx** - 31 tests, 100% coverage
 5. **src/components/participants/UserAvatar.tsx** - 38 tests, mejora de 30.5% a ~100% coverage
+6. **src/components/participants/CompactAvatarGroup.tsx** - 34 tests, mejora de 26.25% a ~100% coverage
+7. **src/components/participants/ParticipantList.tsx** - 29 tests, mejora de 6.41% a ~100% coverage
 
-**Total Fase 4**: 164 tests nuevos
-**Cobertura actual**: 45.06% (mejora de 44.82% → 45.06% = +0.24%)
-**Progreso hacia 80%**: 45.06% / 80% = 56.33% completado
-**Restante**: 34.94% para alcanzar el objetivo
+**Total Fase 4**: 227 tests nuevos
+**Cobertura actual**: 45.86% (mejora de 45.42% → 45.86% = +0.44%)
+**Progreso hacia 80%**: 45.86% / 80% = 57.33% completado
+**Restante**: 34.14% para alcanzar el objetivo
