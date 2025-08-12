@@ -320,7 +320,6 @@ export class UserService {
 
         // Check if board is already in joined boards
         if (userProfile.joinedBoards?.includes(boardId)) {
-            console.log(`Board ${boardId} is already in user's joined boards, skipping`);
             return; // Don't throw error, just skip silently
         }
 
@@ -331,8 +330,6 @@ export class UserService {
             joinedBoards: updatedJoinedBoards,
             updatedAt: new Date(),
         });
-
-        console.log(`Successfully added board ${boardId} to user's joined boards`);
     }
 
     async removeJoinedBoard(uid: string, boardId: string): Promise<void> {

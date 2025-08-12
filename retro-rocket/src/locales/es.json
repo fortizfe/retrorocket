@@ -21,6 +21,7 @@
         "cancel": "Cancelar",
         "create": "Crear",
         "creating": "Creando...",
+        "templateDefault": "Plantilla estándar",
         "controls": {
             "sortBy": "Ordenar por:",
             "sortByName": "Nombre",
@@ -50,8 +51,7 @@
             "participants": "participantes",
             "joined": "Unido",
             "creator": "Creador",
-            "deleteTitle": "Eliminar tablero",
-            "templateDefault": "Plantilla estándar"
+            "deleteTitle": "Eliminar tablero"
         },
         "joinModal": {
             "title": "Unirse a Retrospectiva",
@@ -256,6 +256,14 @@
                 }
             }
         },
+        "grouping": {
+            "noGrouping": "Sin agrupación",
+            "traditionalListView": "Vista de lista tradicional",
+            "groupByUser": "Agrupar por usuario",
+            "groupCardsByCreator": "Agrupar tarjetas por creador",
+            "suggestedGroupings": "Agrupaciones sugeridas",
+            "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
+        },
         "progress": "Progreso"
     },
     "facilitator": {
@@ -306,16 +314,6 @@
             "noNotesSubtitle": "Añade notas para hacer seguimiento de la retrospectiva",
             "loading": "Cargando notas..."
         }
-    },
-    "grouping": {
-        "title": "Agrupar tarjetas",
-        "options": "Opciones de agrupación",
-        "noGrouping": "Sin agrupación",
-        "groupByUser": "Agrupar por usuario",
-        "suggestedGroupings": "Agrupaciones sugeridas",
-        "traditionalListView": "Vista de lista tradicional",
-        "groupCardsByCreator": "Agrupa tarjetas por creador",
-        "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
     },
     "groupSuggestion": {
         "group": "Grupo",

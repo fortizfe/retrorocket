@@ -21,6 +21,7 @@
         "cancel": "Cancel",
         "create": "Create",
         "creating": "Creating...",
+        "templateDefault": "Standard Template",
         "controls": {
             "sortBy": "Sort by:",
             "sortByName": "Name",
@@ -50,8 +51,7 @@
             "participants": "participants",
             "joined": "Joined",
             "creator": "Creator",
-            "deleteTitle": "Delete board",
-            "templateDefault": "Standard Template"
+            "deleteTitle": "Delete board"
         },
         "joinModal": {
             "title": "Join Retrospective",
@@ -200,6 +200,14 @@
             "exporting": "Exporting...",
             "progress": "Progress"
         },
+        "grouping": {
+            "noGrouping": "No grouping",
+            "traditionalListView": "Traditional list view",
+            "groupByUser": "Group by user",
+            "groupCardsByCreator": "Group cards by creator",
+            "suggestedGroupings": "Suggested groupings",
+            "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity"
+        },
         "groupCard": {
             "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",
             "groupOfCards": "Group of {{totalCards}} cards",
@@ -304,16 +312,6 @@
                 "noNotesSubtitle": "Add notes to track the retrospective",
                 "loading": "Loading notes..."
             }
-        },
-        "grouping": {
-            "title": "Group cards",
-            "options": "Grouping options",
-            "noGrouping": "No grouping",
-            "groupByUser": "Group by user",
-            "suggestedGroupings": "Suggested groupings",
-            "traditionalListView": "Traditional list view",
-            "groupCardsByCreator": "Group cards by creator",
-            "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity"
         },
         "groupSuggestion": {
             "group": "Group",

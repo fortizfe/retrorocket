@@ -1,6 +1,5 @@
 // Types for column grouping functionality
 import { LucideIcon, List, Users, Sparkles } from 'lucide-react';
-import i18n from '../i18n/config';
 
 export type GroupingCriteria = 'none' | 'user' | 'suggestions';
 
@@ -17,27 +16,28 @@ export interface ColumnGroupingState {
 }
 
 // Function to get translated grouping options
-export const getGroupingOptions = (): GroupingOption[] => {
-    const t = i18n.getFixedT(i18n.language);
+export const getGroupingOptions = (t?: (key: string) => string): GroupingOption[] => {
+    // If no translation function provided, use a fallback
+    const translate = t || ((key: string) => key);
 
     return [
         {
             value: 'none',
-            label: t('retrospective.grouping.noGrouping'),
+            label: translate('retrospective.grouping.noGrouping'),
             icon: List,
-            description: t('retrospective.grouping.traditionalListView')
+            description: translate('retrospective.grouping.traditionalListView')
         },
         {
             value: 'user',
-            label: t('retrospective.grouping.groupByUser'),
+            label: translate('retrospective.grouping.groupByUser'),
             icon: Users,
-            description: t('retrospective.grouping.groupCardsByCreator')
+            description: translate('retrospective.grouping.groupCardsByCreator')
         },
         {
             value: 'suggestions',
-            label: t('retrospective.grouping.suggestedGroupings'),
+            label: translate('retrospective.grouping.suggestedGroupings'),
             icon: Sparkles,
-            description: t('retrospective.grouping.automaticSuggestionsBySimilarity')
+            description: translate('retrospective.grouping.automaticSuggestionsBySimilarity')
         }
     ];
 };

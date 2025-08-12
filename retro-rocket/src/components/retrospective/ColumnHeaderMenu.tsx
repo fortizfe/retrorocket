@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
     ChevronDown,
     CheckCircle,
@@ -7,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
     GroupingCriteria,
-    GROUPING_OPTIONS
+    getGroupingOptions
 } from '../../types/columnGrouping';
 
 interface ColumnHeaderMenuProps {
@@ -25,6 +26,10 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
 }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const { t } = useTranslation();
+
+    // Get grouping options dynamically to respond to language changes
+    const groupingOptions = getGroupingOptions(t);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -46,7 +51,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     };
 
     const getGroupingIcon = (criteria: GroupingCriteria) => {
-        const option = GROUPING_OPTIONS.find(opt => opt.value === criteria);
+        const option = groupingOptions.find(opt => opt.value === criteria);
         const IconComponent = option?.icon;
         return IconComponent ? <IconComponent className="w-3 h-3" /> : null;
     };
@@ -63,8 +68,8 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                     ${menuOpen ? 'bg-slate-100 dark:bg-slate-700 shadow-sm' : ''}
                     ${currentGrouping !== 'none' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700' : 'text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600'}
                 `}
-                title="Agrupar tarjetas"
-                aria-label="Opciones de agrupación"
+                title="Group cards"
+                aria-label="Grouping options"
                 aria-expanded={menuOpen ? "true" : "false"}
                 aria-haspopup="true"
             >
@@ -81,9 +86,9 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                         exit={{ opacity: 0, y: -8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
                         className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50 min-w-[220px]"
-                        aria-label="Opciones de agrupación"
+                        aria-label="Grouping options"
                     >
-                        {GROUPING_OPTIONS.map((option) => (
+                        {groupingOptions.map((option) => (
                             <button
                                 key={option.value}
                                 onClick={() => handleGroupingSelect(option.value)}
