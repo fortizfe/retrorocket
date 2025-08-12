@@ -14,12 +14,11 @@ import {
     batchUpdateCardOrder
 } from '../services/cardInteractionService';
 import { Card, CreateCardInput, EmojiReaction, GroupedReaction } from '../types/card';
-import { ColumnType } from '../types/retrospective';
 import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '../utils/cardHelpers';
 
 interface UseCardsReturn {
     cards: Card[];
-    cardsByColumn: Record<ColumnType, Card[]>;
+    cardsByColumn: Record<string, Card[]>; // Changed from ColumnType to string
     loading: boolean;
     error: string | null;
     createCard: (cardInput: CreateCardInput) => Promise<string>;
@@ -185,13 +184,15 @@ export const useCards = (retrospectiveId?: string): UseCardsReturn => {
         return getUserReactionHelper(card?.reactions ?? [], userId);
     }, [cards]);
 
-    // Group cards by column for easier rendering
-    const cardsByColumn: Record<ColumnType, Card[]> = {
-        helped: cards.filter(card => card.column === 'helped'),
-        hindered: cards.filter(card => card.column === 'hindered'),
-        improve: cards.filter(card => card.column === 'improve'),
-        actions: cards.filter(card => card.column === 'actions')
-    };
+    // Group cards by column for easier rendering - dynamic grouping
+    const cardsByColumn: Record<string, Card[]> = cards.reduce((acc, card) => {
+        const columnId = card.column;
+        if (!acc[columnId]) {
+            acc[columnId] = [];
+        }
+        acc[columnId].push(card);
+        return acc;
+    }, {} as Record<string, Card[]>);
 
     return {
         cards,

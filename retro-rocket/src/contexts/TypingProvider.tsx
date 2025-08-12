@@ -1,13 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useTypingStatus } from '../hooks/useTypingStatus';
 import { TypingIndicator } from '../types/typing';
-import { ColumnType } from '../types/retrospective';
 
 interface TypingContextType {
     typingIndicators: TypingIndicator[];
-    startTyping: (column: ColumnType) => void;
-    stopTyping: (column: ColumnType) => void;
-    getTypingUsersForColumn: (column: ColumnType) => TypingIndicator[];
+    startTyping: (column: string) => void;
+    stopTyping: (column: string) => void;
+    getTypingUsersForColumn: (column: string) => TypingIndicator[];
 }
 
 const TypingContext = createContext<TypingContextType | null>(null);

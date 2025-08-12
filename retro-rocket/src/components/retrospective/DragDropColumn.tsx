@@ -16,14 +16,13 @@ import {
     arrayMove,
 } from '@dnd-kit/sortable';
 import { Card, EmojiReaction } from '../../types/card';
-import { ColumnType } from '../../types/retrospective';
 import { Participant } from '../../types/participant';
 import SortableCard from './SortableCard';
 import DraggableCard from './DraggableCard';
 
 interface DragDropColumnProps {
     cards: Card[];
-    column: ColumnType;
+    column: string; // Changed from ColumnType to string for dynamic column support
     onCardUpdate: (cardId: string, updates: Partial<Card>) => Promise<void>;
     onCardDelete: (cardId: string) => Promise<void>;
     onCardVote: (cardId: string, increment: boolean) => Promise<void>;

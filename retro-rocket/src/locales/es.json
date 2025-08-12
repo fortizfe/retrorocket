@@ -45,6 +45,37 @@
             "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
         }
     },
+    "boardTemplates": {
+        "default": {
+            "name": "Plantilla por defecto",
+            "description": "Retrospectiva tradicional con qué ayudó, qué retrasó y qué mejorar"
+        },
+        "madSadGlad": {
+            "name": "Mad, Sad, Glad",
+            "description": "Explora emociones del equipo: enfado, tristeza y alegría"
+        },
+        "startStopContinue": {
+            "name": "Start, Stop, Continue",
+            "description": "Enfócate en qué empezar, parar y continuar haciendo"
+        },
+        "actionItems": {
+            "name": "Elementos de Acción"
+        }
+    },
+    "createBoard": {
+        "selectTemplate": {
+            "title": "Elegir Plantilla",
+            "description": "Selecciona una plantilla para tu retrospectiva",
+            "defaultSelected": "Plantilla por defecto seleccionada",
+            "choose": "Elegir",
+            "preview": "Vista previa",
+            "actionItemsNote": "Todas las plantillas incluyen una columna de 'Elementos de Acción' al final"
+        },
+        "next": "Siguiente",
+        "create": "Crear",
+        "back": "Atrás",
+        "step": "Paso {{current}} de {{total}}"
+    },
     "retrospective": {
         "columns": {
             "placeholder": "¿Qué {{columnTitle}}?",
@@ -67,7 +98,17 @@
                 "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
                 "whatHindered": "Obstáculos o problemas que encontramos",
                 "whatToImprove": "Ideas y sugerencias para mejorar"
-            }
+            },
+            "helped": "Qué me ayudó",
+            "hindered": "Qué me retrasó",
+            "improve": "Qué podemos hacer mejor",
+            "mad": "Enfadado",
+            "sad": "Triste",
+            "glad": "Contento",
+            "start": "Empezar",
+            "stop": "Parar",
+            "continue": "Continuar",
+            "actionItems": "Elementos de Acción"
         },
         "cards": {
             "likes": "Me gusta",

@@ -1,4 +1,3 @@
-import { ColumnType } from './retrospective';
 import { ALL_EMOJIS } from '../utils/emojiConstants';
 
 // Available emoji reactions - Now includes all available emojis
@@ -56,7 +55,7 @@ export interface GroupSuggestion {
 export interface CardGroup {
     id: string;
     retrospectiveId: string;
-    column: ColumnType;
+    column: string; // Changed from ColumnType to string for dynamic column support
     headCardId: string;      // ID of the main card
     memberCardIds: string[]; // IDs of member cards
     title?: string;          // Custom group title (optional)
@@ -74,7 +73,7 @@ export interface CardGroup {
 export interface Card {
     id: string;
     content: string;
-    column: ColumnType;
+    column: string; // Changed from ColumnType to string for dynamic column support
     createdBy: string;
     createdAt: Date;
     updatedAt: Date;
@@ -93,7 +92,7 @@ export interface Card {
 
 export interface CreateCardInput {
     content: string;
-    column: ColumnType;
+    column: string; // Changed from ColumnType to string for dynamic column support
     createdBy: string;
     retrospectiveId: string;
     color?: CardColor; // Optional color selection

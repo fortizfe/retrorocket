@@ -16,13 +16,13 @@ import GroupedCardList from './GroupedCardList';
 import { useTypingContext } from '../../contexts/TypingProvider';
 import { useLanguage } from '../../hooks/useLanguage';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '../../types/card';
-import { ColumnConfig } from '../../types/retrospective';
+import { DynamicColumnConfig } from '../../hooks/useRetrospectiveColumns';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
 import { useColumnGrouping } from '../../hooks/useColumnGrouping';
 import { GroupingCriteria } from '../../types/columnGrouping';
 
 interface GroupableColumnProps {
-    column: ColumnConfig;
+    column: DynamicColumnConfig; // Changed from ColumnConfig to DynamicColumnConfig
     cards: CardType[];
     groups: CardGroup[];
     onCardCreate: (cardInput: CreateCardInput) => Promise<void>;
@@ -103,7 +103,16 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     }, [processCards, ungroupedCards, columnState.criteria, column.id]);
 
     const handleCreateCard = async () => {
-        if (!newCardContent.trim() || !currentUser) return;
+        console.log('🔍 DEBUG GroupableColumn handleCreateCard started');
+        console.log('🔍 DEBUG newCardContent:', newCardContent);
+        console.log('🔍 DEBUG currentUser:', currentUser);
+        console.log('🔍 DEBUG column.id:', column.id);
+        console.log('🔍 DEBUG retrospectiveId:', retrospectiveId);
+
+        if (!newCardContent.trim() || !currentUser) {
+            console.log('❌ DEBUG Validation failed - content or user missing');
+            return;
+        }
 
         // Stop typing when submitting
         stopTyping(column.id);
@@ -118,12 +127,14 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 color: selectedColor
             };
 
+            console.log('🔍 DEBUG Calling onCardCreate with:', cardInput);
             await onCardCreate(cardInput);
+            console.log('✅ DEBUG Card creation completed successfully');
             setNewCardContent('');
             setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
             setIsCreating(false);
         } catch (error) {
-            console.error('Error creating card:', error);
+            console.error('❌ DEBUG Error creating card in GroupableColumn:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -297,7 +308,10 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                     <Button
                                         size="sm"
                                         variant="primary"
-                                        onClick={handleCreateCard}
+                                        onClick={() => {
+                                            console.log('🔍 DEBUG Create button clicked');
+                                            handleCreateCard();
+                                        }}
                                         loading={isSubmitting}
                                         disabled={!newCardContent.trim()}
                                     >

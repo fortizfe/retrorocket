@@ -11,9 +11,9 @@ interface UseTypingStatusOptions {
 
 interface UseTypingStatusReturn {
     typingIndicators: TypingIndicator[];
-    startTyping: (column: ColumnType) => void;
-    stopTyping: (column: ColumnType) => void;
-    getTypingUsersForColumn: (column: ColumnType) => TypingIndicator[];
+    startTyping: (column: string) => void;
+    stopTyping: (column: string) => void;
+    getTypingUsersForColumn: (column: string) => TypingIndicator[];
 }
 
 /**
@@ -25,9 +25,9 @@ export function useTypingStatus({
     currentUsername
 }: UseTypingStatusOptions): UseTypingStatusReturn {
     const [typingStatuses, setTypingStatuses] = useState<TypingStatus[]>([]);
-    const activeTypingColumns = useRef<Set<ColumnType>>(new Set());
-    const debounceTimers = useRef<Map<ColumnType, NodeJS.Timeout>>(new Map());
-    const lastUpdateTimers = useRef<Map<ColumnType, number>>(new Map());
+    const activeTypingColumns = useRef<Set<string>>(new Set());
+    const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+    const lastUpdateTimers = useRef<Map<string, number>>(new Map());
 
     const UPDATE_THROTTLE = 2000; // 2 seconds between Firebase updates
 
@@ -81,7 +81,7 @@ export function useTypingStatus({
     /**
      * Start typing in a specific column
      */
-    const startTyping = useCallback((column: ColumnType) => {
+    const startTyping = useCallback((column: string) => {
         if (!currentUserId || !currentUsername) return;
 
         // Clear existing debounce timer for this column
@@ -101,7 +101,7 @@ export function useTypingStatus({
                 userId: currentUserId,
                 username: currentUsername,
                 retrospectiveId,
-                column,
+                column: column as ColumnType, // Cast to ColumnType for service compatibility
                 isActive: true
             });
 
@@ -122,7 +122,7 @@ export function useTypingStatus({
     /**
      * Stop typing in a specific column
      */
-    const stopTyping = useCallback((column: ColumnType) => {
+    const stopTyping = useCallback((column: string) => {
         if (!currentUserId || !currentUsername) return;
 
         // Clear debounce timer
@@ -141,7 +141,7 @@ export function useTypingStatus({
                 userId: currentUserId,
                 username: currentUsername,
                 retrospectiveId,
-                column,
+                column: column as ColumnType, // Cast to ColumnType for service compatibility
                 isActive: false
             });
 
@@ -152,7 +152,7 @@ export function useTypingStatus({
     /**
      * Get typing users for a specific column
      */
-    const getTypingUsersForColumn = useCallback((column: ColumnType): TypingIndicator[] => {
+    const getTypingUsersForColumn = useCallback((column: string): TypingIndicator[] => {
         return typingStatuses
             .filter(status => status.column === column)
             .map(status => ({

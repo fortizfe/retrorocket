@@ -45,6 +45,37 @@
             "helpText": "Don't have the ID? Ask the retrospective organizer to share it with you."
         }
     },
+    "boardTemplates": {
+        "default": {
+            "name": "Default Template",
+            "description": "Traditional retrospective with what helped, hindered, and to improve"
+        },
+        "madSadGlad": {
+            "name": "Mad, Sad, Glad",
+            "description": "Explore team emotions: anger, sadness, and joy"
+        },
+        "startStopContinue": {
+            "name": "Start, Stop, Continue",
+            "description": "Focus on what to start, stop, and continue doing"
+        },
+        "actionItems": {
+            "name": "Action Items"
+        }
+    },
+    "createBoard": {
+        "selectTemplate": {
+            "title": "Choose Template",
+            "description": "Select a template for your retrospective",
+            "defaultSelected": "Default template selected",
+            "choose": "Choose",
+            "preview": "Preview",
+            "actionItemsNote": "All templates include an 'Action Items' column at the end"
+        },
+        "next": "Next",
+        "create": "Create",
+        "back": "Back",
+        "step": "Step {{current}} of {{total}}"
+    },
     "retrospective": {
         "columns": {
             "placeholder": "What {{columnTitle}}?",
@@ -67,7 +98,17 @@
                 "whatHelped": "Things that worked well and helped us",
                 "whatHindered": "Obstacles or problems we encountered",
                 "whatToImprove": "Ideas and suggestions for improvement"
-            }
+            },
+            "helped": "What helped",
+            "hindered": "What hindered",
+            "improve": "What to improve",
+            "mad": "Mad",
+            "sad": "Sad",
+            "glad": "Glad",
+            "start": "Start",
+            "stop": "Stop",
+            "continue": "Continue",
+            "actionItems": "Action Items"
         },
         "cards": {
             "likes": "Likes",

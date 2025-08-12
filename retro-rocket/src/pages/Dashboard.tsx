@@ -5,14 +5,11 @@ import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../contexts/UserContext';
 import { userService } from '../services/userService';
-import { useRetrospective } from '../hooks/useRetrospective';
-import { addParticipant } from '../services/participantService';
-import { incrementParticipantCount } from '../services/retrospectiveService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
 import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
+import CreateBoardFlow from '../components/create-board/CreateBoardFlow';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 import toast from 'react-hot-toast';
 
 interface Board {
@@ -28,16 +25,13 @@ interface Board {
 }
 
 const DashboardPage: React.FC = () => {
-    const { user, userProfile } = useUser();
+    const { user } = useUser();
     const { t } = useTranslation();
     const [boards, setBoards] = useState<Board[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showCreateFlow, setShowCreateFlow] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
-    const [newBoardTitle, setNewBoardTitle] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
     const navigate = useNavigate();
-    const { createRetrospective } = useRetrospective();
 
     useEffect(() => {
         loadUserBoards();
@@ -58,57 +52,11 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    const createBoardAndNavigate = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!newBoardTitle.trim() || !user || !userProfile) {
-            return;
-        }
-
-        try {
-            setIsCreating(true);
-
-            // Create the retrospective
-            const boardId = await createRetrospective({
-                title: newBoardTitle.trim(),
-                createdBy: user.uid,
-                createdByName: userProfile.displayName,
-            });
-
-            if (boardId) {
-                // Add the creator as a participant automatically
-                try {
-                    const result = await addParticipant({
-                        name: userProfile.displayName,
-                        userId: userProfile.uid,
-                        retrospectiveId: boardId
-                    });
-
-                    // Only increment if it's a new participant (should always be true for new boards)
-                    if (result.isNew) {
-                        await incrementParticipantCount(boardId);
-                    }
-
-                    // Mark as already joined in localStorage to prevent auto-join on navigation
-                    localStorage.setItem(`participant_${boardId}_${userProfile.uid}`, result.id);
-                } catch (participantError) {
-                    console.warn('Error adding creator as participant:', participantError);
-                    // Don't fail the creation for this, just log it
-                }
-
-                toast.success('Tablero creado exitosamente');
-                setNewBoardTitle('');
-                setShowCreateForm(false);
-
-                // Navigate directly to the new board
-                navigate(`/retro/${boardId}`);
-            }
-        } catch (error) {
-            console.error('Error creating board:', error);
-            toast.error('Error al crear el tablero');
-        } finally {
-            setIsCreating(false);
-        }
+    const handleBoardCreated = (boardId: string) => {
+        // Refresh boards list
+        loadUserBoards();
+        // Navigate to the new board
+        navigate(`/retro/${boardId}`);
     };
 
     const handleBoardDeleted = (boardId: string) => {
@@ -155,7 +103,7 @@ const DashboardPage: React.FC = () => {
                                 {t('dashboard.joinRetro')}
                             </Button>
                             <Button
-                                onClick={() => setShowCreateForm(true)}
+                                onClick={() => setShowCreateFlow(true)}
                                 className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
                             >
                                 <Plus className="w-5 h-5" />
@@ -165,60 +113,12 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </motion.div>
 
-                {/* Create Form Modal */}
-                {showCreateForm && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        onClick={() => setShowCreateForm(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="glass-strong rounded-xl p-6 w-full max-w-md shadow-medium"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-                                {t('dashboard.createBoard')}
-                            </h3>
-                            <form onSubmit={createBoardAndNavigate} className="space-y-4">
-                                <div>
-                                    <label htmlFor="boardTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        {t('dashboard.newBoardTitle')}
-                                    </label>
-                                    <Input
-                                        id="boardTitle"
-                                        type="text"
-                                        value={newBoardTitle}
-                                        onChange={(e) => setNewBoardTitle(e.target.value)}
-                                        placeholder={t('dashboard.placeholder_boardTitle')}
-                                        required
-                                        className="w-full"
-                                        autoFocus
-                                    />
-                                </div>
-                                <div className="flex gap-3">
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={() => setShowCreateForm(false)}
-                                        className="flex-1"
-                                    >
-                                        {t('dashboard.cancel')}
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={!newBoardTitle.trim() || isCreating}
-                                        className="flex-1 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
-                                    >
-                                        {isCreating ? t('dashboard.creating') : t('dashboard.create')}
-                                    </Button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
+                {/* Create Board Flow */}
+                <CreateBoardFlow
+                    isOpen={showCreateFlow}
+                    onClose={() => setShowCreateFlow(false)}
+                    onSuccess={handleBoardCreated}
+                />
 
                 {/* Join Retrospective Modal */}
                 <JoinRetrospectiveModal
@@ -252,7 +152,7 @@ const DashboardPage: React.FC = () => {
                                 {t('dashboard.joinRetro')}
                             </Button>
                             <Button
-                                onClick={() => setShowCreateForm(true)}
+                                onClick={() => setShowCreateFlow(true)}
                                 className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
                             >
                                 <Plus className="w-5 h-5" />
