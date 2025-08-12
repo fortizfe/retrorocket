@@ -3,18 +3,38 @@ import { ALL_EMOJIS } from '../utils/emojiConstants';
 // Available emoji reactions - Now includes all available emojis
 export type EmojiReaction = typeof ALL_EMOJIS[number];
 
-// Card color palette - 10 beautiful pastel colors
-export type CardColor =
-    | 'pastelWhite'      // Base blanco suave
-    | 'pastelGreen'      // Verde menta
-    | 'pastelRed'        // Rosa coral suave
-    | 'pastelYellow'     // Amarillo mantequilla
-    | 'pastelBlue'       // Azul cielo suave
-    | 'pastelPurple'     // Lavanda
-    | 'pastelOrange'     // Melocotón
-    | 'pastelPink'       // Rosa suave
-    | 'pastelTeal'       // Verde azulado
-    | 'pastelGray';      // Gris perla
+// Card color palette - 18 beautiful pastel colors for more variety
+export type CardColor = 
+    | 'pastelWhite'
+    | 'pastelGreen'
+    | 'pastelRed'
+    | 'pastelYellow'
+    | 'pastelBlue'
+    | 'pastelPurple'
+    | 'pastelPink'
+    | 'pastelOrange'
+    | 'pastelTeal'
+    | 'pastelGray'
+    | 'pastelIndigo'
+    | 'pastelEmerald'
+    | 'pastelAmber'
+    | 'pastelCyan'
+    | 'pastelLime'
+    | 'pastelRose'
+    | 'pastelSlate'
+    | 'pastelViolet'
+    | 'pastelSky'
+    | 'pastelFuchsia'
+    | 'pastelMint'
+    | 'pastelPeach'
+    | 'pastelLavender'
+    | 'pastelCream'
+    | 'pastelCoral'
+    | 'pastelTurquoise'
+    | 'pastelGold'
+    | 'pastelSilver'
+    | 'pastelBronze'
+    | 'pastelIvory';
 
 // Individual like record
 export interface Like {
