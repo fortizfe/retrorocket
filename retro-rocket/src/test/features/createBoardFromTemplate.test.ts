@@ -1,14 +1,6 @@
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createBoardFromTemplate } from '../../features/boards/createBoardFromTemplate';
 import { BOARD_TEMPLATES } from '../../templates/boardTemplates';
-
-// Mock Firebase
-vi.mock('../../services/firebase', () => ({
-    db: {},
-    FIRESTORE_COLLECTIONS: {
-        RETROSPECTIVES: 'retrospectives'
-    }
-}));
 
 // Mock Firebase Firestore functions
 vi.mock('firebase/firestore', () => ({
@@ -19,20 +11,24 @@ vi.mock('firebase/firestore', () => ({
     serverTimestamp: vi.fn(() => ({ type: 'timestamp' }))
 }));
 
-const mockAddDoc = vi.fn();
-const mockSetDoc = vi.fn();
-const mockCollection = vi.fn();
-const mockDoc = vi.fn();
+// Mock Firebase
+vi.mock('../../services/firebase', () => ({
+    db: {},
+    FIRESTORE_COLLECTIONS: {
+        RETROSPECTIVES: 'retrospectives'
+    }
+}));
+
+// Import the mocked functions
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+
+const mockAddDoc = vi.mocked(addDoc);
+const mockSetDoc = vi.mocked(setDoc);
+const mockCollection = vi.mocked(collection);
+const mockDoc = vi.mocked(doc);
 
 beforeEach(() => {
     vi.clearAllMocks();
-
-    // Setup default mocks
-    const { addDoc, setDoc, collection, doc } = require('firebase/firestore');
-    (addDoc as Mock).mockImplementation(mockAddDoc);
-    (setDoc as Mock).mockImplementation(mockSetDoc);
-    (collection as Mock).mockImplementation(mockCollection);
-    (doc as Mock).mockImplementation(mockDoc);
 });
 
 describe('createBoardFromTemplate', () => {
@@ -46,10 +42,10 @@ describe('createBoardFromTemplate', () => {
 
     describe('Successful creation', () => {
         beforeEach(() => {
-            mockAddDoc.mockResolvedValue({ id: 'retro123' });
+            mockAddDoc.mockResolvedValue({ id: 'retro123' } as any);
             mockSetDoc.mockResolvedValue(undefined);
-            mockCollection.mockReturnValue('mockCollection');
-            mockDoc.mockReturnValue('mockDocRef');
+            mockCollection.mockReturnValue('mockCollection' as any);
+            mockDoc.mockReturnValue('mockDocRef' as any);
         });
 
         it('should create board with default template', async () => {
@@ -145,7 +141,7 @@ describe('createBoardFromTemplate', () => {
         });
 
         it('should throw error when column creation fails', async () => {
-            mockAddDoc.mockResolvedValue({ id: 'retro123' });
+            mockAddDoc.mockResolvedValue({ id: 'retro123' } as any);
             mockSetDoc.mockRejectedValue(new Error('Column creation failed'));
 
             await expect(createBoardFromTemplate(validParams))

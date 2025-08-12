@@ -99,6 +99,21 @@ vi.mock('../../../hooks/useLanguage', () => ({
     useLanguage: () => ({})
 }));
 
+vi.mock('../../../hooks/useRetrospectiveColumns', () => ({
+    useRetrospectiveColumns: () => ({
+        columnConfigs: {
+            'helped': { id: 'helped', title: 'What helped?', description: '', color: 'bg-green-50', icon: '👍' },
+            'hindered': { id: 'hindered', title: 'What hindered?', description: '', color: 'bg-red-50', icon: '⚠️' },
+            'improve': { id: 'improve', title: 'What to improve?', description: '', color: 'bg-yellow-50', icon: '💡' }
+        },
+        columnOrder: ['helped', 'hindered', 'improve'],
+        actionColumn: null,
+        loading: false,
+        error: null,
+        columns: []
+    })
+}));
+
 describe('RetrospectiveBoard', () => {
     const mockRetrospective: Retrospective = {
         id: 'retro-123',

@@ -114,7 +114,11 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
             }
         );
 
-        return () => unsubscribe();
+        return () => {
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+            }
+        };
     }, [retrospectiveId]);
 
     return {

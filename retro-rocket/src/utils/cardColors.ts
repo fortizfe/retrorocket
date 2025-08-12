@@ -55,14 +55,14 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         tooltip: 'Amarillo mantequilla - Ideal para acciones'
     },
     pastelBlue: {
-        name: 'Azul Cielo',
+        name: 'Azul Suave',
         value: 'pastelBlue',
         background: 'bg-blue-50',
         border: 'border-blue-200',
         text: 'text-blue-800',
         preview: 'bg-blue-100',
-        ariaLabel: 'Seleccionar color azul cielo',
-        tooltip: 'Azul cielo suave - Perfecto para ideas'
+        ariaLabel: 'Seleccionar color azul suave',
+        tooltip: 'Azul suave - Perfecto para ideas'
     },
     pastelPurple: {
         name: 'Lavanda',
@@ -195,14 +195,14 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         tooltip: 'Violeta suave'
     },
     pastelSky: {
-        name: 'Azul Cielo',
+        name: 'Azul Cielo Brillante',
         value: 'pastelSky',
         background: 'bg-sky-50',
         border: 'border-sky-200',
         text: 'text-sky-800',
         preview: 'bg-sky-100 border-sky-300',
-        ariaLabel: 'Seleccionar color azul cielo',
-        tooltip: 'Azul cielo suave'
+        ariaLabel: 'Seleccionar color azul cielo brillante',
+        tooltip: 'Azul cielo brillante'
     },
     pastelFuchsia: {
         name: 'Fucsia Suave',
@@ -225,24 +225,24 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         tooltip: 'Verde menta fresco'
     },
     pastelPeach: {
-        name: 'Melocotón',
+        name: 'Durazno',
         value: 'pastelPeach',
         background: 'bg-orange-25',
         border: 'border-orange-100',
         text: 'text-orange-800',
         preview: 'bg-orange-50 border-orange-200',
-        ariaLabel: 'Seleccionar color melocotón',
-        tooltip: 'Melocotón suave'
+        ariaLabel: 'Seleccionar color durazno',
+        tooltip: 'Durazno suave'
     },
     pastelLavender: {
-        name: 'Lavanda',
+        name: 'Lavanda Suave',
         value: 'pastelLavender',
-        background: 'bg-purple-25',
-        border: 'border-purple-100',
+        background: 'bg-purple-200',
+        border: 'border-purple-300',
         text: 'text-purple-800',
-        preview: 'bg-purple-50 border-purple-200',
-        ariaLabel: 'Seleccionar color lavanda',
-        tooltip: 'Lavanda relajante'
+        preview: 'bg-purple-200 border-purple-300',
+        ariaLabel: 'Seleccionar color lavanda suave',
+        tooltip: 'Lavanda suave'
     },
     pastelCream: {
         name: 'Crema',

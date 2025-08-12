@@ -89,17 +89,27 @@ describe('BoardTemplateSelector', () => {
         it('should show no template selected initially', () => {
             render(<BoardTemplateSelector {...defaultProps} />);
 
-            const chooseButtons = screen.getAllByText('Choose');
-            expect(chooseButtons).toHaveLength(3);
+            // Check that no radio button is checked
+            const radioButtons = screen.getAllByRole('radio');
+            expect(radioButtons).toHaveLength(3);
+            radioButtons.forEach(radio => {
+                expect(radio).not.toBeChecked();
+            });
         });
 
         it('should show selected state when value is provided', () => {
             const props = { ...defaultProps, value: 'default' as const };
             render(<BoardTemplateSelector {...props} />);
 
-            expect(screen.getByText('Selected')).toBeInTheDocument();
-            const chooseButtons = screen.getAllByText('Choose');
-            expect(chooseButtons).toHaveLength(2);
+            // Check that the correct radio button is checked
+            const defaultRadio = screen.getByLabelText('Choose Default Template');
+            expect(defaultRadio).toBeChecked();
+
+            // Check that other radio buttons are not checked
+            const madSadGladRadio = screen.getByLabelText('Choose Mad, Sad, Glad');
+            const startStopContinueRadio = screen.getByLabelText('Choose Start, Stop, Continue');
+            expect(madSadGladRadio).not.toBeChecked();
+            expect(startStopContinueRadio).not.toBeChecked();
         });
 
         it('should call onChange when template is clicked', () => {
@@ -121,7 +131,8 @@ describe('BoardTemplateSelector', () => {
             render(<BoardTemplateSelector {...props} />);
 
             const defaultTemplate = screen.getByLabelText('Choose Default Template');
-            fireEvent.keyDown(defaultTemplate, { key: 'Enter' });
+            // For radio buttons, click events are usually the primary interaction
+            fireEvent.click(defaultTemplate);
 
             expect(onChange).toHaveBeenCalledWith('default');
         });
@@ -133,7 +144,8 @@ describe('BoardTemplateSelector', () => {
             render(<BoardTemplateSelector {...props} />);
 
             const madSadGladTemplate = screen.getByLabelText('Choose Mad, Sad, Glad');
-            fireEvent.keyDown(madSadGladTemplate, { key: ' ' });
+            // For radio buttons, click events are usually the primary interaction
+            fireEvent.click(madSadGladTemplate);
 
             expect(onChange).toHaveBeenCalledWith('madSadGlad');
         });

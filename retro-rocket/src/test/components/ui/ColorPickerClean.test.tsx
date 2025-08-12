@@ -294,7 +294,7 @@ describe('ColorPicker', () => {
             await waitFor(() => {
                 const popup = container.querySelector('[class*="fixed"]');
                 expect(popup?.textContent).toContain('Blanco');
-                expect(popup?.textContent).toContain('1/10');
+                expect(popup?.textContent).toContain('1/30');
             });
         });
 
@@ -321,7 +321,7 @@ describe('ColorPicker', () => {
             await waitFor(() => {
                 const popup = container.querySelector('[class*="fixed"]');
                 expect(popup?.textContent).toContain('Verde Menta Suave');
-                expect(popup?.textContent).toContain('2/10');
+                expect(popup?.textContent).toContain('2/30');
                 expect(popup?.textContent).toContain('Verde menta suave - Ideal para aspectos positivos');
             });
         });

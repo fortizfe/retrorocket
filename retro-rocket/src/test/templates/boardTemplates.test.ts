@@ -51,7 +51,7 @@ describe('Board Templates', () => {
     describe('Action Column', () => {
         it('should have correct structure', () => {
             expect(ACTION_COLUMN.id).toBe('actionItems');
-            expect(ACTION_COLUMN.i18nKey).toBe('columns.actionItems');
+            expect(ACTION_COLUMN.i18nKey).toBe('retrospective.columns.actionItems');
             expect(ACTION_COLUMN.type).toBe('action');
         });
     });

@@ -4,7 +4,7 @@ import { ALL_EMOJIS } from '../utils/emojiConstants';
 export type EmojiReaction = typeof ALL_EMOJIS[number];
 
 // Card color palette - 18 beautiful pastel colors for more variety
-export type CardColor = 
+export type CardColor =
     | 'pastelWhite'
     | 'pastelGreen'
     | 'pastelRed'
