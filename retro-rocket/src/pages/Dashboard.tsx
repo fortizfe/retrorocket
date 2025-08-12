@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
@@ -7,6 +7,9 @@ import { useUser } from '../contexts/UserContext';
 import { userService } from '../services/userService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
+import BoardListItem from '../components/dashboard/BoardListItem';
+import BoardControlsBar, { SortBy, ViewMode } from '../components/dashboard/BoardControlsBar';
+import Pagination from '../components/dashboard/Pagination';
 import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
 import CreateBoardFlow from '../components/create-board/CreateBoardFlow';
 import Button from '../components/ui/Button';
@@ -22,6 +25,7 @@ interface Board {
     isActive: boolean;
     createdBy: string;
     isCreator?: boolean;
+    templateId?: string;
 }
 
 const DashboardPage: React.FC = () => {
@@ -31,11 +35,60 @@ const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [showCreateFlow, setShowCreateFlow] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
+
+    // Controls state
+    const [sortBy, setSortBy] = useState<SortBy>('date');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     const navigate = useNavigate();
 
     useEffect(() => {
         loadUserBoards();
     }, [user]);
+
+    // Reset pagination when search or sort changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, sortBy]);
+
+    // Filter and sort boards
+    const filteredAndSortedBoards = useMemo(() => {
+        let filtered = boards;
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = boards.filter(board =>
+                board.title.toLowerCase().includes(query) ||
+                board.description?.toLowerCase().includes(query)
+            );
+        }
+
+        // Apply sorting
+        const sorted = [...filtered].sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return a.title.localeCompare(b.title);
+                case 'date':
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                default:
+                    return 0;
+            }
+        });
+
+        return sorted;
+    }, [boards, searchQuery, sortBy]);
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredAndSortedBoards.length / itemsPerPage);
+    const paginatedBoards = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredAndSortedBoards.slice(startIndex, endIndex);
+    }, [filteredAndSortedBoards, currentPage, itemsPerPage]);
 
     const loadUserBoards = async () => {
         if (!user) return;
@@ -126,7 +179,21 @@ const DashboardPage: React.FC = () => {
                     onClose={() => setShowJoinModal(false)}
                 />
 
-                {/* Boards Grid */}
+                {/* Controls Bar */}
+                {boards.length > 0 && (
+                    <BoardControlsBar
+                        sortBy={sortBy}
+                        onSortChange={setSortBy}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                        totalCount={boards.length}
+                        filteredCount={filteredAndSortedBoards.length}
+                    />
+                )}
+
+                {/* Boards Content */}
                 {boards.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -161,30 +228,96 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </motion.div>
                 ) : (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    >
-                        {boards.map((board, index) => (
+                    <>
+                        {filteredAndSortedBoards.length === 0 ? (
                             <motion.div
-                                key={board.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
+                                className="text-center py-16"
                             >
-                                <BoardCard
-                                    board={{
-                                        ...board,
-                                        createdBy: board.createdBy ?? user?.uid ?? ''
-                                    }}
-                                    currentUserId={user?.uid ?? ''}
-                                    onBoardDeleted={handleBoardDeleted}
-                                />
+                                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <LayoutGrid className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                    {t('dashboard.controls.noResults')}
+                                </h3>
+                                <Button
+                                    onClick={() => setSearchQuery('')}
+                                    variant="outline"
+                                    className="mt-4"
+                                >
+                                    {t('dashboard.controls.clearFilter')}
+                                </Button>
                             </motion.div>
-                        ))}
-                    </motion.div>
+                        ) : (
+                            <>
+                                {/* Grid View */}
+                                {viewMode === 'grid' ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+                                    >
+                                        {paginatedBoards.map((board, index) => (
+                                            <motion.div
+                                                key={board.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
+                                            >
+                                                <BoardCard
+                                                    board={{
+                                                        ...board,
+                                                        createdBy: board.createdBy ?? user?.uid ?? ''
+                                                    }}
+                                                    currentUserId={user?.uid ?? ''}
+                                                    onBoardDeleted={handleBoardDeleted}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+                                ) : (
+                                    /* List View */
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="space-y-4"
+                                    >
+                                        {paginatedBoards.map((board, index) => (
+                                            <motion.div
+                                                key={board.id}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                            >
+                                                <BoardListItem
+                                                    board={{
+                                                        ...board,
+                                                        createdBy: board.createdBy ?? user?.uid ?? ''
+                                                    }}
+                                                    currentUserId={user?.uid ?? ''}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+                                )}
+
+                                {/* Pagination */}
+                                {viewMode === 'list' && (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        itemsPerPage={itemsPerPage}
+                                        totalItems={filteredAndSortedBoards.length}
+                                        onPageChange={setCurrentPage}
+                                        onItemsPerPageChange={setItemsPerPage}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </>
                 )}
             </div>
         </div>
