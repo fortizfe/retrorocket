@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Users, Hash } from 'lucide-react';
 import { Card as CardType, EmojiReaction } from '../../types/card';
 import { GroupingCriteria } from '../../types/columnGrouping';
@@ -38,6 +39,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
     canConvertToAction,
     onConvertToAction
 }) => {
+    const { t } = useTranslation();
     const groupNames = Object.keys(groupedCards);
 
     // If no grouping, render cards directly
@@ -94,8 +96,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                                     </h4>
                                 </div>
                                 <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                    <span>{cardsInGroup.length}</span>
-                                    <span>tarjeta{cardsInGroup.length !== 1 ? 's' : ''}</span>
+                                    <span>{t('retrospective.groupCard.cardsCount', { count: cardsInGroup.length, totalCards: cardsInGroup.length })}</span>
                                 </div>
                             </div>
 
