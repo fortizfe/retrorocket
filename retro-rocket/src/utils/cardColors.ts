@@ -156,9 +156,23 @@ export const getSuggestedColorForColumn = (columnTitle: string, columnId?: strin
     // First priority: map by specific column ID
     if (columnId) {
         const columnIdMap: Record<string, CardColor> = {
+            // Plantilla por defecto
             'helped': 'pastelGreen',     // Primera columna - Verde menta suave
-            'hindered': 'pastelRed',     // Segunda columna - Rosa coral suave
-            'improve': 'pastelYellow'    // Tercera columna - Amarillo mantequilla
+            'hindered': 'pastelRed',     // Segunda columna - Rosa coral suave  
+            'improve': 'pastelYellow',   // Tercera columna - Amarillo mantequilla
+
+            // Plantilla Mad-Sad-Glad
+            'mad': 'pastelOrange',       // Enfadado - Melocotón (frustración, pero no demasiado agresivo)
+            'sad': 'pastelGray',         // Triste - Gris perla (melancolía, neutral)
+            'glad': 'pastelGreen',       // Contento - Verde menta (alegría, positivo)
+
+            // Plantilla Start-Stop-Continue  
+            'start': 'pastelTeal',       // Empezar - Verde azulado (innovación, nuevos comienzos)
+            'stop': 'pastelRed',         // Parar - Rosa coral (detener, advertencia suave)
+            'continue': 'pastelBlue',    // Continuar - Azul cielo (continuidad, estabilidad)
+
+            // Elementos de acción
+            'actionItems': 'pastelYellow' // Amarillo mantequilla (acción, atención)
         };
 
         if (columnIdMap[columnId]) {
@@ -170,20 +184,23 @@ export const getSuggestedColorForColumn = (columnTitle: string, columnId?: strin
     const title = columnTitle.toLowerCase();
 
     // Mapping common retrospective column patterns to appropriate colors
-    if (title.includes('ayudó') || title.includes('bien') || title.includes('good') || title.includes('went well') || title.includes('positivo')) {
+    if (title.includes('ayudó') || title.includes('bien') || title.includes('good') || title.includes('went well') || title.includes('positivo') || title.includes('contento') || title.includes('glad') || title.includes('alegr')) {
         return 'pastelGreen';
     }
-    if (title.includes('retrasó') || title.includes('mal') || title.includes('bad') || title.includes('hindered') || title.includes('problema') || title.includes('obstáculo')) {
+    if (title.includes('retrasó') || title.includes('mal') || title.includes('bad') || title.includes('hindered') || title.includes('problema') || title.includes('obstáculo') || title.includes('parar') || title.includes('stop')) {
         return 'pastelRed';
     }
     if (title.includes('mejor') || title.includes('improve') || title.includes('mejorar') || title.includes('accion') || title.includes('action') || title.includes('hacer') || title.includes('todo') || title.includes('next')) {
         return 'pastelYellow';
     }
-    if (title.includes('idea') || title.includes('suggestion') || title.includes('innovar') || title.includes('creative')) {
-        return 'pastelBlue';
+    if (title.includes('idea') || title.includes('suggestion') || title.includes('innovar') || title.includes('creative') || title.includes('empezar') || title.includes('start') || title.includes('continuar') || title.includes('continue')) {
+        return title.includes('empezar') || title.includes('start') ? 'pastelTeal' : 'pastelBlue';
     }
     if (title.includes('question') || title.includes('pregunta') || title.includes('doubt') || title.includes('confusion')) {
         return 'pastelPurple';
+    }
+    if (title.includes('triste') || title.includes('sad') || title.includes('enfadado') || title.includes('mad') || title.includes('frustrado')) {
+        return title.includes('enfadado') || title.includes('mad') || title.includes('frustrado') ? 'pastelOrange' : 'pastelGray';
     }
 
     // Default color for unknown column types
