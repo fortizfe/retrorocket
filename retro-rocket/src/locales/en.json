@@ -79,6 +79,17 @@
     "retrospective": {
         "columns": {
             "placeholder": "What {{columnTitle}}?",
+            "placeholders": {
+                "mad": "What frustrated you during this sprint?",
+                "sad": "What disappointed you or didn't go as expected?",
+                "glad": "What made you happy or worked really well?",
+                "start": "What new practice should we start doing?",
+                "stop": "What should we stop doing?",
+                "continue": "What works well and should we keep doing?",
+                "helped": "What helped us?",
+                "hindered": "What hindered us?",
+                "improve": "What can we improve?"
+            },
             "createCard": "Create card",
             "cancel": "Cancel",
             "colorPreview": "Color preview",
@@ -97,7 +108,13 @@
             "descriptions": {
                 "whatHelped": "Things that worked well and helped us",
                 "whatHindered": "Obstacles or problems we encountered",
-                "whatToImprove": "Ideas and suggestions for improvement"
+                "whatToImprove": "Ideas and suggestions for improvement",
+                "mad": "Situations that frustrated or annoyed us",
+                "sad": "Things that disappointed or saddened us",
+                "glad": "Achievements and moments that made us happy",
+                "start": "New practices we should begin",
+                "stop": "Activities we should stop doing",
+                "continue": "Good practices we should maintain"
             },
             "helped": "What helped",
             "hindered": "What hindered",

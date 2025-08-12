@@ -79,6 +79,17 @@
     "retrospective": {
         "columns": {
             "placeholder": "¿Qué {{columnTitle}}?",
+            "placeholders": {
+                "mad": "¿Qué te frustró durante este sprint?",
+                "sad": "¿Qué te decepcionó o no salió como esperabas?",
+                "glad": "¿Qué te alegró o funcionó muy bien?",
+                "start": "¿Qué nueva práctica deberíamos empezar a hacer?",
+                "stop": "¿Qué deberíamos dejar de hacer?",
+                "continue": "¿Qué funciona bien y debemos seguir haciendo?",
+                "helped": "¿Qué nos ayudó?",
+                "hindered": "¿Qué nos retrasó?",
+                "improve": "¿Qué podemos hacer mejor?"
+            },
             "createCard": "Crear tarjeta",
             "cancel": "Cancelar",
             "colorPreview": "Vista previa del color",
@@ -97,7 +108,13 @@
             "descriptions": {
                 "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
                 "whatHindered": "Obstáculos o problemas que encontramos",
-                "whatToImprove": "Ideas y sugerencias para mejorar"
+                "whatToImprove": "Ideas y sugerencias para mejorar",
+                "mad": "Situaciones que nos frustraron o molestaron",
+                "sad": "Cosas que nos decepcionaron o entristecieron",
+                "glad": "Logros y momentos que nos alegraron",
+                "start": "Nuevas prácticas que deberíamos comenzar",
+                "stop": "Actividades que deberíamos dejar de hacer",
+                "continue": "Buenas prácticas que debemos mantener"
             },
             "helped": "Qué me ayudó",
             "hindered": "Qué me retrasó",

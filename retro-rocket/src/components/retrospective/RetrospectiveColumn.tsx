@@ -171,7 +171,9 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   value={newCardContent}
                   onChange={handleTextareaChange}
                   onBlur={handleTextareaBlur}
-                  placeholder={t('retrospective.columns.placeholder', { columnTitle: column.title.toLowerCase() })}
+                  placeholder={t(`retrospective.columns.placeholders.${column.id}`, {
+                    defaultValue: t('retrospective.columns.placeholder', { columnTitle: column.title.toLowerCase() })
+                  })}
                   rows={3}
                   autoFocus
                   className="mb-3 bg-transparent border-none focus:ring-0 resize-none"

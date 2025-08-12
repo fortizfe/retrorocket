@@ -40,12 +40,14 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
             }
 
             const title = t(i18nKey);
-            console.log(`🔍 DEBUG Column ${column.id}: i18nKey="${i18nKey}" → title="${title}"`);
+            const descriptionKey = `retrospective.columns.descriptions.${column.id}`;
+            const description = t(descriptionKey, { defaultValue: '' });
+            console.log(`🔍 DEBUG Column ${column.id}: i18nKey="${i18nKey}" → title="${title}", descriptionKey="${descriptionKey}" → description="${description}"`);
 
             configs[column.id] = {
                 id: column.id,
                 title,
-                description: '', // We can expand this later if needed
+                description,
                 color: column.defaultColor,
                 icon: getColumnIcon(column.id)
             };
