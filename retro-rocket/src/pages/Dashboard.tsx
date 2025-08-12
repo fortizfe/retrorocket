@@ -8,7 +8,7 @@ import { userService } from '../services/userService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
 import BoardListItem from '../components/dashboard/BoardListItem';
-import BoardControlsBar, { SortBy, SortOrder, ViewMode } from '../components/dashboard/BoardControlsBar';
+import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '../components/dashboard/BoardControlsBar';
 import Pagination from '../components/dashboard/Pagination';
 import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
 import CreateBoardFlow from '../components/create-board/CreateBoardFlow';
@@ -39,6 +39,7 @@ const DashboardPage: React.FC = () => {
     // Controls state
     const [sortBy, setSortBy] = useState<SortBy>('date');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    const [filterBy, setFilterBy] = useState<FilterBy>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [currentPage, setCurrentPage] = useState(1);
@@ -50,10 +51,10 @@ const DashboardPage: React.FC = () => {
         loadUserBoards();
     }, [user]);
 
-    // Reset pagination when search or sort changes
+    // Reset pagination when search, sort or filter changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, sortBy, sortOrder]);
+    }, [searchQuery, sortBy, sortOrder, filterBy]);
 
     // Handle sort change
     const handleSortChange = (newSortBy: SortBy, newSortOrder: SortOrder) => {
@@ -65,10 +66,22 @@ const DashboardPage: React.FC = () => {
     const filteredAndSortedBoards = useMemo(() => {
         let filtered = boards;
 
+        // Apply type filter
+        if (filterBy !== 'all') {
+            filtered = boards.filter(board => {
+                if (filterBy === 'created') {
+                    return board.isCreator === true;
+                } else if (filterBy === 'joined') {
+                    return board.isCreator === false;
+                }
+                return true;
+            });
+        }
+
         // Apply search filter
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            filtered = boards.filter(board =>
+            filtered = filtered.filter(board =>
                 board.title.toLowerCase().includes(query) ||
                 board.description?.toLowerCase().includes(query)
             );
@@ -93,7 +106,14 @@ const DashboardPage: React.FC = () => {
         });
 
         return sorted;
-    }, [boards, searchQuery, sortBy, sortOrder]);
+    }, [boards, searchQuery, sortBy, sortOrder, filterBy]);
+
+    // Calculate board counts by type
+    const boardCounts = useMemo(() => {
+        const created = boards.filter(board => board.isCreator === true).length;
+        const joined = boards.filter(board => board.isCreator === false).length;
+        return { created, joined, total: boards.length };
+    }, [boards]);
 
     // Calculate pagination
     const totalPages = Math.ceil(filteredAndSortedBoards.length / itemsPerPage);
@@ -175,6 +195,88 @@ const DashboardPage: React.FC = () => {
                                 <Plus className="w-5 h-5" />
                                 {t('dashboard.newBoard')}
                             </Button>
+                            {/* Temporary debug button - REMOVE in production */}
+                            <Button
+                                onClick={async () => {
+                                    if (!user) return;
+
+                                    try {
+                                        console.log('🔍 DEBUG - Starting user debug...');
+
+                                        // Test user profile
+                                        const profile = await userService.getUserProfile(user.uid);
+                                        console.log('🔍 DEBUG - User Profile:', profile);
+                                        console.log('🔍 DEBUG - Joined Boards:', profile?.joinedBoards || []);
+
+                                        // Test getUserBoards
+                                        const boards = await userService.getUserBoards(user.uid);
+                                        console.log('🔍 DEBUG - All Boards:', boards);
+                                        console.log('🔍 DEBUG - Created Boards:', boards.filter(b => b.isCreator));
+                                        console.log('🔍 DEBUG - Joined Boards:', boards.filter(b => !b.isCreator));
+
+                                        toast.success(`Depuración completada. Total: ${boards.length} tableros. Ver consola para detalles.`);
+                                    } catch (error) {
+                                        console.error('🔍 DEBUG - Error:', error);
+                                        toast.error('Error en depuración. Ver consola.');
+                                    }
+                                }}
+                                variant="outline"
+                                className="border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-300 dark:hover:bg-orange-900/20 font-medium px-4 py-3"
+                            >
+                                🔍 Debug
+                            </Button>
+                            {/* Temporary repair button - REMOVE in production */}
+                            <Button
+                                onClick={async () => {
+                                    if (!user) return;
+
+                                    try {
+                                        console.log('🔧 REPAIR - Starting joined boards repair...');
+                                        toast.loading('Reparando tableros unidos...', { id: 'repair' });
+
+                                        // Importar servicios de Firebase
+                                        const { collection, getDocs, doc, updateDoc, getFirestore } = await import('firebase/firestore');
+                                        const db = getFirestore();
+
+                                        // 1. Obtener todos los participantes del usuario actual
+                                        const participantsSnapshot = await getDocs(collection(db, 'participants'));
+                                        console.log(`🔧 REPAIR - Found ${participantsSnapshot.size} total participants`);
+
+                                        // 2. Filtrar solo los del usuario actual
+                                        const userParticipations: string[] = [];
+                                        participantsSnapshot.forEach(docSnap => {
+                                            const data = docSnap.data();
+                                            if (data.userId === user.uid && data.retrospectiveId) {
+                                                userParticipations.push(data.retrospectiveId);
+                                            }
+                                        });
+
+                                        console.log(`🔧 REPAIR - User participations found:`, userParticipations);
+
+                                        // 3. Actualizar el perfil del usuario
+                                        if (userParticipations.length > 0) {
+                                            await updateDoc(doc(db, 'users', user.uid), {
+                                                joinedBoards: userParticipations,
+                                                updatedAt: new Date()
+                                            });
+                                            console.log(`🔧 REPAIR - Updated user profile with ${userParticipations.length} joined boards`);
+                                        }
+
+                                        // 4. Recargar tableros
+                                        await loadUserBoards();
+
+                                        toast.success(`Reparación completada. ${userParticipations.length} tableros unidos encontrados.`, { id: 'repair' });
+
+                                    } catch (error) {
+                                        console.error('🔧 REPAIR - Error:', error);
+                                        toast.error('Error en reparación. Ver consola.', { id: 'repair' });
+                                    }
+                                }}
+                                variant="outline"
+                                className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-300 dark:hover:bg-green-900/20 font-medium px-4 py-3"
+                            >
+                                🔧 Reparar
+                            </Button>
                         </div>
                     </div>
                 </motion.div>
@@ -198,12 +300,16 @@ const DashboardPage: React.FC = () => {
                         sortBy={sortBy}
                         sortOrder={sortOrder}
                         onSortChange={handleSortChange}
+                        filterBy={filterBy}
+                        onFilterChange={setFilterBy}
                         searchQuery={searchQuery}
                         onSearchChange={setSearchQuery}
                         viewMode={viewMode}
                         onViewModeChange={setViewMode}
                         totalCount={boards.length}
                         filteredCount={filteredAndSortedBoards.length}
+                        createdCount={boardCounts.created}
+                        joinedCount={boardCounts.joined}
                     />
                 )}
 

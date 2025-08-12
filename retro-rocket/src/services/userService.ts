@@ -197,6 +197,8 @@ export class UserService {
                 chunks.push(joinedBoardIds.slice(i, i + 10));
             }
 
+            console.log('🔍 DEBUG getUserBoards - Processing chunks:', chunks.length);
+
             for (const chunk of chunks) {
                 const joinedBoardsQuery = query(
                     collection(db, 'retrospectives'),
@@ -205,6 +207,12 @@ export class UserService {
                 );
 
                 const joinedBoardsSnapshot = await getDocs(joinedBoardsQuery);
+                console.log('🔍 DEBUG getUserBoards - Chunk query result:', {
+                    chunkSize: chunk.length,
+                    docsReturned: joinedBoardsSnapshot.docs.length,
+                    docIds: joinedBoardsSnapshot.docs.map(doc => doc.id)
+                });
+
                 const chunkBoards = joinedBoardsSnapshot.docs
                     .filter(doc => doc.data().createdBy !== userId) // Exclude boards created by user
                     .map(doc => ({
@@ -311,7 +319,7 @@ export class UserService {
         }
 
         // Check if board is already in joined boards
-        if (userProfile.joinedBoards && userProfile.joinedBoards.includes(boardId)) {
+        if (userProfile.joinedBoards?.includes(boardId)) {
             console.log(`Board ${boardId} is already in user's joined boards, skipping`);
             return; // Don't throw error, just skip silently
         }

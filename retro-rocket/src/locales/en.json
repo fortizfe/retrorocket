@@ -8,10 +8,10 @@
         "signOut": "Sign Out"
     },
     "dashboard": {
-        "title": "My Boards",
-        "subtitle": "Manage and access all your retrospectives",
+        "title": "My Retrospectives",
+        "subtitle": "Manage all the retrospectives you've created or participate in",
         "noBoards": "You don't have retrospectives yet",
-        "createFirst": "Create your first retrospective to start collaborating with your team",
+        "createFirst": "Create your first retrospective or join an existing one to start collaborating with your team",
         "joinRetro": "Join Retrospective",
         "createFirst_button": "Create my first board",
         "createBoard": "Create Retrospective",
@@ -28,6 +28,10 @@
             "ascending": "Ascending",
             "descending": "Descending",
             "filterPlaceholder": "Search retrospectives...",
+            "filterBy": "Filter:",
+            "showAll": "All",
+            "showCreated": "Created",
+            "showJoined": "Joined",
             "viewMode": "View:",
             "gridView": "Grid",
             "listView": "List",
@@ -46,7 +50,8 @@
             "participants": "participants",
             "joined": "Joined",
             "creator": "Creator",
-            "deleteTitle": "Delete board"
+            "deleteTitle": "Delete board",
+            "templateDefault": "Standard Template"
         },
         "joinModal": {
             "title": "Join Retrospective",

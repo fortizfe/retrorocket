@@ -8,10 +8,10 @@
         "signOut": "Cerrar sesión"
     },
     "dashboard": {
-        "title": "Mis Tableros",
-        "subtitle": "Gestiona y accede a todas tus retrospectivas",
+        "title": "Mis Retrospectivas",
+        "subtitle": "Gestiona todas las retrospectivas que has creado o en las que participas",
         "noBoards": "Aún no tienes retrospectivas",
-        "createFirst": "Crea tu primera retrospectiva para comenzar a colaborar con tu equipo",
+        "createFirst": "Crea tu primera retrospectiva o únete a una existente para comenzar a colaborar con tu equipo",
         "joinRetro": "Unirse a Retrospectiva",
         "createFirst_button": "Crear mi primer tablero",
         "createBoard": "Crear Retrospectiva",
@@ -28,6 +28,10 @@
             "ascending": "Ascendente",
             "descending": "Descendente",
             "filterPlaceholder": "Buscar retrospectivas...",
+            "filterBy": "Filtrar:",
+            "showAll": "Todas",
+            "showCreated": "Creadas",
+            "showJoined": "Unidas",
             "viewMode": "Vista:",
             "gridView": "Galería",
             "listView": "Lista",
@@ -46,7 +50,8 @@
             "participants": "participantes",
             "joined": "Unido",
             "creator": "Creador",
-            "deleteTitle": "Eliminar tablero"
+            "deleteTitle": "Eliminar tablero",
+            "templateDefault": "Plantilla estándar"
         },
         "joinModal": {
             "title": "Unirse a Retrospectiva",

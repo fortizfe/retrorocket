@@ -1,34 +1,43 @@
 import React from 'react';
-import { Search, SortAsc, SortDesc, Grid, List, X, Calendar, Type } from 'lucide-react';
+import { Search, SortAsc, SortDesc, Grid, List, X, Calendar, Type, Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Button from '../ui/Button';
 
 export type SortBy = 'name' | 'date';
 export type SortOrder = 'asc' | 'desc';
 export type ViewMode = 'grid' | 'list';
+export type FilterBy = 'all' | 'created' | 'joined';
 
 interface BoardControlsBarProps {
     sortBy: SortBy;
     sortOrder: SortOrder;
     onSortChange: (sortBy: SortBy, sortOrder: SortOrder) => void;
+    filterBy: FilterBy;
+    onFilterChange: (filterBy: FilterBy) => void;
     searchQuery: string;
     onSearchChange: (query: string) => void;
     viewMode: ViewMode;
     onViewModeChange: (mode: ViewMode) => void;
     totalCount: number;
     filteredCount: number;
+    createdCount?: number;
+    joinedCount?: number;
 }
 
 const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
     sortBy,
     sortOrder,
     onSortChange,
+    filterBy,
+    onFilterChange,
     searchQuery,
     onSearchChange,
     viewMode,
     onViewModeChange,
     totalCount,
-    filteredCount
+    filteredCount,
+    createdCount = 0,
+    joinedCount = 0
 }) => {
     const { t } = useTranslation();
 
@@ -86,6 +95,42 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                                 <X className="h-4 w-4" />
                             </button>
                         )}
+                    </div>
+
+                    {/* Filter by Type */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                            {t('dashboard.controls.filterBy')}
+                        </span>
+                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-1">
+                            <Button
+                                variant={filterBy === 'all' ? 'primary' : 'ghost'}
+                                size="sm"
+                                onClick={() => onFilterChange('all')}
+                                className="px-3 py-1 text-xs"
+                            >
+                                {t('dashboard.controls.showAll')}
+                                <span className="ml-1 text-xs opacity-75">({totalCount})</span>
+                            </Button>
+                            <Button
+                                variant={filterBy === 'created' ? 'primary' : 'ghost'}
+                                size="sm"
+                                onClick={() => onFilterChange('created')}
+                                className="px-3 py-1 text-xs"
+                            >
+                                {t('dashboard.controls.showCreated')}
+                                <span className="ml-1 text-xs opacity-75">({createdCount})</span>
+                            </Button>
+                            <Button
+                                variant={filterBy === 'joined' ? 'primary' : 'ghost'}
+                                size="sm"
+                                onClick={() => onFilterChange('joined')}
+                                className="px-3 py-1 text-xs"
+                            >
+                                {t('dashboard.controls.showJoined')}
+                                <span className="ml-1 text-xs opacity-75">({joinedCount})</span>
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Sort Controls */}
