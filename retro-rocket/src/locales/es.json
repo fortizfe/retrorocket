@@ -25,6 +25,8 @@
             "sortBy": "Ordenar por:",
             "sortByName": "Nombre",
             "sortByDate": "Fecha de creación",
+            "ascending": "Ascendente",
+            "descending": "Descendente",
             "filterPlaceholder": "Buscar retrospectivas...",
             "viewMode": "Vista:",
             "gridView": "Galería",

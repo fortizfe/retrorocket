@@ -8,7 +8,7 @@ import { userService } from '../services/userService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
 import BoardListItem from '../components/dashboard/BoardListItem';
-import BoardControlsBar, { SortBy, ViewMode } from '../components/dashboard/BoardControlsBar';
+import BoardControlsBar, { SortBy, SortOrder, ViewMode } from '../components/dashboard/BoardControlsBar';
 import Pagination from '../components/dashboard/Pagination';
 import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
 import CreateBoardFlow from '../components/create-board/CreateBoardFlow';
@@ -38,6 +38,7 @@ const DashboardPage: React.FC = () => {
 
     // Controls state
     const [sortBy, setSortBy] = useState<SortBy>('date');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [currentPage, setCurrentPage] = useState(1);
@@ -52,7 +53,13 @@ const DashboardPage: React.FC = () => {
     // Reset pagination when search or sort changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, sortBy]);
+    }, [searchQuery, sortBy, sortOrder]);
+
+    // Handle sort change
+    const handleSortChange = (newSortBy: SortBy, newSortOrder: SortOrder) => {
+        setSortBy(newSortBy);
+        setSortOrder(newSortOrder);
+    };
 
     // Filter and sort boards
     const filteredAndSortedBoards = useMemo(() => {
@@ -69,18 +76,24 @@ const DashboardPage: React.FC = () => {
 
         // Apply sorting
         const sorted = [...filtered].sort((a, b) => {
+            let comparison = 0;
+
             switch (sortBy) {
                 case 'name':
-                    return a.title.localeCompare(b.title);
+                    comparison = a.title.localeCompare(b.title);
+                    break;
                 case 'date':
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                    comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    break;
                 default:
                     return 0;
             }
+
+            return sortOrder === 'asc' ? comparison : -comparison;
         });
 
         return sorted;
-    }, [boards, searchQuery, sortBy]);
+    }, [boards, searchQuery, sortBy, sortOrder]);
 
     // Calculate pagination
     const totalPages = Math.ceil(filteredAndSortedBoards.length / itemsPerPage);
@@ -183,7 +196,8 @@ const DashboardPage: React.FC = () => {
                 {boards.length > 0 && (
                     <BoardControlsBar
                         sortBy={sortBy}
-                        onSortChange={setSortBy}
+                        sortOrder={sortOrder}
+                        onSortChange={handleSortChange}
                         searchQuery={searchQuery}
                         onSearchChange={setSearchQuery}
                         viewMode={viewMode}
