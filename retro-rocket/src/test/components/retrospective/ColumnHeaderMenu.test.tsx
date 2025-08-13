@@ -4,6 +4,16 @@ import userEvent from '@testing-library/user-event';
 import ColumnHeaderMenu from '../../../components/retrospective/ColumnHeaderMenu';
 import { GroupingCriteria } from '../../../types/columnGrouping';
 
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => key, // Return the key as the translation
+        i18n: {
+            changeLanguage: () => new Promise(() => { }),
+        },
+    }),
+}));
+
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
     motion: {
@@ -22,8 +32,28 @@ vi.mock('lucide-react', () => ({
     Sparkles: ({ className }: any) => <div data-testid="sparkles-icon" className={className}></div>
 }));
 
-// Mock GROUPING_OPTIONS
+// Mock columnGrouping module
 vi.mock('../../../types/columnGrouping', () => ({
+    getGroupingOptions: vi.fn(() => [
+        {
+            value: 'none',
+            label: 'Sin agrupar',
+            description: 'Mostrar tarjetas individuales',
+            icon: ({ className }: any) => <div data-testid="none-icon" className={className}></div>
+        },
+        {
+            value: 'user',
+            label: 'Por usuario',
+            description: 'Agrupar tarjetas por autor',
+            icon: ({ className }: any) => <div data-testid="users-icon" className={className}></div>
+        },
+        {
+            value: 'suggestions',
+            label: 'Sugerencias',
+            description: 'Mostrar grupos sugeridos automáticamente',
+            icon: ({ className }: any) => <div data-testid="sparkles-icon" className={className}></div>
+        }
+    ]),
     GROUPING_OPTIONS: [
         {
             value: 'none',
@@ -62,7 +92,7 @@ describe('ColumnHeaderMenu', () => {
         it('should render the menu button when not disabled and has cards', () => {
             render(<ColumnHeaderMenu {...defaultProps} />);
 
-            const button = screen.getByRole('button', { name: /opciones de agrupación/i });
+            const button = screen.getByRole('button', { name: /grouping options/i });
             expect(button).toBeInTheDocument();
             expect(button).toHaveAttribute('aria-expanded', 'false');
             expect(button).toHaveAttribute('aria-haspopup', 'true');
@@ -224,10 +254,10 @@ describe('ColumnHeaderMenu', () => {
             render(<ColumnHeaderMenu {...defaultProps} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveAttribute('aria-label', 'Opciones de agrupación');
+            expect(button).toHaveAttribute('aria-label', 'Grouping options');
             expect(button).toHaveAttribute('aria-expanded', 'false');
             expect(button).toHaveAttribute('aria-haspopup', 'true');
-            expect(button).toHaveAttribute('title', 'Agrupar tarjetas');
+            expect(button).toHaveAttribute('title', 'Group cards');
         });
 
         it('should have proper ARIA labels for menu options', async () => {
