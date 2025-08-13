@@ -253,7 +253,18 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         const totalCards = data.cards.length;
         const totalGroups = data.groups.length;
         const totalParticipants = data.participants.length;
-        const totalVotes = data.cards.reduce((sum, card) => sum + (card.votes || 0), 0);
+
+        // Debug: Check cards with likes (now used as votes)
+        const cardsWithLikes = data.cards.filter(card => card.likes && card.likes.length > 0);
+        if (cardsWithLikes.length > 0) {
+            console.log('📊 Cards with likes (showing as votes):', cardsWithLikes.length);
+        }
+
+        const totalVotes = data.cards.reduce((sum, card) => {
+            const cardLikes = card.likes?.length ?? 0; // Use likes instead of votes
+            return sum + cardLikes;
+        }, 0);
+
         const totalReactions = data.cards.reduce((sum, card) => sum + (card.reactions?.length || 0), 0);
         const totalActionItems = data.actionItems?.length || 0;
 
@@ -390,7 +401,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                 React.createElement(View, { key: 'stats', style: styles.groupStats }, [
                     React.createElement(Text, { key: 'count' }, `Tarjetas: ${groupCards.length}`),
                     React.createElement(Text, { key: 'votes' },
-                        `Votos totales: ${groupCards.reduce((sum, card) => sum + (card.votes || 0), 0)}`
+                        `Votos totales: ${groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0)}`
                     )
                 ]),
                 ...groupCards.map((card) =>
@@ -398,7 +409,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                         React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
                         React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
                             React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                            React.createElement(Text, { key: 'votes' }, `Votos: ${card.votes || 0}`)
+                            React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
                         ])
                     ])
                 )
@@ -412,7 +423,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                     React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
                     React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
                         React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.votes || 0}`)
+                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
                     ])
                 ])
             );

@@ -95,7 +95,7 @@ export class UnifiedExportService {
                 return cards.sort((a, b) => a.content.localeCompare(b.content, 'es'));
 
             case 'votes':
-                return cards.sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0));
+                return cards.sort((a, b) => (b.likes?.length ?? 0) - (a.likes?.length ?? 0));
 
             case 'likes':
                 return cards.sort((a, b) => (b.likes?.length ?? 0) - (a.likes?.length ?? 0));

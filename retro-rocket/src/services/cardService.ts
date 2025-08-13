@@ -118,6 +118,7 @@ export const subscribeToCards = (
 
 export const voteCard = async (cardId: string, increment: boolean = true): Promise<void> => {
     try {
+        console.log(`🗳️ Vote card: ${cardId}, increment: ${increment}`);
         const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
 
         // For simplicity, we'll get the current votes and update
@@ -126,12 +127,19 @@ export const voteCard = async (cardId: string, increment: boolean = true): Promi
 
         if (cardDoc.exists()) {
             const currentCard = cardDoc.data() as Card;
-            const newVotes = (currentCard.votes || 0) + (increment ? 1 : -1);
+            const currentVotes = currentCard.votes || 0;
+            const newVotes = currentVotes + (increment ? 1 : -1);
+
+            console.log(`🗳️ Current votes: ${currentVotes}, new votes: ${Math.max(0, newVotes)}`);
 
             await updateDoc(cardRef, {
                 votes: Math.max(0, newVotes),
                 updatedAt: serverTimestamp()
             });
+
+            console.log(`🗳️ Vote updated successfully for card ${cardId}`);
+        } else {
+            console.log(`🗳️ Card ${cardId} not found for voting`);
         }
     } catch (error) {
         console.error('Error voting card:', error);

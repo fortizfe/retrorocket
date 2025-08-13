@@ -155,7 +155,7 @@ export class TxtExportService {
         lines.push('-'.repeat(20));
 
         const totalCards = data.cards.length;
-        const totalVotes = data.cards.reduce((sum, card) => sum + (card.votes ?? 0), 0);
+        const totalVotes = data.cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
         const totalLikes = data.cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
 
         lines.push(`Total de tarjetas: ${totalCards}`);
@@ -221,8 +221,8 @@ export class TxtExportService {
         }
 
         // Votes
-        if (card.votes && card.votes > 0) {
-            metadata.push(`Votos: ${card.votes}`);
+        if (card.likes && card.likes.length > 0) {
+            metadata.push(`Votos: ${card.likes.length}`);
         }
 
         // Likes
@@ -278,7 +278,7 @@ export class TxtExportService {
             });
 
             // Group statistics
-            const totalVotes = groupCards.reduce((sum, card) => sum + (card.votes || 0), 0);
+            const totalVotes = groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
             const totalLikes = groupCards.reduce((sum, card) => sum + (card.likes?.length || 0), 0);
 
             if (totalVotes > 0 || totalLikes > 0) {

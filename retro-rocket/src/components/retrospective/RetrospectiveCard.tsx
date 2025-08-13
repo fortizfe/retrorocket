@@ -105,7 +105,7 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
                 />
               )}
 
-              {/* Vote buttons */}
+              {/* Vote buttons - always show for testing */}
               <div className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
                 <button
                   onClick={() => handleVote(true)}
@@ -115,7 +115,7 @@ const RetrospectiveCard: React.FC<RetrospectiveCardProps> = ({
                   <ThumbsUp size={14} />
                 </button>
                 <span className="text-sm font-medium text-gray-700">
-                  {card.votes || 0}
+                  {card.votes ?? 0}
                 </span>
                 <button
                   onClick={() => handleVote(false)}

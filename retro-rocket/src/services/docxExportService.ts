@@ -280,7 +280,7 @@ export class DocxExportService {
         // Calculate statistics
         const totalCards = cards.length;
         const totalGroups = groups.length;
-        const totalVotes = cards.reduce((sum, card) => sum + (card.votes ?? 0), 0);
+        const totalVotes = cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
         const totalLikes = cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
         const totalReactions = cards.reduce((sum, card) => sum + (card.reactions?.length ?? 0), 0);
         const totalActionItems = actionItems?.length ?? 0;
@@ -444,7 +444,7 @@ export class DocxExportService {
 
         // Group stats
         if (options.includeGroupDetails) {
-            const totalVotes = groupCards.reduce((sum, card) => sum + (card.votes ?? 0), 0);
+            const totalVotes = groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
             const totalLikes = groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
 
             sections.push(
@@ -527,7 +527,7 @@ export class DocxExportService {
         // Card metadata
         const metadata = [];
         if (card.createdBy) metadata.push(`Autor: ${card.createdBy}`);
-        if (card.votes && card.votes > 0) metadata.push(`${card.votes} votos`);
+        if (card.likes && card.likes.length > 0) metadata.push(`${card.likes.length} votos`);
         if (card.likes && card.likes.length > 0) metadata.push(`${card.likes.length} likes`);
         if (card.reactions && card.reactions.length > 0) {
             const reactionCounts = card.reactions.reduce((acc: { [key: string]: number }, reaction) => {

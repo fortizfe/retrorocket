@@ -164,29 +164,27 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                            {/* Legacy vote buttons - keeping for backward compatibility */}
-                            {(card.votes !== undefined && card.votes > 0) && (
-                                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
-                                    <button
-                                        onClick={() => handleVote(true)}
-                                        className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                        aria-label="Vote up"
-                                    >
-                                        <ThumbsUp size={14} />
-                                    </button>
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                        {card.votes || 0}
-                                    </span>
-                                    <button
-                                        onClick={() => handleVote(false)}
-                                        className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                                        aria-label="Vote down"
-                                        disabled={!card.votes || card.votes === 0}
-                                    >
-                                        <ThumbsUp size={14} className="rotate-180" />
-                                    </button>
-                                </div>
-                            )}
+                            {/* Legacy vote buttons - always show for testing */}
+                            <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
+                                <button
+                                    onClick={() => handleVote(true)}
+                                    className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    aria-label="Vote up"
+                                >
+                                    <ThumbsUp size={14} />
+                                </button>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {card.votes ?? 0}
+                                </span>
+                                <button
+                                    onClick={() => handleVote(false)}
+                                    className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                    aria-label="Vote down"
+                                    disabled={!card.votes || card.votes === 0}
+                                >
+                                    <ThumbsUp size={14} className="rotate-180" />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
