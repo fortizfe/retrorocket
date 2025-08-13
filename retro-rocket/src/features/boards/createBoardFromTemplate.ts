@@ -49,11 +49,6 @@ export async function createBoardFromTemplate(params: CreateBoardParams): Promis
 
         // Obtener las columnas de la plantilla (incluyendo la de acción)
         const templateColumns = getTemplateColumns(templateId);
-        console.log(`🔍 DEBUG createBoardFromTemplate for ${templateId}:`, {
-            templateId,
-            boardId,
-            templateColumns
-        });
 
         // Crear las columnas en Firestore
         const columnPromises = templateColumns.map(async (column: any, index: number) => {
@@ -64,8 +59,6 @@ export async function createBoardFromTemplate(params: CreateBoardParams): Promis
                 defaultColor: column.defaultColor || 'bg-slate-50 dark:bg-slate-900/40',
                 createdAt: serverTimestamp()
             };
-
-            console.log(`🔍 DEBUG Creating column ${column.id}:`, columnData);
 
             const columnDocRef = doc(
                 db!,

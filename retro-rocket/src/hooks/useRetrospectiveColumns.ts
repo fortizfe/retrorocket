@@ -30,8 +30,6 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
     const columnConfigs = useMemo((): Record<string, DynamicColumnConfig> => {
         const configs: Record<string, DynamicColumnConfig> = {};
 
-        console.log(`🔍 DEBUG columnConfigs useMemo for columns:`, columns);
-
         columns.forEach(column => {
             // Migration compatibility: handle old i18n keys without 'retrospective.' prefix
             let i18nKey = column.i18nKey;
@@ -42,7 +40,6 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
             const title = t(i18nKey);
             const descriptionKey = `retrospective.columns.descriptions.${column.id}`;
             const description = t(descriptionKey, { defaultValue: '' });
-            console.log(`🔍 DEBUG Column ${column.id}: i18nKey="${i18nKey}" → title="${title}", descriptionKey="${descriptionKey}" → description="${description}"`);
 
             configs[column.id] = {
                 id: column.id,
@@ -53,7 +50,6 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
             };
         });
 
-        console.log(`🔍 DEBUG Final columnConfigs:`, configs);
         return configs;
     }, [columns, t]);
 
@@ -85,14 +81,8 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
             (snapshot) => {
                 const columnsData: RetrospectiveColumn[] = [];
 
-                console.log(`🔍 DEBUG useRetrospectiveColumns snapshot for ${retrospectiveId}:`, {
-                    snapshotSize: snapshot.size,
-                    isEmpty: snapshot.empty
-                });
-
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log(`🔍 DEBUG Column document ${doc.id}:`, data);
 
                     columnsData.push({
                         id: doc.id,
@@ -103,7 +93,6 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
                     });
                 });
 
-                console.log(`🔍 DEBUG Final columnsData for ${retrospectiveId}:`, columnsData);
                 setColumns(columnsData);
                 setLoading(false);
             },

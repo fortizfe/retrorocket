@@ -254,12 +254,6 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         const totalGroups = data.groups.length;
         const totalParticipants = data.participants.length;
 
-        // Debug: Check cards with likes (now used as votes)
-        const cardsWithLikes = data.cards.filter(card => card.likes && card.likes.length > 0);
-        if (cardsWithLikes.length > 0) {
-            console.log('📊 Cards with likes (showing as votes):', cardsWithLikes.length);
-        }
-
         const totalVotes = data.cards.reduce((sum, card) => {
             const cardLikes = card.likes?.length ?? 0; // Use likes instead of votes
             return sum + cardLikes;

@@ -103,14 +103,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     }, [processCards, ungroupedCards, columnState.criteria, column.id]);
 
     const handleCreateCard = async () => {
-        console.log('🔍 DEBUG GroupableColumn handleCreateCard started');
-        console.log('🔍 DEBUG newCardContent:', newCardContent);
-        console.log('🔍 DEBUG currentUser:', currentUser);
-        console.log('🔍 DEBUG column.id:', column.id);
-        console.log('🔍 DEBUG retrospectiveId:', retrospectiveId);
-
         if (!newCardContent.trim() || !currentUser) {
-            console.log('❌ DEBUG Validation failed - content or user missing');
             return;
         }
 
@@ -127,9 +120,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 color: selectedColor
             };
 
-            console.log('🔍 DEBUG Calling onCardCreate with:', cardInput);
             await onCardCreate(cardInput);
-            console.log('✅ DEBUG Card creation completed successfully');
             setNewCardContent('');
             setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
             setIsCreating(false);
@@ -311,7 +302,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                         size="sm"
                                         variant="primary"
                                         onClick={() => {
-                                            console.log('🔍 DEBUG Create button clicked');
                                             handleCreateCard();
                                         }}
                                         loading={isSubmitting}

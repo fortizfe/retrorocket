@@ -197,8 +197,6 @@ export class UserService {
                 chunks.push(joinedBoardIds.slice(i, i + 10));
             }
 
-            console.log('🔍 DEBUG getUserBoards - Processing chunks:', chunks.length);
-
             for (const chunk of chunks) {
                 const joinedBoardsQuery = query(
                     collection(db, 'retrospectives'),
@@ -207,11 +205,6 @@ export class UserService {
                 );
 
                 const joinedBoardsSnapshot = await getDocs(joinedBoardsQuery);
-                console.log('🔍 DEBUG getUserBoards - Chunk query result:', {
-                    chunkSize: chunk.length,
-                    docsReturned: joinedBoardsSnapshot.docs.length,
-                    docIds: joinedBoardsSnapshot.docs.map(doc => doc.id)
-                });
 
                 const chunkBoards = joinedBoardsSnapshot.docs
                     .filter(doc => doc.data().createdBy !== userId) // Exclude boards created by user

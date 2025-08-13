@@ -92,17 +92,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const finalColumnConfigs = Object.keys(columnConfigs).length > 0 ? columnConfigs : getColumns();
     const COLUMN_ORDER_ARRAY = columnOrder.length > 0 ? columnOrder : COLUMN_ORDER;
 
-    // DEBUG: Log column information
-    console.log('🔍 DEBUG RetrospectiveBoard:', {
-        retrospectiveId: retrospective.id,
-        columnsLoading,
-        columnsError,
-        columnConfigsKeys: Object.keys(columnConfigs),
-        columnOrder,
-        finalColumnConfigsKeys: Object.keys(finalColumnConfigs),
-        COLUMN_ORDER_ARRAY
-    });
-
     // Show loading state while columns are being fetched
     if (columnsLoading) {
         return <Loading />;
@@ -119,10 +108,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const isFacilitator = uid === retrospective.createdBy;
 
     const handleCardCreate = async (cardInput: CreateCardInput) => {
-        console.log('🔍 DEBUG handleCardCreate called with:', cardInput);
         try {
             await createCard(cardInput);
-            console.log('✅ DEBUG Card created successfully');
         } catch (error) {
             console.error('❌ DEBUG Error creating card:', error);
             throw error;
@@ -215,13 +202,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                     {COLUMN_ORDER_ARRAY.map((columnId, index) => {
                         const column = finalColumnConfigs[columnId as keyof typeof finalColumnConfigs];
                         const columnCards = cardsByColumn[columnId] || [];
-
-                        console.log(`🔍 DEBUG Column ${columnId}:`, {
-                            columnId,
-                            column,
-                            hasColumn: !!column,
-                            columnCardsCount: columnCards.length
-                        });
 
                         if (!column) {
                             console.warn(`⚠️ DEBUG Column ${columnId} is undefined!`);
