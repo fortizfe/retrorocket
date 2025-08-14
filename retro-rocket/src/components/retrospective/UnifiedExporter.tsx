@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
+import { ActionItem } from '../../types/actionItem';
 import { UnifiedExportOptions, ExportFormat, SortOrder } from '../../types/export';
 import { useUnifiedExport } from '../../hooks/useUnifiedExport';
 import { UnifiedExportService } from '../../services/unifiedExportService';
@@ -26,6 +27,7 @@ interface UnifiedExporterProps {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    actionItems?: ActionItem[];
     variant?: 'button' | 'full';
     className?: string;
 }
@@ -35,6 +37,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
     cards,
     groups,
     participants,
+    actionItems = [],
     variant = 'button',
     className = ''
 }) => {
@@ -51,6 +54,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
         includeCardAuthors: true,
         includeReactions: true,
         includeGroupDetails: true,
+        includeActionItems: true,
         sortOrder: 'original',
         includeFacilitatorNotes: false,
         facilitatorNotes: '',
@@ -77,7 +81,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
             retrospective,
             cards,
             groups,
-            participants
+            participants,
+            actionItems
         };
 
         const finalOptions = {
@@ -94,7 +99,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
             retrospective,
             cards,
             groups,
-            participants
+            participants,
+            actionItems
         };
 
         const quickOptions: UnifiedExportOptions = {
@@ -106,6 +112,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
             includeCardAuthors: true,
             includeReactions: true,
             includeGroupDetails: true,
+            includeActionItems: true,
             sortOrder: 'original',
             includeFacilitatorNotes: false
         };
@@ -415,6 +422,18 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         Detalles de agrupaciones de tarjetas
                                                     </span>
                                                 </label>
+
+                                                <label className="flex items-center gap-3 col-span-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={options.includeActionItems}
+                                                        onChange={(e) => setOptions(prev => ({ ...prev, includeActionItems: e.target.checked }))}
+                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-700">
+                                                        Elementos de acción
+                                                    </span>
+                                                </label>
                                             </div>
                                         </div>
 
@@ -647,6 +666,18 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                             />
                             <span className="text-sm font-medium text-gray-700">
                                 Detalles de agrupaciones de tarjetas
+                            </span>
+                        </label>
+
+                        <label className="flex items-center gap-3 col-span-2">
+                            <input
+                                type="checkbox"
+                                checked={options.includeActionItems}
+                                onChange={(e) => setOptions(prev => ({ ...prev, includeActionItems: e.target.checked }))}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                                Elementos de acción
                             </span>
                         </label>
                     </div>

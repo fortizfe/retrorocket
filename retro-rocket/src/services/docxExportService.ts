@@ -642,6 +642,16 @@ export class DocxExportService {
                     ],
                     spacing: { after: 50 }
                 }),
+                ...(item.dueDate ? [new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `   Fecha de vencimiento: ${formatDate(item.dueDate)}`,
+                            size: 18,
+                            color: '666666'
+                        })
+                    ],
+                    spacing: { after: 50 }
+                })] : []),
                 new Paragraph({
                     children: [
                         new TextRun({

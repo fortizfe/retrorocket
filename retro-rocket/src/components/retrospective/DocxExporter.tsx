@@ -3,6 +3,7 @@ import { FileText, Download, Settings, CheckCircle, AlertCircle, Loader2 } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
+import { ActionItem } from '../../types/actionItem';
 import { useExportDocx } from '../../hooks/useExportDocx';
 
 interface DocxExporterProps {
@@ -10,6 +11,7 @@ interface DocxExporterProps {
     cards: Card[];
     groups: CardGroup[];
     participants: Array<{ name: string; joinedAt: Date }>;
+    actionItems?: ActionItem[];
     variant?: 'button' | 'full';
     className?: string;
 }
@@ -18,6 +20,7 @@ interface ExportSettings {
     includeParticipants: boolean;
     includeStatistics: boolean;
     includeGroupDetails: boolean;
+    includeActionItems: boolean;
     includeFacilitatorNotes: boolean;
     facilitatorNotes: string;
 }
@@ -27,6 +30,7 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
     cards,
     groups,
     participants,
+    actionItems = [],
     variant = 'button',
     className = ''
 }) => {
@@ -36,6 +40,7 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
         includeParticipants: true,
         includeStatistics: true,
         includeGroupDetails: true,
+        includeActionItems: true,
         includeFacilitatorNotes: false,
         facilitatorNotes: ''
     });
@@ -45,13 +50,15 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
             retrospective,
             cards,
             groups,
-            participants
+            participants,
+            actionItems
         };
 
         const exportOptions = {
             includeParticipants: settings.includeParticipants,
             includeStatistics: settings.includeStatistics,
             includeGroupDetails: settings.includeGroupDetails,
+            includeActionItems: settings.includeActionItems,
             includeFacilitatorNotes: settings.includeFacilitatorNotes,
             facilitatorNotes: settings.facilitatorNotes.trim() || undefined
         };
@@ -65,13 +72,15 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
             retrospective,
             cards,
             groups,
-            participants
+            participants,
+            actionItems
         };
 
         await exportToDocx(exportData, {
             includeParticipants: true,
             includeStatistics: true,
-            includeGroupDetails: true
+            includeGroupDetails: true,
+            includeActionItems: true
         });
     };
 
@@ -250,6 +259,21 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
                                             <label className="flex items-center">
                                                 <input
                                                     type="checkbox"
+                                                    checked={settings.includeActionItems}
+                                                    onChange={(e) => setSettings(prev => ({
+                                                        ...prev,
+                                                        includeActionItems: e.target.checked
+                                                    }))}
+                                                    className="mr-3 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    Incluir elementos de acción
+                                                </span>
+                                            </label>
+
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="checkbox"
                                                     checked={settings.includeFacilitatorNotes}
                                                     onChange={(e) => setSettings(prev => ({
                                                         ...prev,
@@ -384,6 +408,21 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
                         />
                         <span className="text-sm font-medium text-gray-700">
                             Mostrar detalles de agrupaciones
+                        </span>
+                    </label>
+
+                    <label className="flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={settings.includeActionItems}
+                            onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                includeActionItems: e.target.checked
+                            }))}
+                            className="mr-3 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                            Incluir elementos de acción
                         </span>
                     </label>
 

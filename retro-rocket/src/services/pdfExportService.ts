@@ -447,6 +447,9 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                         React.createElement(Text, { key: 'assignee', style: styles.noteTimestamp },
                             `Asignado a: ${item.assignedToName || 'Sin asignar'}`
                         ),
+                        ...(item.dueDate ? [React.createElement(Text, { key: 'dueDate', style: styles.noteTimestamp },
+                            `Fecha de vencimiento: ${formatDate(item.dueDate)}`
+                        )] : []),
                         React.createElement(Text, { key: 'created', style: styles.noteTimestamp },
                             `Creado: ${formatDate(item.createdAt)}`
                         )

@@ -127,6 +127,10 @@ export class TxtExportService {
                 lines.push(`${index + 1}. ${actionItem.content}`);
                 lines.push(`   Responsable: ${assignee}`);
 
+                if (actionItem.dueDate) {
+                    lines.push(`   Fecha de vencimiento: ${new Date(actionItem.dueDate).toLocaleDateString('es-ES')}`);
+                }
+
                 if (actionItem.createdAt) {
                     lines.push(`   Creado: ${new Date(actionItem.createdAt).toLocaleDateString('es-ES')}`);
                 }
