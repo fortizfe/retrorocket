@@ -11,7 +11,7 @@ import EmojiReactions from './EmojiReactions';
 import CardMenu from './CardMenu';
 import { Card as CardType, EmojiReaction, CardColor } from '../../types/card';
 import { Participant } from '../../types/participant';
-import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '../../utils/cardHelpers';
+import { groupReactions, hasUserLiked } from '../../utils/cardHelpers';
 import { getCardStyling, validateColor } from '../../utils/cardColors';
 
 interface DraggableCardProps {
@@ -53,7 +53,6 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     // Calculate reactions directly from card data
     const likesCount = card.likes?.length ?? 0;
     const isLiked = hasUserLiked(card.likes ?? [], currentUser);
-    const userReaction = getUserReactionHelper(card.reactions ?? [], currentUser);
     const groupedReactions = groupReactions(card.reactions ?? []);
 
     // Get card color styling with validation
@@ -114,6 +113,15 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
         }
     };
 
+    // Wrapper functions for EmojiReactions component
+    const handleEmojiReaction = (emoji: EmojiReaction) => {
+        handleAddReaction(emoji);
+    };
+
+    const handleEmojiRemoveReaction = () => {
+        handleRemoveReaction();
+    };
+
     const handleColorChange = async (color: CardColor) => {
         if (onUpdate) {
             try {
@@ -164,27 +172,29 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                            {/* Legacy vote buttons - always show for testing */}
-                            <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
-                                <button
-                                    onClick={() => handleVote(true)}
-                                    className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                    aria-label="Vote up"
-                                >
-                                    <ThumbsUp size={14} />
-                                </button>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                    {card.votes ?? 0}
-                                </span>
-                                <button
-                                    onClick={() => handleVote(false)}
-                                    className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                                    aria-label="Vote down"
-                                    disabled={!card.votes || card.votes === 0}
-                                >
-                                    <ThumbsUp size={14} className="rotate-180" />
-                                </button>
-                            </div>
+                            {/* Legacy vote buttons - show only when votes > 0 */}
+                            {(card.votes !== undefined && card.votes > 0) && (
+                                <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-1">
+                                    <button
+                                        onClick={() => handleVote(true)}
+                                        className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                        aria-label="Vote up"
+                                    >
+                                        <ThumbsUp size={14} />
+                                    </button>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                        {card.votes ?? 0}
+                                    </span>
+                                    <button
+                                        onClick={() => handleVote(false)}
+                                        className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                        aria-label="Vote down"
+                                        disabled={!card.votes || card.votes === 0}
+                                    >
+                                        <ThumbsUp size={14} className="rotate-180" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -225,9 +235,9 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <EmojiReactions
                                 cardId={card.id}
                                 groupedReactions={groupedReactions}
-                                userReaction={userReaction}
-                                onAddReaction={handleAddReaction}
-                                onRemoveReaction={handleRemoveReaction}
+                                currentUserId={currentUser}
+                                onReaction={handleEmojiReaction}
+                                onRemoveReaction={handleEmojiRemoveReaction}
                                 disabled={!onReaction}
                             />
                         </div>

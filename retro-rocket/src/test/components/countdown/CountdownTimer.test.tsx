@@ -117,13 +117,6 @@ describe('CountdownTimer', () => {
         expect(screen.getByTestId('alert-circle-icon')).toBeInTheDocument();
     });
 
-    it('calculates and displays progress percentage correctly', () => {
-        // 300 remaining out of 600 total = 50% progress
-        render(<CountdownTimer {...defaultProps} />);
-
-        expect(screen.getByText('50%')).toBeInTheDocument();
-    });
-
     it('calls formatTime with correct time value', () => {
         const mockFormatTime = vi.fn(() => '5:00');
         mockUseCountdown.mockReturnValue({

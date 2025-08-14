@@ -96,16 +96,14 @@ vi.mock('../../../components/retrospective/LikeButton', () => ({
 }));
 
 vi.mock('../../../components/retrospective/EmojiReactions', () => ({
-    default: ({ onAddReaction, onRemoveReaction, userReaction, ...props }: any) => (
+    default: ({ onReaction, onRemoveReaction, currentUserId, ...props }: any) => (
         <div data-testid="emoji-reactions" {...props}>
-            <button data-testid="add-reaction" onClick={() => onAddReaction?.('👍' as EmojiReaction)}>
+            <button data-testid="add-reaction" onClick={() => onReaction?.('👍' as EmojiReaction)}>
                 Add Reaction
             </button>
-            {userReaction && (
-                <button data-testid="remove-reaction" onClick={onRemoveReaction}>
-                    Remove {userReaction}
-                </button>
-            )}
+            <button data-testid="remove-reaction" onClick={onRemoveReaction}>
+                Remove Reaction
+            </button>
         </div>
     ),
 }));
