@@ -216,7 +216,8 @@ describe('useActionItems', () => {
                 'retro-1',
                 'facilitator-1',
                 'user-1',
-                'John Doe'
+                'John Doe',
+                undefined
             );
         });
 

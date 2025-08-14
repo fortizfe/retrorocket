@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MoreVertical, Target } from 'lucide-react';
 import { Card } from '../../types/card';
 import { Participant } from '../../types/participant';
+import DatePicker from '../ui/DatePicker';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface CardMenuProps {
     card: Card;
     participants: Participant[];
     canConvertToAction: boolean; // Solo el facilitador puede convertir
-    onConvertToAction: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
+    onConvertToAction: (cardContent: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => void;
     className?: string;
 }
 
@@ -24,6 +25,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [selectedAssignee, setSelectedAssignee] = useState('');
+    const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -34,7 +36,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
             const rect = buttonRef.current.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
             const viewportWidth = window.innerWidth;
-            const menuHeight = 200; // Approximate menu height
+            const menuHeight = 380; // Increased for date picker space
             const menuWidth = 280;
 
             let top = rect.bottom + 4;
@@ -89,10 +91,12 @@ const CardMenu: React.FC<CardMenuProps> = ({
         onConvertToAction(
             card.content,
             selectedAssignee || undefined,
-            selectedParticipant?.name || undefined
+            selectedParticipant?.name || undefined,
+            selectedDueDate
         );
         setIsOpen(false);
         setSelectedAssignee('');
+        setSelectedDueDate(null);
     };
 
     if (!canConvertToAction) {
@@ -114,19 +118,19 @@ const CardMenu: React.FC<CardMenuProps> = ({
                         zIndex: 9999,
                     }}
                     className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 
-                       min-w-[280px] overflow-hidden"
+                       min-w-[280px] max-h-[90vh] overflow-visible"
                 >
                     <div className="p-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                             <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                                Convertir en elemento de acción
+                                {t('retrospective.cards.convertToActionTitle')}
                             </h4>
                         </div>
 
                         <div className="mb-4">
                             <label htmlFor={`assign-${card.id}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Asignar responsable (opcional)
+                                {t('retrospective.cards.assignResponsible')}
                             </label>
                             <select
                                 id={`assign-${card.id}`}
@@ -145,6 +149,18 @@ const CardMenu: React.FC<CardMenuProps> = ({
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="mb-4">
+                            <DatePicker
+                                label={t('retrospective.cards.dueDate')}
+                                value={selectedDueDate}
+                                onChange={setSelectedDueDate}
+                                placeholder={t('retrospective.cards.dueDatePlaceholder')}
+                                minDate={new Date()}
+                                className="text-sm"
+                                zIndex={99999}
+                            />
                         </div>
 
                         <div className="flex gap-2">

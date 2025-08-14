@@ -12,12 +12,22 @@ vi.mock('framer-motion', () => ({
     AnimatePresence: vi.fn(({ children }) => children),
 }));
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
+// Mock useLanguage hook
+vi.mock('../../../hooks/useLanguage', () => ({
+    useLanguage: () => ({
         t: (key: string, options?: any) => {
             const translations: Record<string, string> = {
                 'retrospective.actionItems.title': 'Action Items',
                 'retrospective.actionItems.description': 'Define specific actions to implement',
+                'retrospective.actionItems.addActionItem': 'Añadir elemento de acción',
+                'retrospective.actionItems.newAction': 'Describe la acción a implementar...',
+                'retrospective.actionItems.responsible': 'Responsable (opcional)',
+                'retrospective.actionItems.responsibleSelect': 'Seleccionar responsable',
+                'retrospective.actionItems.create': 'Crear',
+                'retrospective.actionItems.cancel': 'Cancelar',
+                'retrospective.actionItems.dueDate': 'Fecha de vencimiento (opcional)',
+                'retrospective.actionItems.dueDatePlaceholder': 'Seleccionar fecha de vencimiento',
+                'retrospective.cards.unassigned': 'Sin asignar',
                 'retrospective.facilitator.onlyFacilitatorCanCreateActions': 'Only facilitator can create actions',
                 'retrospective.facilitator.noActionItems': 'No action items yet',
                 'retrospective.facilitator.createFirstActionOrConvert': 'Create first action or convert from cards',
@@ -26,6 +36,9 @@ vi.mock('react-i18next', () => ({
             };
             return translations[key] || key;
         },
+        currentLanguage: 'es',
+        changeLanguage: vi.fn(),
+        getAvailableLanguages: vi.fn(() => []),
     }),
 }));
 
@@ -68,6 +81,22 @@ vi.mock('../../../components/retrospective/ActionItemCard', () => ({
                     </button>
                 </>
             )}
+        </div>
+    )),
+}));
+
+// Mock DatePicker component
+vi.mock('../../../components/ui/DatePicker', () => ({
+    default: vi.fn(({ label, value, onChange, placeholder, minDate, className }) => (
+        <div>
+            <label>{label}</label>
+            <input
+                type="date"
+                value={value ? value.toISOString().split('T')[0] : ''}
+                onChange={(e) => onChange(e.target.value ? new Date(e.target.value) : null)}
+                placeholder={placeholder}
+                className={className}
+            />
         </div>
     )),
 }));
@@ -120,6 +149,7 @@ describe('ActionItemsColumn', () => {
             updatedAt: new Date(),
             assignedTo: 'user-1',
             assignedToName: 'John Doe',
+            dueDate: null,
             order: 1,
         },
         {
@@ -131,6 +161,7 @@ describe('ActionItemsColumn', () => {
             updatedAt: new Date(),
             assignedTo: null,
             assignedToName: null,
+            dueDate: null,
             order: 2,
         },
     ];
@@ -173,13 +204,13 @@ describe('ActionItemsColumn', () => {
         it('shows add action button when can edit', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            expect(screen.getByText('Añadir elemento de acción')).toBeInTheDocument();
+            expect(screen.getByTestId('button')).toBeInTheDocument();
         });
 
         it('hides add action button when cannot edit', () => {
             render(<ActionItemsColumn {...defaultProps} canEdit={false} />);
 
-            expect(screen.queryByText('Añadir elemento de acción')).not.toBeInTheDocument();
+            expect(screen.queryByTestId('button')).not.toBeInTheDocument();
         });
 
         it('shows permission message when cannot edit', () => {
@@ -212,22 +243,22 @@ describe('ActionItemsColumn', () => {
         it('enters create mode when add button is clicked', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            expect(screen.getByPlaceholderText('Describe la acción a implementar...')).toBeInTheDocument();
-            expect(screen.getByText('Crear')).toBeInTheDocument();
-            expect(screen.getByText('Cancelar')).toBeInTheDocument();
+            expect(screen.getByPlaceholderText('retrospective.actionItems.newAction')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.actionItems.create')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.actionItems.cancel')).toBeInTheDocument();
         });
 
         it('shows assignee selector in create mode', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            expect(screen.getByLabelText('Responsable (opcional)')).toBeInTheDocument();
-            expect(screen.getByText('Sin asignar')).toBeInTheDocument();
+            expect(screen.getByLabelText('retrospective.actionItems.responsible')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.cards.unassigned')).toBeInTheDocument();
             expect(screen.getByText('John Doe')).toBeInTheDocument();
             expect(screen.getByText('Jane Smith')).toBeInTheDocument();
         });
@@ -235,13 +266,13 @@ describe('ActionItemsColumn', () => {
         it('creates action item with content only', async () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'New action item' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             fireEvent.click(createButton);
 
             await waitFor(() => {
@@ -251,6 +282,7 @@ describe('ActionItemsColumn', () => {
                     createdBy: 'facilitator-1',
                     assignedTo: null,
                     assignedToName: null,
+                    dueDate: null,
                 });
             });
         });
@@ -258,16 +290,16 @@ describe('ActionItemsColumn', () => {
         it('creates action item with assignee', async () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'Assigned action' } });
 
-            const assigneeSelect = screen.getByLabelText('Responsable (opcional)');
+            const assigneeSelect = screen.getByLabelText('retrospective.actionItems.responsible');
             fireEvent.change(assigneeSelect, { target: { value: 'user-1' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             fireEvent.click(createButton);
 
             await waitFor(() => {
@@ -277,6 +309,7 @@ describe('ActionItemsColumn', () => {
                     createdBy: 'facilitator-1',
                     assignedTo: 'user-1',
                     assignedToName: 'John Doe',
+                    dueDate: null,
                 });
             });
         });
@@ -284,70 +317,70 @@ describe('ActionItemsColumn', () => {
         it('disables create button when content is empty', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             expect(createButton).toBeDisabled();
         });
 
         it('enables create button when content is added', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'Some content' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             expect(createButton).not.toBeDisabled();
         });
 
         it('cancels create mode and resets form', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'Test content' } });
 
-            const cancelButton = screen.getByText('Cancelar');
+            const cancelButton = screen.getByText('retrospective.actionItems.cancel');
             fireEvent.click(cancelButton);
 
-            expect(screen.queryByPlaceholderText('Describe la acción a implementar...')).not.toBeInTheDocument();
-            expect(screen.getByText('Añadir elemento de acción')).toBeInTheDocument();
+            expect(screen.queryByPlaceholderText('retrospective.actionItems.newAction')).not.toBeInTheDocument();
+            expect(screen.getByTestId('button')).toBeInTheDocument();
         });
 
         it('resets form after successful creation', async () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'New action' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             fireEvent.click(createButton);
 
             await waitFor(() => {
-                expect(screen.queryByPlaceholderText('Describe la acción a implementar...')).not.toBeInTheDocument();
-                expect(screen.getByText('Añadir elemento de acción')).toBeInTheDocument();
+                expect(screen.queryByPlaceholderText('retrospective.actionItems.newAction')).not.toBeInTheDocument();
+                expect(screen.getByTestId('button')).toBeInTheDocument();
             });
         });
 
         it('trims whitespace from content', async () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: '  Content with spaces  ' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             fireEvent.click(createButton);
 
             await waitFor(() => {
@@ -362,10 +395,10 @@ describe('ActionItemsColumn', () => {
         it('shows loading state when creating', () => {
             render(<ActionItemsColumn {...defaultProps} loading={true} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'New action' } });
 
             const createButton = screen.getByText('Loading...');
@@ -411,23 +444,23 @@ describe('ActionItemsColumn', () => {
         it('handles empty content gracefully', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: '   ' } }); // Only spaces
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             expect(createButton).toBeDisabled();
         });
 
         it('handles empty participants list', () => {
             render(<ActionItemsColumn {...defaultProps} participants={[]} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const assigneeSelect = screen.getByLabelText('Responsable (opcional)');
+            const assigneeSelect = screen.getByLabelText('retrospective.actionItems.responsible');
             expect(assigneeSelect.children).toHaveLength(1); // Only "Sin asignar" option
         });
 
@@ -447,16 +480,16 @@ describe('ActionItemsColumn', () => {
 
             render(<ActionItemsColumn {...defaultProps} participants={participantsWithoutUser} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: 'Test action' } });
 
-            const assigneeSelect = screen.getByLabelText('Responsable (opcional)');
+            const assigneeSelect = screen.getByLabelText('retrospective.actionItems.responsible');
             fireEvent.change(assigneeSelect, { target: { value: 'user-1' } }); // Non-existent user
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             fireEvent.click(createButton);
 
             await waitFor(() => {
@@ -466,6 +499,7 @@ describe('ActionItemsColumn', () => {
                     createdBy: 'facilitator-1',
                     assignedTo: null, // Should be null since empty value is converted to null
                     assignedToName: null, // Should be null if participant not found
+                    dueDate: null,
                 });
             });
         });
@@ -499,13 +533,13 @@ describe('ActionItemsColumn', () => {
         it('prevents submission with only whitespace', async () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
             fireEvent.change(textarea, { target: { value: '   \n\t   ' } });
 
-            const createButton = screen.getByText('Crear');
+            const createButton = screen.getByText('retrospective.actionItems.create');
             expect(createButton).toBeDisabled();
 
             fireEvent.click(createButton);
@@ -518,11 +552,11 @@ describe('ActionItemsColumn', () => {
         it('updates create button state reactively', () => {
             render(<ActionItemsColumn {...defaultProps} />);
 
-            const addButton = screen.getByText('Añadir elemento de acción');
+            const addButton = screen.getByTestId('button');
             fireEvent.click(addButton);
 
-            const textarea = screen.getByPlaceholderText('Describe la acción a implementar...');
-            const createButton = screen.getByText('Crear');
+            const textarea = screen.getByPlaceholderText('retrospective.actionItems.newAction');
+            const createButton = screen.getByText('retrospective.actionItems.create');
 
             // Initially disabled
             expect(createButton).toBeDisabled();

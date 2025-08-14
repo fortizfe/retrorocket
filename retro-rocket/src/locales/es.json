@@ -151,24 +151,34 @@
             "likes": "Me gusta",
             "reactions": "Reacciones",
             "convertToAction": "Convertir en elemento de acción",
+            "convertToActionTitle": "Convertir en elemento de acción",
             "assignResponsible": "Asignar responsable (opcional)",
             "selectResponsible": "Seleccionar responsable",
             "unassigned": "Sin asignar",
             "convert": "Convertir",
             "created": "Creado:",
-            "responsible": "Responsable:"
+            "responsible": "Responsable:",
+            "dueDate": "Fecha de vencimiento (opcional)",
+            "dueDatePlaceholder": "Seleccionar fecha de vencimiento"
         },
         "actionItems": {
             "title": "Elementos de Acción",
             "description": "Acciones específicas para implementar",
             "newAction": "Describe la acción a implementar...",
             "responsible": "Responsable (opcional)",
+            "responsibleSelect": "Seleccionar responsable",
             "add": "Agregar",
             "edit": "Editar",
             "save": "Guardar",
             "saving": "Guardando...",
             "cancel": "Cancelar",
-            "elementsCount": "{{count}} elementos"
+            "elementsCount": "{{count}} elementos",
+            "addActionItem": "Añadir elemento de acción",
+            "create": "Crear",
+            "dueDate": "Fecha de vencimiento (opcional)",
+            "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
+            "dueDateDisplay": "Vence: {{date}}",
+            "actionLabel": "ACCIÓN"
         },
         "export": {
             "title": "Exportar Retrospectiva",
@@ -318,6 +328,11 @@
     "groupSuggestion": {
         "group": "Grupo",
         "cardsInGroup": "{{count}} tarjetas"
+    },
+    "datePicker": {
+        "placeholder": "Seleccionar fecha",
+        "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
+        "clearDate": "Limpiar fecha"
     },
     "participants": {
         "title": "Participantes",

@@ -151,24 +151,34 @@
             "likes": "Likes",
             "reactions": "Reactions",
             "convertToAction": "Convert to action item",
+            "convertToActionTitle": "Convert to action item",
             "assignResponsible": "Assign responsible (optional)",
             "selectResponsible": "Select responsible",
             "unassigned": "Unassigned",
             "convert": "Convert",
             "created": "Created:",
-            "responsible": "Responsible:"
+            "responsible": "Responsible:",
+            "dueDate": "Due date (optional)",
+            "dueDatePlaceholder": "Select due date"
         },
         "actionItems": {
             "title": "Action Items",
             "description": "Specific actions to implement",
             "newAction": "Describe the action to implement...",
             "responsible": "Responsible (optional)",
+            "responsibleSelect": "Select responsible",
             "add": "Add",
             "edit": "Edit",
             "save": "Save",
             "saving": "Saving...",
             "cancel": "Cancel",
-            "elementsCount": "{{count}} elements"
+            "elementsCount": "{{count}} elements",
+            "addActionItem": "Add action item",
+            "create": "Create",
+            "dueDate": "Due date (optional)",
+            "dueDatePlaceholder": "Select due date",
+            "dueDateDisplay": "Due: {{date}}",
+            "actionLabel": "ACTION"
         },
         "export": {
             "title": "Export Retrospective",
@@ -317,6 +327,11 @@
             "group": "Group",
             "cardsInGroup": "{{count}} cards"
         }
+    },
+    "datePicker": {
+        "placeholder": "Select date",
+        "dueDatePlaceholder": "Select due date",
+        "clearDate": "Clear date"
     },
     "participants": {
         "title": "Participants",

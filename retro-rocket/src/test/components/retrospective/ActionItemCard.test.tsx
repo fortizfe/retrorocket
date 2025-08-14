@@ -42,6 +42,21 @@ vi.mock('../../../hooks/useLanguage', () => ({
             if (key === 'retrospective.actionItemCard.created') {
                 return 'Created';
             }
+            if (key === 'retrospective.actionItems.actionLabel') {
+                return 'ACCIÓN';
+            }
+            if (key === 'retrospective.actionItems.responsible') {
+                return 'Responsable (opcional)';
+            }
+            if (key === 'retrospective.actionItems.responsibleSelect') {
+                return 'Seleccionar responsable';
+            }
+            if (key === 'retrospective.actionItems.dueDate') {
+                return 'Fecha límite (opcional)';
+            }
+            if (key === 'retrospective.actionItems.dueDatePlaceholder') {
+                return 'Seleccionar fecha...';
+            }
             return key;
         }
     })
@@ -86,7 +101,9 @@ describe('ActionItemCard', () => {
         updatedAt: new Date('2024-01-15T10:30:00.000Z'),
         retrospectiveId: 'retro-1',
         assignedTo: 'user2',
-        assignedToName: 'John Doe'
+        assignedToName: 'John Doe',
+        dueDate: null,
+        order: 0
     };
 
     const mockParticipants: Participant[] = [
@@ -244,7 +261,8 @@ describe('ActionItemCard', () => {
                 expect(defaultProps.onEdit).toHaveBeenCalledWith('action-1', {
                     content: 'Updated action item',
                     assignedTo: 'user1',
-                    assignedToName: 'Alice Smith'
+                    assignedToName: 'Alice Smith',
+                    dueDate: null
                 });
             });
         });

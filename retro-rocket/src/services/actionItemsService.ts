@@ -111,6 +111,7 @@ export class ActionItemsService {
                     createdBy: data.createdBy,
                     assignedTo: data.assignedTo || null,
                     assignedToName: data.assignedToName || null,
+                    dueDate: data.dueDate?.toDate() || null,
                     createdAt: data.createdAt?.toDate() || new Date(),
                     updatedAt: data.updatedAt?.toDate() || new Date(),
                     order: data.order || 0
@@ -131,14 +132,16 @@ export class ActionItemsService {
         retrospectiveId: string,
         facilitatorId: string,
         assignedTo?: string,
-        assignedToName?: string
+        assignedToName?: string,
+        dueDate?: Date | null
     ): Promise<string> {
         return this.createActionItem({
             content: cardContent,
             retrospectiveId,
             createdBy: facilitatorId,
             assignedTo: assignedTo || null,
-            assignedToName: assignedToName || null
+            assignedToName: assignedToName || null,
+            dueDate: dueDate || null
         });
     }
 }

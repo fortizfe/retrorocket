@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Target, AlertCircle } from 'lucide-react';
 import ActionItemCard from './ActionItemCard';
 import Button from '../ui/Button';
+import DatePicker from '../ui/DatePicker';
 import { useLanguage } from '../../hooks/useLanguage';
 import { ActionItem, CreateActionItemInput } from '../../types/actionItem';
 import { Participant } from '../../types/participant';
@@ -35,6 +36,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     const [isCreating, setIsCreating] = useState(false);
     const [newContent, setNewContent] = useState('');
     const [selectedAssignee, setSelectedAssignee] = useState('');
+    const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(null);
 
     // Get language context
     const { t } = useLanguage();
@@ -49,12 +51,14 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
             retrospectiveId,
             createdBy: facilitatorId,
             assignedTo: selectedAssignee || null,
-            assignedToName: selectedParticipant?.name || null
+            assignedToName: selectedParticipant?.name || null,
+            dueDate: selectedDueDate
         });
 
         // Reset form
         setNewContent('');
         setSelectedAssignee('');
+        setSelectedDueDate(null);
         setIsCreating(false);
     };
 
@@ -62,6 +66,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
         setIsCreating(false);
         setNewContent('');
         setSelectedAssignee('');
+        setSelectedDueDate(null);
     };
 
     return (
@@ -120,7 +125,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                 <textarea
                                     value={newContent}
                                     onChange={(e) => setNewContent(e.target.value)}
-                                    placeholder="Describe la acción a implementar..."
+                                    placeholder={t('retrospective.actionItems.newAction')}
                                     className="w-full p-3 text-sm border border-amber-200 dark:border-amber-700 
                            rounded resize-none bg-white dark:bg-slate-800 
                            text-slate-900 dark:text-slate-100 
@@ -132,25 +137,36 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
 
                                 <div>
                                     <label htmlFor="new-action-assignee" className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
-                                        Responsable (opcional)
+                                        {t('retrospective.actionItems.responsible')}
                                     </label>
                                     <select
                                         id="new-action-assignee"
                                         value={selectedAssignee}
                                         onChange={(e) => setSelectedAssignee(e.target.value)}
-                                        title="Seleccionar responsable"
+                                        title={t('retrospective.actionItems.responsibleSelect')}
                                         className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 
                              rounded bg-white dark:bg-slate-800 
                              text-slate-900 dark:text-slate-100
                              focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                     >
-                                        <option value="">Sin asignar</option>
+                                        <option value="">{t('retrospective.cards.unassigned')}</option>
                                         {participants.map((participant) => (
                                             <option key={participant.id} value={participant.userId}>
                                                 {participant.name}
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <DatePicker
+                                        label={t('retrospective.actionItems.dueDate')}
+                                        value={selectedDueDate}
+                                        onChange={setSelectedDueDate}
+                                        placeholder={t('retrospective.actionItems.dueDatePlaceholder')}
+                                        minDate={new Date()}
+                                        className="text-sm"
+                                    />
                                 </div>
 
                                 <div className="flex gap-2">
@@ -162,7 +178,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         className="bg-amber-600 hover:bg-amber-700 text-white"
                                     >
                                         <Plus className="w-4 h-4 mr-1" />
-                                        Crear
+                                        {t('retrospective.actionItems.create')}
                                     </Button>
                                     <Button
                                         onClick={handleCancel}
@@ -170,7 +186,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         variant="ghost"
                                         size="sm"
                                     >
-                                        Cancelar
+                                        {t('retrospective.actionItems.cancel')}
                                     </Button>
                                 </div>
                             </motion.div>
@@ -184,7 +200,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                          text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Añadir elemento de acción
+                                {t('retrospective.actionItems.addActionItem')}
                             </Button>
                         )}
                     </AnimatePresence>

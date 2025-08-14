@@ -295,6 +295,7 @@ describe('ActionItemsService', () => {
                     createdBy: mockUserId,
                     assignedTo: 'user-1',
                     assignedToName: 'User One',
+                    dueDate: null,
                     createdAt: new Date('2024-01-01'),
                     updatedAt: new Date('2024-01-02'),
                     order: 1
@@ -306,6 +307,7 @@ describe('ActionItemsService', () => {
                     createdBy: mockUserId,
                     assignedTo: null,
                     assignedToName: null,
+                    dueDate: null,
                     createdAt: new Date('2024-01-03'),
                     updatedAt: new Date('2024-01-04'),
                     order: 2
@@ -350,6 +352,7 @@ describe('ActionItemsService', () => {
                     createdBy: mockUserId,
                     assignedTo: null,
                     assignedToName: null,
+                    dueDate: null,
                     createdAt: expect.any(Date),
                     updatedAt: expect.any(Date),
                     order: 0

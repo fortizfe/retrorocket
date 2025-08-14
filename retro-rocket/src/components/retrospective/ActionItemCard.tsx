@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Trash2, Check, X, User } from 'lucide-react';
+import { Edit3, Trash2, Check, X, User, Calendar } from 'lucide-react';
 import { ActionItem } from '../../types/actionItem';
 import { Participant } from '../../types/participant';
 import Button from '../ui/Button';
 import LinkifyText from '../ui/LinkifyText';
+import DatePicker from '../ui/DatePicker';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface ActionItemCardProps {
@@ -24,10 +25,11 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
     onDelete,
     className = ''
 }) => {
-    const { t } = useLanguage();
+    const { t, currentLanguage } = useLanguage();
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(actionItem.content);
     const [selectedAssignee, setSelectedAssignee] = useState(actionItem.assignedTo || '');
+    const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(actionItem.dueDate || null);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -40,7 +42,8 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
             onEdit(actionItem.id, {
                 content: editContent.trim(),
                 assignedTo: selectedAssignee || null,
-                assignedToName: selectedParticipant?.name || null
+                assignedToName: selectedParticipant?.name || null,
+                dueDate: selectedDueDate
             });
             setIsEditing(false);
         } catch (error) {
@@ -54,6 +57,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
         setIsEditing(false);
         setEditContent(actionItem.content);
         setSelectedAssignee(actionItem.assignedTo || '');
+        setSelectedDueDate(actionItem.dueDate || null);
     };
 
     const handleDelete = () => {
@@ -86,7 +90,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                 <div className="flex items-center gap-2">
                     <span className="text-amber-600 dark:text-amber-400 text-sm font-medium">🎯</span>
                     <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                        ACCIÓN
+                        {t('retrospective.actionItems.actionLabel')}
                     </span>
                 </div>
 
@@ -139,13 +143,13 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         {/* Selector de responsable */}
                         <div>
                             <label htmlFor={`assignee-${actionItem.id}`} className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
-                                Responsable (opcional)
+                                {t('retrospective.actionItems.responsible')}
                             </label>
                             <select
                                 id={`assignee-${actionItem.id}`}
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
-                                title="Seleccionar responsable"
+                                title={t('retrospective.actionItems.responsibleSelect')}
                                 className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 
                          rounded bg-white dark:bg-slate-800 
                          text-slate-900 dark:text-slate-100
@@ -158,6 +162,18 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        {/* Selector de fecha de vencimiento */}
+                        <div>
+                            <DatePicker
+                                label={t('retrospective.actionItems.dueDate')}
+                                value={selectedDueDate}
+                                onChange={setSelectedDueDate}
+                                placeholder={t('retrospective.actionItems.dueDatePlaceholder')}
+                                minDate={new Date()}
+                                className="text-sm"
+                            />
                         </div>
 
                         <div className="flex gap-2">
@@ -202,6 +218,23 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 <User className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                                 <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
                                     {t('retrospective.actionItemCard.responsible')}: {assignedParticipant.name}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Fecha de vencimiento */}
+                        {actionItem.dueDate && (
+                            <div className="flex items-center gap-2 p-2 bg-blue-100 dark:bg-blue-800/20 
+                            rounded border border-blue-200 dark:border-blue-700">
+                                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                    {t('retrospective.actionItems.dueDateDisplay', {
+                                        date: actionItem.dueDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'es-ES', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric'
+                                        })
+                                    })}
                                 </span>
                             </div>
                         )}

@@ -64,7 +64,8 @@ export function useActionItems(retrospectiveId: string) {
         cardContent: string,
         facilitatorId: string,
         assignedTo?: string,
-        assignedToName?: string
+        assignedToName?: string,
+        dueDate?: Date | null
     ) => {
         setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -74,7 +75,8 @@ export function useActionItems(retrospectiveId: string) {
                 retrospectiveId,
                 facilitatorId,
                 assignedTo,
-                assignedToName
+                assignedToName,
+                dueDate
             );
             // Los elementos se actualizarán automáticamente por la suscripción
         } catch (error) {

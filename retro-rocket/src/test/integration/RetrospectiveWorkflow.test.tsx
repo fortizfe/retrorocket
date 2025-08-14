@@ -62,6 +62,17 @@ vi.mock('react-beautiful-dnd', () => ({
     }, {}),
 }));
 
+vi.mock('../../hooks/useLanguage', () => ({
+    useLanguage: () => ({
+        t: (key: string, params?: any) => {
+            if (key === 'retrospective.cards.convertToAction') {
+                return 'convertir en elemento de acción';
+            }
+            return key;
+        }
+    })
+}));
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
     <BrowserRouter>
         {children}
@@ -114,7 +125,8 @@ describe('Retrospective Workflow Integration', () => {
             createdBy: mockUserId,
             createdAt: new Date(),
             updatedAt: new Date(),
-            order: 1
+            order: 1,
+            dueDate: null
         }
     ];
 
@@ -215,7 +227,7 @@ describe('Retrospective Workflow Integration', () => {
             expect(screen.getByText('Good communication')).toBeInTheDocument();
 
             // Check that menu button exists (look for the exact title)
-            const menuButton = screen.getByTitle('retrospective.cards.convertToAction');
+            const menuButton = screen.getByTitle('convertir en elemento de acción');
             expect(menuButton).toBeInTheDocument();
 
             // Click the menu button to open the menu
@@ -223,7 +235,7 @@ describe('Retrospective Workflow Integration', () => {
 
             // Check if dropdown content appears
             await waitFor(() => {
-                expect(screen.getByText(/convertir en elemento de acción/i)).toBeInTheDocument();
+                expect(screen.getByTitle(/convertir en elemento de acción/i)).toBeInTheDocument();
             });
         });
     });
@@ -299,7 +311,7 @@ describe('Retrospective Workflow Integration', () => {
             expect(screen.getByText('Good communication')).toBeInTheDocument();
 
             // Check that convert button exists
-            const convertButton = screen.getByTitle('retrospective.cards.convertToAction');
+            const convertButton = screen.getByTitle('convertir en elemento de acción');
             expect(convertButton).toBeInTheDocument();
         });
     });

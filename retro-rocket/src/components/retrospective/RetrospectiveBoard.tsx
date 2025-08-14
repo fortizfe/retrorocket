@@ -145,9 +145,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     };
 
     // Handler para convertir tarjeta a elemento de acción
-    const handleConvertToActionItem = (cardContent: string, assignedTo?: string, assignedToName?: string) => {
+    const handleConvertToActionItem = (cardContent: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => {
         if (uid) {
-            convertCardToActionItem(cardContent, uid, assignedTo, assignedToName);
+            convertCardToActionItem(cardContent, uid, assignedTo, assignedToName, dueDate);
         }
     };
 
