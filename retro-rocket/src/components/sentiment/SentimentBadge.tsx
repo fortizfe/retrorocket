@@ -1,0 +1,76 @@
+import React from 'react';
+import { SentimentBadgeProps, SENTIMENT_COLORS } from '../../types/sentiment';
+
+const SentimentBadge: React.FC<SentimentBadgeProps> = ({
+    sentiment,
+    confidence,
+    size = 'sm',
+    showTooltip = true
+}) => {
+    const colors = SENTIMENT_COLORS[sentiment];
+
+    // Size classes
+    const sizeClasses = {
+        sm: 'text-xs px-1.5 py-0.5',
+        md: 'text-sm px-2 py-1',
+        lg: 'text-base px-2.5 py-1.5'
+    };
+
+    const confidencePercentage = Math.round(confidence * 100);
+
+    // Don't show badge if confidence is very low
+    if (confidence < 0.3) {
+        return null;
+    }
+
+    // Get sentiment label
+    const getSentimentLabel = () => {
+        switch (sentiment) {
+            case 'positive': return 'Positivo';
+            case 'negative': return 'Negativo';
+            default: return 'Neutral';
+        }
+    };
+
+    const badge = (
+        <span
+            className={`
+                inline-flex items-center gap-1 rounded-full font-medium
+                ${colors.bg} ${colors.text} ${colors.border} border
+                ${sizeClasses[size]}
+                transition-all duration-200
+            `}
+        >
+            <span className="leading-none">{colors.icon}</span>
+            <span className="capitalize leading-none">
+                {getSentimentLabel()}
+            </span>
+        </span>
+    );
+
+    if (!showTooltip) {
+        return badge;
+    }
+
+    return (
+        <div
+            className="relative group"
+            title={`Sentimiento ${sentiment} con ${confidencePercentage}% de confianza`}
+        >
+            {badge}
+
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 
+                          bg-gray-900 dark:bg-gray-700 text-white text-xs rounded shadow-lg
+                          opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                          pointer-events-none whitespace-nowrap z-50">
+                Confianza: {confidencePercentage}%
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 
+                              border-l-4 border-r-4 border-t-4 border-transparent 
+                              border-t-gray-900 dark:border-t-gray-700" />
+            </div>
+        </div>
+    );
+};
+
+export default SentimentBadge;

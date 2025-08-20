@@ -14,6 +14,7 @@ import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useLanguage } from '../hooks/useLanguage';
+import { useSentiment } from '../hooks/useSentiment';
 import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
 import { Card, CardGroup } from '../types/card';
 import { ActionItem } from '../types/actionItem';
@@ -35,6 +36,9 @@ const RetrospectivePageContent: React.FC = () => {
     const [exportCards, setExportCards] = useState<Card[]>([]);
     const [exportGroups, setExportGroups] = useState<CardGroup[]>([]);
     const [exportActionItems, setExportActionItems] = useState<ActionItem[]>([]);
+
+    // Sentiment analysis hook - initially disabled, enabled by facilitator
+    const sentimentAnalysis = useSentiment(exportCards, id || '');
 
     // Handle data changes from RetrospectiveBoard for export
     const handleDataChange = (cards: Card[], groups: CardGroup[], actionItems: ActionItem[]) => {
@@ -288,6 +292,7 @@ const RetrospectivePageContent: React.FC = () => {
                                     retrospectiveId={retrospective.id}
                                     facilitatorId={uid || ''}
                                     isOwner={retrospective.createdBy === uid}
+                                    sentimentAnalysis={sentimentAnalysis}
                                 />
                             </div>
                         </div>
@@ -307,6 +312,7 @@ const RetrospectivePageContent: React.FC = () => {
                             currentUser={fullName}
                             onDataChange={handleDataChange}
                             participants={participants || []}
+                            sentimentAnalysis={sentimentAnalysis}
                         />
                     </motion.div>
                 </div>

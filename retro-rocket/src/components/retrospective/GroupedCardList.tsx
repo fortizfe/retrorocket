@@ -5,6 +5,7 @@ import { Users, Hash } from 'lucide-react';
 import { Card as CardType, EmojiReaction } from '../../types/card';
 import { GroupingCriteria } from '../../types/columnGrouping';
 import { Participant } from '../../types/participant';
+import { useSentiment } from '../../hooks/useSentiment';
 import DragDropColumn from './DragDropColumn';
 
 interface GroupedCardListProps {
@@ -22,6 +23,8 @@ interface GroupedCardListProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
+    // Sentiment analysis
+    sentimentHook?: ReturnType<typeof useSentiment>;
 }
 
 const GroupedCardList: React.FC<GroupedCardListProps> = ({
@@ -37,7 +40,8 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
     currentUser,
     participants,
     canConvertToAction,
-    onConvertToAction
+    onConvertToAction,
+    sentimentHook
 }) => {
     const { t } = useTranslation();
     const groupNames = Object.keys(groupedCards);
@@ -62,6 +66,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                 participants={participants}
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}
+                sentimentHook={sentimentHook}
             />
         );
     }
@@ -120,6 +125,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                                     participants={participants}
                                     canConvertToAction={canConvertToAction}
                                     onConvertToAction={onConvertToAction}
+                                    sentimentHook={sentimentHook}
                                 />
                             </div>
                         </motion.div>

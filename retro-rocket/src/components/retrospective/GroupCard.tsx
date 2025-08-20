@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Users, Sparkles, X } from 'lucide-react';
 import { CardGroup, Card, EmojiReaction } from '../../types/card';
+import { useSentiment } from '../../hooks/useSentiment';
 import DraggableCard from './DraggableCard';
 import { CARD_COLORS } from '../../utils/cardColors';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -20,6 +21,8 @@ interface GroupCardProps {
     onCardReactionRemove?: (cardId: string, userId: string) => Promise<void>;
     currentUserId?: string;
     isReadOnly?: boolean;
+    // Sentiment analysis
+    sentimentHook?: ReturnType<typeof useSentiment>;
 }
 
 export const GroupCard: React.FC<GroupCardProps> = ({
@@ -35,7 +38,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     onCardReaction,
     onCardReactionRemove,
     currentUserId,
-    isReadOnly = false
+    isReadOnly = false,
+    sentimentHook
 }) => {
     const { t } = useLanguage();
     const [isHovered, setIsHovered] = useState(false);
@@ -182,6 +186,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                     currentUser={currentUserId}
                                     canEdit={!isReadOnly}
                                     isDragging={false}
+                                    sentimentResult={sentimentHook?.enabled ? sentimentHook.getSentiment(headCard.id) : undefined}
                                 />
                             </div>
 
@@ -211,6 +216,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                         currentUser={currentUserId}
                                         canEdit={!isReadOnly}
                                         isDragging={false}
+                                        sentimentResult={sentimentHook?.enabled ? sentimentHook.getSentiment(card.id) : undefined}
                                     />
                                 </motion.div>
                             ))}

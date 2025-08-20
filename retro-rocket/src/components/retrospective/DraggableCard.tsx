@@ -9,8 +9,10 @@ import LinkifyText from '../ui/LinkifyText';
 import LikeButton from './LikeButton';
 import EmojiReactions from './EmojiReactions';
 import CardMenu from './CardMenu';
+import SentimentBadge from '../sentiment/SentimentBadge';
 import { Card as CardType, EmojiReaction, CardColor } from '../../types/card';
 import { Participant } from '../../types/participant';
+import { SentimentResult } from '../../types/sentiment';
 import { groupReactions, hasUserLiked } from '../../utils/cardHelpers';
 import { getCardStyling, validateColor } from '../../utils/cardColors';
 
@@ -29,6 +31,8 @@ interface DraggableCardProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
+    // Sentiment analysis
+    sentimentResult?: SentimentResult;
 }
 
 const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -44,7 +48,8 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     isDragging = false,
     participants = [],
     canConvertToAction = false,
-    onConvertToAction
+    onConvertToAction,
+    sentimentResult
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
@@ -170,6 +175,21 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                             <User size={14} />
                             <span>{card.createdBy}</span>
+
+                            {/* Sentiment Badge */}
+                            {(() => {
+                                console.log(`DraggableCard ${card.id}: sentimentResult =`, sentimentResult);
+                                console.log(`Should show badge: ${!!(sentimentResult && card.column !== 'actions')}`);
+                                return null;
+                            })()}
+                            {sentimentResult && card.column !== 'actions' && (
+                                <SentimentBadge
+                                    sentiment={sentimentResult.sentiment}
+                                    confidence={sentimentResult.confidence}
+                                    size="sm"
+                                    showTooltip={true}
+                                />
+                            )}
                         </div>
                         <div className="flex items-center space-x-1">
                             {/* Legacy vote buttons - show only when votes > 0 */}

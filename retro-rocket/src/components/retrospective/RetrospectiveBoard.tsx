@@ -10,6 +10,7 @@ import { useActionItems } from '../../hooks/useActionItems';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useRetrospectiveColumns } from '../../hooks/useRetrospectiveColumns';
+import { useSentiment } from '../../hooks/useSentiment';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
@@ -20,13 +21,15 @@ interface RetrospectiveBoardProps {
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
     participants?: any[]; // Necesitamos los participantes para el menú de conversión
+    sentimentAnalysis?: any; // Sentiment analysis hook
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     retrospective,
     currentUser,
     onDataChange,
-    participants = []
+    participants = [],
+    sentimentAnalysis: externalSentimentAnalysis
 }) => {
     // Get language context to trigger re-render when language changes
     useLanguage();
@@ -77,6 +80,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         deleteActionItem,
         convertCardToActionItem
     } = useActionItems(retrospective.id);
+
+    // Sentiment analysis hook - initially disabled, enabled by facilitator
+    const internalSentimentAnalysis = useSentiment(cards, retrospective.id);
+
+    // Use external sentiment analysis if provided, otherwise use internal one
+    const sentimentAnalysis = externalSentimentAnalysis || internalSentimentAnalysis;
 
     // Get current user's name using useCurrentUser hook for more reliable data
     const { fullName, displayName, email, uid } = useCurrentUser();
@@ -243,6 +252,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     participants={participants}
                                     canConvertToAction={isFacilitator}
                                     onConvertToAction={handleConvertToActionItem}
+                                    // Sentiment analysis
+                                    sentimentHook={sentimentAnalysis}
                                 />
                             </motion.div>
                         );

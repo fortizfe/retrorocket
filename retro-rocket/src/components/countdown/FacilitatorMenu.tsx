@@ -15,14 +15,31 @@ import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useLanguage } from '../../hooks/useLanguage';
 import { FacilitatorNotes } from '../facilitator/FacilitatorNotes';
+import SentimentControls from '../sentiment/SentimentControls';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
     facilitatorId: string;
     isOwner: boolean;
+    // Sentiment analysis props
+    sentimentAnalysis?: {
+        enabled: boolean;
+        ready: boolean;
+        loading: boolean;
+        error?: string;
+        config: any;
+        setEnabled: (enabled: boolean) => void;
+        updateConfig: (updates: any) => void;
+        getSentimentCounts: () => { positive: number; negative: number; neutral: number; total: number };
+    };
 }
 
-const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, facilitatorId, isOwner }) => {
+const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
+    retrospectiveId,
+    facilitatorId,
+    isOwner,
+    sentimentAnalysis
+}) => {
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
@@ -147,7 +164,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
-                aria-expanded={isOpen}
+                aria-expanded={isOpen ? "true" : "false"}
                 aria-haspopup="true"
             >
                 {isOpen ? (
@@ -296,6 +313,22 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({ retrospectiveId, faci
                                             </Button>
                                         )}
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Sentiment Analysis Controls */}
+                            {sentimentAnalysis && (
+                                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                                    <SentimentControls
+                                        enabled={sentimentAnalysis.enabled}
+                                        ready={sentimentAnalysis.ready}
+                                        loading={sentimentAnalysis.loading}
+                                        error={sentimentAnalysis.error}
+                                        config={sentimentAnalysis.config}
+                                        onToggle={sentimentAnalysis.setEnabled}
+                                        onConfigUpdate={sentimentAnalysis.updateConfig}
+                                        cardCount={sentimentAnalysis.getSentimentCounts().total}
+                                    />
                                 </div>
                             )}
 
