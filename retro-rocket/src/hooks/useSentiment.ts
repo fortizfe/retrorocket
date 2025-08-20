@@ -5,7 +5,8 @@ import {
     SentimentResult,
     SentimentConfiguration,
     DEFAULT_SENTIMENT_CONFIG,
-    SentimentType
+    SentimentType,
+    shouldShowSentimentBadge
 } from '../types/sentiment';
 
 // Cache for analyzed content to avoid reprocessing
@@ -396,6 +397,11 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
     // Memoize utility functions to prevent recreations
     const isProcessing = useCallback((cardId: string) => processingQueue.current.has(cardId), []);
 
+    // Memoize shouldShowBadge function
+    const shouldShowBadge = useCallback((result: SentimentResult): boolean => {
+        return shouldShowSentimentBadge(result, config);
+    }, [config.threshold, config.thresholds]);
+
     // Memoize getSentiment function with results.size for stable reference
     const getSentiment = useCallback((cardId: string): SentimentResult | undefined =>
         state.results.get(cardId), [state.results.size]);
@@ -406,13 +412,13 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         Array.from(cardsMapRef.current.values()).forEach(card => {
             if (!shouldAnalyzeCard(card)) return;
             const result = state.results.get(card.id);
-            if (result && result.confidence >= config.threshold) {
+            if (result && shouldShowSentimentBadge(result, config)) {
                 counts[result.sentiment]++;
             }
             counts.total++;
         });
         return counts;
-    }, [state.results.size, config.threshold]);    // Memoize the return object with minimal dependencies to prevent recreations
+    }, [state.results.size, config.threshold, config.thresholds]);    // Memoize the return object with minimal dependencies to prevent recreations
     const hookResult = useMemo(() => {
         const result = {
             // State
@@ -426,6 +432,7 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
             results: state.results,
             getSentiment,
             getSentimentCounts,
+            shouldShowBadge,
 
             // Actions and utilities - these are stable
             setEnabled,
@@ -447,8 +454,10 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         config.threshold,
         config.enabled,
         config.modelId,
+        config.thresholds,
         getSentiment,
         getSentimentCounts,
+        shouldShowBadge,
         setEnabled,
         updateConfig,
         analyzeCard,

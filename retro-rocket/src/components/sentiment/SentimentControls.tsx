@@ -130,6 +130,9 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                     <p>
                         🌍 Compatible con español e inglés • 🔒 100% privado (no envía datos externos)
                     </p>
+                    <p>
+                        ⚡ Umbrales optimizados: neutrales más permisivos para mejor análisis
+                    </p>
                 </motion.div>
             )}
 

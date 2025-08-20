@@ -22,6 +22,12 @@ export interface SentimentConfiguration {
     modelId: string;
     threshold: number; // Confidence threshold for showing results
     batchSize: number; // Number of cards to process at once
+    // New granular thresholds
+    thresholds?: {
+        positive: number; // Minimum confidence to show positive badges
+        negative: number; // Minimum confidence to show negative badges  
+        neutral: number;  // Minimum confidence to show neutral badges
+    };
 }
 
 export interface SentimentBadgeProps {
@@ -79,8 +85,14 @@ export const SENTIMENT_MODELS: ModelConfig[] = [
 export const DEFAULT_SENTIMENT_CONFIG: SentimentConfiguration = {
     enabled: true,
     modelId: SENTIMENT_MODELS[0].id,
-    threshold: 0.6,
-    batchSize: 5
+    threshold: 0.4, // Lowered from 0.6 to 0.4 for more permissive sentiment detection
+    batchSize: 5,
+    // Granular thresholds for different sentiment types
+    thresholds: {
+        positive: 0.4,  // Higher confidence required for positive
+        negative: 0.4,  // Higher confidence required for negative
+        neutral: 0.25   // Lower confidence OK for neutral (more inclusive)
+    }
 };
 
 // Colors for sentiment display
@@ -98,9 +110,33 @@ export const SENTIMENT_COLORS = {
         icon: '😞'
     },
     neutral: {
-        bg: 'bg-gray-100 dark:bg-gray-800/20',
-        text: 'text-gray-800 dark:text-gray-300',
-        border: 'border-gray-200 dark:border-gray-600',
+        bg: 'bg-slate-100 dark:bg-slate-700/40',
+        text: 'text-slate-700 dark:text-slate-300',
+        border: 'border-slate-300 dark:border-slate-600',
         icon: '😐'
     }
 } as const;
+
+// Utility function to determine if a sentiment badge should be shown
+export const shouldShowSentimentBadge = (
+    result: SentimentResult,
+    config: SentimentConfiguration
+): boolean => {
+    if (!result || !config.thresholds) {
+        // Fallback to general threshold
+        return result.confidence >= config.threshold;
+    }
+
+    const thresholds = config.thresholds;
+
+    switch (result.sentiment) {
+        case 'positive':
+            return result.confidence >= thresholds.positive;
+        case 'negative':
+            return result.confidence >= thresholds.negative;
+        case 'neutral':
+            return result.confidence >= thresholds.neutral;
+        default:
+            return false;
+    }
+};

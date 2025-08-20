@@ -180,9 +180,22 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 
                             {/* Sentiment Badge - Memoized to prevent flickering */}
                             {React.useMemo(() => {
-                                if (!sentimentResult || card.column === 'actions' || sentimentResult.confidence < sentimentThreshold) {
+                                if (!sentimentResult || card.column === 'actions') {
                                     return null;
                                 }
+                                // Use granular threshold logic - positive/negative need higher confidence, neutral can be lower
+                                const thresholds = {
+                                    positive: sentimentThreshold || 0.4,
+                                    negative: sentimentThreshold || 0.4,
+                                    neutral: 0.25  // Lower threshold for neutral to show more results
+                                };
+
+                                const requiredThreshold = thresholds[sentimentResult.sentiment] || sentimentThreshold;
+
+                                if (sentimentResult.confidence < requiredThreshold) {
+                                    return null;
+                                }
+
                                 return (
                                     <SentimentBadge
                                         sentiment={sentimentResult.sentiment}

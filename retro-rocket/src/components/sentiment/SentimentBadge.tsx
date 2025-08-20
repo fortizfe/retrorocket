@@ -20,8 +20,9 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = React.memo(({
 
     const confidencePercentage = Math.round(confidence * 100);
 
-    // Don't show badge if confidence is very low
-    if (confidence < 0.3) {
+    // Show badge with lower threshold to include more neutral results
+    // This allows neutral sentiments to be displayed more frequently
+    if (confidence < 0.2) {
         return null;
     }
 
