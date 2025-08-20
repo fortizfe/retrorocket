@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Card } from '../types/card';
 import {
     SentimentAnalysisState,
@@ -44,9 +44,14 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
 
     // Initialize worker
     const initializeWorker = useCallback(async () => {
-        if (workerRef.current || !state.enabled) return;
+        // Prevent multiple initializations
+        if (workerRef.current || !state.enabled) {
+            return;
+        }
 
         try {
+            setState(prev => ({ ...prev, loading: true, ready: false, error: undefined }));
+
             // Create worker from the TypeScript file
             workerRef.current = new Worker(
                 new URL('../workers/sentimentWorker.ts', import.meta.url),
@@ -77,7 +82,6 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
 
                     case 'result':
                         if (data.cardId) {
-                            console.log('Received sentiment result:', data);
                             setState(prev => {
                                 const newResults = new Map(prev.results);
                                 newResults.set(data.cardId, {
@@ -85,7 +89,6 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
                                     timestamp: new Date(data.timestamp)
                                 });
                                 processingQueue.current.delete(data.cardId);
-                                console.log('Updated results map, new size:', newResults.size);
                                 return {
                                     ...prev,
                                     results: newResults
@@ -96,7 +99,6 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
 
                     case 'batch_result':
                         if (data.results) {
-                            console.log('Received batch sentiment results:', data.results);
                             const newResults = new Map(state.results);
                             for (const result of data.results) {
                                 newResults.set(result.cardId, {
@@ -105,7 +107,6 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
                                 });
                                 processingQueue.current.delete(result.cardId);
                             }
-                            console.log('Updated results map after batch, new size:', newResults.size);
                             setState(prev => ({
                                 ...prev,
                                 results: newResults
@@ -210,11 +211,7 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
 
     // Analyze multiple cards in batch
     const analyzeBatch = useCallback((cardsToAnalyze: Card[]) => {
-        console.log('analyzeBatch called with:', cardsToAnalyze.map(c => ({ id: c.id, content: c.content })));
-        console.log('State ready:', state.ready, 'Worker exists:', !!workerRef.current);
-
         if (!state.ready || !workerRef.current) {
-            console.log('analyzeBatch early return - not ready or no worker');
             return;
         }
 
@@ -335,26 +332,28 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
                 cleanupWorker();
             }
         };
-    }, [state.enabled, config.enabled, initializeWorker, cleanupWorker]);    // Auto-analyze new cards
+    }, [state.enabled, config.enabled, initializeWorker, cleanupWorker]);    // Auto-analyze new cards - only when truly ready
     useEffect(() => {
-        console.log('Auto-analyze effect triggered:', { ready: state.ready, enabled: state.enabled, cardsCount: cards.length });
-
+        // Wait a bit after ready to ensure everything is settled
         if (!state.ready || !state.enabled) {
-            console.log('Auto-analyze skipped - not ready or not enabled');
             return;
         }
 
-        // Batch analyze all unanalyzed cards on startup
-        const unanalyzedCards = cards.filter(card =>
-            shouldAnalyzeCard(card) && !state.results.has(card.id)
-        );
+        const timeoutId = setTimeout(() => {
+            // Double check we're still ready and enabled
+            if (!state.ready || !state.enabled) return;
 
-        console.log(`Found ${unanalyzedCards.length} unanalyzed cards:`, unanalyzedCards.map(c => ({ id: c.id, content: c.content })));
+            // Batch analyze all unanalyzed cards on startup
+            const unanalyzedCards = cards.filter(card =>
+                shouldAnalyzeCard(card) && !state.results.has(card.id)
+            );
 
-        if (unanalyzedCards.length > 0) {
-            console.log('Starting batch analysis for unanalyzed cards');
-            analyzeBatch(unanalyzedCards);
-        }
+            if (unanalyzedCards.length > 0) {
+                analyzeBatch(unanalyzedCards);
+            }
+        }, 500); // Wait 500ms after ready to ensure worker is fully initialized
+
+        return () => clearTimeout(timeoutId);
     }, [cards, state.ready, state.enabled, analyzeBatch, state.results]);
 
     // Cleanup on unmount
@@ -362,7 +361,12 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         return cleanupWorker;
     }, [cleanupWorker]);
 
-    return {
+    // Memoize utility functions to prevent recreations
+    const isProcessing = useCallback((cardId: string) => processingQueue.current.has(cardId), []);
+
+    // Memoize the return object to prevent unnecessary re-renders
+    // Only recreate when absolutely essential properties change
+    return useMemo(() => ({
         // State
         enabled: state.enabled,
         ready: state.ready,
@@ -383,7 +387,12 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         filterCardsBySentiment,
 
         // Utilities
-        isProcessing: (cardId: string) => processingQueue.current.has(cardId),
+        isProcessing,
         shouldAnalyze: shouldAnalyzeCard
-    };
+    }), [
+        state.enabled, // Critical - controls badge visibility  
+        state.ready,   // Critical - controls when badges appear
+        // Note: Deliberately minimal dependencies to prevent constant recreations
+        // All functions use useCallback with stable dependencies
+    ]);
 }

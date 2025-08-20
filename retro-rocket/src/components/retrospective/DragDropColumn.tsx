@@ -153,9 +153,6 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                     {sortedCards.map((card) => {
                         // Only get sentiment result if sentiment analysis is enabled
                         const sentimentResult = (sentimentHook?.enabled) ? sentimentHook?.getSentiment(card.id) : undefined;
-                        console.log(`Card ${card.id}: sentimentResult =`, sentimentResult);
-                        console.log(`SentimentHook enabled: ${sentimentHook?.enabled}, ready: ${sentimentHook?.ready}`);
-                        console.log(`Results map size: ${sentimentHook?.results.size}`);
 
                         return (
                             <SortableCard

@@ -177,11 +177,6 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
 
                             {/* Sentiment Badge */}
-                            {(() => {
-                                console.log(`DraggableCard ${card.id}: sentimentResult =`, sentimentResult);
-                                console.log(`Should show badge: ${!!(sentimentResult && card.column !== 'actions')}`);
-                                return null;
-                            })()}
                             {sentimentResult && card.column !== 'actions' && (
                                 <SentimentBadge
                                     sentiment={sentimentResult.sentiment}
