@@ -21,7 +21,6 @@ interface FacilitatorMenuProps {
     retrospectiveId: string;
     facilitatorId: string;
     isOwner: boolean;
-    // Sentiment analysis props
     sentimentAnalysis?: {
         enabled: boolean;
         ready: boolean;

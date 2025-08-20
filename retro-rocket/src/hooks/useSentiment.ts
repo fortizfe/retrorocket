@@ -94,11 +94,23 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
                     case 'result':
                         if (data.cardId) {
                             setState(prev => {
-                                const newResults = new Map(prev.results);
-                                newResults.set(data.cardId, {
+                                // Check if the result is actually different to avoid unnecessary updates
+                                const existingResult = prev.results.get(data.cardId);
+                                const newResult = {
                                     ...data,
                                     timestamp: new Date(data.timestamp)
-                                });
+                                };
+
+                                if (existingResult &&
+                                    existingResult.sentiment === newResult.sentiment &&
+                                    Math.abs(existingResult.confidence - newResult.confidence) < 0.01) {
+                                    // Result hasn't changed meaningfully, just clean up processing queue
+                                    processingQueue.current.delete(data.cardId);
+                                    return prev;
+                                }
+
+                                const newResults = new Map(prev.results);
+                                newResults.set(data.cardId, newResult);
                                 processingQueue.current.delete(data.cardId);
                                 return {
                                     ...prev,
@@ -110,18 +122,33 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
 
                     case 'batch_result':
                         if (data.results) {
-                            const newResults = new Map(state.results);
-                            for (const result of data.results) {
-                                newResults.set(result.cardId, {
-                                    ...result,
-                                    timestamp: new Date(result.timestamp)
-                                });
-                                processingQueue.current.delete(result.cardId);
-                            }
-                            setState(prev => ({
-                                ...prev,
-                                results: newResults
-                            }));
+                            setState(prev => {
+                                const newResults = new Map(prev.results);
+                                let hasChanges = false;
+
+                                for (const result of data.results) {
+                                    const existingResult = newResults.get(result.cardId);
+                                    const newResult = {
+                                        ...result,
+                                        timestamp: new Date(result.timestamp)
+                                    };
+
+                                    // Only update if result is meaningfully different
+                                    if (!existingResult ||
+                                        existingResult.sentiment !== newResult.sentiment ||
+                                        Math.abs(existingResult.confidence - newResult.confidence) >= 0.01) {
+                                        newResults.set(result.cardId, newResult);
+                                        hasChanges = true;
+                                    }
+
+                                    processingQueue.current.delete(result.cardId);
+                                }
+
+                                return hasChanges ? {
+                                    ...prev,
+                                    results: newResults
+                                } : prev;
+                            });
                         }
                         break;
 
@@ -369,7 +396,23 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
     // Memoize utility functions to prevent recreations
     const isProcessing = useCallback((cardId: string) => processingQueue.current.has(cardId), []);
 
-    // Memoize the return object with minimal dependencies to prevent recreations
+    // Memoize getSentiment function with results.size for stable reference
+    const getSentiment = useCallback((cardId: string): SentimentResult | undefined =>
+        state.results.get(cardId), [state.results.size]);
+
+    // Memoize getSentimentCounts function with results.size instead of the Map
+    const getSentimentCounts = useCallback(() => {
+        const counts = { positive: 0, negative: 0, neutral: 0, total: 0 };
+        Array.from(cardsMapRef.current.values()).forEach(card => {
+            if (!shouldAnalyzeCard(card)) return;
+            const result = state.results.get(card.id);
+            if (result && result.confidence >= config.threshold) {
+                counts[result.sentiment]++;
+            }
+            counts.total++;
+        });
+        return counts;
+    }, [state.results.size, config.threshold]);    // Memoize the return object with minimal dependencies to prevent recreations
     const hookResult = useMemo(() => {
         const result = {
             // State
@@ -379,21 +422,10 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
             error: state.error,
             config,
 
-            // Results
+            // Results - use memoized functions
             results: state.results,
-            getSentiment: (cardId: string): SentimentResult | undefined => state.results.get(cardId),
-            getSentimentCounts: () => {
-                const counts = { positive: 0, negative: 0, neutral: 0, total: 0 };
-                Array.from(cardsMapRef.current.values()).forEach(card => {
-                    if (!shouldAnalyzeCard(card)) return;
-                    const result = state.results.get(card.id);
-                    if (result && result.confidence >= config.threshold) {
-                        counts[result.sentiment]++;
-                    }
-                    counts.total++;
-                });
-                return counts;
-            },
+            getSentiment,
+            getSentimentCounts,
 
             // Actions and utilities - these are stable
             setEnabled,
@@ -411,10 +443,18 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         state.ready,
         state.loading,
         state.error,
-        state.results,
+        state.results.size, // Use size instead of the Map itself to reduce re-renders
         config.threshold,
         config.enabled,
         config.modelId,
+        getSentiment,
+        getSentimentCounts,
+        setEnabled,
+        updateConfig,
+        analyzeCard,
+        analyzeBatch,
+        filterCardsBySentiment,
+        isProcessing,
         updateTrigger // Include to trigger updates when cards change
     ]);
 

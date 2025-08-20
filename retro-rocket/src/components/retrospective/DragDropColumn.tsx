@@ -150,7 +150,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
             >
                 <div className="space-y-3">
                     {children}
-                    {sortedCards.map((card) => {
+                    {React.useMemo(() => sortedCards.map((card) => {
                         // Only get sentiment result if sentiment analysis is enabled
                         const sentimentResult = (sentimentHook?.enabled && sentimentHook?.ready) ? sentimentHook?.getSentiment(card.id) : undefined;
 
@@ -176,7 +176,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                                 sentimentThreshold={sentimentHook?.config?.threshold}
                             />
                         );
-                    })}
+                    }), [sortedCards, sentimentHook?.enabled, sentimentHook?.ready, sentimentHook?.getSentiment, sentimentHook?.config?.threshold, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
                 </div>
             </SortableContext>
 

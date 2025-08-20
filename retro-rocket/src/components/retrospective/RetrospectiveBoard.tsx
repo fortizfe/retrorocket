@@ -21,7 +21,7 @@ interface RetrospectiveBoardProps {
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
     participants?: any[]; // Necesitamos los participantes para el menú de conversión
-    sentimentAnalysis?: any; // Sentiment analysis hook
+    onSentimentAnalysisReady?: (sentimentAnalysis: any) => void; // Callback to expose sentiment analysis
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
@@ -29,7 +29,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     currentUser,
     onDataChange,
     participants = [],
-    sentimentAnalysis: externalSentimentAnalysis
+    onSentimentAnalysisReady
 }) => {
     // Get language context to trigger re-render when language changes
     useLanguage();
@@ -82,12 +82,16 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     } = useActionItems(retrospective.id);
 
     // Sentiment analysis hook - initially disabled, enabled by facilitator
-    const internalSentimentAnalysis = useSentiment(cards, retrospective.id);
+    const sentimentAnalysis = useSentiment(cards, retrospective.id);
 
-    // Use external sentiment analysis if provided, otherwise use internal one
-    const sentimentAnalysis = externalSentimentAnalysis || internalSentimentAnalysis;
+    // Expose sentiment analysis to parent component with stable callback
+    const sentimentAnalysisCallback = React.useCallback(() => sentimentAnalysis, [sentimentAnalysis]);
 
-    // Get current user's name using useCurrentUser hook for more reliable data
+    React.useEffect(() => {
+        if (onSentimentAnalysisReady) {
+            onSentimentAnalysisReady(sentimentAnalysisCallback());
+        }
+    }, [onSentimentAnalysisReady, sentimentAnalysisCallback]);    // Get current user's name using useCurrentUser hook for more reliable data
     const { fullName, displayName, email, uid } = useCurrentUser();
 
     // Notify parent component about data changes for export functionality

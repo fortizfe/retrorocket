@@ -2,7 +2,7 @@ import React from 'react';
 import { SentimentBadgeProps, SENTIMENT_COLORS } from '../../types/sentiment';
 import { useLanguage } from '../../hooks/useLanguage';
 
-const SentimentBadge: React.FC<SentimentBadgeProps> = ({
+const SentimentBadge: React.FC<SentimentBadgeProps> = React.memo(({
     sentiment,
     confidence,
     size = 'sm',
@@ -75,6 +75,8 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = ({
             </div>
         </div>
     );
-};
+});
+
+SentimentBadge.displayName = 'SentimentBadge';
 
 export default SentimentBadge;

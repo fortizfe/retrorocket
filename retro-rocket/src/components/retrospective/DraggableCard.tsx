@@ -178,15 +178,20 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <User size={14} />
                             <span>{card.createdBy}</span>
 
-                            {/* Sentiment Badge */}
-                            {sentimentResult && card.column !== 'actions' && sentimentResult.confidence >= sentimentThreshold && (
-                                <SentimentBadge
-                                    sentiment={sentimentResult.sentiment}
-                                    confidence={sentimentResult.confidence}
-                                    size="sm"
-                                    showTooltip={true}
-                                />
-                            )}
+                            {/* Sentiment Badge - Memoized to prevent flickering */}
+                            {React.useMemo(() => {
+                                if (!sentimentResult || card.column === 'actions' || sentimentResult.confidence < sentimentThreshold) {
+                                    return null;
+                                }
+                                return (
+                                    <SentimentBadge
+                                        sentiment={sentimentResult.sentiment}
+                                        confidence={sentimentResult.confidence}
+                                        size="sm"
+                                        showTooltip={true}
+                                    />
+                                );
+                            }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold])}
                         </div>
                         <div className="flex items-center space-x-1">
                             {/* Legacy vote buttons - show only when votes > 0 */}
