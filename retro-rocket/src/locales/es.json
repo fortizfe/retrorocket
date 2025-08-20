@@ -632,5 +632,11 @@
         "exit": "Salir",
         "connectedAs": "Conectado como:",
         "backToDashboard": "Volver al Dashboard"
+    },
+    "sentiment": {
+        "positive": "Positivo",
+        "negative": "Negativo",
+        "neutral": "Neutral",
+        "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza"
     }
 }

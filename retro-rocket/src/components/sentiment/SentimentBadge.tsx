@@ -1,5 +1,6 @@
 import React from 'react';
 import { SentimentBadgeProps, SENTIMENT_COLORS } from '../../types/sentiment';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const SentimentBadge: React.FC<SentimentBadgeProps> = ({
     sentiment,
@@ -7,6 +8,7 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = ({
     size = 'sm',
     showTooltip = true
 }) => {
+    const { t } = useLanguage();
     const colors = SENTIMENT_COLORS[sentiment];
 
     // Size classes
@@ -25,11 +27,7 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = ({
 
     // Get sentiment label
     const getSentimentLabel = () => {
-        switch (sentiment) {
-            case 'positive': return 'Positivo';
-            case 'negative': return 'Negativo';
-            default: return 'Neutral';
-        }
+        return t(`sentiment.${sentiment}`);
     };
 
     const badge = (
@@ -55,7 +53,10 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = ({
     return (
         <div
             className="relative group"
-            title={`Sentimiento ${sentiment} con ${confidencePercentage}% de confianza`}
+            title={t('sentiment.tooltip', {
+                sentiment: getSentimentLabel().toLowerCase(),
+                confidence: confidencePercentage
+            })}
         >
             {badge}
 
@@ -64,7 +65,10 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = ({
                           bg-gray-900 dark:bg-gray-700 text-white text-xs rounded shadow-lg
                           opacity-0 group-hover:opacity-100 transition-opacity duration-200
                           pointer-events-none whitespace-nowrap z-50">
-                Confianza: {confidencePercentage}%
+                {t('sentiment.tooltip', {
+                    sentiment: getSentimentLabel().toLowerCase(),
+                    confidence: confidencePercentage
+                })}
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 
                               border-l-4 border-r-4 border-t-4 border-transparent 
                               border-t-gray-900 dark:border-t-gray-700" />

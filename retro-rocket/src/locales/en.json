@@ -631,5 +631,11 @@
         "exit": "Exit",
         "connectedAs": "Connected as:",
         "backToDashboard": "Back to Dashboard"
+    },
+    "sentiment": {
+        "positive": "Positive",
+        "negative": "Negative",
+        "neutral": "Neutral",
+        "tooltip": "{{sentiment}} sentiment with {{confidence}}% confidence"
     }
 }
