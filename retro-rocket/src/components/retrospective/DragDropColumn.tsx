@@ -152,7 +152,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                     {children}
                     {sortedCards.map((card) => {
                         // Only get sentiment result if sentiment analysis is enabled
-                        const sentimentResult = (sentimentHook?.enabled) ? sentimentHook?.getSentiment(card.id) : undefined;
+                        const sentimentResult = (sentimentHook?.enabled && sentimentHook?.ready) ? sentimentHook?.getSentiment(card.id) : undefined;
 
                         return (
                             <SortableCard
@@ -173,6 +173,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                                 canConvertToAction={canConvertToAction}
                                 onConvertToAction={onConvertToAction}
                                 sentimentResult={sentimentResult}
+                                sentimentThreshold={sentimentHook?.config?.threshold}
                             />
                         );
                     })}
@@ -184,7 +185,8 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                     <DraggableCard
                         card={activeCard}
                         isDragging={true}
-                        sentimentResult={(sentimentHook?.enabled) ? sentimentHook?.getSentiment(activeCard.id) : undefined}
+                        sentimentResult={(sentimentHook?.enabled && sentimentHook?.ready) ? sentimentHook?.getSentiment(activeCard.id) : undefined}
+                        sentimentThreshold={sentimentHook?.config?.threshold}
                     />
                 ) : null}
             </DragOverlay>

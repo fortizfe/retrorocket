@@ -33,6 +33,7 @@ interface DraggableCardProps {
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
     // Sentiment analysis
     sentimentResult?: SentimentResult;
+    sentimentThreshold?: number;
 }
 
 const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -49,7 +50,8 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     participants = [],
     canConvertToAction = false,
     onConvertToAction,
-    sentimentResult
+    sentimentResult,
+    sentimentThreshold = 0.6
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
@@ -177,7 +179,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <span>{card.createdBy}</span>
 
                             {/* Sentiment Badge */}
-                            {sentimentResult && card.column !== 'actions' && (
+                            {sentimentResult && card.column !== 'actions' && sentimentResult.confidence >= sentimentThreshold && (
                                 <SentimentBadge
                                     sentiment={sentimentResult.sentiment}
                                     confidence={sentimentResult.confidence}

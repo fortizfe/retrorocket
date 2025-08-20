@@ -26,6 +26,7 @@ interface SelectableCardProps {
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
     // Sentiment analysis result
     sentimentResult?: SentimentResult;
+    sentimentThreshold?: number;
 }
 
 const SelectableCard: React.FC<SelectableCardProps> = ({
@@ -45,7 +46,8 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
     participants,
     canConvertToAction,
     onConvertToAction,
-    sentimentResult
+    sentimentResult,
+    sentimentThreshold
 }) => {
     const handleCardClick = (e: React.MouseEvent) => {
         if (isGroupingMode && onSelect) {
@@ -102,6 +104,7 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}
                 sentimentResult={sentimentResult}
+                sentimentThreshold={sentimentThreshold}
             />
         </motion.div>
     );

@@ -25,6 +25,7 @@ interface SortableCardProps {
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
     // Sentiment analysis result
     sentimentResult?: SentimentResult;
+    sentimentThreshold?: number;
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({
@@ -43,7 +44,8 @@ const SortableCard: React.FC<SortableCardProps> = ({
     participants,
     canConvertToAction,
     onConvertToAction,
-    sentimentResult
+    sentimentResult,
+    sentimentThreshold
 }) => {
     const {
         attributes,
@@ -91,6 +93,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}
                 sentimentResult={sentimentResult}
+                sentimentThreshold={sentimentThreshold}
             />
         </div>
     );

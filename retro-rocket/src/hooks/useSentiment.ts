@@ -42,6 +42,17 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
     const workerRef = useRef<Worker | null>(null);
     const processingQueue = useRef<Set<string>>(new Set());
 
+    // Stable reference to cards to prevent hook recreation
+    const cardsMapRef = useRef<Map<string, Card>>(new Map());
+    const [updateTrigger, setUpdateTrigger] = useState(0);
+
+    // Update cards map when cards change, but don't recreate hook
+    useEffect(() => {
+        const newCardsMap = new Map(cards.map(card => [card.id, card]));
+        cardsMapRef.current = newCardsMap;
+        setUpdateTrigger(prev => prev + 1); // Force update for getSentimentCounts
+    }, [cards]);
+
     // Initialize worker
     const initializeWorker = useCallback(async () => {
         // Prevent multiple initializations
@@ -260,28 +271,6 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         });
     }, [state.ready, state.results, config.batchSize]);
 
-    // Get sentiment result for a card
-    const getSentiment = useCallback((cardId: string): SentimentResult | undefined => {
-        return state.results.get(cardId);
-    }, [state.results]);
-
-    // Get sentiment counts for filtering
-    const getSentimentCounts = useCallback(() => {
-        const counts = { positive: 0, negative: 0, neutral: 0, total: 0 };
-
-        cards.forEach(card => {
-            if (!shouldAnalyzeCard(card)) return;
-
-            const result = state.results.get(card.id);
-            if (result && result.confidence >= config.threshold) {
-                counts[result.sentiment]++;
-            }
-            counts.total++;
-        });
-
-        return counts;
-    }, [cards, state.results, config.threshold]);
-
     // Filter cards by sentiment
     const filterCardsBySentiment = useCallback((
         cardsToFilter: Card[],
@@ -305,9 +294,18 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
         setConfig(prev => ({ ...prev, enabled: enable }));
 
         if (!enable) {
+            // Clear results when disabled
+            setState(prev => ({ ...prev, results: new Map() }));
             cleanupWorker();
+        } else {
+            // When enabling, trigger initialization after a short delay
+            setTimeout(() => {
+                if (workerRef.current === null) {
+                    initializeWorker();
+                }
+            }, 100);
         }
-    }, [cleanupWorker]);
+    }, [cleanupWorker, initializeWorker]);
 
     // Update configuration
     const updateConfig = useCallback((updates: Partial<SentimentConfiguration>) => {
@@ -332,29 +330,36 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
                 cleanupWorker();
             }
         };
-    }, [state.enabled, config.enabled, initializeWorker, cleanupWorker]);    // Auto-analyze new cards - only when truly ready
+    }, [state.enabled, config.enabled, initializeWorker, cleanupWorker]);    // Auto-analyze new cards - using stable references to prevent flicker
     useEffect(() => {
-        // Wait a bit after ready to ensure everything is settled
         if (!state.ready || !state.enabled) {
             return;
         }
 
-        const timeoutId = setTimeout(() => {
-            // Double check we're still ready and enabled
-            if (!state.ready || !state.enabled) return;
+        // Get current cards from stable reference
+        const currentCards = Array.from(cardsMapRef.current.values());
 
-            // Batch analyze all unanalyzed cards on startup
-            const unanalyzedCards = cards.filter(card =>
-                shouldAnalyzeCard(card) && !state.results.has(card.id)
-            );
+        // Only analyze when there are actually new cards
+        const needsAnalysis = currentCards.some(card =>
+            shouldAnalyzeCard(card) && !state.results.has(card.id)
+        );
 
-            if (unanalyzedCards.length > 0) {
-                analyzeBatch(unanalyzedCards);
-            }
-        }, 500); // Wait 500ms after ready to ensure worker is fully initialized
+        if (needsAnalysis) {
+            // Use a shorter delay to minimize flicker
+            const timeoutId = setTimeout(() => {
+                const cardsToAnalyze = Array.from(cardsMapRef.current.values());
+                const unanalyzedCards = cardsToAnalyze.filter(card =>
+                    shouldAnalyzeCard(card) && !state.results.has(card.id)
+                );
 
-        return () => clearTimeout(timeoutId);
-    }, [cards, state.ready, state.enabled, analyzeBatch, state.results]);
+                if (unanalyzedCards.length > 0) {
+                    analyzeBatch(unanalyzedCards);
+                }
+            }, 50);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [updateTrigger, state.ready, state.enabled, state.results.size]); // Stable dependencies
 
     // Cleanup on unmount
     useEffect(() => {
@@ -364,35 +369,54 @@ export function useSentiment(cards: Card[], retrospectiveId: string) {
     // Memoize utility functions to prevent recreations
     const isProcessing = useCallback((cardId: string) => processingQueue.current.has(cardId), []);
 
-    // Memoize the return object to prevent unnecessary re-renders
-    // Only recreate when absolutely essential properties change
-    return useMemo(() => ({
-        // State
-        enabled: state.enabled,
-        ready: state.ready,
-        loading: state.loading,
-        error: state.error,
-        config,
+    // Memoize the return object with minimal dependencies to prevent recreations
+    const hookResult = useMemo(() => {
+        const result = {
+            // State
+            enabled: state.enabled,
+            ready: state.ready,
+            loading: state.loading,
+            error: state.error,
+            config,
 
-        // Results
-        results: state.results,
-        getSentiment,
-        getSentimentCounts,
+            // Results
+            results: state.results,
+            getSentiment: (cardId: string): SentimentResult | undefined => state.results.get(cardId),
+            getSentimentCounts: () => {
+                const counts = { positive: 0, negative: 0, neutral: 0, total: 0 };
+                Array.from(cardsMapRef.current.values()).forEach(card => {
+                    if (!shouldAnalyzeCard(card)) return;
+                    const result = state.results.get(card.id);
+                    if (result && result.confidence >= config.threshold) {
+                        counts[result.sentiment]++;
+                    }
+                    counts.total++;
+                });
+                return counts;
+            },
 
-        // Actions  
-        setEnabled,
-        updateConfig,
-        analyzeCard,
-        analyzeBatch,
-        filterCardsBySentiment,
+            // Actions and utilities - these are stable
+            setEnabled,
+            updateConfig,
+            analyzeCard,
+            analyzeBatch,
+            filterCardsBySentiment,
+            isProcessing,
+            shouldAnalyze: shouldAnalyzeCard
+        };
 
-        // Utilities
-        isProcessing,
-        shouldAnalyze: shouldAnalyzeCard
-    }), [
-        state.enabled, // Critical - controls badge visibility  
-        state.ready,   // Critical - controls when badges appear
-        // Note: Deliberately minimal dependencies to prevent constant recreations
-        // All functions use useCallback with stable dependencies
+        return result;
+    }, [
+        state.enabled,
+        state.ready,
+        state.loading,
+        state.error,
+        state.results,
+        config.threshold,
+        config.enabled,
+        config.modelId,
+        updateTrigger // Include to trigger updates when cards change
     ]);
+
+    return hookResult;
 }
