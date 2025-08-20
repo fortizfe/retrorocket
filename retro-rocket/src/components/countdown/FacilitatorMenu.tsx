@@ -110,11 +110,28 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
         if (!triggerRect) return {};
 
         const dropdownWidth = 320; // w-80 = 320px
+        const maxHeight = window.innerHeight * 0.7; // max-h-[70vh]
         const spacing = 8;
 
-        // Always position to the left of the trigger
+        // Calculate left position - always position to the left of the trigger
         const left = Math.max(spacing, triggerRect.right - dropdownWidth);
-        const top = triggerRect.bottom + spacing;
+
+        // Calculate top position with viewport bounds checking
+        let top = triggerRect.bottom + spacing;
+
+        // Check if dropdown would go below viewport
+        if (top + maxHeight > window.innerHeight - spacing) {
+            // Position above the trigger if there's more space
+            const spaceAbove = triggerRect.top - spacing;
+            const spaceBelow = window.innerHeight - triggerRect.bottom - spacing;
+
+            if (spaceAbove > spaceBelow && spaceAbove >= 200) {
+                top = Math.max(spacing, triggerRect.top - maxHeight - spacing);
+            } else {
+                // Keep below but adjust to fit in viewport
+                top = Math.max(spacing, window.innerHeight - maxHeight - spacing);
+            }
+        }
 
         return {
             left: `${left}px`,
@@ -164,7 +181,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
-                aria-expanded={isOpen ? "true" : "false"}
+                aria-expanded={isOpen ? 'true' : 'false'}
                 aria-haspopup="true"
             >
                 {isOpen ? (
@@ -205,7 +222,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                         </div>
 
                         {/* Content */}
-                        <div className="p-4 space-y-4">
+                        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4">
                             {/* Timer Configuration */}
                             {(!timer || countdownState.totalDuration === 0) && (
                                 <div className="space-y-3">
