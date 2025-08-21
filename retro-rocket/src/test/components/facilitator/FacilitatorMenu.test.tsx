@@ -26,6 +26,9 @@ vi.mock('lucide-react', () => ({
     Pause: () => <svg data-testid="pause-icon" />,
     RotateCcw: () => <svg data-testid="rotate-icon" />,
     Trash2: () => <svg data-testid="trash-icon" />,
+    Timer: () => <svg data-testid="timer-icon" />,
+    Brain: () => <svg data-testid="brain-icon" />,
+    StickyNote: () => <svg data-testid="sticky-note-icon" />,
 }));
 
 vi.mock('../../../hooks/useCountdown', () => ({
@@ -43,6 +46,37 @@ vi.mock('../../../hooks/useLanguage', () => ({
 vi.mock('../../../components/facilitator/FacilitatorNotes', () => ({
     FacilitatorNotes: ({ retrospectiveId }: any) => (
         <div data-testid="facilitator-notes">Notes for {retrospectiveId}</div>
+    ),
+}));
+
+vi.mock('../../../components/facilitator/FacilitatorMenuTabs', () => ({
+    default: ({ children, onClose }: any) => (
+        <div data-testid="facilitator-menu-tabs">
+            <button onClick={onClose} data-testid="close-menu">Close</button>
+            {children}
+        </div>
+    ),
+}));
+
+vi.mock('../../../components/facilitator/TimerTab', () => ({
+    default: ({ retrospectiveId }: any) => (
+        <div data-testid="timer-tab">Timer for {retrospectiveId}</div>
+    ),
+}));
+
+vi.mock('../../../components/facilitator/SentimentTab', () => ({
+    default: (props: any) => (
+        <div data-testid="sentiment-tab">
+            Sentiment Analysis {props.enabled ? 'enabled' : 'disabled'}
+        </div>
+    ),
+}));
+
+vi.mock('../../../components/facilitator/NotesTab', () => ({
+    default: ({ retrospectiveId, facilitatorId }: any) => (
+        <div data-testid="notes-tab">
+            Notes for {retrospectiveId} by {facilitatorId}
+        </div>
     ),
 }));
 

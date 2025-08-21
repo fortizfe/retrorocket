@@ -3,19 +3,15 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Menu,
-    X,
-    Settings,
-    Play,
-    Pause,
-    RotateCcw,
-    Trash2
+    X
 } from 'lucide-react';
-import Button from '../ui/Button';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useLanguage } from '../../hooks/useLanguage';
-import { FacilitatorNotes } from '../facilitator/FacilitatorNotes';
-import SentimentControls from '../sentiment/SentimentControls';
+import FacilitatorMenuTabs from '../facilitator/FacilitatorMenuTabs';
+import TimerTab from '../facilitator/TimerTab';
+import SentimentTab from '../facilitator/SentimentTab';
+import NotesTab from '../facilitator/NotesTab';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
@@ -41,9 +37,8 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
 }) => {
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('timer');
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-    const [inputs, setInputs] = useState({ minutes: 0, seconds: 0 });
-    const [isCreating, setIsCreating] = useState(false);
 
     const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -51,12 +46,6 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     const {
         timer,
         countdownState,
-        loading,
-        createTimer,
-        startTimer,
-        pauseTimer,
-        resetTimer,
-        deleteTimer,
     } = useCountdown(retrospectiveId);
 
     // Bloquear scroll cuando el menú esté abierto
@@ -108,8 +97,8 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     const getPositionStyles = () => {
         if (!triggerRect) return {};
 
-        const dropdownWidth = 320; // w-80 = 320px
-        const maxHeight = window.innerHeight * 0.7; // max-h-[70vh]
+        const dropdownWidth = 384; // w-96 = 384px
+        const maxHeight = window.innerHeight * 0.8; // max-h-[80vh]
         const spacing = 8;
 
         // Calculate left position - always position to the left of the trigger
@@ -138,33 +127,65 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
         };
     };
 
-    const handleInputChange = (field: 'minutes' | 'seconds', value: number) => {
-        setInputs(prev => ({ ...prev, [field]: Math.max(0, value) }));
+    // Calculate badges for tabs
+    const getTimerBadge = () => {
+        if (!timer) return undefined;
+        if (countdownState.isFinished) return '!';
+        if (countdownState.isRunning) return '▶';
+        if (countdownState.isPaused) return '⏸';
+        return '⏲';
     };
 
-    const handleCreateTimer = async () => {
-        const totalSeconds = inputs.minutes * 60 + inputs.seconds;
-        if (totalSeconds <= 0) return;
+    const getSentimentBadge = () => {
+        if (!sentimentAnalysis) return undefined;
+        if (!sentimentAnalysis.enabled) return 'OFF';
+        if (sentimentAnalysis.loading) return '...';
+        if (sentimentAnalysis.error) return '!';
+        if (sentimentAnalysis.ready) return '✓';
+        return '?';
+    };
 
-        setIsCreating(true);
-        try {
-            await createTimer(totalSeconds, 'facilitator');
-            setInputs({ minutes: 0, seconds: 0 });
-        } finally {
-            setIsCreating(false);
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId);
+    };
+
+    const handleClose = () => {
+        setIsOpen(false);
+    };
+
+    // Render tab content
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'timer':
+                return <TimerTab retrospectiveId={retrospectiveId} />;
+            case 'sentiment':
+                return sentimentAnalysis ? (
+                    <SentimentTab
+                        enabled={sentimentAnalysis.enabled}
+                        ready={sentimentAnalysis.ready}
+                        loading={sentimentAnalysis.loading}
+                        error={sentimentAnalysis.error}
+                        config={sentimentAnalysis.config}
+                        onToggle={sentimentAnalysis.setEnabled}
+                        onConfigUpdate={sentimentAnalysis.updateConfig}
+                        cardCount={sentimentAnalysis.getSentimentCounts().total}
+                    />
+                ) : (
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                        <p>Análisis de sentimientos no disponible</p>
+                    </div>
+                );
+            case 'notes':
+                return (
+                    <NotesTab
+                        retrospectiveId={retrospectiveId}
+                        facilitatorId={facilitatorId}
+                    />
+                );
+            default:
+                return null;
         }
     };
-
-    const handleStart = () => startTimer();
-    const handlePause = () => pauseTimer();
-    const handleReset = () => resetTimer();
-    const handleDelete = () => deleteTimer();
-
-    // Calculate timer states
-    const canStart = timer && !countdownState.isRunning && !countdownState.isFinished;
-    const canPause = timer && countdownState.isRunning;
-    const canReset = timer && (countdownState.isRunning || countdownState.isPaused);
-    const canDelete = timer;
 
     // Solo mostrar el menú si el usuario es el propietario
     if (!isOwner) {
@@ -177,17 +198,22 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
             <button
                 ref={buttonRef}
                 onClick={handleToggle}
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
+                className="p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
-                aria-expanded={isOpen ? 'true' : 'false'}
+                aria-expanded={isOpen ? "true" : "false"}
                 aria-haspopup="true"
             >
-                {isOpen ? (
-                    <X className="w-5 h-5" />
-                ) : (
-                    <Menu className="w-5 h-5" />
-                )}
+                <motion.div
+                    animate={{ rotate: isOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    {isOpen ? (
+                        <X className="w-5 h-5" />
+                    ) : (
+                        <Menu className="w-5 h-5" />
+                    )}
+                </motion.div>
             </button>
 
             {/* Portal Dropdown Menu */}
@@ -198,169 +224,20 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                         initial={{ opacity: 0, y: -8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="fixed z-[99999] w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg"
+                        transition={{ duration: 0.2 }}
+                        className="fixed z-[99999]"
                         style={triggerRect ? getPositionStyles() : {}}
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                                <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                    {t('retrospective.facilitator.controls')}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                                title="Cerrar"
-                                aria-label="Cerrar menú"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4">
-                            {/* Timer Configuration */}
-                            {(!timer || countdownState.totalDuration === 0) && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        <Settings className="w-4 h-4" />
-                                        {t('retrospective.facilitator.configureTime')}
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="60"
-                                                value={inputs.minutes}
-                                                onChange={(e) => handleInputChange('minutes', parseInt(e.target.value) || 0)}
-                                                className="w-16 px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                                                placeholder="0"
-                                            />
-                                            <span className="text-sm text-slate-600 dark:text-slate-400">min</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="59"
-                                                value={inputs.seconds}
-                                                onChange={(e) => handleInputChange('seconds', parseInt(e.target.value) || 0)}
-                                                className="w-16 px-2 py-1 text-sm border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                                                placeholder="0"
-                                            />
-                                            <span className="text-sm text-slate-600 dark:text-slate-400">seg</span>
-                                        </div>
-                                        <Button
-                                            onClick={handleCreateTimer}
-                                            disabled={isCreating || loading}
-                                            variant="primary"
-                                            size="sm"
-                                            className="ml-2"
-                                        >
-                                            {isCreating ? t('retrospective.facilitator.countdown.creating') : t('retrospective.facilitator.create')}
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Timer Controls */}
-                            {timer && countdownState.totalDuration > 0 && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        <Settings className="w-4 h-4" />
-                                        {t('retrospective.facilitator.countdown.control')}
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        {canStart && (
-                                            <Button
-                                                onClick={handleStart}
-                                                disabled={loading}
-                                                variant="primary"
-                                                size="sm"
-                                                className="flex items-center gap-1 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
-                                            >
-                                                <Play className="w-4 h-4" />
-                                                Iniciar
-                                            </Button>
-                                        )}
-
-                                        {canPause && (
-                                            <Button
-                                                onClick={handlePause}
-                                                disabled={loading}
-                                                variant="secondary"
-                                                size="sm"
-                                                className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700"
-                                            >
-                                                <Pause className="w-4 h-4" />
-                                                Pausar
-                                            </Button>
-                                        )}
-
-                                        {canReset && (
-                                            <Button
-                                                onClick={handleReset}
-                                                disabled={loading}
-                                                variant="secondary"
-                                                size="sm"
-                                                className="flex items-center gap-1"
-                                            >
-                                                <RotateCcw className="w-4 h-4" />
-                                                Reiniciar
-                                            </Button>
-                                        )}
-
-                                        {canDelete && (
-                                            <Button
-                                                onClick={handleDelete}
-                                                disabled={loading}
-                                                variant="danger"
-                                                size="sm"
-                                                className="flex items-center gap-1"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Eliminar
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Sentiment Analysis Controls */}
-                            {sentimentAnalysis && (
-                                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                                    <SentimentControls
-                                        enabled={sentimentAnalysis.enabled}
-                                        ready={sentimentAnalysis.ready}
-                                        loading={sentimentAnalysis.loading}
-                                        error={sentimentAnalysis.error}
-                                        config={sentimentAnalysis.config}
-                                        onToggle={sentimentAnalysis.setEnabled}
-                                        onConfigUpdate={sentimentAnalysis.updateConfig}
-                                        cardCount={sentimentAnalysis.getSentimentCounts().total}
-                                    />
-                                </div>
-                            )}
-
-                            {/* Facilitator Notes */}
-                            <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                                <FacilitatorNotes
-                                    retrospectiveId={retrospectiveId}
-                                    facilitatorId={facilitatorId}
-                                />
-                            </div>
-
-                            {/* Status Info */}
-                            <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-700">
-                                {t('retrospective.facilitator.onlyYouCanSee')}
-                            </div>
-                        </div>
+                        <FacilitatorMenuTabs
+                            activeTab={activeTab}
+                            onTabChange={handleTabChange}
+                            onClose={handleClose}
+                            timerBadge={getTimerBadge()}
+                            sentimentBadge={getSentimentBadge()}
+                            notesBadge={undefined} // Could add notes count here later
+                        >
+                            {renderTabContent()}
+                        </FacilitatorMenuTabs>
                     </motion.div>
                 </AnimatePresence>,
                 document.body

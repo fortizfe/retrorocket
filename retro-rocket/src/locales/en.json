@@ -279,6 +279,7 @@
             "controls": "Facilitator Controls",
             "configureTime": "Configure time",
             "create": "Create",
+            "quickTimers": "Quick Timers",
             "onlyYouCanSee": "Only you can see and control this panel as facilitator",
             "onlyFacilitatorCanCreateActions": "Only the facilitator can create action items",
             "facilitatorCanCreateActions": "The facilitator can create action items",
@@ -636,6 +637,59 @@
         "positive": "Positive",
         "negative": "Negative",
         "neutral": "Neutral",
-        "tooltip": "{{sentiment}} sentiment with {{confidence}}% confidence"
+        "tooltip": "{{sentiment}} sentiment with {{confidence}}% confidence",
+        "analysis": "Sentiment Analysis",
+        "model": "AI Model",
+        "confidenceThreshold": "Confidence Threshold",
+        "batchSize": "Batch Size",
+        "advancedSettings": "Advanced Settings",
+        "status": {
+            "initializing": "Initializing...",
+            "connectionError": "Connection error",
+            "disabled": "Disabled",
+            "ready": "Ready for analysis",
+            "configuring": "Configuring..."
+        },
+        "buttons": {
+            "enabled": "Enabled",
+            "enable": "Enable",
+            "pauseAnalysis": "Pause analysis",
+            "reanalyze": "Re-analyze"
+        },
+        "stats": {
+            "cards": "cards",
+            "realTimeAnalysis": "Real-time analysis"
+        },
+        "settings": {
+            "modelSelectedDescription": "Selected model for sentiment analysis",
+            "lowConfidence": "Low confidence",
+            "highConfidence": "High confidence",
+            "batchSizeDescription": "Number of cards to process simultaneously",
+            "autoAnalysis": "Automatic analysis",
+            "autoAnalysisDescription": "Automatically update when cards change"
+        },
+        "help": {
+            "tip": "Tip:",
+            "description": "Sentiment analysis helps identify the emotional tone of cards.",
+            "autoUpdate": "Results update automatically when cards are created or modified."
+        }
+    },
+    "timer": {
+        "status": {
+            "finished": "Finished",
+            "running": "Running",
+            "paused": "Paused",
+            "ready": "Ready"
+        }
+    },
+    "notes": {
+        "new": "New",
+        "creating": "New note",
+        "editing": "Editing note",
+        "count": {
+            "singular": "note",
+            "plural": "notes"
+        },
+        "createFirst": "Create first note"
     }
 }

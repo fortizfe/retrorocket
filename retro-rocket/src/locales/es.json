@@ -279,14 +279,21 @@
             "controls": "Controles de Facilitador",
             "configureTime": "Configurar tiempo",
             "create": "Crear",
+            "quickTimers": "Temporizadores rápidos",
             "onlyYouCanSee": "Solo tú puedes ver y controlar este panel como facilitador",
             "onlyFacilitatorCanCreateActions": "Solo el facilitador puede crear elementos de acción",
             "facilitatorCanCreateActions": "El facilitador puede crear elementos de acción",
             "createFirstActionOrConvert": "Crea el primer elemento de acción o convierte una tarjeta existente",
             "noActionItems": "No hay elementos de acción",
             "loadingActionItems": "Cargando elementos de acción...",
+            "tabs": {
+                "timer": "Timer",
+                "sentiment": "IA",
+                "notes": "Notas"
+            },
             "countdown": {
                 "title": "Temporizador",
+                "totalTime": "Tiempo total",
                 "create": "Crear Temporizador",
                 "minutes": "min",
                 "seconds": "seg",
@@ -637,6 +644,59 @@
         "positive": "Positivo",
         "negative": "Negativo",
         "neutral": "Neutral",
-        "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza"
+        "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza",
+        "analysis": "Análisis de Sentimientos",
+        "model": "Modelo de IA",
+        "confidenceThreshold": "Umbral de confianza",
+        "batchSize": "Tamaño de lote",
+        "advancedSettings": "Configuración avanzada",
+        "status": {
+            "initializing": "Inicializando...",
+            "connectionError": "Error de conexión",
+            "disabled": "Desactivado",
+            "ready": "Listo para análisis",
+            "configuring": "Configurando..."
+        },
+        "buttons": {
+            "enabled": "Activado",
+            "enable": "Activar",
+            "pauseAnalysis": "Pausar análisis",
+            "reanalyze": "Re-analizar"
+        },
+        "stats": {
+            "cards": "tarjetas",
+            "realTimeAnalysis": "Análisis en tiempo real"
+        },
+        "settings": {
+            "modelSelectedDescription": "Modelo seleccionado para el análisis de sentimientos",
+            "lowConfidence": "Baja confianza",
+            "highConfidence": "Alta confianza",
+            "batchSizeDescription": "Número de tarjetas a procesar simultáneamente",
+            "autoAnalysis": "Análisis automático",
+            "autoAnalysisDescription": "Actualizar automáticamente al cambiar tarjetas"
+        },
+        "help": {
+            "tip": "Consejo:",
+            "description": "El análisis de sentimientos ayuda a identificar el tono emocional de las tarjetas.",
+            "autoUpdate": "Los resultados se actualizan automáticamente cuando se crean o modifican tarjetas."
+        }
+    },
+    "timer": {
+        "status": {
+            "finished": "Finalizado",
+            "running": "En curso",
+            "paused": "Pausado",
+            "ready": "Listo"
+        }
+    },
+    "notes": {
+        "new": "Nueva",
+        "creating": "Nueva nota",
+        "editing": "Editando nota",
+        "count": {
+            "singular": "nota",
+            "plural": "notas"
+        },
+        "createFirst": "Crear primera nota"
     }
 }
