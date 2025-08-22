@@ -15,7 +15,7 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
-import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
+import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 import { getCardColorHex } from '../utils/cardColors';
 
 export interface DocxExportOptions {
@@ -54,7 +54,7 @@ export class DocxExportService {
             const headerSections = this.createDocumentHeader(data.retrospective);
             const infoSections = this.createRetrospectiveInfo(data.retrospective, data.participants, options);
             const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups, data.actionItems) : [];
-            const contentSections = this.createColumnsContent(data.cards, data.groups, options);
+            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
             const actionItemsSections = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ?
@@ -358,22 +358,33 @@ export class DocxExportService {
     /**
      * Create columns content sections
      */
-    private createColumnsContent(cards: Card[], groups: CardGroup[], options: DocxExportOptions): Paragraph[] {
+    private createColumnsContent(cards: Card[], groups: CardGroup[], options: DocxExportOptions, retrospective: Retrospective): Paragraph[] {
         const sections: Paragraph[] = [];
 
-        COLUMN_ORDER.forEach((columnId) => {
-            const column = COLUMNS[columnId];
+        // Get dynamic columns based on template
+        const templateId = retrospective.templateId;
+        const columns = getExportColumns(templateId);
+        const columnOrder = getExportColumnOrder(templateId);
+
+        // Validate cards structure
+        const validation = validateCardsForTemplate(cards, templateId);
+        if (!validation.isValid) {
+            console.warn('⚠️ Cards validation issues:', validation.issues);
+        }
+
+        columnOrder.forEach((columnId) => {
+            const columnConfig = columns[columnId];
             const columnCards = cards.filter(card => card.column === columnId);
             const columnGroups = groups.filter(group => group.column === columnId);
 
-            if (columnCards.length === 0) return;
+            if (columnCards.length === 0 || !columnConfig) return;
 
             // Column title
             sections.push(
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: column.title,
+                            text: columnConfig.title,
                             bold: true,
                             size: 24
                         })
@@ -388,7 +399,7 @@ export class DocxExportService {
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: column.description,
+                            text: columnConfig.description,
                             size: 20,
                             color: '6B7280',
                             italics: true

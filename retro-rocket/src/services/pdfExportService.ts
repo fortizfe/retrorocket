@@ -13,7 +13,7 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
-import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
+import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 import { getCardColorHex } from '../utils/cardColors';
 
 // Registra la fuente de emojis (esto se hace una sola vez en tu aplicación)
@@ -222,6 +222,17 @@ const styles = StyleSheet.create({
  * Crea el componente del documento PDF usando createElement
  */
 const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOptions) => {
+    // Get dynamic columns based on template
+    const templateId = data.retrospective.templateId;
+    const columns = getExportColumns(templateId);
+    const columnOrder = getExportColumnOrder(templateId);
+
+    // Validate cards structure
+    const validation = validateCardsForTemplate(data.cards, templateId);
+    if (!validation.isValid) {
+        console.warn('⚠️ Cards validation issues:', validation.issues);
+    }
+
     const getColumnCards = (columnType: string) => {
         return data.cards.filter(card => card.column === columnType);
     };
@@ -295,6 +306,12 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
             React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Fecha de creación'),
             React.createElement(Text, { key: 'value', style: styles.infoValue }, formatDate(data.retrospective.createdAt))
         ]),
+        ...(templateId ? [
+            React.createElement(View, { key: 'template', style: styles.infoItem }, [
+                React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Plantilla'),
+                React.createElement(Text, { key: 'value', style: styles.infoValue }, getTemplateName(templateId))
+            ])
+        ] : []),
         React.createElement(View, { key: 'status', style: styles.infoItem }, [
             React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Estado'),
             React.createElement(Text, { key: 'value', style: styles.infoValue },
@@ -377,12 +394,12 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
     ] : [];
 
     // Columnas
-    const columnElements = COLUMN_ORDER.map((columnType) => {
-        const column = COLUMNS[columnType];
+    const columnElements = columnOrder.map((columnType) => {
+        const columnConfig = columns[columnType];
         const columnCards = getColumnCards(columnType);
         const columnGroups = getColumnGroups(columnType);
 
-        if (columnCards.length === 0) return null;
+        if (columnCards.length === 0 || !columnConfig) return null;
 
         const groupElements = options.includeGroupDetails ? columnGroups.map((group) => {
             const groupCards = columnCards.filter(card => card.groupId === group.id);
@@ -425,10 +442,10 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         return React.createElement(View, { key: columnType, style: styles.columnSection }, [
             React.createElement(View, { key: 'header', style: styles.columnHeader }, [
                 React.createElement(Text, { key: 'title', style: styles.columnTitle },
-                    `${column.title} (${columnCards.length} tarjetas)`
+                    `${columnConfig.title} (${columnCards.length} tarjetas)`
                 ),
                 React.createElement(Text, { key: 'description', style: styles.columnDescription },
-                    column.description
+                    columnConfig.description
                 )
             ]),
             ...groupElements,

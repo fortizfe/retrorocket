@@ -3,7 +3,7 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
-import { COLUMNS, COLUMN_ORDER } from '../utils/constants';
+import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 
 export interface TxtExportOptions {
     includeParticipants?: boolean;
@@ -57,10 +57,27 @@ export class TxtExportService {
     private buildTextContent(data: RetrospectiveTxtData, options: TxtExportOptions): string {
         const lines: string[] = [];
 
+        // Get dynamic columns based on template
+        const templateId = data.retrospective.templateId;
+        const columns = getExportColumns(templateId);
+        const columnOrder = getExportColumnOrder(templateId);
+
+        // Validate cards structure
+        const validation = validateCardsForTemplate(data.cards, templateId);
+        if (!validation.isValid) {
+            console.warn('⚠️ Cards validation issues:', validation.issues);
+        }
+
         // Title
         lines.push(`RETROSPECTIVA: ${data.retrospective.title.toUpperCase()}`);
         lines.push('='.repeat(50));
         lines.push('');
+
+        // Template info
+        if (templateId) {
+            lines.push(`Plantilla: ${getTemplateName(templateId)}`);
+            lines.push('');
+        }
 
         // Description if exists
         if (data.retrospective.description) {
@@ -87,11 +104,11 @@ export class TxtExportService {
 
         // Statistics
         if (options.includeStatistics) {
-            this.addStatistics(lines, data);
+            this.addStatistics(lines, data, columns, columnOrder);
         }
 
         // Cards by column
-        this.addCardsByColumn(lines, data, options);
+        this.addCardsByColumn(lines, data, options, columns, columnOrder);
 
         // Groups
         if (options.includeGroupDetails && data.groups.length > 0) {
@@ -154,7 +171,7 @@ export class TxtExportService {
     /**
      * Add statistics section
      */
-    private addStatistics(lines: string[], data: RetrospectiveTxtData): void {
+    private addStatistics(lines: string[], data: RetrospectiveTxtData, columns: Record<string, any>, columnOrder: string[]): void {
         lines.push('ESTADÍSTICAS:');
         lines.push('-'.repeat(20));
 
@@ -173,9 +190,12 @@ export class TxtExportService {
         }
 
         // Cards per column
-        COLUMN_ORDER.forEach(columnId => {
+        columnOrder.forEach(columnId => {
             const columnCards = data.cards.filter(card => card.column === columnId);
-            lines.push(`${COLUMNS[columnId].title}: ${columnCards.length} tarjetas`);
+            const columnConfig = columns[columnId];
+            if (columnConfig) {
+                lines.push(`${columnConfig.title}: ${columnCards.length} tarjetas`);
+            }
         });
 
         lines.push('');
@@ -184,17 +204,19 @@ export class TxtExportService {
     /**
      * Add cards organized by column
      */
-    private addCardsByColumn(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions): void {
-        COLUMN_ORDER.forEach(columnId => {
-            const column = COLUMNS[columnId];
+    private addCardsByColumn(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions, columns: Record<string, any>, columnOrder: string[]): void {
+        columnOrder.forEach(columnId => {
+            const columnConfig = columns[columnId];
             const columnCards = data.cards.filter(card => card.column === columnId);
 
-            if (columnCards.length === 0) return;
+            if (columnCards.length === 0 || !columnConfig) return;
 
-            lines.push(`${column.title.toUpperCase()}:`);
-            lines.push('-'.repeat(column.title.length + 1));
-            lines.push(`${column.description}`);
-            lines.push(''); columnCards.forEach((card, index) => {
+            lines.push(`${columnConfig.title.toUpperCase()}:`);
+            lines.push('-'.repeat(columnConfig.title.length + 1));
+            lines.push(`${columnConfig.description}`);
+            lines.push('');
+
+            columnCards.forEach((card, index) => {
                 // Ensure card content exists and is not empty
                 const cardContent = card.content?.trim() || '[Sin contenido]';
 

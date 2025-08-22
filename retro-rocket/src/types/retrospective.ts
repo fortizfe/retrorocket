@@ -2,6 +2,7 @@ export interface Retrospective {
   id: string;
   title: string;
   description?: string;
+  templateId?: string; // Template ID for dynamic column support
   createdBy: string; // user UID
   createdAt: Date;
   updatedAt: Date;
