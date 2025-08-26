@@ -3,6 +3,8 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
+import { SentimentResult } from '../types/sentiment';
+import { TeamMoodReport } from '../types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 
 export interface TxtExportOptions {
@@ -12,6 +14,9 @@ export interface TxtExportOptions {
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
     includeActionItems?: boolean;
+    // New sentiment analysis options
+    includeSentimentBadges?: boolean;
+    includeTeamMoodAnalysis?: boolean;
 }
 
 export interface RetrospectiveTxtData {
@@ -21,6 +26,9 @@ export interface RetrospectiveTxtData {
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
+    // New sentiment data
+    sentimentResults?: Map<string, SentimentResult>;
+    teamMoodReport?: TeamMoodReport;
 }
 
 export class TxtExportService {
@@ -160,6 +168,11 @@ export class TxtExportService {
             });
         }
 
+        // Team Mood Analysis (Facilitator only)
+        if (options.includeTeamMoodAnalysis && data.teamMoodReport) {
+            this.addTeamMoodAnalysis(lines, data.teamMoodReport);
+        }
+
         // Footer
         lines.push('');
         lines.push('-'.repeat(50));
@@ -228,6 +241,14 @@ export class TxtExportService {
                     lines.push(`   ${meta}`);
                 });
 
+                // Add sentiment metadata if enabled
+                if (options.includeSentimentBadges && data.sentimentResults) {
+                    const sentimentMetadata = this.buildSentimentMetadata(card, data.sentimentResults);
+                    sentimentMetadata.forEach(meta => {
+                        lines.push(`   ${meta}`);
+                    });
+                }
+
                 lines.push('');
             });
 
@@ -265,6 +286,126 @@ export class TxtExportService {
         }
 
         return metadata;
+    }
+
+    /**
+     * Build sentiment metadata for card
+     */
+    private buildSentimentMetadata(card: Card, sentimentResults?: Map<string, SentimentResult>): string[] {
+        const metadata: string[] = [];
+
+        if (sentimentResults && sentimentResults.has(card.id)) {
+            const result = sentimentResults.get(card.id)!;
+            const confidencePercent = Math.round(result.confidence * 100);
+
+            let sentimentLabel = '';
+            let sentimentIcon = '';
+
+            switch (result.sentiment) {
+                case 'positive':
+                    sentimentLabel = 'Positivo';
+                    sentimentIcon = '😊';
+                    break;
+                case 'negative':
+                    sentimentLabel = 'Negativo';
+                    sentimentIcon = '😞';
+                    break;
+                case 'neutral':
+                    sentimentLabel = 'Neutral';
+                    sentimentIcon = '😐';
+                    break;
+            }
+
+            metadata.push(`Sentimiento: ${sentimentIcon} ${sentimentLabel} (${confidencePercent}%)`);
+        }
+
+        return metadata;
+    }
+
+    /**
+     * Add team mood analysis section (facilitator only)
+     */
+    private addTeamMoodAnalysis(lines: string[], teamMoodReport: TeamMoodReport): void {
+        lines.push('ANÁLISIS DEL ESTADO DE ÁNIMO DEL EQUIPO:');
+        lines.push('='.repeat(50));
+        lines.push('');
+
+        const { metrics, insights, moodScore } = teamMoodReport;
+
+        // Mood score and overall sentiment
+        lines.push(`Puntuación General: ${moodScore}/10`);
+
+        let moodLabel = '';
+        if (moodScore >= 8.5) moodLabel = 'Excelente';
+        else if (moodScore >= 7.5) moodLabel = 'Muy Bueno';
+        else if (moodScore >= 6.5) moodLabel = 'Bueno';
+        else if (moodScore >= 5.5) moodLabel = 'Regular';
+        else if (moodScore >= 4.5) moodLabel = 'Preocupante';
+        else moodLabel = 'Crítico';
+
+        lines.push(`Estado General: ${moodLabel}`);
+        lines.push('');
+
+        // Overall metrics
+        lines.push('MÉTRICAS GENERALES:');
+        lines.push('-'.repeat(20));
+        lines.push(`Total de tarjetas: ${metrics.totalCards}`);
+        lines.push(`Tarjetas analizadas: ${metrics.analyzedCards} (${Math.round(metrics.analysisCompleteness)}%)`);
+        lines.push(`Confianza promedio: ${Math.round(metrics.overallConfidence * 100)}%`);
+        lines.push('');
+
+        // Sentiment distribution
+        lines.push('DISTRIBUCIÓN DE SENTIMIENTOS:');
+        lines.push('-'.repeat(30));
+        lines.push(`😊 Positivo: ${metrics.totalPositive} tarjetas (${metrics.positivePercentage}%)`);
+        lines.push(`😐 Neutral: ${metrics.totalNeutral} tarjetas (${metrics.neutralPercentage}%)`);
+        lines.push(`😞 Negativo: ${metrics.totalNegative} tarjetas (${metrics.negativePercentage}%)`);
+        lines.push('');
+
+        // Column breakdown
+        if (metrics.columnMetrics && metrics.columnMetrics.length > 0) {
+            lines.push('ANÁLISIS POR SECCIÓN:');
+            lines.push('-'.repeat(25));
+
+            metrics.columnMetrics.forEach(column => {
+                lines.push(`${column.columnTitle}:`);
+                lines.push(`  Total: ${column.total} tarjetas`);
+                lines.push(`  😊 Positivo: ${column.positive} (${column.positivePercentage}%)`);
+                lines.push(`  😐 Neutral: ${column.neutral} (${column.neutralPercentage}%)`);
+                lines.push(`  😞 Negativo: ${column.negative} (${column.negativePercentage}%)`);
+                lines.push(`  Confianza: ${Math.round(column.averageConfidence * 100)}%`);
+                lines.push('');
+            });
+        }
+
+        // Insights
+        if (insights && insights.length > 0) {
+            lines.push('INSIGHTS Y RECOMENDACIONES:');
+            lines.push('-'.repeat(35));
+
+            // Sort insights by severity (highest first)
+            const sortedInsights = [...insights].sort((a, b) => b.severity - a.severity);
+
+            sortedInsights.slice(0, 5).forEach((insight, index) => {
+                const priorityLabel = insight.severity >= 4 ? '🚨 CRÍTICO' :
+                    insight.severity >= 3 ? '⚠️ IMPORTANTE' :
+                        insight.severity >= 2 ? '💡 INFORMACIÓN' : '✨ POSITIVO';
+
+                lines.push(`${index + 1}. ${priorityLabel}: ${insight.title}`);
+                lines.push(`   ${insight.description}`);
+
+                if (insight.actionable) {
+                    lines.push(`   🎯 Requiere acción del facilitador`);
+                }
+
+                lines.push('');
+            });
+        }
+
+        lines.push('');
+        lines.push('NOTA: Este análisis está basado en IA y es solo para facilitadores.');
+        lines.push('Los datos de sentimiento se procesan localmente y no salen del navegador.');
+        lines.push('');
     }
 
     /**

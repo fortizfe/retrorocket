@@ -27,6 +27,10 @@ export interface UnifiedExportOptions {
     includeFacilitatorNotes: boolean;
     facilitatorNotes?: string;
 
+    // Funcionalidades avanzadas del facilitador
+    includeSentimentBadges?: boolean;
+    includeTeamMoodAnalysis?: boolean;
+
     // Configuraciones específicas por formato
     pdfOptions?: {
         pageSize?: 'a4' | 'letter';
@@ -51,6 +55,9 @@ export interface UnifiedExportData {
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[]; // Añadir elementos de acción
+    // New sentiment analysis data
+    sentimentResults?: Map<string, import('./sentiment').SentimentResult>;
+    teamMoodReport?: import('./teamMood').TeamMoodReport;
 }
 
 export interface UseUnifiedExportState {

@@ -13,6 +13,8 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
+import { SentimentResult } from '../types/sentiment';
+import { TeamMoodReport } from '../types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 import { getCardColorHex } from '../utils/cardColors';
 
@@ -29,6 +31,9 @@ export interface ExportOptions {
     includeFacilitatorNotes?: boolean;
     includeActionItems?: boolean;
     logoUrl?: string;
+    // New sentiment analysis options
+    includeSentimentBadges?: boolean;
+    includeTeamMoodAnalysis?: boolean;
 }
 
 export interface RetrospectiveExportData {
@@ -38,6 +43,9 @@ export interface RetrospectiveExportData {
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
+    // New sentiment data
+    sentimentResults?: Map<string, SentimentResult>;
+    teamMoodReport?: TeamMoodReport;
 }
 
 // Estilos para el PDF
@@ -415,29 +423,51 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                         `Votos totales: ${groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0)}`
                     )
                 ]),
-                ...groupCards.map((card) =>
-                    React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
+                ...groupCards.map((card) => {
+                    const cardMetaElements = [
+                        React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
+                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
+                    ];
+
+                    // Add sentiment badges if enabled
+                    if (options.includeSentimentBadges && data.sentimentResults?.has(card.id)) {
+                        const sentimentResult = data.sentimentResults.get(card.id)!;
+                        const sentimentText = `Sentimiento: ${sentimentResult.sentiment} (${(sentimentResult.confidence * 100).toFixed(0)}%)`;
+                        cardMetaElements.push(
+                            React.createElement(Text, { key: 'sentiment', style: styles.cardMeta }, sentimentText)
+                        );
+                    }
+
+                    return React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
                         React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
-                        React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
-                            React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                            React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
-                        ])
-                    ])
-                )
+                        React.createElement(View, { key: 'meta', style: styles.cardMeta }, cardMetaElements)
+                    ]);
+                })
             ]);
         }).filter(Boolean) : [];
 
         const ungroupedCards = columnCards
             .filter(card => !card.groupId || !options.includeGroupDetails)
-            .map((card) =>
-                React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
+            .map((card) => {
+                const cardMetaElements = [
+                    React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
+                    React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
+                ];
+
+                // Add sentiment badges if enabled
+                if (options.includeSentimentBadges && data.sentimentResults?.has(card.id)) {
+                    const sentimentResult = data.sentimentResults.get(card.id)!;
+                    const sentimentText = `Sentimiento: ${sentimentResult.sentiment} (${(sentimentResult.confidence * 100).toFixed(0)}%)`;
+                    cardMetaElements.push(
+                        React.createElement(Text, { key: 'sentiment', style: styles.cardMeta }, sentimentText)
+                    );
+                }
+
+                return React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
                     React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
-                    React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
-                        React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
-                    ])
-                ])
-            );
+                    React.createElement(View, { key: 'meta', style: styles.cardMeta }, cardMetaElements)
+                ]);
+            });
 
         return React.createElement(View, { key: columnType, style: styles.columnSection }, [
             React.createElement(View, { key: 'header', style: styles.columnHeader }, [
@@ -476,6 +506,45 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         ])
     ] : [];
 
+    const getMoodLabel = (score: number): string => {
+        if (score >= 8.5) return 'Excelente';
+        if (score >= 7.5) return 'Muy Bueno';
+        if (score >= 6.5) return 'Bueno';
+        if (score >= 5.5) return 'Regular';
+        if (score >= 4.5) return 'Preocupante';
+        return 'Crítico';
+    };
+
+    // Team Mood Analysis Elements
+    const teamMoodElements = (options.includeTeamMoodAnalysis && data.teamMoodReport) ? [
+        React.createElement(View, { key: 'teamMood', style: styles.section }, [
+            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Análisis del Estado de Ánimo del Equipo'),
+            React.createElement(View, { key: 'teamMoodContent', style: styles.facilitatorNotesSection }, [
+                // Overall score
+                React.createElement(Text, { key: 'score', style: styles.noteContent },
+                    `Puntuación General: ${data.teamMoodReport.moodScore}/10 - ${getMoodLabel(data.teamMoodReport.moodScore)}`
+                ),
+                // General metrics
+                React.createElement(Text, { key: 'metrics', style: styles.noteContent },
+                    `Total de tarjetas: ${data.teamMoodReport.metrics.totalCards}, Analizadas: ${data.teamMoodReport.metrics.analyzedCards} (${Math.round(data.teamMoodReport.metrics.analysisCompleteness)}%)`
+                ),
+                // Sentiment distribution
+                React.createElement(Text, { key: 'distribution', style: styles.noteContent },
+                    `Distribución: Positivo ${data.teamMoodReport.metrics.positivePercentage}% (${data.teamMoodReport.metrics.totalPositive}), Neutral ${data.teamMoodReport.metrics.neutralPercentage}% (${data.teamMoodReport.metrics.totalNeutral}), Negativo ${data.teamMoodReport.metrics.negativePercentage}% (${data.teamMoodReport.metrics.totalNegative})`
+                ),
+                // Insights
+                ...(data.teamMoodReport.insights.length > 0 ? [
+                    React.createElement(Text, { key: 'insightsTitle', style: styles.noteTimestamp }, 'Insights Clave:'),
+                    ...data.teamMoodReport.insights.map((insight, index) =>
+                        React.createElement(Text, { key: `insight-${index}`, style: styles.noteContent },
+                            `• ${insight.description} (Nivel ${insight.severity})`
+                        )
+                    )
+                ] : [])
+            ])
+        ])
+    ] : [];
+
     // Footer
     const footer = React.createElement(Text, { style: styles.footer },
         `Generado por Retro Rocket - ${formatDate(new Date())}`
@@ -493,6 +562,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         ...facilitatorNotesElements,
         ...columnElements,
         ...actionItemsElements,
+        ...teamMoodElements,
         footer
     ];
 
@@ -509,6 +579,17 @@ export const exportRetrospectiveToPdf = async (
     options: ExportOptions = {}
 ): Promise<void> => {
     try {
+        console.log('🚀 Starting PDF export for retrospective:', data.retrospective.title);
+
+        // Log sentiment analysis features (PDF implementation pending)
+        if (options.includeSentimentBadges && data.sentimentResults) {
+            console.log('📊 Sentiment badges included for', data.sentimentResults.size, 'analyzed cards');
+        }
+
+        if (options.includeTeamMoodAnalysis && data.teamMoodReport) {
+            console.log('🎯 Team mood analysis included with score:', data.teamMoodReport.moodScore);
+        }
+
         // Crear el documento PDF
         const document = createRetrospectivePDF(data, options);
 

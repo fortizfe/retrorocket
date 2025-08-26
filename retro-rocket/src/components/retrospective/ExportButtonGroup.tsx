@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Button from '../ui/Button';
-import ExportPopover from './ExportPopover';
+import ImprovedExportPopover from './ImprovedExportPopover';
 import { Retrospective } from '../../types/retrospective';
 import { Card, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
@@ -13,6 +13,8 @@ interface ExportButtonGroupProps {
     participants: Array<{ name: string; joinedAt: Date }>;
     actionItems?: ActionItem[];
     className?: string;
+    // New sentiment analysis props
+    sentimentAnalysis?: any;
 }
 
 const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
@@ -21,18 +23,20 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
     groups,
     participants,
     actionItems = [],
-    className = ''
+    className = '',
+    sentimentAnalysis
 }) => {
     const { t } = useLanguage();
     const [showPopover, setShowPopover] = useState(false);
 
     return (
-        <ExportPopover
+        <ImprovedExportPopover
             retrospective={retrospective}
             cards={cards}
             groups={groups}
             participants={participants}
             actionItems={actionItems}
+            sentimentAnalysis={sentimentAnalysis}
             isOpen={showPopover}
             onClose={() => setShowPopover(false)}
             className={className}
@@ -46,7 +50,7 @@ const ExportButtonGroup: React.FC<ExportButtonGroupProps> = ({
             >
                 {t('retrospective.export.exportText')}
             </Button>
-        </ExportPopover>
+        </ImprovedExportPopover>
     );
 };
 

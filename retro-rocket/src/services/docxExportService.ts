@@ -15,6 +15,8 @@ import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
 import { FacilitatorNote } from '../types/facilitatorNotes';
 import { ActionItem } from '../types/actionItem';
+import { SentimentResult } from '../types/sentiment';
+import { TeamMoodReport } from '../types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '../utils/exportColumns';
 import { getCardColorHex } from '../utils/cardColors';
 
@@ -25,8 +27,11 @@ export interface DocxExportOptions {
     includeReactions?: boolean;
     includeGroupDetails?: boolean;
     includeFacilitatorNotes?: boolean;
-    includeActionItems?: boolean;
     facilitatorNotes?: string;
+    includeActionItems?: boolean;
+    // New sentiment analysis options
+    includeSentimentBadges?: boolean;
+    includeTeamMoodAnalysis?: boolean;
 }
 
 export interface RetrospectiveDocxData {
@@ -36,6 +41,9 @@ export interface RetrospectiveDocxData {
     participants: Array<{ name: string; joinedAt: Date }>;
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
+    // New sentiment data
+    sentimentResults?: Map<string, SentimentResult>;
+    teamMoodReport?: TeamMoodReport;
 }
 
 export class DocxExportService {
@@ -54,11 +62,15 @@ export class DocxExportService {
             const headerSections = this.createDocumentHeader(data.retrospective);
             const infoSections = this.createRetrospectiveInfo(data.retrospective, data.participants, options);
             const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups, data.actionItems) : [];
-            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective);
+            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective, data.sentimentResults);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
             const actionItemsSections = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ?
                 this.createActionItemsSection(data.actionItems) : [];
+
+            // Add team mood analysis section (facilitator only)
+            const teamMoodSections = (options.includeTeamMoodAnalysis && data.teamMoodReport) ?
+                this.createTeamMoodAnalysisSection(data.teamMoodReport) : [];
 
             // Flatten all sections into a single array
             const allSections = [
@@ -67,7 +79,8 @@ export class DocxExportService {
                 ...statsSections,
                 ...contentSections,
                 ...notesSections,
-                ...actionItemsSections
+                ...actionItemsSections,
+                ...teamMoodSections
             ];
 
             // Create the document
@@ -358,7 +371,13 @@ export class DocxExportService {
     /**
      * Create columns content sections
      */
-    private createColumnsContent(cards: Card[], groups: CardGroup[], options: DocxExportOptions, retrospective: Retrospective): Paragraph[] {
+    private createColumnsContent(
+        cards: Card[],
+        groups: CardGroup[],
+        options: DocxExportOptions,
+        retrospective: Retrospective,
+        sentimentResults?: Map<string, SentimentResult>
+    ): Paragraph[] {
         const sections: Paragraph[] = [];
 
         // Get dynamic columns based on template
@@ -411,13 +430,13 @@ export class DocxExportService {
 
             // Add groups first
             columnGroups.forEach(group => {
-                sections.push(...this.createGroupSection(group, cards, options));
+                sections.push(...this.createGroupSection(group, cards, options, sentimentResults));
             });
 
             // Add ungrouped cards
             const ungroupedCards = columnCards.filter(card => !card.groupId);
             ungroupedCards.forEach(card => {
-                sections.push(...this.createCardSection(card, false));
+                sections.push(...this.createCardSection(card, false, false, options, sentimentResults));
             });
         });
 
@@ -427,7 +446,12 @@ export class DocxExportService {
     /**
      * Create group section
      */
-    private createGroupSection(group: CardGroup, allCards: Card[], options: DocxExportOptions): Paragraph[] {
+    private createGroupSection(
+        group: CardGroup,
+        allCards: Card[],
+        options: DocxExportOptions,
+        sentimentResults?: Map<string, SentimentResult>
+    ): Paragraph[] {
         const groupCards = allCards.filter(card =>
             card.id === group.headCardId || group.memberCardIds.includes(card.id)
         );
@@ -481,12 +505,12 @@ export class DocxExportService {
 
         // Add head card first
         if (headCard) {
-            sections.push(...this.createCardSection(headCard, true, true));
+            sections.push(...this.createCardSection(headCard, true, true, options, sentimentResults));
         }
 
         // Add member cards with indentation
         memberCards.forEach(card => {
-            sections.push(...this.createCardSection(card, true, false));
+            sections.push(...this.createCardSection(card, true, false, options, sentimentResults));
         });
 
         return sections;
@@ -495,7 +519,13 @@ export class DocxExportService {
     /**
      * Create card section
      */
-    private createCardSection(card: Card, isGrouped: boolean = false, isHeadCard: boolean = false): Paragraph[] {
+    private createCardSection(
+        card: Card,
+        isGrouped: boolean = false,
+        isHeadCard: boolean = false,
+        options?: DocxExportOptions,
+        sentimentResults?: Map<string, SentimentResult>
+    ): Paragraph[] {
         const sections: Paragraph[] = [];
 
         // Card content with background color
@@ -559,6 +589,49 @@ export class DocxExportService {
                             text: metadata.join(' | '),
                             size: 16,
                             color: '6B7280',
+                            italics: true
+                        })
+                    ],
+                    spacing: { after: 150 },
+                    indent: { left: leftIndent }
+                })
+            );
+        }
+
+        // Add sentiment metadata if enabled
+        if (options?.includeSentimentBadges && sentimentResults && sentimentResults.has(card.id)) {
+            const sentimentResult = sentimentResults.get(card.id)!;
+            const confidencePercent = Math.round(sentimentResult.confidence * 100);
+
+            let sentimentLabel = '';
+            let sentimentIcon = '';
+            let sentimentColor = '6B7280';
+
+            switch (sentimentResult.sentiment) {
+                case 'positive':
+                    sentimentLabel = 'Positivo';
+                    sentimentIcon = '😊';
+                    sentimentColor = '059669'; // green-600
+                    break;
+                case 'negative':
+                    sentimentLabel = 'Negativo';
+                    sentimentIcon = '😞';
+                    sentimentColor = 'DC2626'; // red-600
+                    break;
+                case 'neutral':
+                    sentimentLabel = 'Neutral';
+                    sentimentIcon = '😐';
+                    sentimentColor = '6B7280'; // gray-500
+                    break;
+            }
+
+            sections.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `${sentimentIcon} Sentimiento: ${sentimentLabel} (${confidencePercent}% confianza)`,
+                            size: 16,
+                            color: sentimentColor,
                             italics: true
                         })
                     ],
@@ -675,6 +748,232 @@ export class DocxExportService {
                 })
             );
         });
+
+        return sections;
+    }
+
+    /**
+     * Create team mood analysis section (facilitator only)
+     */
+    private createTeamMoodAnalysisSection(teamMoodReport: TeamMoodReport): Paragraph[] {
+        const sections: Paragraph[] = [];
+        const { metrics, insights, moodScore } = teamMoodReport;
+
+        // Title
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'Análisis del Estado de Ánimo del Equipo',
+                        bold: true,
+                        size: 24
+                    })
+                ],
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 400, after: 200 }
+            })
+        );
+
+        // Mood score
+        let moodLabel = '';
+        if (moodScore >= 8.5) moodLabel = 'Excelente';
+        else if (moodScore >= 7.5) moodLabel = 'Muy Bueno';
+        else if (moodScore >= 6.5) moodLabel = 'Bueno';
+        else if (moodScore >= 5.5) moodLabel = 'Regular';
+        else if (moodScore >= 4.5) moodLabel = 'Preocupante';
+        else moodLabel = 'Crítico';
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: `Puntuación General: ${moodScore}/10 - ${moodLabel}`,
+                        size: 20,
+                        bold: true
+                    })
+                ],
+                spacing: { after: 200 }
+            })
+        );
+
+        // Overall metrics
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'Métricas Generales',
+                        bold: true,
+                        size: 18
+                    })
+                ],
+                heading: HeadingLevel.HEADING_3,
+                spacing: { before: 300, after: 150 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: `• Total de tarjetas: ${metrics.totalCards}\n• Tarjetas analizadas: ${metrics.analyzedCards} (${Math.round(metrics.analysisCompleteness)}%)\n• Confianza promedio: ${Math.round(metrics.overallConfidence * 100)}%`,
+                        size: 18
+                    })
+                ],
+                spacing: { after: 200 }
+            })
+        );
+
+        // Sentiment distribution
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'Distribución de Sentimientos',
+                        bold: true,
+                        size: 18
+                    })
+                ],
+                heading: HeadingLevel.HEADING_3,
+                spacing: { before: 300, after: 150 }
+            })
+        );
+
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: `😊 Positivo: ${metrics.totalPositive} tarjetas (${metrics.positivePercentage}%)\n😐 Neutral: ${metrics.totalNeutral} tarjetas (${metrics.neutralPercentage}%)\n😞 Negativo: ${metrics.totalNegative} tarjetas (${metrics.negativePercentage}%)`,
+                        size: 18
+                    })
+                ],
+                spacing: { after: 200 }
+            })
+        );
+
+        // Column breakdown
+        if (metrics.columnMetrics && metrics.columnMetrics.length > 0) {
+            sections.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: 'Análisis por Sección',
+                            bold: true,
+                            size: 18
+                        })
+                    ],
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 300, after: 150 }
+                })
+            );
+
+            metrics.columnMetrics.forEach(column => {
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `${column.columnTitle}: ${column.total} tarjetas`,
+                                bold: true,
+                                size: 16
+                            })
+                        ],
+                        spacing: { before: 100, after: 50 }
+                    })
+                );
+
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `  😊 Positivo: ${column.positive} (${column.positivePercentage}%)\n  😐 Neutral: ${column.neutral} (${column.neutralPercentage}%)\n  😞 Negativo: ${column.negative} (${column.negativePercentage}%)\n  Confianza: ${Math.round(column.averageConfidence * 100)}%`,
+                                size: 16
+                            })
+                        ],
+                        spacing: { after: 150 }
+                    })
+                );
+            });
+        }
+
+        // Insights
+        if (insights && insights.length > 0) {
+            sections.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: 'Insights y Recomendaciones',
+                            bold: true,
+                            size: 18
+                        })
+                    ],
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 300, after: 150 }
+                })
+            );
+
+            const sortedInsights = [...insights].sort((a, b) => b.severity - a.severity);
+
+            sortedInsights.slice(0, 5).forEach((insight, index) => {
+                const priorityLabel = insight.severity >= 4 ? '🚨 CRÍTICO' :
+                    insight.severity >= 3 ? '⚠️ IMPORTANTE' :
+                        insight.severity >= 2 ? '💡 INFORMACIÓN' : '✨ POSITIVO';
+
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `${index + 1}. ${priorityLabel}: ${insight.title}`,
+                                bold: true,
+                                size: 16
+                            })
+                        ],
+                        spacing: { before: 150, after: 50 }
+                    })
+                );
+
+                sections.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `   ${insight.description}`,
+                                size: 16
+                            })
+                        ],
+                        spacing: { after: insight.actionable ? 50 : 150 }
+                    })
+                );
+
+                if (insight.actionable) {
+                    sections.push(
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: `   🎯 Requiere acción del facilitador`,
+                                    size: 16,
+                                    italics: true,
+                                    color: '059669'
+                                })
+                            ],
+                            spacing: { after: 150 }
+                        })
+                    );
+                }
+            });
+        }
+
+        // Footer note
+        sections.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'NOTA: Este análisis está basado en IA y es solo para facilitadores. Los datos de sentimiento se procesan localmente y no salen del navegador.',
+                        size: 14,
+                        italics: true,
+                        color: '6B7280'
+                    })
+                ],
+                spacing: { before: 300, after: 200 }
+            })
+        );
 
         return sections;
     }

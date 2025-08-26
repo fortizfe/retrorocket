@@ -39,6 +39,11 @@ const RetrospectivePageContent: React.FC = () => {
     // Sentiment analysis state - will be populated by RetrospectiveBoard
     const [sentimentAnalysis, setSentimentAnalysis] = useState<any>(null);
 
+    // Handle sentiment analysis data from RetrospectiveBoard
+    const handleSentimentAnalysisReady = (analysisData: any) => {
+        setSentimentAnalysis(analysisData);
+    };
+
     // Note: Sentiment analysis is now handled entirely within RetrospectiveBoard
     // to avoid double initialization and model loading
 
@@ -255,6 +260,7 @@ const RetrospectivePageContent: React.FC = () => {
                                         groups={exportGroups}
                                         participants={participants || []}
                                         actionItems={exportActionItems}
+                                        sentimentAnalysis={sentimentAnalysis}
                                         className="flex items-center gap-2"
                                     />
                                 </div>

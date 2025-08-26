@@ -116,7 +116,9 @@ export class UnifiedExportService {
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
             includeActionItems: options.includeActionItems,
-            logoUrl: options.includeRetroRocketLogo ? '/rocket.svg' : undefined
+            // New sentiment options
+            includeSentimentBadges: options.includeSentimentBadges,
+            includeTeamMoodAnalysis: options.includeTeamMoodAnalysis
         };
 
         // Convert to PDF service format
@@ -129,10 +131,14 @@ export class UnifiedExportService {
             groups: data.groups,
             participants: data.participants,
             facilitatorNotes: data.facilitatorNotes,
-            actionItems: data.actionItems
+            actionItems: data.actionItems,
+            // Include sentiment data
+            sentimentResults: data.sentimentResults,
+            teamMoodReport: data.teamMoodReport
         };
 
         console.log(`Exporting ${pdfData.cards.length} cards to PDF`);
+        console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
         await exportRetrospectiveToPdf(pdfData, pdfOptions);
     }
 
@@ -146,7 +152,10 @@ export class UnifiedExportService {
             includeCardAuthors: options.includeCardAuthors,
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
-            includeActionItems: options.includeActionItems
+            includeActionItems: options.includeActionItems,
+            // New sentiment options
+            includeSentimentBadges: options.includeSentimentBadges,
+            includeTeamMoodAnalysis: options.includeTeamMoodAnalysis
         };
 
         // Convert to TXT service format
@@ -159,10 +168,14 @@ export class UnifiedExportService {
             groups: data.groups,
             participants: data.participants,
             facilitatorNotes: data.facilitatorNotes,
-            actionItems: data.actionItems
+            actionItems: data.actionItems,
+            // Include sentiment data
+            sentimentResults: data.sentimentResults,
+            teamMoodReport: data.teamMoodReport
         };
 
         console.log(`Exporting ${txtData.cards.length} cards to TXT`);
+        console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
         await exportRetrospectiveToTxt(txtData, txtOptions);
     }
 
@@ -178,7 +191,10 @@ export class UnifiedExportService {
             includeGroupDetails: options.includeGroupDetails,
             includeFacilitatorNotes: options.includeFacilitatorNotes,
             includeActionItems: options.includeActionItems,
-            facilitatorNotes: options.facilitatorNotes
+            facilitatorNotes: options.facilitatorNotes,
+            // New sentiment options
+            includeSentimentBadges: options.includeSentimentBadges,
+            includeTeamMoodAnalysis: options.includeTeamMoodAnalysis
         };
 
         // Convert to DOCX service format
@@ -191,10 +207,14 @@ export class UnifiedExportService {
             groups: data.groups,
             participants: data.participants,
             facilitatorNotes: data.facilitatorNotes,
-            actionItems: data.actionItems
+            actionItems: data.actionItems,
+            // Include sentiment data
+            sentimentResults: data.sentimentResults,
+            teamMoodReport: data.teamMoodReport
         };
 
         console.log(`Exporting ${docxData.cards.length} cards to DOCX`);
+        console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
         await exportRetrospectiveToDocx(docxData, docxOptions);
     }
 
