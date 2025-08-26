@@ -48,7 +48,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
         },
         {
             id: 'team-mood',
-            label: 'Estado del Equipo',
+            label: t('retrospective.facilitator.tabs.teamMood'),
             icon: Users,
             badge: teamMoodBadge
         },
@@ -60,8 +60,19 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
         }
     ];
 
+    // Crear labels compactos para mejor distribución
+    const getCompactLabel = (label: string) => {
+        const compactLabels: Record<string, string> = {
+            'Timer': 'Timer',
+            'IA': 'IA',
+            'Estado del Equipo': 'Equipo',
+            'Notas': 'Notas'
+        };
+        return compactLabels[label] || label;
+    };
+
     return (
-        <div className="w-96 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+        <div className="w-96 max-w-[90vw] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
             {/* Header con tabs */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-600">
                 <div className="flex items-center justify-between p-4 pb-2">
@@ -82,7 +93,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex px-4 pb-3">
+                <div className="flex px-4 pb-3 gap-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -92,31 +103,50 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                                 key={tab.id}
                                 onClick={() => onTabChange(tab.id)}
                                 className={`
-                                    relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                                    group relative flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 min-w-[70px] flex-1
                                     ${isActive
-                                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/30 dark:hover:bg-slate-600/30'
+                                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
+                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/30 dark:hover:bg-slate-600/30 hover:scale-102'
                                     }
                                 `}
+                                title={tab.label} // Tooltip para accesibilidad
                             >
-                                <Icon className="w-4 h-4" />
-                                <span className="hidden sm:inline">{tab.label}</span>
+                                <div className="relative">
+                                    <Icon className="w-4 h-4" />
 
-                                {/* Badge */}
-                                {tab.badge && (
-                                    <motion.span
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className={`
-                                            min-w-[18px] h-[18px] px-1 rounded-full text-xs font-semibold flex items-center justify-center
-                                            ${isActive
-                                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
-                                            }
-                                        `}
-                                    >
-                                        {tab.badge}
-                                    </motion.span>
+                                    {/* Badge sobre el icono */}
+                                    {tab.badge && (
+                                        <motion.span
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className={`
+                                                absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center
+                                                ${isActive
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'bg-red-500 text-white'
+                                                }
+                                            `}
+                                        >
+                                            {tab.badge}
+                                        </motion.span>
+                                    )}
+                                </div>
+
+                                {/* Label compacto - Siempre visible pero truncado si es necesario */}
+                                <span className={`
+                                    leading-tight text-center max-w-full truncate
+                                    ${isActive ? 'text-[10px] font-semibold' : 'text-[10px]'}
+                                `}>
+                                    {getCompactLabel(tab.label)}
+                                </span>
+
+                                {/* Indicador activo */}
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-blue-500 rounded-full"
+                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                    />
                                 )}
                             </button>
                         );
