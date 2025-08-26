@@ -294,6 +294,8 @@ const RetrospectivePageContent: React.FC = () => {
                                     retrospectiveId={retrospective.id}
                                     facilitatorId={uid || ''}
                                     isOwner={retrospective.createdBy === uid}
+                                    cards={exportCards}
+                                    columnConfigs={sentimentAnalysis?.columnConfigs || {}}
                                     sentimentAnalysis={sentimentAnalysis}
                                 />
                             </div>

@@ -289,7 +289,98 @@
             "tabs": {
                 "timer": "Timer",
                 "sentiment": "IA",
+                "teamMood": "Estado del Equipo",
                 "notes": "Notas"
+            },
+            "teamMood": {
+                "title": "Estado de Ánimo del Equipo",
+                "analyzing": "Analizando estado de ánimo del equipo...",
+                "insufficientData": {
+                    "title": "Datos insuficientes",
+                    "description": "Se necesitan al menos 3 tarjetas con análisis de sentimientos para generar un informe significativo del estado de ánimo del equipo.",
+                    "tip": "Las tarjetas se analizan automáticamente cuando se crean o modifican"
+                },
+                "disabled": {
+                    "title": "Análisis de Sentimientos Desactivado",
+                    "description": "Para generar el informe del estado de ánimo del equipo, primero activa el análisis de sentimientos en la pestaña \"IA\".",
+                    "tip": "El análisis de sentimientos ayuda a identificar automáticamente el tono emocional de las tarjetas del equipo."
+                },
+                "initializing": {
+                    "title": "Inicializando Análisis",
+                    "description": "Preparando el sistema de análisis de sentimientos..."
+                },
+                "updated": "Actualizado:",
+                "basedOn": "Basado en el análisis de {{count}} tarjetas",
+                "sentiments": {
+                    "positive": "Positivo",
+                    "negative": "Negativo",
+                    "neutral": "Neutral"
+                },
+                "sections": {
+                    "columnAnalysis": "Análisis por Sección",
+                    "insights": "Insights y Recomendaciones",
+                    "detailedStats": "Estadísticas Detalladas"
+                },
+                "stats": {
+                    "totalCards": "Tarjetas totales:",
+                    "analyzed": "Analizadas:",
+                    "averageConfidence": "Confianza promedio:",
+                    "dominantSentiment": "Sentimiento dominante:",
+                    "cards_singular": "tarjeta",
+                    "cards_plural": "tarjetas"
+                },
+                "actionable": "Acción recomendada",
+                "moreInsights": "Y {{count}} insight más...",
+                "moreInsights_plural": "Y {{count}} insights más...",
+                "facilitatorNote": {
+                    "title": "Solo visible para facilitadores",
+                    "description": "Este informe se basa en el análisis automático de sentimientos de las tarjetas y se actualiza en tiempo real conforme el equipo participa."
+                },
+                "moodLabels": {
+                    "excellent": "Excelente",
+                    "good": "Bueno",
+                    "fair": "Regular",
+                    "poor": "Deficiente",
+                    "critical": "Crítico"
+                },
+                "insights": {
+                    "insufficientData": {
+                        "title": "Datos insuficientes",
+                        "description": "Se necesitan más tarjetas para generar un análisis significativo del estado de ánimo del equipo."
+                    },
+                    "incompleteAnalysis": {
+                        "title": "Análisis incompleto",
+                        "description": "Solo se ha analizado el {{percentage}}% de las tarjetas. Algunos sentimientos podrían estar subestimados."
+                    },
+                    "criticalNegative": {
+                        "title": "Alto nivel de sentimientos negativos",
+                        "description": "{{percentage}}% de las tarjetas expresan sentimientos negativos. El equipo puede estar atravesando dificultades significativas."
+                    },
+                    "warningNegative": {
+                        "title": "Sentimientos negativos elevados",
+                        "description": "{{percentage}}% de las tarjetas muestran sentimientos negativos. Considera dedicar tiempo a abordar las preocupaciones del equipo."
+                    },
+                    "lowPositive": {
+                        "title": "Pocos sentimientos positivos",
+                        "description": "Solo {{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo podría beneficiarse de reconocer más logros."
+                    },
+                    "criticalColumn": {
+                        "title": "Área crítica: {{column}}",
+                        "description": "{{percentage}}% de las tarjetas en \"{{column}}\" son negativas. Esta área requiere atención inmediata."
+                    },
+                    "excellentMood": {
+                        "title": "Excelente estado de ánimo",
+                        "description": "{{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo muestra una actitud muy constructiva."
+                    },
+                    "favorableMood": {
+                        "title": "Estado de ánimo favorable",
+                        "description": "{{percentage}}% de las tarjetas son positivas. El equipo mantiene una perspectiva mayormente constructiva."
+                    },
+                    "balancedPerspective": {
+                        "title": "Perspectiva equilibrada",
+                        "description": "El equipo muestra una mezcla equilibrada de perspectivas, con buena objetividad en sus comentarios."
+                    }
+                }
             },
             "countdown": {
                 "title": "Temporizador",

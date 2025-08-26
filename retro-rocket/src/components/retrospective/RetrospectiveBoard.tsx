@@ -85,7 +85,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const sentimentAnalysis = useSentiment(cards, retrospective.id);
 
     // Expose sentiment analysis to parent component with stable callback
-    const sentimentAnalysisCallback = React.useCallback(() => sentimentAnalysis, [sentimentAnalysis]);
+    const sentimentAnalysisCallback = React.useCallback(() => ({
+        ...sentimentAnalysis,
+        columnConfigs // Include column configurations for team mood analysis
+    }), [sentimentAnalysis, columnConfigs]);
 
     React.useEffect(() => {
         if (onSentimentAnalysisReady) {

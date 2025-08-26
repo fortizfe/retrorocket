@@ -12,17 +12,21 @@ import FacilitatorMenuTabs from '../facilitator/FacilitatorMenuTabs';
 import TimerTab from '../facilitator/TimerTab';
 import SentimentTab from '../facilitator/SentimentTab';
 import NotesTab from '../facilitator/NotesTab';
+import TeamMoodTab from '../facilitator/TeamMoodTab';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
     facilitatorId: string;
     isOwner: boolean;
+    cards?: any[];
+    columnConfigs?: Record<string, any>;
     sentimentAnalysis?: {
         enabled: boolean;
         ready: boolean;
         loading: boolean;
         error?: string;
         config: any;
+        results?: Map<string, any>;
         setEnabled: (enabled: boolean) => void;
         updateConfig: (updates: any) => void;
         getSentimentCounts: () => { positive: number; negative: number; neutral: number; total: number };
@@ -33,6 +37,8 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     retrospectiveId,
     facilitatorId,
     isOwner,
+    cards = [],
+    columnConfigs = {},
     sentimentAnalysis
 }) => {
     const { t } = useLanguage();
@@ -145,6 +151,18 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
         return '?';
     };
 
+    const getTeamMoodBadge = () => {
+        if (!sentimentAnalysis?.enabled || !sentimentAnalysis.ready) return '⚪';
+        const counts = sentimentAnalysis.getSentimentCounts();
+        if (counts.total === 0) return '📊';
+
+        const negativeRatio = counts.negative / counts.total;
+        if (negativeRatio > 0.4) return '🚨'; // Crítico
+        if (negativeRatio > 0.25) return '⚠️'; // Advertencia
+        if (counts.positive / counts.total > 0.6) return '😊'; // Excelente
+        return '📈'; // Normal/Bueno
+    };
+
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);
     };
@@ -175,6 +193,16 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                         <p>Análisis de sentimientos no disponible</p>
                     </div>
                 );
+            case 'team-mood':
+                return (
+                    <TeamMoodTab
+                        cards={cards}
+                        sentimentResults={sentimentAnalysis?.results || new Map()}
+                        sentimentEnabled={sentimentAnalysis?.enabled || false}
+                        sentimentReady={sentimentAnalysis?.ready || false}
+                        columnConfigs={columnConfigs}
+                    />
+                );
             case 'notes':
                 return (
                     <NotesTab
@@ -201,7 +229,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                 className="p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
-                aria-expanded={isOpen ? "true" : "false"}
+                aria-expanded={isOpen ? 'true' : 'false'}
                 aria-haspopup="true"
             >
                 <motion.div
@@ -234,6 +262,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                             onClose={handleClose}
                             timerBadge={getTimerBadge()}
                             sentimentBadge={getSentimentBadge()}
+                            teamMoodBadge={getTeamMoodBadge()}
                             notesBadge={undefined} // Could add notes count here later
                         >
                             {renderTabContent()}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Brain, StickyNote, X } from 'lucide-react';
+import { Timer, Brain, StickyNote, X, Users } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface Tab {
@@ -17,6 +17,7 @@ interface FacilitatorMenuTabsProps {
     timerBadge?: string;
     notesBadge?: number;
     sentimentBadge?: string;
+    teamMoodBadge?: string;
     children: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
     timerBadge,
     notesBadge,
     sentimentBadge,
+    teamMoodBadge,
     children
 }) => {
     const { t } = useLanguage();
@@ -43,6 +45,12 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             label: t('retrospective.facilitator.tabs.sentiment'),
             icon: Brain,
             badge: sentimentBadge
+        },
+        {
+            id: 'team-mood',
+            label: 'Estado del Equipo',
+            icon: Users,
+            badge: teamMoodBadge
         },
         {
             id: 'notes',

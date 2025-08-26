@@ -322,6 +322,96 @@
                 "noNotes": "No notes yet",
                 "noNotesSubtitle": "Add notes to track the retrospective",
                 "loading": "Loading notes..."
+            },
+            "teamMood": {
+                "title": "Team Mood",
+                "analyzing": "Analyzing team mood...",
+                "insufficientData": {
+                    "title": "Insufficient data",
+                    "description": "At least 3 cards with sentiment analysis are needed to generate a meaningful team mood report.",
+                    "tip": "Cards are automatically analyzed when created or modified"
+                },
+                "disabled": {
+                    "title": "Sentiment Analysis Disabled",
+                    "description": "To generate the team mood report, first enable sentiment analysis in the \"AI\" tab.",
+                    "tip": "Sentiment analysis helps automatically identify the emotional tone of team cards."
+                },
+                "initializing": {
+                    "title": "Initializing Analysis",
+                    "description": "Preparing sentiment analysis system..."
+                },
+                "updated": "Updated:",
+                "basedOn": "Based on analysis of {{count}} cards",
+                "sentiments": {
+                    "positive": "Positive",
+                    "negative": "Negative",
+                    "neutral": "Neutral"
+                },
+                "sections": {
+                    "columnAnalysis": "Section Analysis",
+                    "insights": "Insights and Recommendations",
+                    "detailedStats": "Detailed Statistics"
+                },
+                "stats": {
+                    "totalCards": "Total cards:",
+                    "analyzed": "Analyzed:",
+                    "averageConfidence": "Average confidence:",
+                    "dominantSentiment": "Dominant sentiment:",
+                    "cards_singular": "card",
+                    "cards_plural": "cards"
+                },
+                "actionable": "Recommended action",
+                "moreInsights": "And {{count}} more insight...",
+                "moreInsights_plural": "And {{count}} more insights...",
+                "facilitatorNote": {
+                    "title": "Visible to facilitators only",
+                    "description": "This report is based on automatic sentiment analysis of cards and updates in real-time as the team participates."
+                },
+                "moodLabels": {
+                    "excellent": "Excellent",
+                    "good": "Good",
+                    "fair": "Fair",
+                    "poor": "Poor",
+                    "critical": "Critical"
+                },
+                "insights": {
+                    "insufficientData": {
+                        "title": "Insufficient data",
+                        "description": "More cards are needed to generate meaningful team mood analysis."
+                    },
+                    "incompleteAnalysis": {
+                        "title": "Incomplete analysis",
+                        "description": "Only {{percentage}}% of cards have been analyzed. Some sentiments might be underrepresented."
+                    },
+                    "criticalNegative": {
+                        "title": "High level of negative sentiments",
+                        "description": "{{percentage}}% of cards express negative sentiments. The team may be experiencing significant difficulties."
+                    },
+                    "warningNegative": {
+                        "title": "Elevated negative sentiments",
+                        "description": "{{percentage}}% of cards show negative sentiments. Consider dedicating time to address team concerns."
+                    },
+                    "lowPositive": {
+                        "title": "Few positive sentiments",
+                        "description": "Only {{percentage}}% of cards express positive sentiments. The team could benefit from recognizing more achievements."
+                    },
+                    "criticalColumn": {
+                        "title": "Critical area: {{column}}",
+                        "description": "{{percentage}}% of cards in \"{{column}}\" are negative. This area requires immediate attention."
+                    },
+                    "excellentMood": {
+                        "title": "Excellent mood",
+                        "description": "{{percentage}}% of cards express positive sentiments. The team shows a very constructive attitude."
+                    },
+                    "favorableMood": {
+                        "title": "Favorable mood",
+                        "description": "{{percentage}}% of cards are positive. The team maintains a mostly constructive perspective."
+                    },
+                    "balancedPerspective": {
+                        "title": "Balanced perspective",
+                        "description": "The team shows a balanced mix of perspectives, with good objectivity in their comments."
+                    }
+                }
             }
         },
         "groupSuggestion": {
