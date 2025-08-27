@@ -6,8 +6,7 @@ import {
     View,
     StyleSheet,
     Font,
-    pdf,
-    Image
+    pdf
 } from '@react-pdf/renderer';
 import { Retrospective } from '../types/retrospective';
 import { Card, CardGroup } from '../types/card';
@@ -48,186 +47,430 @@ export interface RetrospectiveExportData {
     teamMoodReport?: TeamMoodReport;
 }
 
-// Estilos para el PDF
+// Estilos para el PDF - Diseño Profesional
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 20,
+        padding: 16,
         fontFamily: 'Helvetica'
     },
-    header: {
-        flexDirection: 'row',
-        marginBottom: 20,
-        borderBottom: '2 solid #e5e7eb',
-        paddingBottom: 15
+
+    // MAIN TITLE FRAME
+    mainTitleFrame: {
+        border: '2 solid #1f2937',
+        marginBottom: 16,
+        padding: 0
     },
-    logo: {
-        width: 40,
-        height: 40,
-        marginRight: 15
+    mainTitleInner: {
+        border: '1 solid #1f2937',
+        margin: 2,
+        padding: 16,
+        backgroundColor: '#f8fafc',
+        textAlign: 'center'
     },
-    headerContent: {
-        flex: 1,
-        flexDirection: 'column'
-    },
-    title: {
-        fontSize: 24,
+    mainTitle: {
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#1f2937',
         marginBottom: 4
     },
-    subtitle: {
+    mainSubtitle: {
         fontSize: 12,
         color: '#6b7280'
     },
-    section: {
-        marginBottom: 20
+
+    // INFO BOX
+    infoBox: {
+        border: '1 solid #3b82f6',
+        borderRadius: 4,
+        marginBottom: 12,
+        padding: 0
     },
-    sectionTitle: {
-        fontSize: 16,
+    infoBoxHeader: {
+        backgroundColor: '#3b82f6',
+        padding: 6,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    infoBoxTitle: {
+        fontSize: 10,
         fontWeight: 'bold',
-        color: '#374151',
-        marginBottom: 10,
-        borderBottom: '1 solid #d1d5db',
-        paddingBottom: 5
+        color: '#ffffff'
     },
-    retrospectiveInfo: {
+    infoBoxContent: {
+        padding: 8,
+        backgroundColor: '#f8fafc'
+    },
+    infoRow: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 20,
-        marginBottom: 15
-    },
-    infoItem: {
-        flexDirection: 'column',
-        minWidth: 120
+        marginBottom: 3
     },
     infoLabel: {
-        fontSize: 10,
-        color: '#6b7280',
-        marginBottom: 2
-    },
-    infoValue: {
-        fontSize: 12,
-        color: '#1f2937',
+        fontSize: 9,
+        color: '#374151',
+        width: 120,
         fontWeight: 'bold'
     },
-    statsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        backgroundColor: '#f9fafb',
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 15
+    infoValue: {
+        fontSize: 9,
+        color: '#1f2937',
+        flex: 1
     },
-    statItem: {
-        flexDirection: 'column',
-        alignItems: 'center'
+
+    // STATS TABLE
+    statsTable: {
+        border: '1 solid #e5e7eb',
+        borderRadius: 4,
+        marginBottom: 12,
+        backgroundColor: '#f8fafc'
+    },
+    statsTableHeader: {
+        backgroundColor: '#374151',
+        padding: 6,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    statsTableTitle: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        textAlign: 'center'
+    },
+    statsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        padding: 8
+    },
+    statCell: {
+        width: '33.333%',
+        alignItems: 'center',
+        marginBottom: 6
     },
     statNumber: {
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 'bold',
-        color: '#3b82f6'
+        color: '#3b82f6',
+        marginBottom: 2
     },
     statLabel: {
-        fontSize: 10,
+        fontSize: 8,
         color: '#6b7280',
-        marginTop: 2
+        textAlign: 'center'
     },
-    columnSection: {
-        marginBottom: 25
+
+    // PARTICIPANTS LIST
+    participantsSection: {
+        border: '1 solid #d1d5db',
+        borderRadius: 4,
+        marginBottom: 12,
+        padding: 0
     },
-    columnHeader: {
+    participantsHeader: {
         backgroundColor: '#f3f4f6',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 10
+        padding: 6,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4,
+        borderBottom: '1 solid #d1d5db'
     },
-    columnTitle: {
-        fontSize: 14,
+    participantsTitle: {
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#374151'
     },
-    columnDescription: {
-        fontSize: 10,
+    participantsContent: {
+        padding: 8
+    },
+    participantItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 3,
+        paddingLeft: 4
+    },
+    participantNumber: {
+        fontSize: 8,
         color: '#6b7280',
+        width: 20
+    },
+    participantName: {
+        fontSize: 9,
+        color: '#1f2937'
+    },
+
+    // COLUMN SECTIONS
+    columnFrame: {
+        border: '1 solid #d1d5db',
+        borderRadius: 4,
+        marginBottom: 12,
+        padding: 0
+    },
+    columnHeader: {
+        backgroundColor: '#374151',
+        padding: 8,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    columnTitle: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#ffffff'
+    },
+    columnDescription: {
+        fontSize: 8,
+        color: '#d1d5db',
         marginTop: 2
     },
-    card: {
-        backgroundColor: '#ffffff',
-        border: '1 solid #e5e7eb',
-        borderRadius: 6,
+    columnContent: {
         padding: 8,
-        marginBottom: 6
+        backgroundColor: '#fafafa'
+    },
+
+    // GROUP SECTIONS
+    groupFrame: {
+        border: '1 solid #fbbf24',
+        borderRadius: 4,
+        marginBottom: 8,
+        padding: 0
+    },
+    groupHeader: {
+        backgroundColor: '#fef3c7',
+        padding: 6,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4,
+        borderBottom: '1 solid #fbbf24'
+    },
+    groupTitle: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#92400e'
+    },
+    groupStats: {
+        fontSize: 8,
+        color: '#a16207',
+        marginTop: 2
+    },
+    groupContent: {
+        padding: 6
+    },
+
+    // CARDS
+    cardFrame: {
+        border: '1 solid #e5e7eb',
+        borderRadius: 3,
+        marginBottom: 4,
+        padding: 0,
+        backgroundColor: '#ffffff'
+    },
+    cardHeader: {
+        padding: 6,
+        borderBottom: '1 solid #f3f4f6'
     },
     cardContent: {
-        fontSize: 11,
-        color: '#374151',
-        lineHeight: 1.4
+        fontSize: 9,
+        color: '#1f2937',
+        lineHeight: 1.3
+    },
+    cardFooter: {
+        backgroundColor: '#f8fafc',
+        padding: 4,
+        borderBottomLeftRadius: 3,
+        borderBottomRightRadius: 3,
+        borderTop: '1 solid #f3f4f6'
     },
     cardMeta: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 4,
-        fontSize: 9,
-        color: '#9ca3af'
-    },
-    groupSection: {
-        marginBottom: 15,
-        backgroundColor: '#f9fafb',
-        padding: 10,
-        borderRadius: 8
-    },
-    groupTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#1f2937',
-        marginBottom: 6
-    },
-    groupStats: {
-        flexDirection: 'row',
-        gap: 15,
-        marginBottom: 8,
-        fontSize: 10,
+        fontSize: 7,
         color: '#6b7280'
     },
-    facilitatorNotesSection: {
-        backgroundColor: '#fef3c7',
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 20
+    cardMetaLeft: {
+        flexDirection: 'row',
+        gap: 8
     },
-    noteItem: {
-        marginBottom: 10,
-        padding: 8,
-        backgroundColor: '#ffffff',
+
+    // FACILITATOR NOTES
+    facilitatorFrame: {
+        border: '2 solid #fbbf24',
         borderRadius: 4,
-        border: '1 solid #fbbf24'
+        marginBottom: 12,
+        padding: 0
     },
-    noteContent: {
+    facilitatorHeader: {
+        backgroundColor: '#fbbf24',
+        padding: 8,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    facilitatorTitle: {
         fontSize: 11,
-        color: '#374151',
-        marginBottom: 4
+        fontWeight: 'bold',
+        color: '#ffffff'
     },
-    noteTimestamp: {
+    facilitatorContent: {
+        padding: 8,
+        backgroundColor: '#fefce8'
+    },
+    noteFrame: {
+        border: '1 solid #d97706',
+        borderRadius: 3,
+        marginBottom: 6,
+        padding: 0,
+        backgroundColor: '#ffffff'
+    },
+    noteHeader: {
+        backgroundColor: '#fed7aa',
+        padding: 4,
+        borderTopLeftRadius: 3,
+        borderTopRightRadius: 3,
+        borderBottom: '1 solid #d97706'
+    },
+    noteDate: {
+        fontSize: 7,
+        color: '#9a3412'
+    },
+    noteContentBox: {
+        padding: 6
+    },
+    noteText: {
         fontSize: 9,
-        color: '#92400e'
+        color: '#1f2937',
+        lineHeight: 1.3
     },
-    footer: {
+
+    // ACTION ITEMS
+    actionFrame: {
+        border: '1 solid #10b981',
+        borderRadius: 4,
+        marginBottom: 12,
+        padding: 0
+    },
+    actionHeader: {
+        backgroundColor: '#10b981',
+        padding: 8,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    actionTitle: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#ffffff'
+    },
+    actionContent: {
+        padding: 8,
+        backgroundColor: '#f0fdf4'
+    },
+    actionItemFrame: {
+        border: '1 solid #16a34a',
+        borderRadius: 3,
+        marginBottom: 6,
+        padding: 0,
+        backgroundColor: '#ffffff'
+    },
+    actionItemHeader: {
+        backgroundColor: '#dcfce7',
+        padding: 4,
+        borderTopLeftRadius: 3,
+        borderTopRightRadius: 3,
+        borderBottom: '1 solid #16a34a'
+    },
+    actionResponsible: {
+        fontSize: 8,
+        fontWeight: 'bold',
+        color: '#15803d'
+    },
+    actionItemContent: {
+        padding: 6
+    },
+    actionItemText: {
+        fontSize: 9,
+        color: '#1f2937',
+        marginBottom: 3
+    },
+    actionItemMeta: {
+        fontSize: 7,
+        color: '#6b7280',
+        borderTop: '1 solid #f3f4f6',
+        paddingTop: 3
+    },
+
+    // TEAM MOOD
+    moodFrame: {
+        border: '2 solid #8b5cf6',
+        borderRadius: 4,
+        marginBottom: 12,
+        padding: 0
+    },
+    moodHeader: {
+        backgroundColor: '#8b5cf6',
+        padding: 8,
+        borderTopLeftRadius: 4,
+        borderTopRightRadius: 4
+    },
+    moodTitle: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#ffffff'
+    },
+    moodContent: {
+        padding: 8,
+        backgroundColor: '#f5f3ff'
+    },
+    moodScoreBox: {
+        border: '1 solid #a855f7',
+        borderRadius: 3,
+        backgroundColor: '#ffffff',
+        padding: 6,
+        marginBottom: 6,
+        textAlign: 'center'
+    },
+    moodScore: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#7c3aed'
+    },
+    moodLabel: {
+        fontSize: 8,
+        color: '#6b46c1',
+        marginTop: 2
+    },
+    moodInsight: {
+        fontSize: 9,
+        color: '#1f2937',
+        marginBottom: 3,
+        paddingLeft: 8
+    },
+
+    // FOOTER
+    footerFrame: {
         position: 'absolute',
-        bottom: 20,
-        left: 20,
-        right: 20,
+        bottom: 16,
+        left: 16,
+        right: 16,
+        border: '1 solid #d1d5db',
+        borderRadius: 4,
+        padding: 0
+    },
+    footerContent: {
+        backgroundColor: '#f8fafc',
+        padding: 8,
+        borderRadius: 4
+    },
+    footerText: {
+        fontSize: 9,
+        color: '#6b7280',
         textAlign: 'center',
-        fontSize: 10,
+        fontWeight: 'bold'
+    },
+    footerDate: {
+        fontSize: 8,
         color: '#9ca3af',
-        borderTop: '1 solid #e5e7eb',
-        paddingTop: 10
+        textAlign: 'center',
+        marginTop: 2
     }
 });
 
 /**
- * Crea el componente del documento PDF usando createElement
+ * Crea el componente del documento PDF usando createElement con diseño profesional
  */
 const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOptions) => {
     // Get dynamic columns based on template
@@ -259,25 +502,319 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         });
     };
 
-    // Función para obtener el estilo de una tarjeta con su color de fondo
-    const getCardStyle = (card: Card) => {
-        const backgroundColor = card.color ? getCardColorHex(card.color) : '#ffffff';
-        return {
-            ...styles.card,
-            backgroundColor
-        };
+    // Professional helper functions
+    const createMainTitle = (title: string, subtitle: string) => {
+        return React.createElement(View, { key: 'mainTitle', style: styles.mainTitleFrame }, [
+            React.createElement(View, { key: 'inner', style: styles.mainTitleInner }, [
+                React.createElement(Text, { key: 'title', style: styles.mainTitle },
+                    `🚀 RETROSPECTIVA: ${title.toUpperCase()}`
+                ),
+                React.createElement(Text, { key: 'subtitle', style: styles.mainSubtitle }, subtitle)
+            ])
+        ]);
     };
 
+    const createInfoBox = (title: string, infoItems: Array<{ label: string, value: string }>) => {
+        return React.createElement(View, { key: 'infoBox', style: styles.infoBox }, [
+            React.createElement(View, { key: 'header', style: styles.infoBoxHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.infoBoxTitle }, `ℹ️ ${title}`)
+            ]),
+            React.createElement(View, { key: 'content', style: styles.infoBoxContent },
+                infoItems.map((item) =>
+                    React.createElement(View, { key: `info-${item.label}`, style: styles.infoRow }, [
+                        React.createElement(Text, { key: 'label', style: styles.infoLabel }, `📅 ${item.label}`),
+                        React.createElement(Text, { key: 'value', style: styles.infoValue }, item.value)
+                    ])
+                )
+            )
+        ]);
+    };
+
+    const createStatsTable = (stats: any) => {
+        const statsData = [
+            { number: stats.totalCards, label: 'Total de tarjetas' },
+            { number: stats.totalVotes, label: 'Total de votos' },
+            { number: stats.totalReactions, label: 'Total de likes' },
+            { number: stats.totalParticipants, label: 'Participantes activos' },
+            { number: stats.totalGroups, label: 'Grupos formados' },
+            { number: stats.totalActionItems, label: 'Elementos de acción' }
+        ];
+
+        return React.createElement(View, { key: 'statsTable', style: styles.statsTable }, [
+            React.createElement(View, { key: 'header', style: styles.statsTableHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.statsTableTitle }, '📊 RESUMEN ESTADÍSTICO')
+            ]),
+            React.createElement(View, { key: 'grid', style: styles.statsGrid },
+                statsData.map((stat) =>
+                    React.createElement(View, { key: `stat-${stat.label}`, style: styles.statCell }, [
+                        React.createElement(Text, { key: 'number', style: styles.statNumber },
+                            stat.number.toString()
+                        ),
+                        React.createElement(Text, { key: 'label', style: styles.statLabel }, stat.label)
+                    ])
+                )
+            )
+        ]);
+    };
+
+    const createParticipantsList = () => {
+        if (!options.includeParticipants || data.participants.length === 0) return null;
+
+        return React.createElement(View, { key: 'participants', style: styles.participantsSection }, [
+            React.createElement(View, { key: 'header', style: styles.participantsHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.participantsTitle },
+                    `👥 PARTICIPANTES (${data.participants.length})`
+                )
+            ]),
+            React.createElement(View, { key: 'content', style: styles.participantsContent },
+                data.participants.map((participant, index) =>
+                    React.createElement(View, { key: `participant-${participant.name}-${index}`, style: styles.participantItem }, [
+                        React.createElement(Text, { key: 'number', style: styles.participantNumber },
+                            `${String(index + 1).padStart(2, '0')}.`
+                        ),
+                        React.createElement(Text, { key: 'name', style: styles.participantName },
+                            `👤 ${participant.name}`
+                        )
+                    ])
+                )
+            )
+        ]);
+    };
+
+    const createCard = (card: Card) => {
+        return React.createElement(View, { key: `card-${card.id}`, style: styles.cardFrame }, [
+            React.createElement(View, { key: 'header', style: styles.cardHeader }, [
+                React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content)
+            ]),
+            React.createElement(View, { key: 'footer', style: styles.cardFooter }, [
+                React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
+                    React.createElement(View, { key: 'left', style: styles.cardMetaLeft }, [
+                        React.createElement(Text, { key: 'author' },
+                            `ℹ️ Autor: ${card.createdBy || 'Anónimo'}`
+                        ),
+                        React.createElement(Text, { key: 'votes' },
+                            `🗳️ Votos: ${card.likes?.length ?? 0}`
+                        )
+                    ]),
+                    ...(options.includeSentimentBadges && data.sentimentResults?.has(card.id) ? [
+                        React.createElement(Text, { key: 'sentiment' },
+                            (() => {
+                                const result = data.sentimentResults!.get(card.id);
+                                if (!result) return '';
+
+                                const getSentimentEmoji = (sentiment: string) => {
+                                    if (sentiment === 'positive') return '😊';
+                                    if (sentiment === 'negative') return '😞';
+                                    return '😐';
+                                };
+
+                                return `🧠 Sentimiento: ${getSentimentEmoji(result.sentiment)} ${result.sentiment} (${(result.confidence * 100).toFixed(0)}%)`;
+                            })()
+                        )
+                    ] : [])
+                ])
+            ])
+        ]);
+    };
+
+    const createColumnSection = (columnType: string) => {
+        const columnConfig = columns[columnType];
+        const columnCards = getColumnCards(columnType);
+        const columnGroups = getColumnGroups(columnType);
+
+        if (columnCards.length === 0 || !columnConfig) return null;
+
+        const groupElements = options.includeGroupDetails ? columnGroups.map((group) => {
+            const groupCards = columnCards.filter(card => card.groupId === group.id);
+            if (groupCards.length === 0) return null;
+
+            return React.createElement(View, { key: `group-${group.id}`, style: styles.groupFrame }, [
+                React.createElement(View, { key: 'header', style: styles.groupHeader }, [
+                    React.createElement(Text, { key: 'title', style: styles.groupTitle },
+                        `📁 ${group.title || 'Grupo sin título'}`
+                    ),
+                    React.createElement(Text, { key: 'stats', style: styles.groupStats },
+                        `Tarjetas: ${groupCards.length} | Votos totales: ${groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0)}`
+                    )
+                ]),
+                React.createElement(View, { key: 'content', style: styles.groupContent },
+                    groupCards.map(card => createCard(card))
+                )
+            ]);
+        }).filter(Boolean) : [];
+
+        const ungroupedCards = columnCards
+            .filter(card => !card.groupId || !options.includeGroupDetails)
+            .map(card => createCard(card));
+
+        return React.createElement(View, { key: `column-${columnType}`, style: styles.columnFrame }, [
+            React.createElement(View, { key: 'header', style: styles.columnHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.columnTitle },
+                    `${columnConfig.title} (${columnCards.length} tarjetas)`
+                ),
+                React.createElement(Text, { key: 'description', style: styles.columnDescription },
+                    columnConfig.description
+                )
+            ]),
+            React.createElement(View, { key: 'content', style: styles.columnContent }, [
+                ...groupElements,
+                ...ungroupedCards
+            ])
+        ]);
+    };
+
+    const createFacilitatorNotes = () => {
+        if (!options.includeFacilitatorNotes || !data.facilitatorNotes || data.facilitatorNotes.length === 0) {
+            return null;
+        }
+
+        return React.createElement(View, { key: 'facilitatorNotes', style: styles.facilitatorFrame }, [
+            React.createElement(View, { key: 'header', style: styles.facilitatorHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.facilitatorTitle },
+                    '📋 NOTAS DEL FACILITADOR'
+                )
+            ]),
+            React.createElement(View, { key: 'content', style: styles.facilitatorContent },
+                data.facilitatorNotes.map((note, index) =>
+                    React.createElement(View, {
+                        key: note.id || `facilitator-${index}`,
+                        style: styles.noteFrame
+                    }, [
+                        React.createElement(View, { key: 'header', style: styles.noteHeader }, [
+                            React.createElement(Text, { key: 'date', style: styles.noteDate },
+                                `📅 ${formatDate(note.timestamp)}`
+                            )
+                        ]),
+                        React.createElement(View, { key: 'content', style: styles.noteContentBox }, [
+                            React.createElement(Text, { key: 'text', style: styles.noteText }, note.content)
+                        ])
+                    ])
+                )
+            )
+        ]);
+    };
+
+    const createActionItems = () => {
+        if (!options.includeActionItems || !data.actionItems || data.actionItems.length === 0) {
+            return null;
+        }
+
+        return React.createElement(View, { key: 'actionItems', style: styles.actionFrame }, [
+            React.createElement(View, { key: 'header', style: styles.actionHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.actionTitle },
+                    '🎯 ELEMENTOS DE ACCIÓN'
+                )
+            ]),
+            React.createElement(View, { key: 'content', style: styles.actionContent },
+                data.actionItems.map((item, index) =>
+                    React.createElement(View, {
+                        key: item.id || `action-${index}`,
+                        style: styles.actionItemFrame
+                    }, [
+                        React.createElement(View, { key: 'header', style: styles.actionItemHeader }, [
+                            React.createElement(Text, { key: 'responsible', style: styles.actionResponsible },
+                                `👤 Responsable: ${item.assignedToName || 'Sin asignar'}`
+                            ),
+                            ...(item.dueDate ? [
+                                React.createElement(Text, { key: 'dueDate', style: styles.actionResponsible },
+                                    `⏰ Vencimiento: ${formatDate(item.dueDate)}`
+                                )
+                            ] : [])
+                        ]),
+                        React.createElement(View, { key: 'content', style: styles.actionItemContent }, [
+                            React.createElement(Text, { key: 'text', style: styles.actionItemText }, item.content),
+                            React.createElement(View, { key: 'meta', style: styles.actionItemMeta }, [
+                                React.createElement(Text, { key: 'created' },
+                                    `📅 Creado: ${formatDate(item.createdAt)}`
+                                ),
+                                React.createElement(Text, { key: 'updated' },
+                                    `🔄 Actualizado: ${formatDate(item.createdAt)}`
+                                )
+                            ])
+                        ])
+                    ])
+                )
+            )
+        ]);
+    };
+
+    const createTeamMoodAnalysis = () => {
+        if (!options.includeTeamMoodAnalysis || !data.teamMoodReport) {
+            return null;
+        }
+
+        const getMoodLabel = (score: number): string => {
+            if (score >= 8.5) return 'Excelente';
+            if (score >= 7.5) return 'Muy Bueno';
+            if (score >= 6.5) return 'Bueno';
+            if (score >= 5.5) return 'Regular';
+            if (score >= 4.5) return 'Preocupante';
+            return 'Crítico';
+        };
+
+        const getMoodEmoji = (score: number): string => {
+            if (score >= 7.5) return '😊';
+            if (score >= 5.5) return '😐';
+            return '⚠️';
+        };
+
+        return React.createElement(View, { key: 'teamMood', style: styles.moodFrame }, [
+            React.createElement(View, { key: 'header', style: styles.moodHeader }, [
+                React.createElement(Text, { key: 'title', style: styles.moodTitle },
+                    '🧠 ANÁLISIS DEL ESTADO DE ÁNIMO DEL EQUIPO'
+                )
+            ]),
+            React.createElement(View, { key: 'content', style: styles.moodContent }, [
+                React.createElement(View, { key: 'score', style: styles.moodScoreBox }, [
+                    React.createElement(Text, { key: 'value', style: styles.moodScore },
+                        `📊 Puntuación: ${data.teamMoodReport.moodScore}/10 (${getMoodEmoji(data.teamMoodReport.moodScore)} ${getMoodLabel(data.teamMoodReport.moodScore)})`
+                    ),
+                    React.createElement(Text, { key: 'confidence', style: styles.moodLabel },
+                        `📈 Confianza promedio: ${Math.round(data.teamMoodReport.metrics.analysisCompleteness)}%`
+                    )
+                ]),
+                React.createElement(Text, { key: 'distribution', style: styles.moodInsight },
+                    `😊 Positivo: ${data.teamMoodReport.metrics.totalPositive} tarjetas (${data.teamMoodReport.metrics.positivePercentage}%)`
+                ),
+                React.createElement(Text, { key: 'neutral', style: styles.moodInsight },
+                    `😐 Neutral: ${data.teamMoodReport.metrics.totalNeutral} tarjetas (${data.teamMoodReport.metrics.neutralPercentage}%)`
+                ),
+                React.createElement(Text, { key: 'negative', style: styles.moodInsight },
+                    `😞 Negativo: ${data.teamMoodReport.metrics.totalNegative} tarjetas (${data.teamMoodReport.metrics.negativePercentage}%)`
+                ),
+                ...(data.teamMoodReport.insights.length > 0 ? [
+                    React.createElement(Text, { key: 'insightsTitle', style: styles.moodInsight },
+                        '💡 INSIGHTS Y RECOMENDACIONES'
+                    ),
+                    ...data.teamMoodReport.insights.map((insight, index) =>
+                        React.createElement(Text, { key: `insight-${index}`, style: styles.moodInsight },
+                            `• ${insight.description} (Nivel ${insight.severity})`
+                        )
+                    )
+                ] : [])
+            ])
+        ]);
+    };
+
+    const createFooter = () => {
+        return React.createElement(View, { key: 'footer', style: styles.footerFrame }, [
+            React.createElement(View, { key: 'content', style: styles.footerContent }, [
+                React.createElement(Text, { key: 'text', style: styles.footerText },
+                    '🎯 GENERADO POR RETROROCKET 🎯'
+                ),
+                React.createElement(Text, { key: 'date', style: styles.footerDate },
+                    `📅 ${formatDate(new Date())} | 🌐 retrorocket.com`
+                )
+            ])
+        ]);
+    };
+
+    // Calculate statistics
     const calculateStatistics = () => {
         const totalCards = data.cards.length;
         const totalGroups = data.groups.length;
         const totalParticipants = data.participants.length;
-
-        const totalVotes = data.cards.reduce((sum, card) => {
-            const cardLikes = card.likes?.length ?? 0; // Use likes instead of votes
-            return sum + cardLikes;
-        }, 0);
-
+        const totalVotes = data.cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
         const totalReactions = data.cards.reduce((sum, card) => sum + (card.reactions?.length || 0), 0);
         const totalActionItems = data.actionItems?.length || 0;
 
@@ -293,278 +830,41 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
 
     const stats = calculateStatistics();
 
-    // Header
-    const headerElements = [
-        ...(options.logoUrl ? [React.createElement(Image, {
-            key: 'logo',
-            style: styles.logo,
-            src: options.logoUrl
-        })] : []),
-        React.createElement(View, { key: 'headerContent', style: styles.headerContent }, [
-            React.createElement(Text, { key: 'title', style: styles.title }, data.retrospective.title),
-            React.createElement(Text, { key: 'subtitle', style: styles.subtitle },
-                `Retrospectiva generada el ${formatDate(new Date())}`
-            )
-        ])
-    ];
-
-    // Información general
-    const infoElements = [
-        React.createElement(View, { key: 'created', style: styles.infoItem }, [
-            React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Fecha de creación'),
-            React.createElement(Text, { key: 'value', style: styles.infoValue }, formatDate(data.retrospective.createdAt))
-        ]),
-        ...(templateId ? [
-            React.createElement(View, { key: 'template', style: styles.infoItem }, [
-                React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Plantilla'),
-                React.createElement(Text, { key: 'value', style: styles.infoValue }, getTemplateName(templateId))
-            ])
-        ] : []),
-        React.createElement(View, { key: 'status', style: styles.infoItem }, [
-            React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Estado'),
-            React.createElement(Text, { key: 'value', style: styles.infoValue },
-                data.retrospective.isActive ? 'Activa' : 'Finalizada'
-            )
-        ]),
-        ...(data.retrospective.description ? [
-            React.createElement(View, { key: 'description', style: styles.infoItem }, [
-                React.createElement(Text, { key: 'label', style: styles.infoLabel }, 'Descripción'),
-                React.createElement(Text, { key: 'value', style: styles.infoValue }, data.retrospective.description)
-            ])
-        ] : [])
-    ];
-
-    // Estadísticas
-    const statsElements = options.includeStatistics ? [
-        React.createElement(View, { key: 'stats', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Estadísticas'),
-            React.createElement(View, { key: 'container', style: styles.statsContainer }, [
-                React.createElement(View, { key: 'cards', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalCards.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Tarjetas')
-                ]),
-                React.createElement(View, { key: 'groups', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalGroups.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Grupos')
-                ]),
-                React.createElement(View, { key: 'participants', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalParticipants.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Participantes')
-                ]),
-                React.createElement(View, { key: 'votes', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalVotes.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Votos')
-                ]),
-                React.createElement(View, { key: 'reactions', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalReactions.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Reacciones')
-                ]),
-                React.createElement(View, { key: 'actionItems', style: styles.statItem }, [
-                    React.createElement(Text, { key: 'number', style: styles.statNumber }, stats.totalActionItems.toString()),
-                    React.createElement(Text, { key: 'label', style: styles.statLabel }, 'Elementos de Acción')
-                ])
-            ])
-        ])
-    ] : [];
-
-    // Participantes
-    const participantsElements = (options.includeParticipants && data.participants.length > 0) ? [
-        React.createElement(View, { key: 'participants', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle },
-                `Participantes (${data.participants.length})`
-            ),
-            ...data.participants.map((participant, index) =>
-                React.createElement(View, { key: `participant-${participant.name}-${index}`, style: styles.card }, [
-                    React.createElement(Text, { key: 'name', style: styles.cardContent }, participant.name),
-                    React.createElement(Text, { key: 'joined', style: styles.cardMeta },
-                        `Se unió: ${formatDate(participant.joinedAt)}`
-                    )
-                ])
-            )
-        ])
-    ] : [];
-
-    // Notas del facilitador
-    const facilitatorNotesElements = (options.includeFacilitatorNotes && data.facilitatorNotes && data.facilitatorNotes.length > 0) ? [
-        React.createElement(View, { key: 'facilitatorNotes', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Notas del Facilitador'),
-            React.createElement(View, { key: 'notesSection', style: styles.facilitatorNotesSection },
-                data.facilitatorNotes.map((note, index) =>
-                    React.createElement(View, { key: note.id || index, style: styles.noteItem }, [
-                        React.createElement(Text, { key: 'content', style: styles.noteContent }, note.content),
-                        React.createElement(Text, { key: 'timestamp', style: styles.noteTimestamp },
-                            formatDate(note.timestamp)
-                        )
-                    ])
-                )
-            )
-        ])
-    ] : [];
-
-    // Columnas
-    const columnElements = columnOrder.map((columnType) => {
-        const columnConfig = columns[columnType];
-        const columnCards = getColumnCards(columnType);
-        const columnGroups = getColumnGroups(columnType);
-
-        if (columnCards.length === 0 || !columnConfig) return null;
-
-        const groupElements = options.includeGroupDetails ? columnGroups.map((group) => {
-            const groupCards = columnCards.filter(card => card.groupId === group.id);
-            if (groupCards.length === 0) return null;
-
-            return React.createElement(View, { key: group.id, style: styles.groupSection }, [
-                React.createElement(Text, { key: 'title', style: styles.groupTitle },
-                    `📁 ${group.title || 'Grupo sin título'}`
-                ),
-                React.createElement(View, { key: 'stats', style: styles.groupStats }, [
-                    React.createElement(Text, { key: 'count' }, `Tarjetas: ${groupCards.length}`),
-                    React.createElement(Text, { key: 'votes' },
-                        `Votos totales: ${groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0)}`
-                    )
-                ]),
-                ...groupCards.map((card) => {
-                    const cardMetaElements = [
-                        React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                        React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
-                    ];
-
-                    // Add sentiment badges if enabled
-                    if (options.includeSentimentBadges && data.sentimentResults?.has(card.id)) {
-                        const sentimentResult = data.sentimentResults.get(card.id)!;
-                        const sentimentText = `Sentimiento: ${sentimentResult.sentiment} (${(sentimentResult.confidence * 100).toFixed(0)}%)`;
-                        cardMetaElements.push(
-                            React.createElement(Text, { key: 'sentiment', style: styles.cardMeta }, sentimentText)
-                        );
-                    }
-
-                    return React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
-                        React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
-                        React.createElement(View, { key: 'meta', style: styles.cardMeta }, cardMetaElements)
-                    ]);
-                })
-            ]);
-        }).filter(Boolean) : [];
-
-        const ungroupedCards = columnCards
-            .filter(card => !card.groupId || !options.includeGroupDetails)
-            .map((card) => {
-                const cardMetaElements = [
-                    React.createElement(Text, { key: 'author' }, `Autor: ${card.createdBy || 'Anónimo'}`),
-                    React.createElement(Text, { key: 'votes' }, `Votos: ${card.likes?.length ?? 0}`)
-                ];
-
-                // Add sentiment badges if enabled
-                if (options.includeSentimentBadges && data.sentimentResults?.has(card.id)) {
-                    const sentimentResult = data.sentimentResults.get(card.id)!;
-                    const sentimentText = `Sentimiento: ${sentimentResult.sentiment} (${(sentimentResult.confidence * 100).toFixed(0)}%)`;
-                    cardMetaElements.push(
-                        React.createElement(Text, { key: 'sentiment', style: styles.cardMeta }, sentimentText)
-                    );
-                }
-
-                return React.createElement(View, { key: card.id, style: getCardStyle(card) }, [
-                    React.createElement(Text, { key: 'content', style: styles.cardContent }, card.content),
-                    React.createElement(View, { key: 'meta', style: styles.cardMeta }, cardMetaElements)
-                ]);
-            });
-
-        return React.createElement(View, { key: columnType, style: styles.columnSection }, [
-            React.createElement(View, { key: 'header', style: styles.columnHeader }, [
-                React.createElement(Text, { key: 'title', style: styles.columnTitle },
-                    `${columnConfig.title} (${columnCards.length} tarjetas)`
-                ),
-                React.createElement(Text, { key: 'description', style: styles.columnDescription },
-                    columnConfig.description
-                )
-            ]),
-            ...groupElements,
-            ...ungroupedCards
-        ]);
-    }).filter(Boolean);
-
-    // Elementos de acción
-    const actionItemsElements = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ? [
-        React.createElement(View, { key: 'actionItems', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Elementos de Acción'),
-            React.createElement(View, { key: 'actionItemsSection', style: styles.facilitatorNotesSection },
-                data.actionItems.map((item, index) =>
-                    React.createElement(View, { key: item.id || index, style: styles.noteItem }, [
-                        React.createElement(Text, { key: 'content', style: styles.noteContent }, item.content),
-                        React.createElement(Text, { key: 'assignee', style: styles.noteTimestamp },
-                            `Asignado a: ${item.assignedToName || 'Sin asignar'}`
-                        ),
-                        ...(item.dueDate ? [React.createElement(Text, { key: 'dueDate', style: styles.noteTimestamp },
-                            `Fecha de vencimiento: ${formatDate(item.dueDate)}`
-                        )] : []),
-                        React.createElement(Text, { key: 'created', style: styles.noteTimestamp },
-                            `Creado: ${formatDate(item.createdAt)}`
-                        )
-                    ])
-                )
-            )
-        ])
-    ] : [];
-
-    const getMoodLabel = (score: number): string => {
-        if (score >= 8.5) return 'Excelente';
-        if (score >= 7.5) return 'Muy Bueno';
-        if (score >= 6.5) return 'Bueno';
-        if (score >= 5.5) return 'Regular';
-        if (score >= 4.5) return 'Preocupante';
-        return 'Crítico';
-    };
-
-    // Team Mood Analysis Elements
-    const teamMoodElements = (options.includeTeamMoodAnalysis && data.teamMoodReport) ? [
-        React.createElement(View, { key: 'teamMood', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Análisis del Estado de Ánimo del Equipo'),
-            React.createElement(View, { key: 'teamMoodContent', style: styles.facilitatorNotesSection }, [
-                // Overall score
-                React.createElement(Text, { key: 'score', style: styles.noteContent },
-                    `Puntuación General: ${data.teamMoodReport.moodScore}/10 - ${getMoodLabel(data.teamMoodReport.moodScore)}`
-                ),
-                // General metrics
-                React.createElement(Text, { key: 'metrics', style: styles.noteContent },
-                    `Total de tarjetas: ${data.teamMoodReport.metrics.totalCards}, Analizadas: ${data.teamMoodReport.metrics.analyzedCards} (${Math.round(data.teamMoodReport.metrics.analysisCompleteness)}%)`
-                ),
-                // Sentiment distribution
-                React.createElement(Text, { key: 'distribution', style: styles.noteContent },
-                    `Distribución: Positivo ${data.teamMoodReport.metrics.positivePercentage}% (${data.teamMoodReport.metrics.totalPositive}), Neutral ${data.teamMoodReport.metrics.neutralPercentage}% (${data.teamMoodReport.metrics.totalNeutral}), Negativo ${data.teamMoodReport.metrics.negativePercentage}% (${data.teamMoodReport.metrics.totalNegative})`
-                ),
-                // Insights
-                ...(data.teamMoodReport.insights.length > 0 ? [
-                    React.createElement(Text, { key: 'insightsTitle', style: styles.noteTimestamp }, 'Insights Clave:'),
-                    ...data.teamMoodReport.insights.map((insight, index) =>
-                        React.createElement(Text, { key: `insight-${index}`, style: styles.noteContent },
-                            `• ${insight.description} (Nivel ${insight.severity})`
-                        )
-                    )
-                ] : [])
-            ])
-        ])
-    ] : [];
-
-    // Footer
-    const footer = React.createElement(Text, { style: styles.footer },
-        `Generado por Retro Rocket - ${formatDate(new Date())}`
+    // Build main page elements
+    const mainTitle = createMainTitle(data.retrospective.title,
+        `Retrospectiva generada el ${formatDate(new Date())}`
     );
 
-    // Construir página completa
+    const infoBox = createInfoBox('INFORMACIÓN GENERAL', [
+        { label: 'Fecha de creación', value: formatDate(data.retrospective.createdAt) },
+        { label: 'Participantes', value: `${data.participants.length} miembros del equipo` },
+        ...(templateId ? [{ label: 'Plantilla', value: getTemplateName(templateId) }] : []),
+        { label: 'Estado', value: data.retrospective.isActive ? 'Activa' : 'Finalizada' },
+        ...(data.retrospective.description ? [{ label: 'Descripción', value: data.retrospective.description }] : [])
+    ]);
+
+    const statsTable = options.includeStatistics ? createStatsTable(stats) : null;
+    const participantsList = createParticipantsList();
+    const facilitatorNotes = createFacilitatorNotes();
+    const actionItems = createActionItems();
+    const teamMoodAnalysis = createTeamMoodAnalysis();
+
+    const columnElements = columnOrder.map(createColumnSection).filter(Boolean);
+
+    const footer = createFooter();
+
+    // Build complete page
     const pageElements = [
-        React.createElement(View, { key: 'header', style: styles.header }, headerElements),
-        React.createElement(View, { key: 'info', style: styles.section }, [
-            React.createElement(Text, { key: 'title', style: styles.sectionTitle }, 'Información General'),
-            React.createElement(View, { key: 'infoContent', style: styles.retrospectiveInfo }, infoElements)
-        ]),
-        ...statsElements,
-        ...participantsElements,
-        ...facilitatorNotesElements,
+        mainTitle,
+        infoBox,
+        ...(statsTable ? [statsTable] : []),
+        ...(participantsList ? [participantsList] : []),
         ...columnElements,
-        ...actionItemsElements,
-        ...teamMoodElements,
+        ...(facilitatorNotes ? [facilitatorNotes] : []),
+        ...(actionItems ? [actionItems] : []),
+        ...(teamMoodAnalysis ? [teamMoodAnalysis] : []),
         footer
-    ];
+    ].filter(Boolean);
 
     return React.createElement(Document, {}, [
         React.createElement(Page, { key: 'page', size: 'A4', style: styles.page }, pageElements)
