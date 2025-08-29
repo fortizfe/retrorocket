@@ -4,7 +4,6 @@ import {
     subscribeToParticipants,
     addParticipant as addParticipantService,
     removeParticipant as removeParticipantService,
-    setParticipantInactive,
     CreateParticipantInput
 } from '../services/participantService';
 import { Participant } from '../types/participant';
@@ -15,7 +14,6 @@ interface UseParticipantsReturn {
     error: string | null;
     addParticipant: (participantInput: CreateParticipantInput) => Promise<{ id: string; isNew: boolean }>;
     removeParticipant: (participantId: string) => Promise<void>;
-    setInactive: (participantId: string) => Promise<void>;
     refetch: () => Promise<void>;
 }
 
@@ -84,25 +82,12 @@ export const useParticipants = (retrospectiveId?: string): UseParticipantsReturn
         }
     }, []);
 
-    const setInactive = useCallback(async (participantId: string): Promise<void> => {
-        try {
-            setError(null);
-            await setParticipantInactive(participantId);
-            // The subscription will handle updating the local state
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error setting participant inactive';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    }, []);
-
     return {
         participants,
         loading,
         error,
         addParticipant,
         removeParticipant,
-        setInactive,
         refetch: fetchParticipants
     };
 };

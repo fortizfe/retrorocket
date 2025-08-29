@@ -188,6 +188,9 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
                                     <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                                         {t('participants.title')}
                                     </h3>
+                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                                        {participants.length}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={onClose}
@@ -204,6 +207,8 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
                                 <ParticipantList
                                     participants={participants}
                                     maxHeight="max-h-60"
+                                    preventBackgroundScroll={true}
+                                    showCount={false}
                                 />
                             </div>
                         </motion.div>

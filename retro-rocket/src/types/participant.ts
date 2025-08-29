@@ -4,6 +4,5 @@ export interface Participant {
     userId: string;
     retrospectiveId: string;
     joinedAt: Date;
-    isActive: boolean;
     photoURL?: string | null;
 }

@@ -432,8 +432,7 @@
         "title": "Participants",
         "close": "Close",
         "closeList": "Close participants list",
-        "totalParticipants": "Total participants",
-        "connectedNow": "Connected now"
+        "totalParticipants": "Total participants"
     },
     "typing": {
         "single": "{{username}} is typing",

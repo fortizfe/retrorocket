@@ -58,7 +58,6 @@ describe('ParticipantPopover', () => {
             userId: 'user1',
             retrospectiveId: 'retro1',
             joinedAt: new Date('2024-01-01'),
-            isActive: true,
             photoURL: 'https://example.com/photo1.jpg'
         },
         {
@@ -66,8 +65,7 @@ describe('ParticipantPopover', () => {
             name: 'Jane Smith',
             userId: 'user2',
             retrospectiveId: 'retro1',
-            joinedAt: new Date('2024-01-02'),
-            isActive: true
+            joinedAt: new Date('2024-01-02')
         },
         {
             id: '3',
@@ -75,7 +73,6 @@ describe('ParticipantPopover', () => {
             userId: 'user3',
             retrospectiveId: 'retro1',
             joinedAt: new Date('2024-01-03'),
-            isActive: false,
             photoURL: null
         }
     ];
@@ -479,6 +476,67 @@ describe('ParticipantPopover', () => {
             // The arrow should be rendered with border classes
             const popoverContainer = screen.getByText('Participants').closest('.fixed');
             expect(popoverContainer).toBeInTheDocument();
+        });
+    });
+
+    describe('Header Redundancy Fix', () => {
+        it('should show only one "Participants" header (in popover, not in internal list)', () => {
+            render(<ParticipantPopover {...defaultProps} isOpen={true} />);
+
+            // Should find exactly one "Participants" text (in the popover header)
+            const participantsHeaders = screen.getAllByText('Participants');
+            expect(participantsHeaders).toHaveLength(1);
+        });
+
+        it('should show participant count in the popover header', () => {
+            render(<ParticipantPopover {...defaultProps} isOpen={true} />);
+
+            // Should show the count in the header (mockParticipants has 3 items)
+            expect(screen.getByText('3')).toBeInTheDocument();
+        });
+
+        it('should show participant names without duplicate headers', () => {
+            render(<ParticipantPopover {...defaultProps} isOpen={true} />);
+
+            // Should show all participant names (using the actual names from mockParticipants)
+            expect(screen.getByText('John Doe')).toBeInTheDocument();
+            expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+            expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+
+            // Should not have the internal ParticipantList header
+            const participantsHeaders = screen.getAllByText('Participants');
+            expect(participantsHeaders).toHaveLength(1); // Only the popover header
+        });
+
+        it('should update count dynamically when participants change', () => {
+            const { rerender } = render(<ParticipantPopover {...defaultProps} isOpen={true} />);
+
+            expect(screen.getByText('3')).toBeInTheDocument();
+
+            // Update with different number of participants
+            const newParticipants = [mockParticipants[0]];
+
+            rerender(
+                <ParticipantPopover
+                    {...defaultProps}
+                    participants={newParticipants}
+                    isOpen={true}
+                />
+            );
+
+            expect(screen.getByText('1')).toBeInTheDocument();
+            expect(screen.queryByText('3')).not.toBeInTheDocument();
+        });
+
+        it('should work correctly with empty participant list', () => {
+            render(<ParticipantPopover {...defaultProps} participants={[]} isOpen={true} />);
+
+            // Should show "0" in the header
+            expect(screen.getByText('0')).toBeInTheDocument();
+
+            // Should still have only one "Participants" header
+            const participantsHeaders = screen.getAllByText('Participants');
+            expect(participantsHeaders).toHaveLength(1);
         });
     });
 });

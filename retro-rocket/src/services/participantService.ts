@@ -28,7 +28,7 @@ export interface CreateParticipantInput {
     retrospectiveId: string;
 }
 
-export const getActiveParticipantByUser = async (
+export const getParticipantByUser = async (
     retrospectiveId: string,
     userId: string
 ): Promise<Participant | null> => {
@@ -38,8 +38,7 @@ export const getActiveParticipantByUser = async (
         const q = query(
             participantsCollection,
             where('retrospectiveId', '==', retrospectiveId),
-            where('userId', '==', userId),
-            where('isActive', '==', true)
+            where('userId', '==', userId)
         );
 
         const snapshot = await getDocs(q);
@@ -47,7 +46,7 @@ export const getActiveParticipantByUser = async (
             return null;
         }
 
-        const doc = snapshot.docs[0]; // Should only be one active participant per user per retrospective
+        const doc = snapshot.docs[0]; // Should only be one participant per user per retrospective
         const data = doc.data();
         return {
             id: doc.id,
@@ -55,7 +54,7 @@ export const getActiveParticipantByUser = async (
             joinedAt: (data.joinedAt as Timestamp)?.toDate() || new Date()
         } as Participant;
     } catch (error) {
-        console.error('Error getting active participant by user:', error);
+        console.error('Error getting participant by user:', error);
         return null;
     }
 };
@@ -65,8 +64,8 @@ export const addParticipant = async (participantInput: CreateParticipantInput): 
         const firestore = ensureFirestore();
         const participantsCollection = collection(firestore, FIRESTORE_COLLECTIONS.PARTICIPANTS);
 
-        // Check if user is already an active participant
-        const existingParticipant = await getActiveParticipantByUser(
+        // Check if user is already a participant
+        const existingParticipant = await getParticipantByUser(
             participantInput.retrospectiveId,
             participantInput.userId
         );
@@ -78,8 +77,7 @@ export const addParticipant = async (participantInput: CreateParticipantInput): 
 
         const participantData = {
             ...participantInput,
-            joinedAt: serverTimestamp(),
-            isActive: true
+            joinedAt: serverTimestamp()
         };
 
         const docRef = await addDoc(participantsCollection, participantData);
@@ -118,8 +116,7 @@ export const getParticipantsByRetrospective = async (retrospectiveId: string): P
         const participantsCollection = collection(firestore, FIRESTORE_COLLECTIONS.PARTICIPANTS);
         const q = query(
             participantsCollection,
-            where('retrospectiveId', '==', retrospectiveId),
-            where('isActive', '==', true)
+            where('retrospectiveId', '==', retrospectiveId)
         );
 
         const snapshot = await getDocs(q);
@@ -146,8 +143,7 @@ export const subscribeToParticipants = (
 
     const q = query(
         participantsCollection,
-        where('retrospectiveId', '==', retrospectiveId),
-        where('isActive', '==', true)
+        where('retrospectiveId', '==', retrospectiveId)
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -166,11 +162,5 @@ export const subscribeToParticipants = (
     });
 };
 
-export const setParticipantInactive = async (id: string): Promise<void> => {
-    try {
-        await updateParticipant(id, { isActive: false });
-    } catch (error) {
-        console.error('Error setting participant inactive:', error);
-        throw new Error('Failed to set participant inactive');
-    }
-};
+// Note: Participant management simplified - participants are permanent once added
+// No need for inactive status as users remain in retrospective permanently

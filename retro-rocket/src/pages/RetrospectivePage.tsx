@@ -28,7 +28,7 @@ const RetrospectivePageContent: React.FC = () => {
     const joinAttemptRef = useRef(false);
 
     const { retrospective, loading: retroLoading, error: retroError } = useRetrospective(id);
-    const { addParticipant, setInactive, participants } = useParticipants(id);
+    const { addParticipant, participants } = useParticipants(id);
     const { uid, fullName, isReady } = useCurrentUser();
 
     // State for export data
@@ -112,24 +112,12 @@ const RetrospectivePageContent: React.FC = () => {
         autoJoinRetrospective();
     }, [isReady, id, uid, fullName, hasJoined, isJoining]); // Removed addParticipant
 
-    // Handle leaving retrospective
+    // Handle leaving retrospective - simplified to just navigation
     const handleLeaveRetrospective = async () => {
-        if (currentParticipantId && id && uid) {
-            try {
-                await setInactive(currentParticipantId);
-                await decrementParticipantCount(id);
-
-                setHasJoined(false);
-                setCurrentParticipantId(null);
-                localStorage.removeItem(`participant_${id}_${uid}`);
-
-                toast.success('Has salido de la retrospectiva');
-                navigate('/dashboard');
-            } catch (error) {
-                console.error('Error leaving retrospective:', error);
-                toast.error('Error al salir de la retrospectiva');
-            }
-        }
+        // Simply navigate back to dashboard
+        // Users remain part of the retrospective permanently once joined
+        toast.success('Volviendo al dashboard');
+        navigate('/dashboard');
     };
 
     // Copy retrospective ID to clipboard

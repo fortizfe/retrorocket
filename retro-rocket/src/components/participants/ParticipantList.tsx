@@ -1,5 +1,5 @@
-import React from 'react';
-import { Clock, UserCheck } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Users } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import { useLanguage } from '../../hooks/useLanguage';
 import { Participant } from '../../types/participant';
@@ -8,89 +8,113 @@ interface ParticipantListProps {
     participants: Participant[];
     className?: string;
     maxHeight?: string;
+    showCount?: boolean;
+    compact?: boolean;
+    preventBackgroundScroll?: boolean;
 }
 
 const ParticipantList: React.FC<ParticipantListProps> = ({
     participants,
     className = '',
-    maxHeight = 'max-h-64'
+    maxHeight = 'max-h-64',
+    showCount = true,
+    compact = false,
+    preventBackgroundScroll = false
 }) => {
     const { t } = useLanguage();
-    const formatJoinTime = (joinedAt: Date) => {
-        const now = new Date();
-        const diffInMinutes = Math.floor((now.getTime() - joinedAt.getTime()) / (1000 * 60));
 
-        if (diffInMinutes < 1) {
-            return 'Ahora mismo';
-        } else if (diffInMinutes < 60) {
-            return `Hace ${diffInMinutes} min`;
-        } else {
-            const diffInHours = Math.floor(diffInMinutes / 60);
-            return `Hace ${diffInHours}h`;
+    // Prevent background scroll when the participant list is displayed
+    useEffect(() => {
+        if (preventBackgroundScroll) {
+            // Store original overflow style
+            const originalOverflow = document.body.style.overflow;
+
+            // Prevent scroll by setting body overflow to hidden
+            document.body.style.overflow = 'hidden';
+
+            // Also prevent touch scrolling on mobile
+            const preventTouchMove = (e: TouchEvent) => {
+                e.preventDefault();
+            };
+
+            // Add touch event listener for mobile devices
+            document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
+
+            // Cleanup function to restore original state
+            return () => {
+                document.body.style.overflow = originalOverflow;
+                document.body.removeEventListener('touchmove', preventTouchMove);
+            };
         }
-    };
+    }, [preventBackgroundScroll]);
+
+    // Sort participants alphabetically for consistent, predictable order
+    const sortedParticipants = [...participants].sort((a, b) =>
+        a.name.localeCompare(b.name)
+    );
 
     if (participants.length === 0) {
         return (
             <div className={`text-center py-6 text-slate-500 dark:text-slate-400 ${className}`}>
-                <UserCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No hay participantes conectados</p>
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-medium">No hay participantes</p>
+                <p className="text-xs mt-1 opacity-75">La sesión está esperando participantes</p>
             </div>
         );
     }
 
+    const itemPadding = compact ? 'p-2' : 'p-3';
+    const avatarSize = compact ? 'sm' : 'md';
+    const spacing = compact ? 'space-y-1' : 'space-y-2';
+
     return (
         <div className={`${className}`}>
-            <div className={`overflow-y-auto ${maxHeight} scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600`}>
-                <div className="space-y-2">
-                    {participants.map((participant) => (
+            {/* Clean header with count */}
+            {showCount && (
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                            {t('participants.title')}
+                        </span>
+                    </div>
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                        {participants.length}
+                    </span>
+                </div>
+            )}
+
+            {/* Optimized participants list */}
+            <div
+                className={`overflow-y-auto ${maxHeight} scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600`}
+                onWheel={(e) => {
+                    // Allow scrolling within the participant list container
+                    if (preventBackgroundScroll) {
+                        e.stopPropagation();
+                    }
+                }}
+            >
+                <div className={spacing}>
+                    {sortedParticipants.map((participant) => (
                         <div
                             key={participant.id}
-                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                            className={`flex items-center gap-3 ${itemPadding} rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-150 group`}
                         >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <UserAvatar
-                                    user={{
-                                        name: participant.name,
-                                        photoURL: participant.photoURL
-                                    }}
-                                    size="md"
-                                />
-                                <div className="min-w-0 flex-1">
-                                    <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                                        {participant.name}
-                                    </h4>
-                                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{formatJoinTime(participant.joinedAt)}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Status indicator */}
-                            <div className="flex items-center gap-1">
-                                {participant.isActive ? (
-                                    <div className="w-2 h-2 bg-green-500 rounded-full" title="Conectado" />
-                                ) : (
-                                    <div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-full" title="Desconectado" />
-                                )}
+                            <UserAvatar
+                                user={{
+                                    name: participant.name,
+                                    photoURL: participant.photoURL
+                                }}
+                                size={avatarSize}
+                                className="ring-1 ring-slate-200 dark:ring-slate-700 group-hover:ring-slate-300 dark:group-hover:ring-slate-600 transition-colors"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">
+                                    {participant.name}
+                                </h4>
                             </div>
                         </div>
                     ))}
-                </div>
-            </div>
-
-            {/* Summary */}
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                    <span>{t('participants.totalParticipants')}</span>
-                    <span className="font-medium">{participants.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    <span>{t('participants.connectedNow')}</span>
-                    <span className="font-medium text-green-600 dark:text-green-400">
-                        {participants.filter(p => p.isActive).length}
-                    </span>
                 </div>
             </div>
         </div>
