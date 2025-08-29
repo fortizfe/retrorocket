@@ -34,7 +34,7 @@ vi.mock('../../../components/ui/Button', () => ({
     ),
 }));
 
-vi.mock('../../../components/retrospective/ExportPopover', () => ({
+vi.mock('../../../components/retrospective/ImprovedExportPopover', () => ({
     default: ({ children, isOpen, onClose, retrospective, cards, groups, participants, actionItems, className }: any) => (
         <div data-testid="export-popover" data-is-open={isOpen} className={className}>
             <div data-testid="popover-props">
@@ -117,7 +117,8 @@ describe('ExportButtonGroup Component', () => {
             createdAt: new Date('2024-01-15'),
             updatedAt: new Date('2024-01-15'),
             assignedTo: 'user1',
-            assignedToName: 'Alice'
+            assignedToName: 'Alice',
+            dueDate: new Date('2024-01-22')
         }
     ];
 

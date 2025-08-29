@@ -347,17 +347,22 @@ describe('ParticipantList - UX Analysis Results', () => {
             document.body.style.overflow = originalOverflow;
 
             // Mount with scroll prevention enabled
-            const { rerender } = render(
+            const { rerender, unmount } = render(
                 <ParticipantList participants={participants} preventBackgroundScroll={true} />
             );
             expect(document.body.style.overflow).toBe('hidden');
 
-            // Disable scroll prevention
+            // Disable scroll prevention - component behavior: useEffect cleanup function
+            // will restore the original overflow value when preventBackgroundScroll changes
             rerender(<ParticipantList participants={participants} preventBackgroundScroll={false} />);
 
-            // Should restore original overflow behavior
-            // Note: In real usage, this would be handled by the parent component
-            expect(document.body.style.overflow).toBe('hidden'); // Still locked until unmounted
+            // After rerender with preventBackgroundScroll=false, the cleanup function runs
+            // and restores the original overflow value
+            expect(document.body.style.overflow).toBe('auto'); // Restored immediately
+
+            // When unmounting, it should maintain the restored state
+            unmount();
+            expect(document.body.style.overflow).toBe('auto'); // Still restored
         });
     });
 });

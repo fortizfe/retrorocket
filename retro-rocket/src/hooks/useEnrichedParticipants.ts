@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { userService } from '../services/userService';
 import { Participant } from '../types/participant';
+import { UserProfileCache } from '../services/optimization/UserProfileCache';
+import { FirebaseMetricsService } from '../services/optimization/FirebaseMetricsService';
 
 interface EnrichedParticipant extends Participant {
     photoURL?: string | null;
@@ -20,28 +21,22 @@ export const useEnrichedParticipants = (participants: Participant[]) => {
             setLoading(true);
 
             try {
-                const enrichedData = await Promise.all(
-                    participants.map(async (participant) => {
-                        try {
-                            const userProfile = await userService.getUserProfile(participant.userId);
-                            return {
-                                ...participant,
-                                photoURL: userProfile?.photoURL ?? null
-                            };
-                        } catch (error) {
-                            console.warn(`Could not fetch profile for user ${participant.userId}:`, error);
-                            return {
-                                ...participant,
-                                photoURL: null
-                            };
-                        }
-                    })
-                );
+                // Usar caché optimizado en lugar de consultas individuales
+                const userIds = participants.map(p => p.userId);
+                const profiles = await UserProfileCache.getProfiles(userIds);
+
+                FirebaseMetricsService.recordCacheHit('user-profiles');
+
+                const enrichedData = participants.map(participant => ({
+                    ...participant,
+                    photoURL: profiles.get(participant.userId)?.photoURL ?? null
+                }));
 
                 setEnrichedParticipants(enrichedData);
             } catch (error) {
                 console.error('Error enriching participants:', error);
-                // Fallback to original participants without photoURL
+                FirebaseMetricsService.recordError('enrich-participants', error as Error);
+                // Fallback a participantes sin photoURL
                 setEnrichedParticipants(participants.map(p => ({ ...p, photoURL: null })));
             } finally {
                 setLoading(false);

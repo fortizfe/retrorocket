@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import RetrospectivePage from './pages/RetrospectivePage';
 import NotFound from './pages/NotFound';
 import ColorSystemTest from './components/ColorSystemTest';
+import MetricsDashboard from './components/optimization/MetricsDashboard';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ const App: React.FC = () => {
             <Route path="/color-test" element={<ColorSystemTest />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <MetricsDashboard />
         </Layout>
         <Toaster
           position="top-right"

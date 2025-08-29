@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
-import { deleteRetrospectiveCompletely } from '../../services/retrospectiveService';
+import { OptimizedRetrospectiveService } from '../../services/optimization/OptimizedRetrospectiveService';
 import toast from 'react-hot-toast';
 
 interface Board {
@@ -38,24 +38,22 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
         navigate(`/retro/${board.id}`);
     };
 
-    const handleDeleteBoard = async () => {
-        if (!isOwner) return;
+    const handleDelete = async () => {
+        if (!currentUserId) return;
 
         setIsDeleting(true);
         try {
-            await deleteRetrospectiveCompletely(board.id, currentUserId);
-            toast.success(t('dashboard.boardCard.deleteSuccess'));
-            onBoardDeleted(board.id);
+            await OptimizedRetrospectiveService.softDeleteRetrospective(board.id, currentUserId);
             setShowDeleteConfirm(false);
-        } catch (error) {
-            console.error('Error deleting board:', error);
-            toast.error(t('dashboard.boardCard.deleteError'));
+            toast.success(t('retrospective.deleteSuccess') || 'Retrospective moved to trash');
+            onBoardDeleted(board.id);
+        } catch (error: any) {
+            console.error('Error deleting retrospective:', error);
+            toast.error(error.message || t('retrospective.deleteError') || 'Failed to delete retrospective');
         } finally {
             setIsDeleting(false);
         }
-    };
-
-    const formatDate = (date: Date) => {
+    }; const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('es-ES', {
             day: 'numeric',
             month: 'short',
@@ -100,7 +98,7 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                             <Button
                                 variant="danger"
                                 size="sm"
-                                onClick={handleDeleteBoard}
+                                onClick={handleDelete}
                                 loading={isDeleting}
                             >
                                 <Trash2 className="h-4 w-4 mr-2" />

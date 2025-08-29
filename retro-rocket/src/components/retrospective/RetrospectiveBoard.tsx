@@ -4,7 +4,7 @@ import GroupableColumn from './GroupableColumn';
 import ActionItemsColumn from './ActionItemsColumn';
 import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
-import { useCards } from '../../hooks/useCards';
+import { useOptimizedCards } from '../../hooks/optimization/useOptimizedCards';
 import { useCardGroups } from '../../hooks/useCardGroups';
 import { useActionItems } from '../../hooks/useActionItems';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
@@ -54,8 +54,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         toggleLike,
         addReaction,
         removeReaction,
-        reorderCards
-    } = useCards(retrospective.id);
+        reorderCards,
+        metrics // Nuevas métricas de optimización
+    } = useOptimizedCards(retrospective.id);
 
     const {
         groups,

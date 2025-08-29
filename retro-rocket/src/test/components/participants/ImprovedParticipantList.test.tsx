@@ -1,14 +1,13 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
+import { vi, beforeEach, describe, it, expect } from 'vitest';
 import ParticipantList from '../../../components/participants/ParticipantList';
 import { Participant } from '../../../types/participant';
 
 // Mock language hook
 const mockT = vi.fn((key: string) => {
     const translations: Record<string, string> = {
-        'participants.title': 'Participantes',
-        'participants.totalParticipants': 'Total de participantes'
+        'participants.title': 'Participantes'
     };
     return translations[key] || key;
 });
@@ -17,7 +16,22 @@ vi.mock('../../../hooks/useLanguage', () => ({
     useLanguage: () => ({ t: mockT })
 }));
 
-describe('ImprovedParticipantList', () => {
+// Mock UserAvatar component
+vi.mock('../../../components/participants/UserAvatar', () => ({
+    default: ({ user, size, className }: any) => (
+        <div
+            className={`user-avatar ${className}`}
+            title={user.name}
+            data-size={size}
+        >
+            <span className="text-xs">
+                {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+            </span>
+        </div>
+    ),
+}));
+
+describe('ParticipantList', () => {
     const createMockParticipant = (overrides: Partial<Participant> = {}): Participant => ({
         id: `participant-${Date.now()}-${Math.random()}`,
         name: 'Test User',
@@ -30,254 +44,207 @@ describe('ImprovedParticipantList', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-
-        // Mock current time for consistent time formatting
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date('2024-01-01T12:00:00Z'));
-    });
-
-    afterEach(() => {
-        vi.useRealTimers();
     });
 
     describe('Empty State', () => {
         it('should show empty state when no participants', () => {
             render(<ParticipantList participants={[]} />);
 
-            expect(screen.getByText('No hay participantes aún')).toBeInTheDocument();
-            expect(screen.getByText('Los participantes aparecerán aquí cuando se unan')).toBeInTheDocument();
+            expect(screen.getByText('No hay participantes')).toBeInTheDocument();
+            expect(screen.getByText('La sesión está esperando participantes')).toBeInTheDocument();
         });
 
-        it('should display Users icon in empty state', () => {
+        it('should not show header when no participants', () => {
             render(<ParticipantList participants={[]} />);
 
-            const usersIcon = screen.getByRole('img', { hidden: true });
-            expect(usersIcon).toBeInTheDocument();
+            expect(screen.queryByText('Participantes')).not.toBeInTheDocument();
         });
     });
 
     describe('Participant Display', () => {
         it('should display participant information correctly', () => {
             const participant = createMockParticipant({
-                name: 'Alice Johnson',
-                joinedAt: new Date('2024-01-01T11:30:00Z') // 30 minutes ago
+                name: 'Alice Johnson'
             });
 
             render(<ParticipantList participants={[participant]} />);
 
             expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
-            expect(screen.getByText('Se unió Hace 30 min')).toBeInTheDocument();
         });
 
-        it('should show "Último" badge for the most recent participant', () => {
+        it('should display participants alphabetically sorted', () => {
             const participants = [
                 createMockParticipant({
-                    id: '1',
-                    name: 'Alice',
-                    joinedAt: new Date('2024-01-01T10:00:00Z')
+                    id: '2',
+                    name: 'Bob'
                 }),
                 createMockParticipant({
-                    id: '2',
-                    name: 'Bob',
-                    joinedAt: new Date('2024-01-01T11:00:00Z') // Most recent
-                })
-            ];
-
-            render(<ParticipantList participants={participants} />);
-
-            // Should show "Último" badge next to Bob (most recent)
-            expect(screen.getByText('Último')).toBeInTheDocument();
-        });
-
-        it('should show new participant indicator for recent joiners', () => {
-            const participant = createMockParticipant({
-                name: 'New User',
-                joinedAt: new Date('2024-01-01T11:58:00Z') // 2 minutes ago (within 5 min threshold)
-            });
-
-            render(<ParticipantList participants={[participant]} />);
-
-            const indicator = screen.getByTitle('Recién llegado');
-            expect(indicator).toBeInTheDocument();
-            expect(indicator).toHaveClass('bg-green-500', 'animate-pulse');
-        });
-
-        it('should not show new participant indicator for older participants', () => {
-            const participant = createMockParticipant({
-                name: 'Old User',
-                joinedAt: new Date('2024-01-01T11:00:00Z') // 1 hour ago
-            });
-
-            render(<ParticipantList participants={[participant]} />);
-
-            expect(screen.queryByTitle('Recién llegado')).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Participant Sorting', () => {
-        it('should sort participants by join date (newest first)', () => {
-            const participants = [
-                createMockParticipant({
                     id: '1',
-                    name: 'Alice',
-                    joinedAt: new Date('2024-01-01T09:00:00Z')
-                }),
-                createMockParticipant({
-                    id: '2',
-                    name: 'Bob',
-                    joinedAt: new Date('2024-01-01T11:00:00Z')
+                    name: 'Alice'
                 }),
                 createMockParticipant({
                     id: '3',
-                    name: 'Charlie',
-                    joinedAt: new Date('2024-01-01T10:00:00Z')
+                    name: 'Charlie'
                 })
             ];
 
             render(<ParticipantList participants={participants} />);
 
             const participantNames = screen.getAllByRole('heading', { level: 4 });
-            expect(participantNames[0]).toHaveTextContent('Bob'); // Most recent
-            expect(participantNames[1]).toHaveTextContent('Charlie');
-            expect(participantNames[2]).toHaveTextContent('Alice'); // Oldest
+            expect(participantNames[0]).toHaveTextContent('Alice'); // Alphabetically first
+            expect(participantNames[1]).toHaveTextContent('Bob');
+            expect(participantNames[2]).toHaveTextContent('Charlie');
         });
-    });
 
-    describe('Time Formatting', () => {
-        it('should format recent times correctly', () => {
-            const testCases = [
-                { joinedAt: new Date('2024-01-01T11:59:30Z'), expected: 'Ahora mismo' }, // 30 seconds ago
-                { joinedAt: new Date('2024-01-01T11:45:00Z'), expected: 'Hace 15 min' }, // 15 minutes ago
-                { joinedAt: new Date('2024-01-01T09:00:00Z'), expected: 'Hace 3h' }, // 3 hours ago
-                { joinedAt: new Date('2023-12-31T12:00:00Z'), expected: 'Hace 1d' }  // 1 day ago
+        it('should show participant count in header', () => {
+            const participants = [
+                createMockParticipant({
+                    name: 'Alice'
+                }),
+                createMockParticipant({
+                    name: 'Bob'
+                })
             ];
 
-            testCases.forEach(({ joinedAt, expected }) => {
-                const participant = createMockParticipant({ joinedAt });
-                const { unmount } = render(<ParticipantList participants={[participant]} />);
+            render(<ParticipantList participants={participants} />);
 
-                expect(screen.getByText(`Se unió ${expected}`)).toBeInTheDocument();
-                unmount();
-            });
+            expect(screen.getByText('2')).toBeInTheDocument();
         });
     });
 
     describe('Header and Summary', () => {
-        it('should display header with title and participant count', () => {
-            const participants = [
-                createMockParticipant({ id: '1', name: 'Alice' }),
-                createMockParticipant({ id: '2', name: 'Bob' }),
-                createMockParticipant({ id: '3', name: 'Charlie' })
-            ];
-
-            render(<ParticipantList participants={participants} />);
-
-            expect(screen.getByText('Participantes')).toBeInTheDocument();
-            expect(screen.getByText('3')).toBeInTheDocument(); // Count in header
-        });
-
-        it('should display correct total in summary section', () => {
-            const participants = [
-                createMockParticipant({ id: '1', name: 'Alice' }),
-                createMockParticipant({ id: '2', name: 'Bob' })
-            ];
-
-            render(<ParticipantList participants={participants} />);
-
-            expect(screen.getByText('Total de participantes')).toBeInTheDocument();
-            expect(screen.getAllByText('2')).toHaveLength(2); // One in header, one in summary
-        });
-    });
-
-    describe('Styling and Interactions', () => {
-        it('should apply correct CSS classes', () => {
-            const participant = createMockParticipant();
-            const { container } = render(<ParticipantList participants={[participant]} />);
-
-            // Check for hover effects and transitions
-            const participantItem = container.querySelector('[class*="hover:bg-slate-50"]');
-            expect(participantItem).toBeInTheDocument();
-        });
-
-        it('should apply custom className', () => {
-            const participant = createMockParticipant();
-            const { container } = render(
-                <ParticipantList participants={[participant]} className="custom-class" />
-            );
-
-            expect(container.firstChild).toHaveClass('custom-class');
-        });
-
-        it('should apply custom maxHeight', () => {
-            const participant = createMockParticipant();
-            const { container } = render(
-                <ParticipantList participants={[participant]} maxHeight="max-h-96" />
-            );
-
-            const scrollableArea = container.querySelector('.max-h-96');
-            expect(scrollableArea).toBeInTheDocument();
-        });
-    });
-
-    describe('Avatar Integration', () => {
-        it('should handle participants with photos', () => {
-            const participant = createMockParticipant({
-                name: 'User With Photo',
-                photoURL: 'https://example.com/photo.jpg'
-            });
-
-            render(<ParticipantList participants={[participant]} />);
-
-            expect(screen.getByText('User With Photo')).toBeInTheDocument();
-            // UserAvatar component should be rendered (tested separately)
-        });
-
-        it('should handle participants without photos', () => {
-            const participant = createMockParticipant({
-                name: 'User Without Photo',
-                photoURL: null
-            });
-
-            render(<ParticipantList participants={[participant]} />);
-
-            expect(screen.getByText('User Without Photo')).toBeInTheDocument();
-        });
-    });
-
-    describe('Long Names and Text Truncation', () => {
-        it('should handle long participant names', () => {
-            const participant = createMockParticipant({
-                name: 'Very Long Participant Name That Should Be Truncated Properly'
-            });
-
-            render(<ParticipantList participants={[participant]} />);
-
-            const nameElement = screen.getByText('Very Long Participant Name That Should Be Truncated Properly');
-            expect(nameElement).toHaveClass('truncate');
-        });
-    });
-
-    describe('Accessibility', () => {
-        it('should have proper heading structure', () => {
+        it('should display header with title when showCount is true', () => {
             const participants = [
                 createMockParticipant({ name: 'Alice' }),
                 createMockParticipant({ name: 'Bob' })
             ];
 
-            render(<ParticipantList participants={participants} />);
+            render(<ParticipantList participants={participants} showCount={true} />);
 
-            const headings = screen.getAllByRole('heading');
-            expect(headings).toHaveLength(2); // One for each participant
+            expect(screen.getByText('Participantes')).toBeInTheDocument();
+            expect(screen.getByText('2')).toBeInTheDocument();
         });
 
-        it('should have proper title attributes for indicators', () => {
+        it('should hide header when showCount is false', () => {
+            const participants = [
+                createMockParticipant({ name: 'Alice' })
+            ];
+
+            render(<ParticipantList participants={participants} showCount={false} />);
+
+            expect(screen.queryByText('Participantes')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Props Configuration', () => {
+        it('should apply custom className', () => {
+            const participant = createMockParticipant();
+            const customClass = 'custom-participant-list';
+
+            const { container } = render(
+                <ParticipantList participants={[participant]} className={customClass} />
+            );
+
+            expect(container.firstChild).toHaveClass(customClass);
+        });
+
+        it('should handle compact mode', () => {
+            const participant = createMockParticipant();
+
+            render(<ParticipantList participants={[participant]} compact={true} />);
+
+            // In compact mode, UserAvatar should receive 'sm' size
+            const avatar = screen.getByTitle(participant.name);
+            expect(avatar).toHaveAttribute('data-size', 'sm');
+        });
+
+        it('should handle custom maxHeight', () => {
+            const participant = createMockParticipant();
+            const customMaxHeight = 'max-h-96';
+
+            const { container } = render(
+                <ParticipantList participants={[participant]} maxHeight={customMaxHeight} />
+            );
+
+            const scrollContainer = container.querySelector('.overflow-y-auto');
+            expect(scrollContainer).toHaveClass(customMaxHeight);
+        });
+    });
+
+    describe('Background Scroll Prevention', () => {
+        beforeEach(() => {
+            // Reset body style before each test
+            document.body.style.overflow = '';
+        });
+
+        it('should prevent background scroll when enabled', () => {
+            const participant = createMockParticipant();
+
+            render(<ParticipantList participants={[participant]} preventBackgroundScroll={true} />);
+
+            expect(document.body.style.overflow).toBe('hidden');
+        });
+
+        it('should not affect background scroll when disabled', () => {
+            const participant = createMockParticipant();
+
+            render(<ParticipantList participants={[participant]} preventBackgroundScroll={false} />);
+
+            // Should remain empty/auto
+            expect(document.body.style.overflow).toBe('');
+        });
+    });
+
+    describe('UserAvatar Integration', () => {
+        it('should render UserAvatar for each participant', () => {
+            const participants = [
+                createMockParticipant({ name: 'Alice Johnson' }),
+                createMockParticipant({ name: 'Bob Smith' })
+            ];
+
+            render(<ParticipantList participants={participants} />);
+
+            expect(screen.getByTitle('Alice Johnson')).toBeInTheDocument();
+            expect(screen.getByTitle('Bob Smith')).toBeInTheDocument();
+        });
+
+        it('should pass correct size to UserAvatar based on compact prop', () => {
+            const participant = createMockParticipant({ name: 'Test User' });
+
+            const { rerender } = render(<ParticipantList participants={[participant]} compact={false} />);
+
+            expect(screen.getByTitle('Test User')).toHaveAttribute('data-size', 'md');
+
+            rerender(<ParticipantList participants={[participant]} compact={true} />);
+
+            expect(screen.getByTitle('Test User')).toHaveAttribute('data-size', 'sm');
+        });
+    });
+
+    describe('Edge Cases', () => {
+        it('should handle participants with long names', () => {
             const participant = createMockParticipant({
-                joinedAt: new Date('2024-01-01T11:58:00Z') // Recent enough for indicator
+                name: 'Very Long Name That Could Potentially Overflow'
             });
 
             render(<ParticipantList participants={[participant]} />);
 
-            expect(screen.getByTitle('Recién llegado')).toBeInTheDocument();
+            const nameElement = screen.getByText('Very Long Name That Could Potentially Overflow');
+            expect(nameElement).toHaveClass('truncate');
+        });
+
+        it('should handle large numbers of participants', () => {
+            const participants = Array.from({ length: 100 }, (_, i) =>
+                createMockParticipant({
+                    id: `participant-${i}`,
+                    name: `User ${i}`
+                })
+            );
+
+            render(<ParticipantList participants={participants} />);
+
+            expect(screen.getByText('100')).toBeInTheDocument();
+            expect(screen.getAllByRole('heading', { level: 4 })).toHaveLength(100);
         });
     });
 });

@@ -14,7 +14,7 @@ import { useRetrospective } from '../hooks/useRetrospective';
 import { useParticipants } from '../hooks/useParticipants';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useLanguage } from '../hooks/useLanguage';
-import { incrementParticipantCount, decrementParticipantCount } from '../services/retrospectiveService';
+import { OptimizedRetrospectiveService } from '../services/optimization/OptimizedRetrospectiveService';
 import { Card, CardGroup } from '../types/card';
 import { ActionItem } from '../types/actionItem';
 
@@ -87,7 +87,7 @@ const RetrospectivePageContent: React.FC = () => {
 
                 // Only increment participant count if it's a new participant
                 if (result.isNew) {
-                    await incrementParticipantCount(id);
+                    await OptimizedRetrospectiveService.incrementParticipantCount(id);
                 }
 
                 setCurrentParticipantId(result.id);

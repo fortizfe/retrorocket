@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TypingStatusService } from '../services/typingStatusService';
+import { OptimizedTypingStatusService } from '../services/optimization/OptimizedTypingStatusService';
+import { FirebaseMetricsService } from '../services/optimization/FirebaseMetricsService';
 import { TypingStatus, TypingIndicator } from '../types/typing';
 import { ColumnType } from '../types/retrospective';
 
@@ -35,11 +36,12 @@ export function useTypingStatus({
     useEffect(() => {
         if (!retrospectiveId) return;
 
-        const unsubscribe = TypingStatusService.subscribeToTypingStatus(
+        const unsubscribe = OptimizedTypingStatusService.subscribeToTypingStatus(
             retrospectiveId,
-            (statuses) => {
+            (statuses: TypingStatus[]) => {
+                FirebaseMetricsService.recordRead('typing-status-updates', statuses.length);
                 // Filter out current user's typing status
-                const otherUsersTyping = statuses.filter(status =>
+                const otherUsersTyping = statuses.filter((status: TypingStatus) =>
                     status.userId !== currentUserId
                 );
                 setTypingStatuses(otherUsersTyping);
@@ -53,7 +55,7 @@ export function useTypingStatus({
     useEffect(() => {
         return () => {
             if (currentUserId && currentUsername) {
-                TypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
+                OptimizedTypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
             }
 
             // Clear all debounce timers
@@ -70,7 +72,7 @@ export function useTypingStatus({
         const handleBeforeUnload = () => {
             if (currentUserId && currentUsername) {
                 // Cleanup user typing status on page unload
-                TypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
+                OptimizedTypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
             }
         };
 
@@ -97,7 +99,7 @@ export function useTypingStatus({
 
         if (shouldUpdate) {
             // Send/update typing status to refresh timestamp
-            TypingStatusService.setTypingStatus({
+            OptimizedTypingStatusService.setTypingStatusDebounced({
                 userId: currentUserId,
                 username: currentUsername,
                 retrospectiveId,
@@ -137,7 +139,7 @@ export function useTypingStatus({
 
         // Only send stop status if currently active for this column
         if (activeTypingColumns.current.has(column)) {
-            TypingStatusService.setTypingStatus({
+            OptimizedTypingStatusService.setTypingStatusDebounced({
                 userId: currentUserId,
                 username: currentUsername,
                 retrospectiveId,
