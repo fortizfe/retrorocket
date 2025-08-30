@@ -1,5 +1,4 @@
 import React, { useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -175,13 +174,14 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
             </div>
 
             {/* Popover */}
-            {isOpen && createPortal(
+            {isOpen && (
                 <AnimatePresence>
-                    <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-16">
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 z-[99999] mt-2">
                         {/* Backdrop */}
                         <button
-                            className="absolute inset-0 bg-black/10 cursor-default"
+                            className="fixed inset-0 bg-black/10 cursor-default"
                             onClick={onClose}
+                            onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
                             aria-label={t('common.close')}
                             tabIndex={-1}
                         />
@@ -189,12 +189,14 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                         {/* Popover Content */}
                         <motion.div
                             ref={popoverRef}
-                            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
                             transition={{ duration: 0.15 }}
                             className="relative w-96 max-w-[95vw] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-[80vh] overflow-y-auto"
                         >
+                            {/* Arrow/pointer */}
+                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white dark:border-b-slate-800"></div>
                             {/* Header */}
                             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
                                 <div className="flex flex-col">
@@ -445,8 +447,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                             </div>
                         </motion.div>
                     </div>
-                </AnimatePresence>,
-                document.body
+                </AnimatePresence>
             )}
         </div>
     );
