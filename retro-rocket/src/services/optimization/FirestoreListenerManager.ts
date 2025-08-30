@@ -19,10 +19,11 @@ export class FirestoreListenerManager {
         if (this.listeners.has(key)) {
             const listener = this.listeners.get(key)!;
             listener.refCount++;
-
+            // No llamamos listenerFn aquí porque ya existe el listener
             return () => this.unsubscribe(key);
         }
 
+        // Solo llamamos listenerFn cuando es la primera vez con esta key
         const unsubscribe = listenerFn();
         this.listeners.set(key, { unsubscribe, refCount: 1 });
 

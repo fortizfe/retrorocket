@@ -1,17 +1,19 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import useParticipants from '../../../hooks/useParticipants';
-import { Participant } from '../../../types/participant';
+import { useParticipants } from '../../hooks/useParticipants';
+import { Participant } from '../../types/participant';
+import * as participantService from '../../services/participantService';
 
 // Mock the participant service
-const mockParticipantService = {
+vi.mock('../../services/participantService', () => ({
     getParticipantsByRetrospective: vi.fn(),
     subscribeToParticipants: vi.fn(),
     addParticipant: vi.fn(),
     removeParticipant: vi.fn()
-};
+}));
 
-vi.mock('../../../services/participantService', () => mockParticipantService);
+// Get mocked versions for use in tests
+const mockedParticipantService = vi.mocked(participantService);
 
 describe('useParticipants (Improved)', () => {
     const mockRetrospectiveId = 'retro-123';
@@ -42,7 +44,7 @@ describe('useParticipants (Improved)', () => {
     describe('Hook Initialization', () => {
         it('should initialize with empty state', () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -55,7 +57,7 @@ describe('useParticipants (Improved)', () => {
             const { result } = renderHook(() => useParticipants());
 
             expect(result.current.loading).toBe(false);
-            expect(mockParticipantService.subscribeToParticipants).not.toHaveBeenCalled();
+            expect(mockedParticipantService.subscribeToParticipants).not.toHaveBeenCalled();
         });
     });
 
@@ -63,7 +65,7 @@ describe('useParticipants (Improved)', () => {
         it('should set up subscription and receive participants', async () => {
             const mockUnsubscribe = vi.fn();
 
-            mockParticipantService.subscribeToParticipants.mockImplementation((retorId, callback) => {
+            mockedParticipantService.subscribeToParticipants.mockImplementation((retorId, callback) => {
                 // Simulate receiving participants
                 setTimeout(() => callback(mockParticipants), 0);
                 return mockUnsubscribe;
@@ -83,7 +85,7 @@ describe('useParticipants (Improved)', () => {
 
         it('should clean up subscription on unmount', () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
 
             const { unmount } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -96,8 +98,8 @@ describe('useParticipants (Improved)', () => {
     describe('Add Participant', () => {
         it('should add participant successfully', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
-            mockParticipantService.addParticipant.mockResolvedValue({ id: 'new-id', isNew: true });
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.addParticipant.mockResolvedValue({ id: 'new-id', isNew: true });
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -113,14 +115,14 @@ describe('useParticipants (Improved)', () => {
             });
 
             expect(addResult).toEqual({ id: 'new-id', isNew: true });
-            expect(mockParticipantService.addParticipant).toHaveBeenCalledWith(participantInput);
+            expect(mockedParticipantService.addParticipant).toHaveBeenCalledWith(participantInput);
             expect(result.current.error).toBeNull();
         });
 
         it('should handle add participant error', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
-            mockParticipantService.addParticipant.mockRejectedValue(new Error('Add failed'));
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.addParticipant.mockRejectedValue(new Error('Add failed'));
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -145,8 +147,8 @@ describe('useParticipants (Improved)', () => {
     describe('Remove Participant', () => {
         it('should remove participant successfully', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
-            mockParticipantService.removeParticipant.mockResolvedValue(undefined);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.removeParticipant.mockResolvedValue(undefined);
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -154,14 +156,14 @@ describe('useParticipants (Improved)', () => {
                 await result.current.removeParticipant('participant-id');
             });
 
-            expect(mockParticipantService.removeParticipant).toHaveBeenCalledWith('participant-id');
+            expect(mockedParticipantService.removeParticipant).toHaveBeenCalledWith('participant-id');
             expect(result.current.error).toBeNull();
         });
 
         it('should handle remove participant error', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
-            mockParticipantService.removeParticipant.mockRejectedValue(new Error('Remove failed'));
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.removeParticipant.mockRejectedValue(new Error('Remove failed'));
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -180,8 +182,8 @@ describe('useParticipants (Improved)', () => {
     describe('Refetch Functionality', () => {
         it('should provide refetch method', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
-            mockParticipantService.getParticipantsByRetrospective.mockResolvedValue(mockParticipants);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.getParticipantsByRetrospective.mockResolvedValue(mockParticipants);
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -189,14 +191,14 @@ describe('useParticipants (Improved)', () => {
                 await result.current.refetch();
             });
 
-            expect(mockParticipantService.getParticipantsByRetrospective).toHaveBeenCalledWith(mockRetrospectiveId);
+            expect(mockedParticipantService.getParticipantsByRetrospective).toHaveBeenCalledWith(mockRetrospectiveId);
         });
     });
 
     describe('Hook Interface Changes', () => {
         it('should not have setInactive method (removed functionality)', () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -206,7 +208,7 @@ describe('useParticipants (Improved)', () => {
 
         it('should have all required methods', () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -224,7 +226,7 @@ describe('useParticipants (Improved)', () => {
             const mockUnsubscribe = vi.fn();
 
             // Mock subscription that immediately calls error callback
-            mockParticipantService.subscribeToParticipants.mockImplementation((retroId, callback) => {
+            mockedParticipantService.subscribeToParticipants.mockImplementation((retroId, callback) => {
                 return mockUnsubscribe;
             });
 
@@ -237,10 +239,10 @@ describe('useParticipants (Improved)', () => {
 
         it('should clear error state on successful operations', async () => {
             const mockUnsubscribe = vi.fn();
-            mockParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
+            mockedParticipantService.subscribeToParticipants.mockReturnValue(mockUnsubscribe);
 
             // First make it fail
-            mockParticipantService.addParticipant.mockRejectedValueOnce(new Error('First error'));
+            mockedParticipantService.addParticipant.mockRejectedValueOnce(new Error('First error'));
 
             const { result } = renderHook(() => useParticipants(mockRetrospectiveId));
 
@@ -260,7 +262,7 @@ describe('useParticipants (Improved)', () => {
             expect(result.current.error).toBe('First error');
 
             // Now make it succeed
-            mockParticipantService.addParticipant.mockResolvedValueOnce({ id: 'success-id', isNew: true });
+            mockedParticipantService.addParticipant.mockResolvedValueOnce({ id: 'success-id', isNew: true });
 
             await act(async () => {
                 await result.current.addParticipant({
@@ -278,7 +280,7 @@ describe('useParticipants (Improved)', () => {
         it('should update participants when subscription triggers', async () => {
             let subscriptionCallback: ((participants: Participant[]) => void) | null = null;
 
-            mockParticipantService.subscribeToParticipants.mockImplementation((retroId, callback) => {
+            mockedParticipantService.subscribeToParticipants.mockImplementation((retroId, callback) => {
                 subscriptionCallback = callback;
                 return vi.fn();
             });

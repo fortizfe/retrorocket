@@ -42,7 +42,14 @@ vi.mock('../../../utils/constants', () => ({
         'hindered': { id: 'hindered', title: 'What hindered?' },
         'improve': { id: 'improve', title: 'What to improve?' }
     }),
-    COLUMN_ORDER: ['helped', 'hindered', 'improve']
+    COLUMN_ORDER: ['helped', 'hindered', 'improve'],
+    FIRESTORE_COLLECTIONS: {
+        RETROSPECTIVES: "retrospectives",
+        PARTICIPANTS: "participants",
+        CARDS: "cards",
+        GROUPS: "groups",
+        ACTION_ITEMS: "actionItems",
+    }
 }));
 
 // Mock hooks with default implementations
@@ -60,6 +67,33 @@ vi.mock('../../../hooks/useCards', () => ({
         addReaction: vi.fn(),
         removeReaction: vi.fn(),
         reorderCards: vi.fn()
+    })
+}));
+
+// Mock the optimized cards hook that's actually being used
+vi.mock('../../../hooks/optimization/useOptimizedCards', () => ({
+    useOptimizedCards: () => ({
+        cards: [],
+        cardsByColumn: { 'helped': [], 'hindered': [], 'improve': [] },
+        loading: false,
+        error: null,
+        createCard: vi.fn(),
+        updateCard: vi.fn(),
+        deleteCard: vi.fn(),
+        voteCard: vi.fn(),
+        toggleLike: vi.fn(),
+        addReaction: vi.fn(),
+        removeReaction: vi.fn(),
+        reorderCards: vi.fn(),
+        getGroupedReactions: vi.fn(() => []),
+        getUserLiked: vi.fn(() => false),
+        getUserReaction: vi.fn(() => null),
+        refetch: vi.fn(),
+        metrics: {
+            operations: 0,
+            cacheHits: 0,
+            errors: 0
+        }
     })
 }));
 
@@ -111,6 +145,17 @@ vi.mock('../../../hooks/useRetrospectiveColumns', () => ({
         loading: false,
         error: null,
         columns: []
+    })
+}));
+
+// Mock sentiment hook
+vi.mock('../../../hooks/useSentiment', () => ({
+    useSentiment: () => ({
+        isEnabled: false,
+        sentiment: null,
+        analysis: null,
+        loading: false,
+        error: null
     })
 }));
 

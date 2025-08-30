@@ -46,20 +46,40 @@ vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
     collection: vi.fn(),
     doc: vi.fn(),
-    getDoc: vi.fn(),
-    getDocs: vi.fn(),
-    addDoc: vi.fn(),
-    updateDoc: vi.fn(),
-    deleteDoc: vi.fn(),
+    getDoc: vi.fn(() => Promise.resolve({
+        exists: () => false,
+        data: () => ({}),
+        id: 'test-id'
+    })),
+    getDocs: vi.fn(() => Promise.resolve({
+        docs: [],
+        empty: true,
+        size: 0
+    })),
+    addDoc: vi.fn(() => Promise.resolve({ id: 'new-doc-id' })),
+    updateDoc: vi.fn(() => Promise.resolve()),
+    deleteDoc: vi.fn(() => Promise.resolve()),
     query: vi.fn(),
     where: vi.fn(),
     orderBy: vi.fn(),
     limit: vi.fn(),
-    onSnapshot: vi.fn(),
-    serverTimestamp: vi.fn(),
+    onSnapshot: vi.fn((query, callback) => {
+        // Mock onSnapshot should return an unsubscribe function
+        const unsubscribe = vi.fn();
+        // Optionally call the callback with empty data
+        setTimeout(() => {
+            callback({
+                docs: [],
+                empty: true,
+                size: 0
+            });
+        }, 0);
+        return unsubscribe;
+    }),
+    serverTimestamp: vi.fn(() => ({ __type: 'server_timestamp' })),
     Timestamp: {
         now: vi.fn(() => ({ seconds: Date.now() / 1000, nanoseconds: 0 })),
-        fromDate: vi.fn(),
+        fromDate: vi.fn((date) => ({ seconds: date.getTime() / 1000, nanoseconds: 0 })),
     },
 }));
 
@@ -117,6 +137,14 @@ vi.mock('react-router-dom', async () => {
         useParams: () => ({}),
     };
 });
+
+// Note: optimization services are not mocked here to allow individual tests to test the actual implementation
+
+// Mock card services
+// Note: cardService is not mocked here to allow individual tests to test the actual implementation
+
+// Mock card interaction service
+// Note: cardInteractionService is not mocked here to allow individual tests to test the actual implementation
 
 // Mock global objects that might be needed
 Object.defineProperty(window, 'matchMedia', {

@@ -104,6 +104,7 @@ describe('TxtExportService', () => {
                     createdBy: 'facilitator-1',
                     createdAt: new Date('2024-01-01'),
                     updatedAt: new Date('2024-01-01'),
+                    dueDate: new Date('2024-01-15'),
                 },
             ],
         };
@@ -131,8 +132,8 @@ describe('TxtExportService', () => {
             // Read blob content
             const content = await blob.text();
             expect(content).toContain('RETROSPECTIVA: TEST RETROSPECTIVE');
-            expect(content).toContain('PARTICIPANTES:');
-            expect(content).toContain('ESTADÍSTICAS:');
+            expect(content).toContain('👥 PARTICIPANTES');
+            expect(content).toContain('📊 RESUMEN ESTADÍSTICO');
             expect(content).toContain('User 1');
             expect(content).toContain('User 2');
         });
@@ -163,9 +164,9 @@ describe('TxtExportService', () => {
             const blob = saveAsCall[0] as Blob;
             const content = await blob.text();
 
-            expect(content).toContain('AGRUPACIONES:');
-            expect(content).toContain('Test Group');
-            expect(content).toContain('★ Principal:');
+            expect(content).toContain('🔗 AGRUPACIONES DE TARJETAS');
+            expect(content).toContain('TEST GROUP');
+            expect(content).toContain('⭐ TARJETA PRINCIPAL:');
         });
 
         it('should include facilitator notes when option is enabled', async () => {
@@ -179,7 +180,7 @@ describe('TxtExportService', () => {
             const blob = saveAsCall[0] as Blob;
             const content = await blob.text();
 
-            expect(content).toContain('NOTAS DEL FACILITADOR:');
+            expect(content).toContain('📋 NOTAS DEL FACILITADOR');
             expect(content).toContain('Test facilitator note');
         });
 
@@ -194,9 +195,9 @@ describe('TxtExportService', () => {
             const blob = saveAsCall[0] as Blob;
             const content = await blob.text();
 
-            expect(content).toContain('ELEMENTOS DE ACCIÓN:');
+            expect(content).toContain('🎯 ELEMENTOS DE ACCIÓN');
             expect(content).toContain('Test action item');
-            expect(content).toContain('Responsable: User 1');
+            expect(content).toContain('👤 Responsable: User 1');
         });
 
         it('should handle cards without content', async () => {
@@ -268,12 +269,12 @@ describe('TxtExportService', () => {
             const blob = saveAsCall[0] as Blob;
             const content = await blob.text();
 
-            expect(content).toContain('Total de tarjetas: 2');
-            expect(content).toContain('Total de votos: 4');
-            expect(content).toContain('Total de likes: 3');
-            expect(content).toContain('Participantes: 2');
-            expect(content).toContain('Grupos formados: 1');
-            expect(content).toContain('Elementos de acción: 1');
+            expect(content).toContain('📝 Total de tarjetas     ·············');
+            expect(content).toContain('🗳️ Total de votos        ·············');
+            expect(content).toContain('❤️ Total de likes        ·············');
+            expect(content).toContain('👥 Participantes activos ·············');
+            expect(content).toContain('🔗 Grupos formados       ·············');
+            expect(content).toContain('🎯 Elementos de acción   ·············');
         });
 
         it('should include RetroRocket footer', async () => {
@@ -283,7 +284,7 @@ describe('TxtExportService', () => {
             const blob = saveAsCall[0] as Blob;
             const content = await blob.text();
 
-            expect(content).toContain('Generado por RetroRocket el');
+            expect(content).toContain('🎯 GENERADO POR RETROROCKET 🎯');
         });
     });
 

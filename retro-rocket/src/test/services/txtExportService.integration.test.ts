@@ -112,12 +112,12 @@ describe('TXT Export Service - Template Support', () => {
 
             // Verify that the content includes Mad Sad Glad template columns
             expect(capturedContent).toContain('RETROSPECTIVA: TEST RETROSPECTIVE');
-            expect(capturedContent).toContain('Plantilla: '); // Template info should be included
+            expect(capturedContent).toContain('🎨 Plantilla'); // Template info should be included in the professional format
 
             // Check that the Mad Sad Glad columns are used instead of default columns
-            expect(capturedContent).toContain('MAD:');
-            expect(capturedContent).toContain('SAD:');
-            expect(capturedContent).toContain('GLAD:');
+            expect(capturedContent).toContain('😡 MAD');
+            expect(capturedContent).toContain('😢 SAD');
+            expect(capturedContent).toContain('😊 GLAD');
 
             // Check that default columns are NOT present
             expect(capturedContent).not.toContain('HELPED:');
@@ -129,10 +129,10 @@ describe('TXT Export Service - Template Support', () => {
             expect(capturedContent).toContain('I was sad about the delays');
             expect(capturedContent).toContain('I was glad about the team work');
 
-            // Check statistics include correct column names
-            expect(capturedContent).toMatch(/Mad.*\d+ tarjetas/);
-            expect(capturedContent).toMatch(/Sad.*\d+ tarjetas/);
-            expect(capturedContent).toMatch(/Glad.*\d+ tarjetas/);
+            // Check statistics include correct column names (using emojis and English keys)
+            expect(capturedContent).toMatch(/😡 Mad.*1/);
+            expect(capturedContent).toMatch(/😢 Sad.*1/);
+            expect(capturedContent).toMatch(/😊 Glad.*1/);
 
         } finally {
             // Restore original saveAs
@@ -189,8 +189,8 @@ describe('TXT Export Service - Template Support', () => {
             }, { includeStatistics: true });
 
             // Should use default columns
-            expect(capturedContent).toContain('HELPED:');
-            expect(capturedContent).not.toContain('MAD:');
+            expect(capturedContent).toContain('👍 WHAT HELPED');
+            expect(capturedContent).not.toContain('😡 MAD');
 
         } finally {
             require('file-saver').saveAs = originalSaveAs;
