@@ -70,20 +70,19 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-amber-50/30 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800">
+        <div className="flex flex-col h-full min-w-[320px] max-w-full bg-amber-50/40 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800 shadow-sm overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b border-amber-200 dark:border-amber-800">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-2 mb-1">
                     <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <h3 className="font-semibold text-amber-900 dark:text-amber-100">
+                    <h3 className="font-bold text-amber-900 dark:text-amber-100 text-base">
                         {t('retrospective.actionItems.title')}
                     </h3>
-                    <div className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 
-                         text-xs px-2 py-1 rounded-full font-medium">
+                    <div className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs px-2 py-0.5 rounded-full font-medium">
                         {actionItems.length}
                     </div>
                 </div>
-                <p className="text-sm text-amber-700 dark:text-amber-300">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
                     {t('retrospective.actionItems.description')}
                 </p>
 
@@ -113,28 +112,23 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
 
             {/* Create Action Item Form (only for facilitator) */}
             {canEdit && (
-                <div className="p-4 border-b border-amber-200 dark:border-amber-800">
+                <div className="p-3 border-b border-amber-200 dark:border-amber-800">
                     <AnimatePresence>
                         {isCreating ? (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="space-y-3"
+                                className="space-y-2"
                             >
                                 <textarea
                                     value={newContent}
                                     onChange={(e) => setNewContent(e.target.value)}
                                     placeholder={t('retrospective.actionItems.newAction')}
-                                    className="w-full p-3 text-sm border border-amber-200 dark:border-amber-700 
-                           rounded resize-none bg-white dark:bg-slate-800 
-                           text-slate-900 dark:text-slate-100 
-                           placeholder-slate-500 dark:placeholder-slate-400
-                           focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                                    rows={3}
+                                    className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 rounded resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    rows={2}
                                     autoFocus
                                 />
-
                                 <div>
                                     <label htmlFor="new-action-assignee" className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
                                         {t('retrospective.actionItems.responsible')}
@@ -144,10 +138,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         value={selectedAssignee}
                                         onChange={(e) => setSelectedAssignee(e.target.value)}
                                         title={t('retrospective.actionItems.responsibleSelect')}
-                                        className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 
-                             rounded bg-white dark:bg-slate-800 
-                             text-slate-900 dark:text-slate-100
-                             focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        className="w-full p-2 text-xs border border-amber-200 dark:border-amber-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                     >
                                         <option value="">{t('retrospective.cards.unassigned')}</option>
                                         {participants.map((participant) => (
@@ -157,7 +148,6 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         ))}
                                     </select>
                                 </div>
-
                                 <div>
                                     <DatePicker
                                         label={t('retrospective.actionItems.dueDate')}
@@ -165,17 +155,16 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         onChange={setSelectedDueDate}
                                         placeholder={t('retrospective.actionItems.dueDatePlaceholder')}
                                         minDate={new Date()}
-                                        className="text-sm"
+                                        className="text-xs"
                                     />
                                 </div>
-
                                 <div className="flex gap-2">
                                     <Button
                                         onClick={handleCreate}
                                         disabled={!newContent.trim() || loading}
                                         loading={loading}
                                         size="sm"
-                                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                                        className="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 text-xs"
                                     >
                                         <Plus className="w-4 h-4 mr-1" />
                                         {t('retrospective.actionItems.create')}
@@ -185,6 +174,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         disabled={loading}
                                         variant="ghost"
                                         size="sm"
+                                        className="px-2 py-1 text-xs"
                                     >
                                         {t('retrospective.actionItems.cancel')}
                                     </Button>
@@ -195,9 +185,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                 onClick={() => setIsCreating(true)}
                                 variant="ghost"
                                 size="sm"
-                                className="w-full border border-dashed border-amber-300 dark:border-amber-700 
-                         hover:border-amber-400 dark:hover:border-amber-600 
-                         text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30"
+                                className="w-full border border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 px-2 py-1 text-xs"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 {t('retrospective.actionItems.addActionItem')}
@@ -208,7 +196,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
             )}
 
             {/* Action Items List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 <AnimatePresence>
                     {actionItems.map((actionItem) => (
                         <ActionItemCard

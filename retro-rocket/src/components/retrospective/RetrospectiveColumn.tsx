@@ -109,28 +109,26 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Column Header */}
-      <Card variant="outlined" padding="sm" className={`mb-4 ${column.color}`}>
-        <div className="flex items-center space-x-2">
-          <span className="text-lg">{column.icon}</span>
+    <div className="flex flex-col h-full min-w-[320px] max-w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      {/* Column Header optimizado */}
+      <Card variant="outlined" padding="xs" className={`sticky top-0 z-10 mb-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${column.color}`}>
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{column.icon}</span>
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">
-              {column.title}
-            </h2>
-            <p className="text-sm text-gray-600">{column.description}</p>
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 leading-tight">{column.title}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{column.description}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">
             {t('retrospective.columns.cardsCount', { count: cards.length })}
           </span>
           <Button
             size="sm"
-            variant="ghost"
+            variant="primary"
             onClick={() => setIsCreating(true)}
             disabled={isCreating || !currentUser}
-            className="flex items-center space-x-1"
+            className="flex items-center gap-1 px-2 py-1 text-xs"
           >
             <Plus size={14} />
             <span>{t('retrospective.columns.add')}</span>
@@ -138,9 +136,9 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
         </div>
       </Card>
 
-      {/* Cards Container */}
-      <div className="flex-1 space-y-0 overflow-y-auto">
-        {/* New Card Form - with AnimatePresence for smooth transitions */}
+      {/* Cards Container optimizado */}
+      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-2">
+        {/* New Card Form - compacta y animada */}
         <AnimatePresence>
           {isCreating && (
             <motion.div
@@ -148,16 +146,15 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-3"
+              className="mb-2"
             >
               <Card
                 variant="outlined"
                 customBackground={true}
-                className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)}`}
+                className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)} p-2`}
               >
-                {/* Preview indicator */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-gray-500 italic">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-400 italic">
                     {t('retrospective.columns.colorPreview')}
                   </span>
                   <ColorPicker
@@ -174,12 +171,12 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   placeholder={t(`retrospective.columns.placeholders.${column.id}`, {
                     defaultValue: t('retrospective.columns.placeholder', { columnTitle: column.title.toLowerCase() })
                   })}
-                  rows={3}
+                  rows={2}
                   autoFocus
-                  className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
+                  className="mb-2 bg-transparent border-none focus:ring-0 resize-none text-sm"
                   showEmojiPicker={true}
                 />
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <Button
                     size="sm"
                     variant="primary"
@@ -207,11 +204,11 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
         {typingUsers.length > 0 && (
           <TypingPreview
             typingUsers={typingUsers}
-            className="mb-3"
+            className="mb-2"
           />
         )}
 
-        {/* Cards with Drag & Drop - Outside AnimatePresence since cards have their own animations */}
+        {/* Cards con Drag & Drop y layout compacto */}
         <DragDropColumn
           key={`cards-${column.id}`}
           cards={cards}
@@ -227,7 +224,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
           canEdit={true}
         />
 
-        {/* Empty State - with AnimatePresence for smooth transitions */}
+        {/* Empty State - compacta y animada */}
         <AnimatePresence>
           {cards.length === 0 && !isCreating && (
             <motion.div
@@ -235,10 +232,10 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center py-8"
+              className="text-center py-6"
             >
-              <div className="text-4xl mb-2">{column.icon}</div>
-              <p className="text-gray-500 text-sm mb-3">
+              <div className="text-3xl mb-1">{column.icon}</div>
+              <p className="text-gray-400 text-xs mb-2">
                 {t('retrospective.columns.noCards')}
               </p>
               {currentUser && (
@@ -246,7 +243,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => setIsCreating(true)}
-                  className="flex items-center space-x-1 mx-auto"
+                  className="flex items-center gap-1 mx-auto text-xs"
                 >
                   <Plus size={14} />
                   <span>{t('retrospective.columns.addFirstCard')}</span>

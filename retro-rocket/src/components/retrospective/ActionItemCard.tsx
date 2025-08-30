@@ -79,17 +79,16 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
     return (
         <motion.div
             layout
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`group relative bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 
-                  rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 ${className}`}
+            exit={{ opacity: 0, y: -16 }}
+            className={`group relative bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-150 ${className}`}
         >
             {/* Header con indicador de elemento de acción */}
             <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-amber-600 dark:text-amber-400 text-sm font-medium">🎯</span>
-                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <div className="flex items-center gap-1">
+                    <span className="text-amber-600 dark:text-amber-400 text-base font-bold">🎯</span>
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
                         {t('retrospective.actionItems.actionLabel')}
                     </span>
                 </div>
@@ -99,8 +98,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <button
                             onClick={() => setIsEditing(true)}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-800/30 
-                       text-amber-600 dark:text-amber-400 transition-colors"
+                            className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-800/30 text-amber-600 dark:text-amber-400 transition-colors"
                             title={t('retrospective.actionItemCard.editAction')}
                         >
                             <Edit3 className="w-3 h-3" />
@@ -108,8 +106,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <button
                             onClick={handleDelete}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-800/30 
-                       text-red-500 dark:text-red-400 transition-colors"
+                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-800/30 text-red-500 dark:text-red-400 transition-colors"
                             title={t('retrospective.actionItemCard.deleteAction')}
                         >
                             <Trash2 className="w-3 h-3" />
@@ -126,21 +123,16 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="space-y-3"
+                        className="space-y-2"
                     >
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 
-                       rounded resize-none bg-white dark:bg-slate-800 
-                       text-slate-900 dark:text-slate-100 
-                       focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                            rows={3}
+                            className="w-full p-2 text-xs border border-amber-200 dark:border-amber-700 rounded resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            rows={2}
                             placeholder={t('retrospective.actionItemCard.placeholder')}
                             autoFocus
                         />
-
-                        {/* Selector de responsable */}
                         <div>
                             <label htmlFor={`assignee-${actionItem.id}`} className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
                                 {t('retrospective.actionItems.responsible')}
@@ -150,10 +142,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 title={t('retrospective.actionItems.responsibleSelect')}
-                                className="w-full p-2 text-sm border border-amber-200 dark:border-amber-700 
-                         rounded bg-white dark:bg-slate-800 
-                         text-slate-900 dark:text-slate-100
-                         focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                className="w-full p-2 text-xs border border-amber-200 dark:border-amber-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             >
                                 <option value="">{t('retrospective.actionItemCard.unassigned')}</option>
                                 {participants.map((participant) => (
@@ -163,8 +152,6 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 ))}
                             </select>
                         </div>
-
-                        {/* Selector de fecha de vencimiento */}
                         <div>
                             <DatePicker
                                 label={t('retrospective.actionItems.dueDate')}
@@ -172,17 +159,16 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 onChange={setSelectedDueDate}
                                 placeholder={t('retrospective.actionItems.dueDatePlaceholder')}
                                 minDate={new Date()}
-                                className="text-sm"
+                                className="text-xs"
                             />
                         </div>
-
                         <div className="flex gap-2">
                             <Button
                                 onClick={handleSave}
                                 disabled={!editContent.trim() || isSaving}
                                 loading={isSaving}
                                 size="sm"
-                                className="h-7 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                                className="px-2 py-1 text-xs bg-amber-600 hover:bg-amber-700 text-white"
                             >
                                 <Check className="w-3 h-3 mr-1" />
                                 {t('retrospective.actionItemCard.save')}
@@ -192,7 +178,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 disabled={isSaving}
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-3 text-xs"
+                                className="px-2 py-1 text-xs"
                             >
                                 <X className="w-3 h-3 mr-1" />
                                 {t('retrospective.actionItemCard.cancel')}
@@ -208,24 +194,18 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                     >
                         <LinkifyText
                             text={actionItem.content}
-                            className="text-sm text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap"
+                            className="text-xs text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap"
                         />
-
-                        {/* Responsable asignado */}
                         {assignedParticipant && (
-                            <div className="flex items-center gap-2 p-2 bg-amber-100 dark:bg-amber-800/20 
-                            rounded border border-amber-200 dark:border-amber-700">
+                            <div className="flex items-center gap-1 p-1 bg-amber-100 dark:bg-amber-800/20 rounded border border-amber-200 dark:border-amber-700">
                                 <User className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                                 <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
                                     {t('retrospective.actionItemCard.responsible')}: {assignedParticipant.name}
                                 </span>
                             </div>
                         )}
-
-                        {/* Fecha de vencimiento */}
                         {actionItem.dueDate && (
-                            <div className="flex items-center gap-2 p-2 bg-blue-100 dark:bg-blue-800/20 
-                            rounded border border-blue-200 dark:border-blue-700">
+                            <div className="flex items-center gap-1 p-1 bg-blue-100 dark:bg-blue-800/20 rounded border border-blue-200 dark:border-blue-700">
                                 <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                                 <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
                                     {t('retrospective.actionItems.dueDateDisplay', {
@@ -238,9 +218,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 </span>
                             </div>
                         )}
-
-                        {/* Timestamp */}
-                        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {t('retrospective.actionItemCard.created')}: {actionItem.createdAt.toLocaleDateString('es-ES', {
                                 day: '2-digit',
                                 month: '2-digit',
