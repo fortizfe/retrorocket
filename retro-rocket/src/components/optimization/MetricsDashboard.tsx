@@ -1,51 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { FirebaseMetricsService } from '../../services/optimization/FirebaseMetricsService';
+import React, { useState } from 'react';
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut';
+import { useFirebaseMetrics } from '../../hooks/useFirebaseMetrics';
 
-interface MetricsData {
-    summary: {
-        reads: number;
-        writes: number;
-        listeners: number;
-        errors: number;
-        cacheHits: number;
-        cacheMisses: number;
-    };
-    uptime: number;
-    averageReadsPerMinute: number;
-    averageWritesPerMinute: number;
-    errorRate: number;
-    cacheHitRate: number;
-}
-
+/**
+ * Componente que muestra las métricas de Firebase en tiempo real
+ * 
+ * Principios SOLID aplicados:
+ * - SRP: El componente se encarga únicamente de la presentación
+ * - OCP: Extensible sin modificar el código existente
+ * - DIP: Depende de abstracciones (hooks) en lugar de implementaciones concretas
+ * 
+ * Se puede mostrar/ocultar con Ctrl+Shift+M
+ */
 const MetricsDashboard: React.FC = () => {
-    const [metrics, setMetrics] = useState<MetricsData | null>(null);
     const [isVisible, setIsVisible] = useState(false);
+    const { metrics } = useFirebaseMetrics(5000); // Actualizar cada 5 segundos
 
-    useEffect(() => {
-        const updateMetrics = () => {
-            setMetrics(FirebaseMetricsService.getMetrics());
-        };
+    // Configurar atajo de teclado Ctrl+Shift+M
+    useKeyboardShortcut(
+        () => setIsVisible(prev => !prev),
+        {
+            key: 'm',
+            ctrlKey: true,
+            shiftKey: true,
+            preventDefault: true,
+        }
+    );
 
-        // Actualizar métricas cada 5 segundos
-        updateMetrics();
-        const interval = setInterval(updateMetrics, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    // Solo mostrar en desarrollo o cuando se presiona Ctrl+Shift+M
-    useEffect(() => {
-        const handleKeyPress = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.shiftKey && event.key === 'M') {
-                setIsVisible(prev => !prev);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, []);
-
-    if (!metrics || (!isVisible && import.meta.env.PROD)) {
+    // No renderizar si las métricas no están disponibles o el panel está oculto
+    if (!metrics || !isVisible) {
         return null;
     }
 
