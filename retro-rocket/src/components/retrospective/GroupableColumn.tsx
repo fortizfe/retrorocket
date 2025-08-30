@@ -210,7 +210,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     return (
         <div className="flex flex-col h-full">
             {/* Column Header */}
-            <Card variant="outlined" padding="sm" className={`mb-4 ${column.color}`}>
+            <Card variant="outlined" padding="sm" className={`mb-2 ${column.color}`}>
                 <div className="flex items-center space-x-2">
                     <span className="text-lg">{column.icon}</span>
                     <div className="flex-1">

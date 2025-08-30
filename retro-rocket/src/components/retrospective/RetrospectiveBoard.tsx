@@ -209,12 +209,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
             currentUsername={currentUsername}
         >
             <div className="h-full flex flex-col">
-                {/* Header with info */}
-                <div className="mb-6">
-                </div>
-
                 {/* Board Grid - 3 columnas regulares + 1 columna de acciones */}
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
                     {/* Columnas regulares de retrospectiva */}
                     {COLUMN_ORDER_ARRAY.map((columnId, index) => {
                         const column = finalColumnConfigs[columnId as keyof typeof finalColumnConfigs];

@@ -72,7 +72,7 @@ const Header: React.FC = () => {
 
     return (
         <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-soft border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-40">
-            <div className="container mx-auto px-4">
+            <div className="container mx-auto px-2">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/mis-tableros" className="flex items-center gap-3 hover:opacity-80 transition-opacity">

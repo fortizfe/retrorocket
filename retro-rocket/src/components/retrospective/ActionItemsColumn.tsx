@@ -72,7 +72,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     return (
         <div className="flex flex-col h-full min-w-[320px] max-w-full bg-amber-50/40 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800 shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-amber-200 dark:border-amber-800">
+            <div className="p-2 border-b border-amber-200 dark:border-amber-800">
                 <div className="flex items-center gap-2 mb-1">
                     <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <h3 className="font-bold text-amber-900 dark:text-amber-100 text-base">
@@ -112,7 +112,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
 
             {/* Create Action Item Form (only for facilitator) */}
             {canEdit && (
-                <div className="p-3 border-b border-amber-200 dark:border-amber-800">
+                <div className="p-2 border-b border-amber-200 dark:border-amber-800">
                     <AnimatePresence>
                         {isCreating ? (
                             <motion.div
@@ -196,7 +196,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
             )}
 
             {/* Action Items List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            <div className="flex-1 overflow-y-auto p-1 space-y-2">
                 <AnimatePresence>
                     {actionItems.map((actionItem) => (
                         <ActionItemCard

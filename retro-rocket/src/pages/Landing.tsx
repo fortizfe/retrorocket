@@ -69,7 +69,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Hero Section */}
-            <div className="container mx-auto px-4 py-16">
+            <div className="container mx-auto px-2 py-16">
                 <div className="text-center max-w-4xl mx-auto">
                     {/* Logo and Title */}
                     <motion.div
@@ -451,7 +451,7 @@ const LandingPage: React.FC = () => {
 
             {/* Footer */}
             <div className="border-t border-white/20 dark:border-slate-700/20 bg-white/5 dark:bg-slate-900/20 backdrop-blur-sm">
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-2 py-8">
                     <div className="text-center text-slate-600 dark:text-slate-400">
                         <p className="text-sm">
                             {t('landing.footer.copyright', { appName: APP_NAME })}
