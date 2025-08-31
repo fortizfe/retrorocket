@@ -88,14 +88,37 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     // Expose sentiment analysis to parent component with stable callback
     const sentimentAnalysisCallback = React.useCallback(() => ({
         ...sentimentAnalysis,
-        columnConfigs // Include column configurations for team mood analysis
-    }), [sentimentAnalysis, columnConfigs]);
+        columnConfigs, // Include column configurations for team mood analysis
+        cards // Expose current cards so other UI (topbar) can use them for exports/analysis
+    }), [sentimentAnalysis, columnConfigs, cards]);
 
     React.useEffect(() => {
+        const payload = sentimentAnalysisCallback();
         if (onSentimentAnalysisReady) {
-            onSentimentAnalysisReady(sentimentAnalysisCallback());
+            onSentimentAnalysisReady(payload);
         }
-    }, [onSentimentAnalysisReady, sentimentAnalysisCallback]);    // Get current user's name using useCurrentUser hook for more reliable data
+
+        // Publish to global in-memory store for other UI (topbar) to consume
+        (async () => {
+            try {
+                const mod = await import('../../lib/sentimentStore');
+                mod.setSentimentFor(retrospective.id, payload);
+            } catch {
+                // ignore - non-critical
+            }
+        })();
+
+        return () => {
+            (async () => {
+                try {
+                    const mod = await import('../../lib/sentimentStore');
+                    mod.setSentimentFor(retrospective.id, null);
+                } catch {
+                    // ignore
+                }
+            })();
+        };
+    }, [onSentimentAnalysisReady, sentimentAnalysisCallback, retrospective.id]);    // Get current user's name using useCurrentUser hook for more reliable data
     const { fullName, displayName, email, uid } = useCurrentUser();
 
     // Notify parent component about data changes for export functionality

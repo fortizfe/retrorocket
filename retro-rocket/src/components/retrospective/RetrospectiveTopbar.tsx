@@ -22,12 +22,14 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
     const { retrospective } = useRetrospective(id);
     const { participants } = useParticipants(id);
     const { uid } = useCurrentUser();
+    const [sentimentAnalysis, setSentimentAnalysis] = React.useState<any>(null);
 
     // Minimal local export placeholders; real data is provided by the board via callbacks or context
-    const exportCards: any[] = [];
-    const exportGroups: any[] = [];
+    // If the board publishes cards via the sentiment store, use them here so topbar features
+    // (exports, facilitator menu) have the real data.
+    const exportCards: any[] = sentimentAnalysis?.cards || [];
+    const exportGroups: any[] = []; // groups are still provided via onDataChange from page
     const exportActionItems: any[] = [];
-    const sentimentAnalysis: any = null;
 
     // Menu state for compact options menu (portal)
     const [optionsOpen, setOptionsOpen] = React.useState(false);
@@ -62,6 +64,28 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
         }
         setOptionsOpen(true);
     }, []);
+
+    // Subscribe to global sentiment store updates for this retrospective
+    React.useEffect(() => {
+        let unsub: (() => void) | null = null;
+        (async () => {
+            try {
+                const mod = await import('../../lib/sentimentStore');
+                const current = mod.getSentimentFor(id as string);
+                setSentimentAnalysis(current);
+                unsub = mod.subscribeSentimentUpdates((rid: string) => {
+                    if (rid === id) {
+                        const latest = mod.getSentimentFor(rid);
+                        setSentimentAnalysis(latest);
+                    }
+                });
+            } catch {
+                // ignore
+            }
+        })();
+
+        return () => { if (unsub) unsub(); };
+    }, [id]);
 
     // Close on outside click
     useEffect(() => {

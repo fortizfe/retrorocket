@@ -45,9 +45,12 @@ export function useTeamMood({
     }), [userConfig]);
 
     // Verificar si hay suficientes datos para el análisis
+    // Usar solo las tarjetas analizables (excluyendo acciones). El requisito
+    // es tener al menos 3 tarjetas que puedan ser analizadas por el sistema.
     const hasEnoughData = useMemo(() => {
-        return cards.length >= 3 && sentimentResults.size >= 2;
-    }, [cards.length, sentimentResults.size]);
+        const analyzableCount = cards.filter(card => card.column !== 'actions').length;
+        return analyzableCount >= 3;
+    }, [cards]);
 
     // Estado de análisis - siempre false ya que este es un cálculo síncrono
     const isAnalyzing = false;
