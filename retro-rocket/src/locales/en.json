@@ -5,7 +5,8 @@
         "closeMenu": "Close menu",
         "closeLanguageSelector": "Close language selector",
         "profile": "Profile",
-        "signOut": "Sign Out"
+        "signOut": "Sign Out",
+        "themeMode": "Dark/Light Mode"
     },
     "dashboard": {
         "title": "My Retrospectives",

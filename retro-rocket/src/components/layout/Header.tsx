@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useUser } from '../../contexts/UserContext';
 import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
+import ThemeMenuToggle from '../ui/ThemeMenuToggle';
 import LanguageSelector from '../ui/LanguageSelector';
 import RetrospectiveTopbar from '../../components/retrospective/RetrospectiveTopbar';
 import { useLocation } from 'react-router-dom';
@@ -218,12 +219,9 @@ const Header: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Theme toggle inside menu */}
+                                                {/* Theme toggle inside menu (menu-friendly) */}
                                                 <div className="px-2 py-2">
-                                                    <div className="text-xs text-slate-400 dark:text-slate-500 px-4 mb-2">{t('header.theme')}</div>
-                                                    <div className="px-4">
-                                                        <ThemeToggle />
-                                                    </div>
+                                                    <ThemeMenuToggle />
                                                 </div>
                                             </div>
 

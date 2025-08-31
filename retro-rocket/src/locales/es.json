@@ -5,7 +5,9 @@
         "closeMenu": "Cerrar menú",
         "closeLanguageSelector": "Cerrar selector de idioma",
         "profile": "Perfil",
-        "signOut": "Cerrar sesión"
+        "signOut": "Cerrar sesión",
+        "language": "Idioma",
+        "themeMode": "Modo Claro/Oscuro"
     },
     "dashboard": {
         "title": "Mis Retrospectivas",
