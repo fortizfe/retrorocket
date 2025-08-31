@@ -8,7 +8,8 @@ import { useUser } from '../../contexts/UserContext';
 import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 import ThemeMenuToggle from '../ui/ThemeMenuToggle';
-import LanguageSelector from '../ui/LanguageSelector';
+// ...existing imports...
+import LanguageMenuList from '../ui/LanguageMenuList';
 import RetrospectiveTopbar from '../../components/retrospective/RetrospectiveTopbar';
 import { useLocation } from 'react-router-dom';
 
@@ -155,6 +156,7 @@ const Header: React.FC = () => {
 
                                         {/* Menu */}
                                         <motion.div
+                                            role="menu"
                                             initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -211,11 +213,11 @@ const Header: React.FC = () => {
                                                     {t('header.myBoards')}
                                                 </Link>
 
-                                                {/* Language selector rendered inside menu to preserve functionality */}
-                                                <div className="px-2 py-2">
+                                                {/* Language selector rendered as menu rows to match other items */}
+                                                <div className="px-2 py-2" role="presentation" aria-label={t('header.language')}>
                                                     <div className="text-xs text-slate-400 dark:text-slate-500 px-4 mb-2">{t('header.language')}</div>
-                                                    <div className="px-4">
-                                                        <LanguageSelector />
+                                                    <div className="px-0">
+                                                        <LanguageMenuList onClose={() => setShowUserMenu(false)} />
                                                     </div>
                                                 </div>
 
