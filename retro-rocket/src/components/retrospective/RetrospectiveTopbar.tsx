@@ -197,25 +197,14 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                             >
                                 <div className="w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl overflow-hidden" role="menu" tabIndex={-1}>
                                     <div className="p-2">
-                                        <ImprovedExportPopover
-                                            retrospective={retrospective}
-                                            cards={exportCards}
-                                            groups={exportGroups}
-                                            participants={participants || []}
-                                            actionItems={exportActionItems}
-                                            sentimentAnalysis={sentimentAnalysis}
-                                            isOpen={showExportPopover}
-                                            onClose={() => setShowExportPopover(false)}
+                                        <button
+                                            onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
+                                            role="menuitem"
+                                            className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
                                         >
-                                            <button
-                                                onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
-                                                role="menuitem"
-                                                className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
-                                            >
-                                                <Copy className="w-4 h-4 text-slate-500" />
-                                                <span>{t('retrospective.export.exportText') || 'Export'}</span>
-                                            </button>
-                                        </ImprovedExportPopover>
+                                            <Copy className="w-4 h-4 text-slate-500" />
+                                            <span>{t('retrospective.export.exportText') || 'Export'}</span>
+                                        </button>
 
                                         <button
                                             onClick={() => { handleCopyId(); setOptionsOpen(false); }}
@@ -250,6 +239,18 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                         document.body
                     )}
                 </div>
+
+                {/* Export popover mounted at topbar level so it isn't trapped inside the options menu portal */}
+                <ImprovedExportPopover
+                    retrospective={retrospective}
+                    cards={exportCards}
+                    groups={exportGroups}
+                    participants={participants || []}
+                    actionItems={exportActionItems}
+                    sentimentAnalysis={sentimentAnalysis}
+                    isOpen={showExportPopover}
+                    onClose={() => setShowExportPopover(false)}
+                />
 
                 <FacilitatorMenu
                     retrospectiveId={retrospective.id}

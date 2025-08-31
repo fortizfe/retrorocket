@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -25,7 +26,7 @@ import { useExportOptions } from '../../hooks/useExportOptions';
 import Button from '../ui/Button';
 
 interface ImprovedExportPopoverProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
@@ -86,17 +87,17 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
     } = useExportOptions({ retrospective, isFacilitator });
 
     const popoverRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement | null>(null);
 
     // Handle click outside to close
     useEffect(() => {
         const handleClickOutside = (event: Event) => {
             const target = event.target as Node;
+            // Close if click is outside popover and (if present) outside trigger
             if (
                 popoverRef.current &&
                 !popoverRef.current.contains(target) &&
-                triggerRef.current &&
-                !triggerRef.current.contains(target)
+                !triggerRef.current?.contains(target)
             ) {
                 onClose();
             }
@@ -129,6 +130,13 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
             document.removeEventListener('keydown', handleEscape);
         };
     }, [isOpen, onClose]);
+
+    // Focus popover for accessibility when opened
+    useEffect(() => {
+        if (isOpen) {
+            setTimeout(() => popoverRef.current?.focus(), 50);
+        }
+    }, [isOpen]);
 
     // Auto-adjust position based on viewport
     useEffect(() => {
@@ -168,15 +176,17 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 
     return (
         <div className={`relative ${className}`}>
-            {/* Trigger */}
-            <div ref={triggerRef}>
-                {children}
-            </div>
+            {/* Trigger (optional) */}
+            {children && (
+                <div ref={triggerRef}>
+                    {children}
+                </div>
+            )}
 
-            {/* Popover */}
-            {isOpen && (
+            {/* Popover rendered in a portal so it shows above other portals/stacking contexts */}
+            {isOpen && createPortal(
                 <AnimatePresence>
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 z-[99999] mt-2">
+                    <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-20 px-4">
                         {/* Backdrop */}
                         <button
                             className="fixed inset-0 bg-black/10 cursor-default"
@@ -448,7 +458,8 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                         </motion.div>
                     </div>
                 </AnimatePresence>
-            )}
+                , document.body)
+            }
         </div>
     );
 };
