@@ -226,7 +226,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
             <button
                 ref={buttonRef}
                 onClick={handleToggle}
-                className="p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
+                className="p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm flex items-center gap-2"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
                 aria-expanded={isOpen ? 'true' : 'false'}
@@ -242,6 +242,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                         <Menu className="w-5 h-5" />
                     )}
                 </motion.div>
+                <span className="hidden lg:inline font-medium">{t('retrospective.facilitator.menu')}</span>
             </button>
 
             {/* Portal Dropdown Menu */}
