@@ -30,26 +30,33 @@ const CardMenu: React.FC<CardMenuProps> = ({
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
-    // Calculate menu position
+    // Calculate menu position: prefer the right side of the card and vertically center it
     useEffect(() => {
         if (isOpen && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
             const viewportWidth = window.innerWidth;
-            const menuHeight = 380; // Increased for date picker space
+            const menuHeight = 380; // space for date picker
             const menuWidth = 280;
 
-            let top = rect.bottom + 4;
-            let left = rect.left;
+            // Prefer to position to the right of the card/button
+            let left = rect.right + 8;
 
-            // Adjust if menu would go off-screen
-            if (top + menuHeight > viewportHeight) {
-                top = rect.top - menuHeight - 4;
+            // Compute vertical center relative to the card/button
+            let top = rect.top + (rect.height / 2) - (menuHeight / 2);
+
+            // If there's not enough space on the right, place to the left
+            if (left + menuWidth > viewportWidth - 8) {
+                left = rect.left - menuWidth - 8;
             }
 
-            if (left + menuWidth > viewportWidth) {
-                left = viewportWidth - menuWidth - 16;
-            }
+            // Clamp left to viewport
+            if (left < 8) left = 8;
+            if (left + menuWidth > viewportWidth - 8) left = Math.max(8, viewportWidth - menuWidth - 8);
+
+            // Clamp top so the menu is visible
+            if (top < 8) top = 8;
+            if (top + menuHeight > viewportHeight - 8) top = Math.max(8, viewportHeight - menuHeight - 8);
 
             setMenuPosition({ top, left });
         }
