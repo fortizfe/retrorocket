@@ -24,6 +24,7 @@ import { useFacilitatorNotes } from '../../hooks/useFacilitatorNotes';
 import { useAuth } from '../../hooks/useAuth';
 import { useExportOptions } from '../../hooks/useExportOptions';
 import Button from '../ui/Button';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ImprovedExportPopoverProps {
     children?: React.ReactNode;
@@ -58,6 +59,8 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
     const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
     const { t } = useLanguage();
 
+    // Lock body scroll while improved popover is open
+    useBodyScrollLock(isOpen);
     // Get team mood analysis if sentiment data is available
     const sentimentResults = sentimentAnalysis?.results || new Map();
     const columnConfigs = {

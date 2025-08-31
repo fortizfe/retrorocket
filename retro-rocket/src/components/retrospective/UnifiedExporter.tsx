@@ -21,6 +21,7 @@ import { ActionItem } from '../../types/actionItem';
 import { UnifiedExportOptions, ExportFormat, SortOrder } from '../../types/export';
 import { useUnifiedExport } from '../../hooks/useUnifiedExport';
 import { UnifiedExportService } from '../../services/unifiedExportService';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface UnifiedExporterProps {
     retrospective: Retrospective;
@@ -143,6 +144,8 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
     };
 
     if (variant === 'button') {
+        // Ensure body scroll is locked when the settings modal is open
+        useBodyScrollLock(showModal);
         return (
             <div className={`relative ${className}`}>
                 <div className="flex items-center gap-2">
@@ -532,6 +535,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
     }
 
     // Full variant (for dedicated export pages)
+    // Full variant doesn't use modal overlay so no body lock needed
     return (
         <div className={`space-y-6 ${className}`}>
             <div className="text-center">

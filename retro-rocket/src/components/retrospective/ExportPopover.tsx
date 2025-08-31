@@ -19,6 +19,7 @@ import { useUnifiedExport } from '../../hooks/useUnifiedExport';
 import { useFacilitatorNotes } from '../../hooks/useFacilitatorNotes';
 import { useAuth } from '../../hooks/useAuth';
 import Button from '../ui/Button';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ExportPopoverProps {
     retrospective: Retrospective;
@@ -49,6 +50,9 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
     const { user } = useAuth();
     const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
     const { t } = useLanguage();
+
+    // Lock body scroll while popover is open
+    useBodyScrollLock(isOpen);
 
     // Verificar si el usuario es propietario del tablero
     const isOwner = user?.uid === retrospective.createdBy;
