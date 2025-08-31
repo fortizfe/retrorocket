@@ -361,10 +361,11 @@
                     "detailedStats": "Detailed Statistics"
                 },
                 "stats": {
-                    "totalCards": "Total cards:",
-                    "analyzed": "Analyzed:",
-                    "averageConfidence": "Average confidence:",
-                    "dominantSentiment": "Dominant sentiment:",
+                    "timer": "Timer",
+                    "sentiment": "AI",
+                    "teamMood": "Team Mood",
+                    "controls": "Controls",
+                    "notes": "Notes",
                     "cards_singular": "card",
                     "cards_plural": "cards"
                 },

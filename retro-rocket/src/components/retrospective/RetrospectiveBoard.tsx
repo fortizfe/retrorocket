@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import GroupableColumn from './GroupableColumn';
 import ActionItemsColumn from './ActionItemsColumn';
+import uiPreferencesStore from '../../lib/uiPreferencesStore';
 import Loading from '../ui/Loading';
 import { TypingProvider } from '../../contexts/TypingProvider';
 import { useOptimizedCards } from '../../hooks/optimization/useOptimizedCards';
@@ -41,6 +42,13 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         loading: columnsLoading,
         error: columnsError
     } = useRetrospectiveColumns(retrospective.id);
+
+    const [showActionColumn, setShowActionColumn] = React.useState<boolean>(() => uiPreferencesStore.getShowActionColumn());
+
+    React.useEffect(() => {
+        const unsub = uiPreferencesStore.subscribe((v) => setShowActionColumn(v));
+        return unsub;
+    }, []);
 
     const {
         cards,
@@ -154,6 +162,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     // Check if current user is facilitator (owner of the retrospective)
     const isFacilitator = uid === retrospective.createdBy;
 
+
     const handleCardCreate = async (cardInput: CreateCardInput) => {
         try {
             await createCard(cardInput);
@@ -239,8 +248,11 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
             currentUsername={currentUsername}
         >
             <div className="h-full flex flex-col">
+                {/* Controls row: facilitator-only controls moved to FacilitatorMenu */}
                 {/* Board Grid - 3 columnas regulares + 1 columna de acciones */}
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
+                <div
+                    className={`flex-1 grid grid-cols-1 lg:grid-cols-${showActionColumn ? '4' : '3'} gap-4 min-h-0`}
+                >
                     {/* Columnas regulares de retrospectiva */}
                     {COLUMN_ORDER_ARRAY.map((columnId, index) => {
                         const column = finalColumnConfigs[columnId as keyof typeof finalColumnConfigs];
@@ -292,25 +304,27 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                             </motion.div>
                         );
                     })}                    {/* Columna de Elementos de Acción */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.4 }}
-                        className="flex flex-col min-h-0"
-                    >
-                        <ActionItemsColumn
-                            actionItems={actionItems}
-                            participants={participants}
-                            canEdit={isFacilitator}
-                            onCreateActionItem={handleCreateActionItem}
-                            onEditActionItem={handleEditActionItem}
-                            onDeleteActionItem={handleDeleteActionItem}
-                            loading={actionItemsLoading}
-                            error={actionItemsError}
-                            retrospectiveId={retrospective.id}
-                            facilitatorId={uid || ''}
-                        />
-                    </motion.div>
+                    {showActionColumn && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: 0.4 }}
+                            className="flex flex-col min-h-0"
+                        >
+                            <ActionItemsColumn
+                                actionItems={actionItems}
+                                participants={participants}
+                                canEdit={isFacilitator}
+                                onCreateActionItem={handleCreateActionItem}
+                                onEditActionItem={handleEditActionItem}
+                                onDeleteActionItem={handleDeleteActionItem}
+                                loading={actionItemsLoading}
+                                error={actionItemsError}
+                                retrospectiveId={retrospective.id}
+                                facilitatorId={uid || ''}
+                            />
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </TypingProvider>

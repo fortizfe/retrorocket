@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Brain, StickyNote, X, Users } from 'lucide-react';
+import { Timer, Brain, StickyNote, X, Users, Settings } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface Tab {
@@ -19,6 +19,7 @@ interface FacilitatorMenuTabsProps {
     sentimentBadge?: string;
     teamMoodBadge?: string;
     children: React.ReactNode;
+    extraHeaderControls?: React.ReactNode;
 }
 
 const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
@@ -29,7 +30,8 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
     notesBadge,
     sentimentBadge,
     teamMoodBadge,
-    children
+    children,
+    extraHeaderControls
 }) => {
     const { t } = useLanguage();
 
@@ -51,6 +53,11 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             label: t('retrospective.facilitator.tabs.teamMood'),
             icon: Users,
             badge: teamMoodBadge
+        },
+        {
+            id: 'controls',
+            label: t('retrospective.facilitator.tabs.controls'),
+            icon: Settings
         },
         {
             id: 'notes',
@@ -82,14 +89,16 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                             {t('retrospective.facilitator.controls')}
                         </span>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                        title={t('common.close')}
-                        aria-label={t('common.close')}
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onClose}
+                            className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                            title={t('common.close')}
+                            aria-label={t('common.close')}
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tab Navigation */}

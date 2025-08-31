@@ -299,6 +299,7 @@
                 "timer": "Timer",
                 "sentiment": "IA",
                 "teamMood": "Estado del Equipo",
+                "controls": "Controles",
                 "notes": "Notas"
             },
             "teamMood": {
