@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Copy, Share2, ArrowLeft, Menu as MenuIcon } from 'lucide-react';
+import { Copy, Share2, ArrowLeft, Menu as MenuIcon, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 // Button unused in this topbar refactor
 import ImprovedExportPopover from './ImprovedExportPopover';
@@ -177,7 +177,11 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                         aria-haspopup="true"
                     >
                         <motion.div animate={{ rotate: optionsOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
-                            <MenuIcon className="w-5 h-5" />
+                            {optionsOpen ? (
+                                <X className="w-5 h-5" />
+                            ) : (
+                                <MenuIcon className="w-5 h-5" />
+                            )}
                         </motion.div>
                         <span className="hidden lg:inline font-medium">{t('retrospectivePage.options') || 'Opciones'}</span>
                     </button>
