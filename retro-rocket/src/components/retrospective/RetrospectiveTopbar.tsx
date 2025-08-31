@@ -21,7 +21,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
 
     const { retrospective } = useRetrospective(id);
     const { participants } = useParticipants(id);
-    const { uid, fullName } = useCurrentUser();
+    const { uid } = useCurrentUser();
 
     // Minimal local export placeholders; real data is provided by the board via callbacks or context
     const exportCards: any[] = [];
@@ -154,9 +154,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                     <h2 className="text-base md:text-lg font-semibold text-slate-800 dark:text-slate-100 truncate">
                         {retrospective.title}
                     </h2>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 truncate">
-                        {t('retrospectivePage.connectedAs')} {fullName}
-                    </p>
+                    {/* subtitle removed: redundant with user menu */}
                 </div>
                 <div className="hidden md:block ml-4 flex-shrink-0">
                     <ResponsiveParticipantDisplay participants={participants || []} className="flex items-center" />

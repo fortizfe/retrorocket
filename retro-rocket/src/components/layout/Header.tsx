@@ -88,7 +88,7 @@ const Header: React.FC = () => {
             <div className="container mx-auto px-2">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <Link to="/mis-tableros" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <Link to="/mis-tableros" className="flex items-center gap-6 mr-6 md:mr-8 hover:opacity-80 transition-opacity">
                         <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                             <Rocket className="w-4 h-4 text-white" />
                         </div>
