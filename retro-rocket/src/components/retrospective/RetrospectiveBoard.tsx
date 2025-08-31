@@ -89,8 +89,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const sentimentAnalysisCallback = React.useCallback(() => ({
         ...sentimentAnalysis,
         columnConfigs, // Include column configurations for team mood analysis
-        cards // Expose current cards so other UI (topbar) can use them for exports/analysis
-    }), [sentimentAnalysis, columnConfigs, cards]);
+        cards, // Expose current cards so other UI (topbar) can use them for exports/analysis
+        groups, // Expose current groups
+        actionItems // Expose action items
+    }), [sentimentAnalysis, columnConfigs, cards, groups, actionItems]);
 
     React.useEffect(() => {
         const payload = sentimentAnalysisCallback();

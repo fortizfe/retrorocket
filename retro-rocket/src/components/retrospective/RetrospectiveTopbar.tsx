@@ -28,8 +28,8 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
     // If the board publishes cards via the sentiment store, use them here so topbar features
     // (exports, facilitator menu) have the real data.
     const exportCards: any[] = sentimentAnalysis?.cards || [];
-    const exportGroups: any[] = []; // groups are still provided via onDataChange from page
-    const exportActionItems: any[] = [];
+    const exportGroups: any[] = sentimentAnalysis?.groups || [];
+    const exportActionItems: any[] = sentimentAnalysis?.actionItems || [];
 
     // Menu state for compact options menu (portal)
     const [optionsOpen, setOptionsOpen] = React.useState(false);
