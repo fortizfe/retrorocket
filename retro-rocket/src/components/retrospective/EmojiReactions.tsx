@@ -10,8 +10,10 @@ import { useLanguage } from '../../hooks/useLanguage';
 interface EmojiReactionsProps {
     cardId: string;
     groupedReactions: GroupedReaction[];
-    currentUserId: string;
-    onReaction: (emoji: EmojiReaction) => void;
+    currentUserId?: string;
+    userReaction?: string | null;
+    onReaction?: (emoji: EmojiReaction) => void;
+    onAddReaction?: (emoji: EmojiReaction) => void;
     onRemoveReaction: () => void;
     disabled?: boolean;
 }
@@ -20,7 +22,9 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     cardId,
     groupedReactions = [],
     currentUserId,
+    userReaction: userReactionProp,
     onReaction,
+    onAddReaction,
     onRemoveReaction,
     disabled = false
 }) => {
@@ -34,10 +38,12 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     // Usar el hook para bloquear scroll cuando el picker esté abierto
     const { restoreScroll } = useBodyScrollLock(showPicker);
 
-    // Find current user's reaction
-    const userReaction = groupedReactions.find(reaction =>
-        reaction.users?.includes(currentUserId)
+    // Find current user's reaction (computed) and allow override via prop
+    const computedReaction = groupedReactions.find(reaction =>
+        (currentUserId ? reaction.users?.includes(currentUserId) : false)
     )?.emoji || null;
+
+    const userReaction = typeof userReactionProp !== 'undefined' ? userReactionProp : computedReaction;
 
     // Calculate picker position
     const calculatePosition = () => {
@@ -112,7 +118,9 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         if (userReaction === emoji) {
             onRemoveReaction();
         } else {
-            onReaction(emoji);
+            // support both onReaction and legacy onAddReaction prop
+            if (onAddReaction) onAddReaction(emoji);
+            else if (onReaction) onReaction(emoji);
         }
         setShowPicker(false);
         restoreScroll();
