@@ -95,7 +95,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     }), [sentimentAnalysis, columnConfigs, cards, groups, actionItems]);
 
     React.useEffect(() => {
-        const payload = sentimentAnalysisCallback();
+        const base = sentimentAnalysisCallback();
+        const payload = {
+            ...base,
+            ready: !!base.ready,
+            version: Date.now()
+        };
         if (onSentimentAnalysisReady) {
             onSentimentAnalysisReady(payload);
         }
