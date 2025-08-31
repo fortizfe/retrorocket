@@ -16,7 +16,7 @@ import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useLanguage } from '../hooks/useLanguage';
 import { OptimizedRetrospectiveService } from '../services/optimization/OptimizedRetrospectiveService';
 import { Card, CardGroup } from '../types/card';
-import { ActionItem } from '../types/actionItem';
+// ...existing code...
 
 const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -32,26 +32,18 @@ const RetrospectivePageContent: React.FC = () => {
     const { uid, fullName, isReady } = useCurrentUser();
 
     // State for export data
+
     const [exportCards, setExportCards] = useState<Card[]>([]);
     const [exportGroups, setExportGroups] = useState<CardGroup[]>([]);
-    const [exportActionItems, setExportActionItems] = useState<ActionItem[]>([]);
 
-    // Sentiment analysis state - will be populated by RetrospectiveBoard
-    const [sentimentAnalysis, setSentimentAnalysis] = useState<any>(null);
-
-    // Handle sentiment analysis data from RetrospectiveBoard
-    const handleSentimentAnalysisReady = (analysisData: any) => {
-        setSentimentAnalysis(analysisData);
-    };
 
     // Note: Sentiment analysis is now handled entirely within RetrospectiveBoard
     // to avoid double initialization and model loading
 
     // Handle data changes from RetrospectiveBoard for export
-    const handleDataChange = (cards: Card[], groups: CardGroup[], actionItems: ActionItem[]) => {
+    const handleDataChange = (cards: Card[], groups: CardGroup[]) => {
         setExportCards(cards);
         setExportGroups(groups);
-        setExportActionItems(actionItems);
     };
 
     // Auto-join when user is ready and hasn't joined yet
@@ -197,105 +189,8 @@ const RetrospectivePageContent: React.FC = () => {
     if (hasJoined) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
-                {/* Sticky Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="sticky top-16 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50 shadow-md transition-all duration-200"
-                >
-                    <div className="container mx-auto px-2 py-3">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => navigate('/dashboard')}
-                                    className="flex items-center gap-2 flex-shrink-0"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('retrospectivePage.back')}</span>
-                                </Button>
-                                <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className="min-w-0">
-                                        <h1 className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100 truncate">
-                                            {retrospective.title}
-                                        </h1>
-                                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 truncate">
-                                            {t('retrospectivePage.connectedAs')} {fullName}
-                                        </p>
-                                    </div>
-                                    {/* Lista de participantes al lado del título */}
-                                    <div className="hidden md:block ml-4 flex-shrink-0">
-                                        <ResponsiveParticipantDisplay
-                                            participants={participants || []}
-                                            className="flex items-center"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Countdown Timer - visible to all */}
-                            <div className="flex items-center flex-shrink-0">
-                                <CountdownTimer retrospectiveId={retrospective.id} />
-                            </div>
-
-                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                {/* Botón de exportación */}
-                                <div className="hidden lg:block">
-                                    <ExportButtonGroup
-                                        retrospective={retrospective}
-                                        cards={exportCards}
-                                        groups={exportGroups}
-                                        participants={participants || []}
-                                        actionItems={exportActionItems}
-                                        sentimentAnalysis={sentimentAnalysis}
-                                        className="flex items-center gap-2"
-                                    />
-                                </div>
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleCopyId}
-                                    className="hidden sm:flex items-center gap-2"
-                                >
-                                    <Copy className="w-4 h-4" />
-                                    <span className="hidden lg:inline">{t('retrospectivePage.copyId')}</span>
-                                </Button>
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleShare}
-                                    className="hidden sm:flex items-center gap-2"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    <span className="hidden lg:inline">{t('retrospectivePage.share')}</span>
-                                </Button>
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleLeaveRetrospective}
-                                    className="flex items-center gap-2"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('retrospectivePage.exit')}</span>
-                                </Button>
-
-                                {/* Menú de facilitador - a la derecha del botón de salir */}
-                                <FacilitatorMenu
-                                    retrospectiveId={retrospective.id}
-                                    facilitatorId={uid || ''}
-                                    isOwner={retrospective.createdBy === uid}
-                                    cards={exportCards}
-                                    columnConfigs={sentimentAnalysis?.columnConfigs || {}}
-                                    sentimentAnalysis={sentimentAnalysis}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+                {/* Header moved to top-level Header to keep a single unified sticky bar */}
+                <div className="pt-4" />
 
                 {/* Main Content Area */}
                 <div className="container mx-auto px-2 pt-6 pb-6">
@@ -310,7 +205,6 @@ const RetrospectivePageContent: React.FC = () => {
                             currentUser={fullName}
                             onDataChange={handleDataChange}
                             participants={participants || []}
-                            onSentimentAnalysisReady={setSentimentAnalysis}
                         />
                     </motion.div>
                 </div>

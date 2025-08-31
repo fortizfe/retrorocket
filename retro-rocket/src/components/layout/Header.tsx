@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, User, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
@@ -8,6 +8,8 @@ import { useUser } from '../../contexts/UserContext';
 import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 import LanguageSelector from '../ui/LanguageSelector';
+import RetrospectiveTopbar from '../../components/retrospective/RetrospectiveTopbar';
+import { useLocation } from 'react-router-dom';
 
 const Header: React.FC = () => {
     const { isAuthenticated, user, userProfile, signOut } = useUser();
@@ -17,6 +19,15 @@ const Header: React.FC = () => {
     const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, left: 0 });
     const navigate = useNavigate();
     const location = useLocation();
+    // Match both legacy '/retro/:id' and verbose '/retrospective/:id' routes
+    const isRetrospectiveRoute = location.pathname.startsWith('/retro/') || location.pathname.startsWith('/retrospective/');
+
+    // extract id from path like /retro/:id or /retrospective/:id
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    let retrospectiveId: string | undefined;
+    if (pathParts[0] === 'retro' || pathParts[0] === 'retrospective') {
+        retrospectiveId = pathParts[1];
+    }
 
     const handleSignOut = async () => {
         try {
@@ -84,19 +95,23 @@ const Header: React.FC = () => {
                         </span>
                     </Link>
 
-                    {/* Navigation */}
-                    <nav className="hidden md:flex items-center gap-6">
-                        <Link
-                            to="/mis-tableros"
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActivePath('/mis-tableros')
-                                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                }`}
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                            {t('header.myBoards')}
-                        </Link>
-                    </nav>
+                    {/* Navigation or retrospective topbar */}
+                    {isRetrospectiveRoute ? (
+                        <RetrospectiveTopbar retrospectiveId={retrospectiveId} />
+                    ) : (
+                        <nav className="hidden md:flex items-center gap-6">
+                            <Link
+                                to="/mis-tableros"
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActivePath('/mis-tableros')
+                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }`}
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                                {t('header.myBoards')}
+                            </Link>
+                        </nav>
+                    )}
 
                     {/* Right side actions */}
                     <div className="flex items-center gap-4">
