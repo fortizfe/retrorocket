@@ -137,7 +137,8 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
       </Card>
 
       {/* Cards Container optimizado */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-2">
+      {/* Prevent horizontal overflow caused by hover effects or absolute children */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-2">
         {/* New Card Form - compacta y animada */}
         <AnimatePresence>
           {isCreating && (

@@ -66,7 +66,9 @@
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-soft hover:scale-[1.02];
+    /* Avoid scaling on hover to prevent creating horizontal overflow in columns.
+       Use a subtle translateY and shadow to preserve look & feel without layout shifts. */
+    @apply transition-transform duration-300 hover:shadow-soft hover:-translate-y-1 transform-gpu;
   }
 
   .input-focus {

@@ -75,13 +75,13 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       animate: { opacity: 1, y: 0 },
       transition: { duration: 0.3, ease: 'easeOut' },
       ...(hover || interactive ? {
+        // Avoid scaling to prevent creating horizontal overflow; use slight translate and shadow instead.
         whileHover: {
           y: -2,
-          scale: 1.01,
           transition: { duration: 0.15, ease: 'easeOut' }
         },
         whileTap: {
-          scale: 0.99,
+          scale: 0.995,
           transition: { duration: 0.1, ease: 'easeOut' }
         }
       } : {})
