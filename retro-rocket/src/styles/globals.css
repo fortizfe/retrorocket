@@ -256,3 +256,11 @@
 .empty-state {
   @apply text-gray-500 text-center;
 }
+
+/* Utility: clamp text to two lines (works without Tailwind plugin) */
+.two-line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

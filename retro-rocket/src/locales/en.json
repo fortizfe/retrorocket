@@ -128,8 +128,11 @@
             },
             "descriptions": {
                 "whatHelped": "Things that worked well and helped us",
+                "helped": "Things that worked well and helped us",
                 "whatHindered": "Obstacles or problems we encountered",
+                "hindered": "Obstacles or problems we encountered",
                 "whatToImprove": "Ideas and suggestions for improvement",
+                "improve": "Ideas and suggestions for improvement",
                 "mad": "Situations that frustrated or annoyed us",
                 "sad": "Things that disappointed or saddened us",
                 "glad": "Achievements and moments that made us happy",

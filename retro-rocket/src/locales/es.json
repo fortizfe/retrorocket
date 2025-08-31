@@ -129,8 +129,11 @@
             },
             "descriptions": {
                 "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
+                "helped": "Cosas que funcionaron bien y nos ayudaron",
                 "whatHindered": "Obstáculos o problemas que encontramos",
-                "whatToImprove": "Ideas y sugerencias para mejorar",
+                "hindered": "Obstáculos o problemas que encontramos",
+                "whatToImprove": "Ideas y sugerencias que nos ayuden a mejorar",
+                "improve": "Ideas y sugerencias que nos ayuden a mejorar",
                 "mad": "Situaciones que nos frustraron o molestaron",
                 "sad": "Cosas que nos decepcionaron o entristecieron",
                 "glad": "Logros y momentos que nos alegraron",

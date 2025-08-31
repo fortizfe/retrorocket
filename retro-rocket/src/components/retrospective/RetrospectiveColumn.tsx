@@ -111,12 +111,13 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
   return (
     <div className="flex flex-col h-full min-w-[320px] max-w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
       {/* Column Header optimizado */}
-      <Card variant="outlined" padding="xs" className={`sticky top-0 z-10 mb-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800 flex items-center justify-between ${column.color}`}>
+      <Card variant="outlined" padding="xs" className={`sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-100 dark:border-slate-800 flex items-start justify-between h-24 box-border ${column.color}`}>
         <div className="flex items-center gap-2">
           <span className="text-xl">{column.icon}</span>
-          <div>
-            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 leading-tight">{column.title}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{column.description}</p>
+          {/* Enforce consistent header layout and clamp description to 2 lines */}
+          <div className="flex-1 h-full flex flex-col justify-start pt-2">
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 leading-tight truncate">{column.title}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 two-line-clamp">{column.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -137,6 +138,7 @@ const RetrospectiveColumn: React.FC<RetrospectiveColumnProps> = ({
       </Card>
 
       {/* Cards Container optimizado */}
+      <div className="mb-2" />
       {/* Prevent horizontal overflow caused by hover effects or absolute children */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-2">
         {/* New Card Form - compacta y animada */}
