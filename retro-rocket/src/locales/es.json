@@ -729,6 +729,7 @@
     "retrospectivePage": {
         "copyId": "Copiar ID",
         "share": "Compartir",
+        "options": "Opciones",
         "back": "Volver",
         "exit": "Salir",
         "connectedAs": "Conectado como:",

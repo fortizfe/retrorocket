@@ -721,6 +721,7 @@
     "retrospectivePage": {
         "copyId": "Copy ID",
         "share": "Share",
+        "options": "Options",
         "back": "Back",
         "exit": "Exit",
         "connectedAs": "Connected as:",
