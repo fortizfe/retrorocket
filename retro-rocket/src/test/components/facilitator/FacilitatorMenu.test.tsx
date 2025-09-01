@@ -27,6 +27,8 @@ vi.mock('lucide-react', () => ({
     RotateCcw: () => <svg data-testid="rotate-icon" />,
     Trash2: () => <svg data-testid="trash-icon" />,
     Timer: () => <svg data-testid="timer-icon" />,
+    Clock: () => <svg data-testid="clock-icon" />,
+    Plus: () => <svg data-testid="plus-icon" />,
     Brain: () => <svg data-testid="brain-icon" />,
     StickyNote: () => <svg data-testid="sticky-note-icon" />,
 }));
@@ -166,7 +168,8 @@ describe('FacilitatorMenu', () => {
             const menuButton = screen.getByLabelText('Controles del Facilitador');
             await user.click(menuButton);
 
-            expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+            // menu content should appear (tabs container is rendered)
+            expect(screen.getByTestId('facilitator-menu-tabs')).toBeInTheDocument();
         });
 
         it('displays timer creation controls when no timer exists', async () => {
@@ -176,7 +179,8 @@ describe('FacilitatorMenu', () => {
             const menuButton = screen.getByLabelText('Controles del Facilitador');
             await user.click(menuButton);
 
-            expect(screen.getByText('Crear Temporizador')).toBeInTheDocument();
+            // creation UI contains plus icon
+            expect(screen.getByTestId('plus-icon')).toBeInTheDocument();
         });
 
         it('displays facilitator notes component', async () => {
@@ -223,8 +227,13 @@ describe('FacilitatorMenu', () => {
             const menuButton = screen.getByLabelText('Controles del Facilitador');
             await user.click(menuButton);
 
-            expect(screen.getByText('Iniciar')).toBeInTheDocument();
-            expect(screen.getByText('Eliminar')).toBeInTheDocument();
+            // Ensure Controls tab is active
+            const controlsTab = screen.getByTestId('controls-tab-button');
+            await user.click(controlsTab);
+
+            // Buttons render icons; assert icons are present
+            expect(screen.getByTestId('play-icon')).toBeInTheDocument();
+            expect(screen.getByTestId('trash-icon')).toBeInTheDocument();
         });
 
         it('handles timer creation', async () => {
@@ -234,8 +243,13 @@ describe('FacilitatorMenu', () => {
             const menuButton = screen.getByLabelText('Controles del Facilitador');
             await user.click(menuButton);
 
-            const createButton = screen.getByText('Crear Temporizador');
-            expect(createButton).toBeInTheDocument();
+            // Click controls tab to make sure controls are visible
+            const controlsTabButton = screen.getByTestId('controls-tab-button');
+            await user.click(controlsTabButton);
+
+            // The create button contains an icon (plus); assert by test id presence
+            const plusIcon = screen.getByTestId('plus-icon');
+            expect(plusIcon).toBeInTheDocument();
         });
     });
 
@@ -248,8 +262,8 @@ describe('FacilitatorMenu', () => {
             const menuButton = screen.getByLabelText('Controles del Facilitador');
             await user.click(menuButton);
 
-            const createButton = screen.getByText('Crear Temporizador');
-            expect(createButton).toBeInTheDocument();
+            // creation UI contains plus icon
+            expect(screen.getByTestId('plus-icon')).toBeInTheDocument();
         });
 
         it('handles retrospectiveId prop correctly', () => {

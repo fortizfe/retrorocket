@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import ActionColumnToggle from '../../../../src/components/retrospective/ActionColumnToggle';
 
 describe('ActionColumnToggle', () => {
@@ -7,10 +8,11 @@ describe('ActionColumnToggle', () => {
         const onToggle = vi.fn();
         render(<ActionColumnToggle visible={true} onToggle={onToggle} />);
 
-        // Should show eye icon label
-        expect(screen.getByTitle(/Ocultar elementos de acción|Mostrar elementos de acción/)).toBeInTheDocument();
+        // Should set aria-label accordingly
+        expect(screen.getByLabelText(/retrospective\.facilitator\.hideActionItems|retrospective\.facilitator\.showActionItems/)).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button'));
+        // Headless UI Switch renders as role='switch'
+        fireEvent.click(screen.getByRole('switch'));
         expect(onToggle).toHaveBeenCalled();
     });
 });

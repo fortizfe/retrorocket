@@ -84,7 +84,8 @@ describe('FacilitatorControls', () => {
     it('renders collapsed state by default', () => {
         render(<FacilitatorControls {...defaultProps} />);
 
-        expect(screen.getByText('Controles de Facilitador')).toBeInTheDocument();
+        // component renders a translation key in tests environment
+        expect(screen.getByText('retrospective.facilitator.menu')).toBeInTheDocument();
         expect(screen.getByTestId('chevron-down-icon')).toBeInTheDocument();
     });
 
@@ -148,7 +149,7 @@ describe('FacilitatorControls', () => {
 
         render(<FacilitatorControls {...defaultProps} />);
 
-        // Component should still render
-        expect(screen.getByText('Controles de Facilitador')).toBeInTheDocument();
+        // Component should still render (translation key shown in test env)
+        expect(screen.getByText('retrospective.facilitator.menu')).toBeInTheDocument();
     });
 });

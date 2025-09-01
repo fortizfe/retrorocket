@@ -87,13 +87,13 @@ vi.mock('firebase/auth', () => ({
     })
 }));
 
-// Mock UI components
-vi.mock('../../../components/ui/ThemeToggle', () => ({
+// Mock UI components used by Header
+vi.mock('../../../components/ui/ThemeMenuToggle', () => ({
     default: () => <button data-testid="theme-toggle">Theme Toggle</button>
 }));
 
-vi.mock('../../../components/ui/LanguageSelector', () => ({
-    default: () => <button data-testid="language-selector">Language</button>
+vi.mock('../../../components/ui/LanguageMenuList', () => ({
+    default: ({ onClose }: any) => <button data-testid="language-menu">Language</button>
 }));
 
 // Mock framer-motion
@@ -166,14 +166,22 @@ describe('Header Component', () => {
             expect(screen.getByText('My Boards')).toBeInTheDocument();
         });
 
-        it('should display theme toggle', () => {
+        it('should display theme toggle', async () => {
+            const user = userEvent.setup();
             renderWithProviders(<Header />);
+            // Theme toggle is rendered inside the user menu; open it first
+            const userButton = screen.getByRole('button', { name: /user/i });
+            await user.click(userButton);
             expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
         });
 
-        it('should display language selector', () => {
+        it('should display language selector', async () => {
+            const user = userEvent.setup();
             renderWithProviders(<Header />);
-            expect(screen.getByTestId('language-selector')).toBeInTheDocument();
+            // Language menu is rendered inside the user menu; open it first
+            const userButton = screen.getByRole('button', { name: /user/i });
+            await user.click(userButton);
+            expect(screen.getByTestId('language-menu')).toBeInTheDocument();
         });
     });
 
@@ -356,14 +364,20 @@ describe('Header Component', () => {
     });
 
     describe('Component Integration', () => {
-        it('should integrate with theme toggle', () => {
+        it('should integrate with theme toggle', async () => {
+            const user = userEvent.setup();
             renderWithProviders(<Header />);
+            const userButton = screen.getByRole('button', { name: /user/i });
+            await user.click(userButton);
             expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
         });
 
-        it('should integrate with language selector', () => {
+        it('should integrate with language selector', async () => {
+            const user = userEvent.setup();
             renderWithProviders(<Header />);
-            expect(screen.getByTestId('language-selector')).toBeInTheDocument();
+            const userButton = screen.getByRole('button', { name: /user/i });
+            await user.click(userButton);
+            expect(screen.getByTestId('language-menu')).toBeInTheDocument();
         });
 
         it('should handle multiple menu interactions', async () => {
