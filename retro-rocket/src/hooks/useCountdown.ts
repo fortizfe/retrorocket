@@ -113,6 +113,22 @@ export const useCountdown = (retrospectiveId: string) => {
         setLoading(true);
         setError(null);
 
+        if (!retrospectiveId) {
+            // No retrospective id provided: reset state and skip subscribing
+            setTimer(null);
+            setCountdownState({
+                timeRemaining: 0,
+                isRunning: false,
+                isPaused: false,
+                isFinished: false,
+                totalDuration: 0
+            });
+            setLoading(false);
+            return () => {
+                clearCountdownInterval();
+            };
+        }
+
         const unsubscribe = CountdownService.subscribeToTimer(retrospectiveId, (timerData) => {
             setTimer(timerData);
             updateCountdownState(timerData);
@@ -129,6 +145,7 @@ export const useCountdown = (retrospectiveId: string) => {
     const createTimer = useCallback(async (duration: number, createdBy: string) => {
         try {
             setError(null);
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
             await CountdownService.createOrUpdateTimer(retrospectiveId, duration, createdBy);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error creating timer';
@@ -140,6 +157,7 @@ export const useCountdown = (retrospectiveId: string) => {
     const startTimer = useCallback(async () => {
         try {
             setError(null);
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
             await CountdownService.startTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error starting timer';
@@ -151,6 +169,7 @@ export const useCountdown = (retrospectiveId: string) => {
     const pauseTimer = useCallback(async () => {
         try {
             setError(null);
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
             await CountdownService.pauseTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error pausing timer';
@@ -163,6 +182,7 @@ export const useCountdown = (retrospectiveId: string) => {
         try {
             setError(null);
             hasPlayedFinishSound.current = false;
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
             await CountdownService.resetTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error resetting timer';
@@ -175,6 +195,7 @@ export const useCountdown = (retrospectiveId: string) => {
         try {
             setError(null);
             hasPlayedFinishSound.current = false;
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
             await CountdownService.deleteTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error deleting timer';

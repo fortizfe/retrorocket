@@ -10,6 +10,7 @@ import {
     ChevronUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../../hooks/useLanguage';
 import { useCountdown } from '../../hooks/useCountdown';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { CountdownControlsProps, CountdownInputs } from '../../types/countdown';
@@ -34,6 +35,8 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const [inputs, setInputs] = useState<CountdownInputs>({ minutes: 5, seconds: 0 });
     const [isCreating, setIsCreating] = useState(false);
+
+    const { t } = useLanguage();
 
     if (!isOwner || !uid) {
         return null;
@@ -128,7 +131,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                        Controles de Facilitador
+                        {t('retrospective.facilitator.menu')}
                     </span>
                 </div>
                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -261,10 +264,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                                 </div>
                             )}
 
-                            {/* Status Info */}
-                            <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                Solo tú puedes ver y controlar este panel como facilitador
-                            </div>
+                            {/* Status Info intentionally removed - facilitator-only notice handled elsewhere */}
                         </div>
                     </motion.div>
                 )}

@@ -55,23 +55,13 @@ vi.mock('../../../components/facilitator/FacilitatorMenuTabs', () => ({
     default: ({ children, onClose, activeTab, onTabChange }: any) => (
         <div data-testid="facilitator-menu-tabs">
             <button onClick={onClose} data-testid="close-menu">Close</button>
-            <button onClick={() => onTabChange?.('timer')} data-testid="timer-tab-button">Timer</button>
+            <button onClick={() => onTabChange?.('controls')} data-testid="controls-tab-button">Controls</button>
             <button onClick={() => onTabChange?.('notes')} data-testid="notes-tab-button">Notes</button>
             {children}
         </div>
     ),
 }));
 
-vi.mock('../../../components/facilitator/TimerTab', () => ({
-    default: ({ retrospectiveId }: any) => (
-        <div data-testid="timer-tab">
-            Timer for {retrospectiveId}
-            <button data-testid="create-timer-button">Crear Temporizador</button>
-            <div>Iniciar</div>
-            <div>Eliminar</div>
-        </div>
-    ),
-}));
 
 vi.mock('../../../components/facilitator/SentimentTab', () => ({
     default: (props: any) => (
@@ -135,7 +125,7 @@ describe('FacilitatorMenu', () => {
                     'retrospective.facilitator.controls': 'Controles del Facilitador',
                     'retrospective.facilitator.configureTime': 'Configurar Tiempo',
                     'retrospective.facilitator.create': 'Crear Temporizador',
-                    'retrospective.facilitator.onlyYouCanSee': 'Solo tú puedes ver estos controles',
+                    'retrospective.facilitator.onlyYouCanSee': 'Visible solo para facilitadores',
                     'facilitator.timer.create': 'Crear Temporizador',
                     'facilitator.timer.start': 'Iniciar',
                     'facilitator.timer.pause': 'Pausar',

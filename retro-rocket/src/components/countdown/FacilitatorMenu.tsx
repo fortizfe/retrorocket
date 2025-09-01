@@ -9,7 +9,6 @@ import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useLanguage } from '../../hooks/useLanguage';
 import FacilitatorMenuTabs from '../facilitator/FacilitatorMenuTabs';
-import TimerTab from '../facilitator/TimerTab';
 import SentimentTab from '../facilitator/SentimentTab';
 import NotesTab from '../facilitator/NotesTab';
 import TeamMoodTab from '../facilitator/TeamMoodTab';
@@ -44,7 +43,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
 }) => {
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('timer');
+    const [activeTab, setActiveTab] = useState('controls');
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -177,8 +176,6 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     // Render tab content
     const renderTabContent = () => {
         switch (activeTab) {
-            case 'timer':
-                return <TimerTab retrospectiveId={retrospectiveId} />;
             case 'sentiment':
                 return sentimentAnalysis ? (
                     <SentimentTab
@@ -214,7 +211,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                     />
                 );
             case 'controls':
-                return <ControlsTab />;
+                return <ControlsTab retrospectiveId={retrospectiveId} />;
             default:
                 return null;
         }

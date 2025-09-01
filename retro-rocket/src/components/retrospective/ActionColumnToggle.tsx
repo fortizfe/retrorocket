@@ -1,29 +1,35 @@
 import React from 'react';
-import Button from '../ui/Button';
-import { Eye, EyeOff } from 'lucide-react';
+import { Switch } from '@headlessui/react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 interface Props {
     visible: boolean;
     onToggle: () => void;
 }
 
-// Small presentational toggle to show/hide the action column.
-// Single responsibility: rendering the control and delegating behavior via props.
+// Accessible switch control for showing/hiding the Action Items column.
 const ActionColumnToggle: React.FC<Props> = ({ visible, onToggle }) => {
-    const label = visible ? 'Ocultar elementos de acción' : 'Mostrar elementos de acción';
+    const { t } = useLanguage();
 
     return (
-        <Button
-            size="sm"
-            variant="ghost"
-            onClick={onToggle}
-            aria-pressed={visible}
-            title={label}
-            className="flex items-center space-x-2"
-        >
-            {visible ? <Eye size={16} /> : <EyeOff size={16} />}
-            <span className="hidden sm:inline">{label}</span>
-        </Button>
+        <Switch.Group>
+            <div className="flex items-center">
+                <Switch
+                    checked={visible}
+                    onChange={onToggle}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${visible ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                    aria-label={visible ? t('retrospective.facilitator.hideActionItems') : t('retrospective.facilitator.showActionItems')}
+                >
+                    <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${visible ? 'translate-x-5' : 'translate-x-1'}`}
+                    />
+                </Switch>
+
+                <Switch.Label className="sr-only">
+                    {visible ? t('retrospective.facilitator.hideActionItems') : t('retrospective.facilitator.showActionItems')}
+                </Switch.Label>
+            </div>
+        </Switch.Group>
     );
 };
 

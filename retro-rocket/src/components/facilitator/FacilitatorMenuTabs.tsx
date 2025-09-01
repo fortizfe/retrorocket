@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Brain, StickyNote, X, Users, Settings } from 'lucide-react';
+import { Brain, StickyNote, X, Users, Settings } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
 
 interface Tab {
@@ -37,16 +37,9 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
 
     const tabs: Tab[] = [
         {
-            id: 'timer',
-            label: t('retrospective.facilitator.tabs.timer'),
-            icon: Timer,
-            badge: timerBadge
-        },
-        {
-            id: 'sentiment',
-            label: t('retrospective.facilitator.tabs.sentiment'),
-            icon: Brain,
-            badge: sentimentBadge
+            id: 'controls',
+            label: t('retrospective.facilitator.tabs.controls'),
+            icon: Settings
         },
         {
             id: 'team-mood',
@@ -55,9 +48,10 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             badge: teamMoodBadge
         },
         {
-            id: 'controls',
-            label: t('retrospective.facilitator.tabs.controls'),
-            icon: Settings
+            id: 'sentiment',
+            label: t('retrospective.facilitator.tabs.sentiment'),
+            icon: Brain,
+            badge: sentimentBadge
         },
         {
             id: 'notes',
@@ -84,10 +78,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-600">
                 <div className="flex items-center justify-between p-4 pb-2">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
-                            {t('retrospective.facilitator.controls')}
-                        </span>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden />
                     </div>
                     <div className="flex items-center gap-2">
                         <button
@@ -179,12 +170,8 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                 </AnimatePresence>
             </div>
 
-            {/* Footer */}
-            <div className="bg-slate-50 dark:bg-slate-700/50 px-6 py-3 border-t border-slate-100 dark:border-slate-700">
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                    {t('retrospective.facilitator.onlyYouCanSee')}
-                </p>
-            </div>
+            {/* Footer (text removed per request) */}
+            <div className="bg-slate-50 dark:bg-slate-700/50 px-6 py-3 border-t border-slate-100 dark:border-slate-700" />
         </div>
     );
 };
