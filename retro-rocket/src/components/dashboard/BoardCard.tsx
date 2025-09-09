@@ -24,9 +24,13 @@ interface BoardCardProps {
     board: Board;
     currentUserId: string;
     onBoardDeleted: (boardId: string) => void;
+    /** Optional override for delete behavior. If provided, BoardCard will call this
+     * function to perform deletion. If omitted, it will use the service's soft delete.
+     */
+    onDelete?: (boardId: string, userId: string) => Promise<void>;
 }
 
-const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDeleted }) => {
+const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDeleted, onDelete }) => {
     const navigate = useNavigate();
     const { t } = useLanguage();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -43,7 +47,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
         setIsDeleting(true);
         try {
-            await OptimizedRetrospectiveService.softDeleteRetrospective(board.id, currentUserId);
+            // If a custom delete strategy is provided, use it (allows callers to
+            // decide between soft vs hard delete). Otherwise fall back to soft delete.
+            if (onDelete) {
+                await onDelete(board.id, currentUserId);
+            } else {
+                await OptimizedRetrospectiveService.softDeleteRetrospective(board.id, currentUserId);
+            }
             setShowDeleteConfirm(false);
             toast.success(t('retrospective.deleteSuccess') || 'Retrospective moved to trash');
             onBoardDeleted(board.id);

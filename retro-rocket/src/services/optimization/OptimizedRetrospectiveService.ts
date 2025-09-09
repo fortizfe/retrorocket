@@ -1,6 +1,7 @@
 import {
     doc,
     updateDoc,
+    deleteDoc,
     serverTimestamp,
     Timestamp,
     onSnapshot,
@@ -50,6 +51,29 @@ export class OptimizedRetrospectiveService {
         } catch (error) {
             console.error('Error soft deleting retrospective:', error);
             throw new Error('Could not delete retrospective');
+        }
+    }
+
+    /**
+     * Permanently delete a retrospective document from Firestore.
+     * This performs a hard delete of the document itself. Note: any subcollections
+     * are not deleted by Firestore's deleteDoc and should be handled separately
+     * if required by the application (archive or cascade delete).
+     */
+    static async deleteRetrospectiveCompletely(
+        retrospectiveId: string,
+        userId?: string
+    ): Promise<void> {
+        try {
+            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+
+            await deleteDoc(docRef);
+
+            FirebaseMetricsService.recordWrite('retrospectives-hard-delete', 1);
+            console.log('Retrospective ' + retrospectiveId + ' permanently deleted' + (userId ? ' by ' + userId : ''));
+        } catch (error) {
+            console.error('Error permanently deleting retrospective:', error);
+            throw new Error('Could not permanently delete retrospective');
         }
     }
 

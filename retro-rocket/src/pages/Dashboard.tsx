@@ -7,6 +7,7 @@ import { useUser } from '../contexts/UserContext';
 import { userService } from '../services/userService';
 import AuthWrapper from '../components/auth/AuthWrapper';
 import BoardCard from '../components/dashboard/BoardCard';
+import { OptimizedRetrospectiveService } from '../services/optimization/OptimizedRetrospectiveService';
 import BoardListItem from '../components/dashboard/BoardListItem';
 import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '../components/dashboard/BoardControlsBar';
 import Pagination from '../components/dashboard/Pagination';
@@ -147,6 +148,21 @@ const DashboardPage: React.FC = () => {
 
     const handleBoardDeleted = (boardId: string) => {
         setBoards(prev => prev.filter(board => board.id !== boardId));
+    };
+
+    // Hard delete handler used by the Dashboard view to permanently remove
+    // retrospectives from Firestore when a user confirms deletion in "Mis tableros".
+    const handleHardDelete = async (boardId: string, userId: string) => {
+        try {
+            await OptimizedRetrospectiveService.deleteRetrospectiveCompletely(boardId, userId);
+            // Update local state
+            handleBoardDeleted(boardId);
+            toast.success('Board deleted');
+        } catch (error) {
+            console.error('Error deleting board:', error);
+            toast.error('Delete failed');
+            throw error;
+        }
     };
 
     if (loading) {
@@ -311,6 +327,7 @@ const DashboardPage: React.FC = () => {
                                                     }}
                                                     currentUserId={user?.uid ?? ''}
                                                     onBoardDeleted={handleBoardDeleted}
+                                                    onDelete={handleHardDelete}
                                                 />
                                             </motion.div>
                                         ))}
