@@ -133,7 +133,11 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 mr-2">
                         <div className="flex items-start gap-2">
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 flex-1">
+                            <h3
+                                className="text-lg font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 flex-1"
+                                title={board.title}
+                                aria-label={board.title}
+                            >
                                 {board.title}
                             </h3>
                             {/* Role indicator */}

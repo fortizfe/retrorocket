@@ -60,7 +60,11 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId }) =
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 truncate mb-1">
+                            <h3
+                                className="text-lg font-semibold text-slate-800 dark:text-slate-100 truncate mb-1"
+                                title={board.title}
+                                aria-label={board.title}
+                            >
                                 {board.title}
                             </h3>
                             {board.description && (
