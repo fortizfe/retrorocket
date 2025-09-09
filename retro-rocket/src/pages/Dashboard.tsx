@@ -353,6 +353,8 @@ const DashboardPage: React.FC = () => {
                                                         createdBy: board.createdBy ?? user?.uid ?? ''
                                                     }}
                                                     currentUserId={user?.uid ?? ''}
+                                                    onBoardDeleted={handleBoardDeleted}
+                                                    onDelete={handleHardDelete}
                                                 />
                                             </motion.div>
                                         ))}
