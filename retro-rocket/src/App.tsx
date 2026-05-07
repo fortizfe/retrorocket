@@ -1,32 +1,40 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from './components/AuthGuard';
 import Layout from './components/layout/Layout';
-import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import RetrospectivePage from './pages/RetrospectivePage';
 import NotFound from './pages/NotFound';
-import ColorSystemTest from './components/ColorSystemTest';
-import MetricsDashboard from './components/optimization/MetricsDashboard';
+import Loading from './components/ui/Loading';
+
+const Landing = lazy(() => import('./pages/Landing'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const RetrospectivePage = lazy(() => import('./pages/RetrospectivePage'));
+const ColorSystemTest = lazy(() => import('./components/ColorSystemTest'));
+const MetricsDashboard = lazy(() => import('./components/optimization/MetricsDashboard'));
 
 const App: React.FC = () => {
   return (
     <AuthGuard>
       <Router>
         <Layout>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/mis-tableros" element={<Dashboard />} />
-            <Route path="/perfil" element={<Profile />} />
-            <Route path="/retrospective/:id" element={<RetrospectivePage />} />
-            <Route path="/retro/:id" element={<RetrospectivePage />} />
-            <Route path="/color-test" element={<ColorSystemTest />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <MetricsDashboard />
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/mis-tableros" element={<Dashboard />} />
+              <Route path="/perfil" element={<Profile />} />
+              <Route path="/retrospective/:id" element={<RetrospectivePage />} />
+              <Route path="/retro/:id" element={<RetrospectivePage />} />
+              <Route path="/color-test" element={<ColorSystemTest />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+          {import.meta.env.DEV && (
+            <Suspense fallback={null}>
+              <MetricsDashboard />
+            </Suspense>
+          )}
         </Layout>
         <Toaster
           position="top-right"

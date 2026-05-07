@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, User, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '../../contexts/UserContext';
+import { useAuthContext, useUserProfileContext } from '../../contexts/UserContext';
 import { APP_NAME } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 import ThemeMenuToggle from '../ui/ThemeMenuToggle';
@@ -14,7 +14,8 @@ import RetrospectiveTopbar from '../../components/retrospective/RetrospectiveTop
 import { useLocation } from 'react-router-dom';
 
 const Header: React.FC = () => {
-    const { isAuthenticated, user, userProfile, signOut } = useUser();
+    const { isAuthenticated, signOut } = useAuthContext();
+    const { user, userProfile } = useUserProfileContext();
     const { t } = useTranslation();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const userMenuButtonRef = useRef<HTMLButtonElement>(null);

@@ -1,78 +1,107 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { auth, onAuthStateChanged, signOutUser } from '../services/firebase';
 import { userService } from '../services/userService';
 import { accountLinkingService } from '../services/accountLinking';
-import { UserProfile, AuthState, AuthProviderType } from '../types/user';
+import { User, UserProfile, AuthProviderType } from '../types/user';
 import toast from 'react-hot-toast';
 
-interface UserContextType extends AuthState {
+// ─── Focused context types ────────────────────────────────────────────────────
+
+interface AuthCoreState {
+    loading: boolean;
+    error: string | null;
+    isAuthenticated: boolean;
+}
+
+interface AuthContextType extends AuthCoreState {
     signInWithGoogle: () => Promise<void>;
     signInWithGithub: () => Promise<void>;
     signOut: () => Promise<void>;
+}
+
+interface UserDataState {
+    user: User | null;
+    userProfile: UserProfile | null;
+}
+
+interface UserProfileContextType extends UserDataState {
     updateDisplayName: (displayName: string) => Promise<void>;
     refreshUserProfile: () => Promise<void>;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+// Backward-compat merged type (keeps all existing consumers working)
+interface UserContextType extends AuthContextType, UserProfileContextType {}
 
-export const useUser = (): UserContextType => {
-    const context = useContext(UserContext);
-    if (!context) {
-        throw new Error('useUser must be used within a UserProvider');
-    }
+// ─── Contexts ─────────────────────────────────────────────────────────────────
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
+
+// ─── Focused hooks ────────────────────────────────────────────────────────────
+
+export const useAuthContext = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (!context) throw new Error('useAuthContext must be used within a UserProvider');
     return context;
 };
+
+export const useUserProfileContext = (): UserProfileContextType => {
+    const context = useContext(UserProfileContext);
+    if (!context) throw new Error('useUserProfileContext must be used within a UserProvider');
+    return context;
+};
+
+// Backward-compat hook — existing consumers need zero changes
+export const useUser = (): UserContextType => {
+    const auth = useAuthContext();
+    const profile = useUserProfileContext();
+    return useMemo(() => ({ ...auth, ...profile }), [auth, profile]);
+};
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 interface UserProviderProps {
     children: ReactNode;
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-    const [authState, setAuthState] = useState<AuthState>({
-        user: null,
-        userProfile: null,
+    // Auth state: changes on sign-in/sign-out/loading — does NOT include profile data
+    const [coreState, setCoreState] = useState<AuthCoreState>({
         loading: true,
         error: null,
         isAuthenticated: false,
     });
 
-    const createOrUpdateUserProfile = async (firebaseUser: FirebaseUser): Promise<UserProfile> => {
+    // User/profile data: changes on profile refresh/update — independent of auth transitions
+    const [userData, setUserData] = useState<UserDataState>({
+        user: null,
+        userProfile: null,
+    });
+
+    const createOrUpdateUserProfile = useCallback(async (firebaseUser: FirebaseUser): Promise<UserProfile> => {
         if (!firebaseUser.email) {
             throw new Error('Email is required');
         }
 
-        // Get all providers from Firebase Auth
         const firebaseProviders = firebaseUser.providerData.map(provider => {
             switch (provider.providerId) {
-                case 'google.com':
-                    return 'google';
-                case 'github.com':
-                    return 'github';
-                case 'apple.com':
-                    return 'apple';
-                default:
-                    return 'google'; // fallback
+                case 'google.com': return 'google';
+                case 'github.com': return 'github';
+                case 'apple.com':  return 'apple';
+                default:           return 'google';
             }
         }) as AuthProviderType[];
 
         console.log('Firebase Auth providers for user:', firebaseProviders);
 
-        // Always get the latest user profile from Firestore first
         let userProfile = await userService.getUserProfile(firebaseUser.uid);
 
         if (userProfile) {
-            // User profile exists, synchronize providers and update the last accessed time
-
-            // Find any missing providers in Firestore that are present in Firebase Auth
-            const missingProviders = firebaseProviders.filter(provider =>
-                !userProfile!.providers.includes(provider)
-            );
+            const missingProviders = firebaseProviders.filter(p => !userProfile!.providers.includes(p));
 
             if (missingProviders.length > 0) {
                 console.log('Found missing providers in Firestore, adding:', missingProviders);
-
-                // Add missing providers one by one
                 for (const provider of missingProviders) {
                     try {
                         await userService.addProviderToUser(firebaseUser.uid, provider);
@@ -82,26 +111,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 }
             }
 
-            await userService.updateUserProfile(firebaseUser.uid, {
-                updatedAt: new Date(),
-            });
+            await userService.updateUserProfile(firebaseUser.uid, { updatedAt: new Date() });
 
-            // Fetch the profile again to ensure we have the most up-to-date data
-            // This is important after account linking operations
             const latestProfile = await userService.getUserProfile(firebaseUser.uid);
             return latestProfile || userProfile;
         }
 
-        // User profile doesn't exist, create new one
-        // Get provider info from the first provider (primary one)
         const providerData = firebaseUser.providerData[0];
-        let provider: AuthProviderType = 'google'; // default
-
-        if (providerData?.providerId === 'github.com') {
-            provider = 'github';
-        } else if (providerData?.providerId === 'apple.com') {
-            provider = 'apple';
-        }
+        let provider: AuthProviderType = 'google';
+        if (providerData?.providerId === 'github.com') provider = 'github';
+        else if (providerData?.providerId === 'apple.com') provider = 'apple';
 
         userProfile = await userService.createUserProfile(firebaseUser.uid, {
             email: firebaseUser.email,
@@ -111,18 +130,18 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         });
 
         return userProfile;
-    };
+    }, []);
 
-    const handleSignInWithGoogle = async (): Promise<void> => {
+    const handleSignInWithGoogle = useCallback(async (): Promise<void> => {
         try {
-            setAuthState(prev => ({ ...prev, loading: true, error: null }));
+            setCoreState(prev => ({ ...prev, loading: true, error: null }));
 
             const result = await accountLinkingService.signInWithAccountLinking('google');
 
             if (result.success && result.user) {
                 const userProfile = await createOrUpdateUserProfile(result.user);
 
-                setAuthState({
+                setUserData({
                     user: {
                         uid: result.user.uid,
                         email: result.user.email,
@@ -134,19 +153,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                         updatedAt: userProfile.updatedAt,
                     },
                     userProfile,
-                    loading: false,
-                    error: null,
-                    isAuthenticated: true,
                 });
+                setCoreState({ loading: false, error: null, isAuthenticated: true });
 
-                // Show appropriate success message
                 if (result.wasLinked) {
-                    toast.success(result.message, {
-                        duration: 6000,
-                        style: {
-                            maxWidth: '450px',
-                        },
-                    });
+                    toast.success(result.message, { duration: 6000, style: { maxWidth: '450px' } });
                 } else {
                     toast.success('Inicio de sesión exitoso');
                 }
@@ -155,31 +166,21 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
-            setAuthState(prev => ({
-                ...prev,
-                loading: false,
-                error: errorMessage,
-            }));
-
-            toast.error(errorMessage, {
-                duration: 6000,
-                style: {
-                    maxWidth: '400px',
-                },
-            });
+            setCoreState(prev => ({ ...prev, loading: false, error: errorMessage }));
+            toast.error(errorMessage, { duration: 6000, style: { maxWidth: '400px' } });
         }
-    };
+    }, [createOrUpdateUserProfile]);
 
-    const handleSignInWithGithub = async (): Promise<void> => {
+    const handleSignInWithGithub = useCallback(async (): Promise<void> => {
         try {
-            setAuthState(prev => ({ ...prev, loading: true, error: null }));
+            setCoreState(prev => ({ ...prev, loading: true, error: null }));
 
             const result = await accountLinkingService.signInWithAccountLinking('github');
 
             if (result.success && result.user) {
                 const userProfile = await createOrUpdateUserProfile(result.user);
 
-                setAuthState({
+                setUserData({
                     user: {
                         uid: result.user.uid,
                         email: result.user.email,
@@ -191,19 +192,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                         updatedAt: userProfile.updatedAt,
                     },
                     userProfile,
-                    loading: false,
-                    error: null,
-                    isAuthenticated: true,
                 });
+                setCoreState({ loading: false, error: null, isAuthenticated: true });
 
-                // Show appropriate success message
                 if (result.wasLinked) {
-                    toast.success(result.message, {
-                        duration: 6000,
-                        style: {
-                            maxWidth: '450px',
-                        },
-                    });
+                    toast.success(result.message, { duration: 6000, style: { maxWidth: '450px' } });
                 } else {
                     toast.success('Inicio de sesión exitoso');
                 }
@@ -212,84 +205,62 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión con GitHub';
-            setAuthState(prev => ({
-                ...prev,
-                loading: false,
-                error: errorMessage,
-            }));
-
-            toast.error(errorMessage, {
-                duration: 6000,
-                style: {
-                    maxWidth: '400px',
-                },
-            });
+            setCoreState(prev => ({ ...prev, loading: false, error: errorMessage }));
+            toast.error(errorMessage, { duration: 6000, style: { maxWidth: '400px' } });
         }
-    };
+    }, [createOrUpdateUserProfile]);
 
-    const handleSignOut = async (): Promise<void> => {
+    const handleSignOut = useCallback(async (): Promise<void> => {
         try {
             await signOutUser();
-            setAuthState({
-                user: null,
-                userProfile: null,
-                loading: false,
-                error: null,
-                isAuthenticated: false,
-            });
+            setUserData({ user: null, userProfile: null });
+            setCoreState({ loading: false, error: null, isAuthenticated: false });
             toast.success('Sesión cerrada exitosamente');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al cerrar sesión';
-            setAuthState(prev => ({ ...prev, error: errorMessage }));
+            setCoreState(prev => ({ ...prev, error: errorMessage }));
             toast.error(errorMessage);
         }
-    };
+    }, []);
 
-    const updateDisplayName = async (displayName: string): Promise<void> => {
-        if (!authState.user) {
-            throw new Error('Usuario no autenticado');
-        }
+    const updateDisplayName = useCallback(async (displayName: string): Promise<void> => {
+        if (!userData.user) throw new Error('Usuario no autenticado');
 
         try {
-            await userService.updateUserProfile(authState.user.uid, { displayName });
-
-            setAuthState(prev => ({
-                ...prev,
+            await userService.updateUserProfile(userData.user.uid, { displayName });
+            // Only profile data changes — auth consumers do NOT re-render
+            setUserData(prev => ({
                 user: prev.user ? { ...prev.user, displayName } : null,
                 userProfile: prev.userProfile ? { ...prev.userProfile, displayName } : null,
             }));
-
             toast.success('Nombre actualizado exitosamente');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el nombre';
             toast.error(errorMessage);
             throw error;
         }
-    };
+    }, [userData.user]);
 
-    const refreshUserProfile = async (): Promise<void> => {
-        if (!authState.user) return;
+    const refreshUserProfile = useCallback(async (): Promise<void> => {
+        if (!userData.user) return;
 
         try {
-            const userProfile = await userService.getUserProfile(authState.user.uid);
+            const userProfile = await userService.getUserProfile(userData.user.uid);
             if (userProfile) {
-                setAuthState(prev => ({
-                    ...prev,
+                // Only profile data changes — auth consumers do NOT re-render
+                setUserData(prev => ({
+                    user: prev.user ? { ...prev.user, displayName: userProfile.displayName } : null,
                     userProfile,
-                    user: prev.user ? {
-                        ...prev.user,
-                        displayName: userProfile.displayName,
-                    } : null,
                 }));
             }
         } catch (error) {
             console.error('Error refreshing user profile:', error);
         }
-    };
+    }, [userData.user]);
 
     useEffect(() => {
         if (!auth) {
-            setAuthState(prev => ({ ...prev, loading: false }));
+            setCoreState(prev => ({ ...prev, loading: false }));
             return;
         }
 
@@ -298,7 +269,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 try {
                     const userProfile = await createOrUpdateUserProfile(firebaseUser);
 
-                    setAuthState({
+                    setUserData({
                         user: {
                             uid: firebaseUser.uid,
                             email: firebaseUser.email,
@@ -310,46 +281,46 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                             updatedAt: userProfile.updatedAt,
                         },
                         userProfile,
-                        loading: false,
-                        error: null,
-                        isAuthenticated: true,
                     });
+                    setCoreState({ loading: false, error: null, isAuthenticated: true });
                 } catch (error) {
                     console.error('Error setting up user profile:', error);
-                    setAuthState({
-                        user: null,
-                        userProfile: null,
+                    setUserData({ user: null, userProfile: null });
+                    setCoreState({
                         loading: false,
                         error: error instanceof Error ? error.message : 'Error de autenticación',
                         isAuthenticated: false,
                     });
                 }
             } else {
-                setAuthState({
-                    user: null,
-                    userProfile: null,
-                    loading: false,
-                    error: null,
-                    isAuthenticated: false,
-                });
+                setUserData({ user: null, userProfile: null });
+                setCoreState({ loading: false, error: null, isAuthenticated: false });
             }
         });
 
         return unsubscribe;
-    }, []);
+    }, [createOrUpdateUserProfile]);
 
-    const contextValue: UserContextType = useMemo(() => ({
-        ...authState,
+    // Auth context value — only re-creates when coreState or auth handlers change
+    const authContextValue = useMemo<AuthContextType>(() => ({
+        ...coreState,
         signInWithGoogle: handleSignInWithGoogle,
         signInWithGithub: handleSignInWithGithub,
         signOut: handleSignOut,
+    }), [coreState, handleSignInWithGoogle, handleSignInWithGithub, handleSignOut]);
+
+    // Profile context value — only re-creates when userData or profile handlers change
+    const profileContextValue = useMemo<UserProfileContextType>(() => ({
+        ...userData,
         updateDisplayName,
         refreshUserProfile,
-    }), [authState, handleSignInWithGoogle, handleSignInWithGithub, handleSignOut, updateDisplayName, refreshUserProfile]);
+    }), [userData, updateDisplayName, refreshUserProfile]);
 
     return (
-        <UserContext.Provider value={contextValue}>
-            {children}
-        </UserContext.Provider>
+        <AuthContext.Provider value={authContextValue}>
+            <UserProfileContext.Provider value={profileContextValue}>
+                {children}
+            </UserProfileContext.Provider>
+        </AuthContext.Provider>
     );
 };

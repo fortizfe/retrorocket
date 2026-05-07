@@ -44,28 +44,46 @@ vi.mock('../../../utils/constants', () => ({
 // Mock UserContext completely
 const mockSignOut = vi.fn(() => Promise.resolve());
 
+const mockUser = {
+    uid: 'test-uid',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    photoURL: null,
+};
+
+const mockUserProfile = {
+    id: 'test-uid',
+    name: 'Test User',
+    email: 'test@example.com',
+    providers: ['google'] as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+};
+
 vi.mock('../../../contexts/UserContext', () => ({
     useUser: () => ({
         isAuthenticated: true,
-        user: {
-            uid: 'test-uid',
-            email: 'test@example.com',
-            displayName: 'Test User',
-            photoURL: null
-        },
-        userProfile: {
-            id: 'test-uid',
-            name: 'Test User',
-            email: 'test@example.com',
-            providers: ['google'] as const,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        },
+        user: mockUser,
+        userProfile: mockUserProfile,
         loading: false,
         error: null,
         signOut: mockSignOut,
         signInWithGoogle: vi.fn(),
         signInWithGithub: vi.fn(),
+        updateDisplayName: vi.fn(),
+        refreshUserProfile: vi.fn(),
+    }),
+    useAuthContext: () => ({
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        signOut: mockSignOut,
+        signInWithGoogle: vi.fn(),
+        signInWithGithub: vi.fn(),
+    }),
+    useUserProfileContext: () => ({
+        user: mockUser,
+        userProfile: mockUserProfile,
         updateDisplayName: vi.fn(),
         refreshUserProfile: vi.fn(),
     }),

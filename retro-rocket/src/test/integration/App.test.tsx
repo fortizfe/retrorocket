@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 // Mock all external dependencies
 vi.mock('../services/firebase', () => ({
@@ -36,6 +36,20 @@ vi.mock('../contexts/UserContext', () => ({
         updateDisplayName: vi.fn(),
         refreshUserProfile: vi.fn(),
     }),
+    useAuthContext: () => ({
+        loading: true,
+        isAuthenticated: false,
+        error: null,
+        signInWithGoogle: vi.fn(),
+        signInWithGithub: vi.fn(),
+        signOut: vi.fn(),
+    }),
+    useUserProfileContext: () => ({
+        user: null,
+        userProfile: null,
+        updateDisplayName: vi.fn(),
+        refreshUserProfile: vi.fn(),
+    }),
 }));
 
 import App from '../../App';
@@ -45,28 +59,34 @@ describe('App Integration Tests', () => {
         vi.clearAllMocks();
     });
 
-    it('should render the application', () => {
+    it('should render the application', async () => {
         render(<App />);
 
-        // The app should render the loading state initially
-        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        // Wait for lazy-loaded Landing to resolve and AuthWrapper to show auth loading state
+        await waitFor(() => {
+            expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        });
     });
 
-    it('should render with application structure', () => {
+    it('should render with application structure', async () => {
         render(<App />);
 
-        // Check for the loading spinner and text
-        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        // Wait for lazy-loaded Landing to resolve and AuthWrapper to show auth loading state
+        await waitFor(() => {
+            expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        });
 
         // The app should have the main layout structure
         const mainElement = document.querySelector('main');
         expect(mainElement).toBeTruthy();
     });
 
-    it('should handle component rendering gracefully', () => {
+    it('should handle component rendering gracefully', async () => {
         render(<App />);
 
         // App should render without errors
-        expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        });
     });
 });

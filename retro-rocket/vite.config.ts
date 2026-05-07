@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
@@ -21,9 +21,15 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
-          ui: ['framer-motion', 'lucide-react', 'clsx'],
+          vendor:         ['react', 'react-dom', 'react-router-dom'],
+          firebase:       ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          ui:             ['framer-motion', 'lucide-react', 'clsx'],
+          dndkit:         ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          datepicker:     ['react-datepicker', 'date-fns'],
+          'export-pdf':   ['@react-pdf/renderer'],
+          'export-docx':  ['docx', 'file-saver'],
+          i18n:           ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+          transformers:   ['@xenova/transformers'],
         },
       },
     },

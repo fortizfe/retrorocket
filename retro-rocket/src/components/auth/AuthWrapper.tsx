@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useUser } from '../../contexts/UserContext';
+import { useAuthContext } from '../../contexts/UserContext';
 import Loading from '../ui/Loading';
 
 interface AuthWrapperProps {
@@ -9,7 +9,7 @@ interface AuthWrapperProps {
 }
 
 const AuthWrapper: React.FC<AuthWrapperProps> = ({ children, requireAuth = true }) => {
-    const { isAuthenticated, loading } = useUser();
+    const { isAuthenticated, loading } = useAuthContext();
     const location = useLocation();
 
     if (loading) {

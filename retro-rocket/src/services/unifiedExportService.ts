@@ -1,7 +1,7 @@
 import { UnifiedExportOptions, UnifiedExportData, ExportFormat, SortOrder } from '../types/export';
-import { exportRetrospectiveToPdf, ExportOptions as PdfExportOptions } from './pdfExportService';
-import { exportRetrospectiveToTxt, TxtExportOptions } from './txtExportService';
-import { exportRetrospectiveToDocx, DocxExportOptions } from './docxExportService';
+import type { ExportOptions as PdfExportOptions } from './pdfExportService';
+import type { TxtExportOptions } from './txtExportService';
+import type { DocxExportOptions } from './docxExportService';
 import { Card } from '../types/card';
 
 export class UnifiedExportService {
@@ -139,6 +139,7 @@ export class UnifiedExportService {
 
         console.log(`Exporting ${pdfData.cards.length} cards to PDF`);
         console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
+        const { exportRetrospectiveToPdf } = await import('./pdfExportService');
         await exportRetrospectiveToPdf(pdfData, pdfOptions);
     }
 
@@ -176,6 +177,7 @@ export class UnifiedExportService {
 
         console.log(`Exporting ${txtData.cards.length} cards to TXT`);
         console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
+        const { exportRetrospectiveToTxt } = await import('./txtExportService');
         await exportRetrospectiveToTxt(txtData, txtOptions);
     }
 
@@ -215,6 +217,7 @@ export class UnifiedExportService {
 
         console.log(`Exporting ${docxData.cards.length} cards to DOCX`);
         console.log(`Advanced facilitator features: Sentiment badges=${options.includeSentimentBadges}, Team mood=${options.includeTeamMoodAnalysis}`);
+        const { exportRetrospectiveToDocx } = await import('./docxExportService');
         await exportRetrospectiveToDocx(docxData, docxOptions);
     }
 
