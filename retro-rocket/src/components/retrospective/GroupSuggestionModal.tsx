@@ -147,19 +147,19 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.1 }}
-                                            className={`border rounded-xl overflow-hidden ${isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'
+                                            className={`border rounded-xl overflow-hidden ${isSelected ? 'border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20' : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'
                                                 }`}
                                         >
                                             {/* Suggestion Header */}
-                                            <div className="p-4 border-b border-gray-100">
+                                            <div className="p-4 border-b border-gray-100 dark:border-slate-700">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-3">
                                                         <div className="flex items-center space-x-2">
-                                                            <Users className="w-5 h-5 text-gray-600" />
-                                                            <span className="font-medium text-gray-900">
+                                                            <Users className="w-5 h-5 text-gray-600 dark:text-slate-400" />
+                                                            <span className="font-medium text-gray-900 dark:text-slate-100">
                                                                 {t('retrospective.groupSuggestion.group')} {index + 1}
                                                             </span>
-                                                            <span className="text-sm text-gray-500">
+                                                            <span className="text-sm text-gray-500 dark:text-slate-400">
                                                                 ({t('retrospective.groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
                                                             </span>
                                                         </div>
@@ -172,13 +172,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                     <div className="flex items-center space-x-2">
                                                         <button
                                                             onClick={() => togglePreview(suggestion.id)}
-                                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                                             title={isPreviewMode ? 'Ocultar tarjetas' : 'Mostrar tarjetas'}
                                                         >
                                                             {isPreviewMode ? (
-                                                                <EyeOff className="w-4 h-4 text-gray-500" />
+                                                                <EyeOff className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                                                             ) : (
-                                                                <Eye className="w-4 h-4 text-gray-500" />
+                                                                <Eye className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                                                             )}
                                                         </button>
                                                     </div>
@@ -186,10 +186,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 
                                                 {/* Suggestion Details */}
                                                 <div className="mt-3">
-                                                    <p className="text-sm text-gray-700 mb-2">
+                                                    <p className="text-sm text-gray-700 dark:text-slate-300 mb-2">
                                                         <span className="font-medium">Razón:</span> {suggestion.reason}
                                                     </p>
-                                                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-400">
                                                         <span>Algoritmo: {suggestion.algorithm}</span>
                                                         {suggestion.keywords && suggestion.keywords.length > 0 && (
                                                             <span>
@@ -210,7 +210,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         transition={{ duration: 0.2 }}
                                                         className="overflow-hidden"
                                                     >
-                                                        <div className="p-4 bg-gray-50 space-y-3">
+                                                        <div className="p-4 bg-gray-50 dark:bg-slate-700/50 space-y-3">
                                                             {suggestionCards.map((card, cardIndex) => (
                                                                 <div
                                                                     key={card.id}
@@ -238,13 +238,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                             </AnimatePresence>
 
                                             {/* Actions */}
-                                            <div className="p-4 bg-gray-50 border-t border-gray-100">
+                                            <div className="p-4 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-100 dark:border-slate-600">
                                                 <div className="flex items-center justify-between">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleReject(suggestion.id)}
-                                                        className="text-gray-600 hover:text-gray-800"
+                                                        className="text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"
                                                     >
                                                         Descartar
                                                     </Button>
@@ -269,9 +269,9 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 
                     {/* Footer */}
                     {!loading && suggestions.length > 0 && (
-                        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800/50">
                             <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-slate-300">
                                     Puedes aceptar múltiples sugerencias o crear grupos manualmente.
                                 </p>
                                 <Button variant="ghost" onClick={onClose}>

@@ -179,7 +179,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         // eslint-disable-next-line react/forbid-dom-props
         <div
             ref={pickerRef}
-            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
+            className="fixed z-[9999] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
             // eslint-disable-next-line react/forbid-dom-props
             style={{
                 top: pickerPosition.top,
@@ -189,15 +189,15 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             aria-label={t('retrospective.emojiReactions.picker.ariaLabel')}
         >
             {/* Header with categories */}
-            <div className="border-b border-gray-100 p-2">
+            <div className="border-b border-gray-100 dark:border-slate-700 p-2">
                 <div className="flex flex-wrap gap-1">
                     {Object.keys(EMOJI_CATEGORIES).map((category) => (
                         <button
                             key={category}
                             onClick={() => setActiveCategory(category)}
                             className={`px-2 py-1 text-xs rounded transition-colors ${activeCategory === category
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'hover:bg-gray-100 text-gray-600'
+                                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                                : 'hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300'
                                 }`}
                         >
                             {t(`retrospective.emojiReactions.categories.${category}`, category)}
@@ -215,10 +215,10 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             onClick={() => handleEmojiSelect(emoji)}
                             className={`
                                 w-8 h-8 flex items-center justify-center text-lg rounded transition-all duration-200
-                                hover:bg-gray-100 hover:scale-110 hover:shadow-md
+                                hover:bg-gray-100 dark:hover:bg-slate-700 hover:scale-110 hover:shadow-md
                                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
                                 ${userReaction === emoji
-                                    ? 'bg-blue-100 ring-2 ring-blue-300 scale-110'
+                                    ? 'bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-300 dark:ring-blue-600 scale-110'
                                     : ''
                                 }
                             `}
@@ -232,16 +232,16 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-100 p-2 text-center">
-                <p className="text-xs text-gray-500">
+            <div className="border-t border-gray-100 dark:border-slate-700 p-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-slate-400">
                     Haz clic en un emoji para reaccionar
                 </p>
             </div>
 
             {/* Current reaction indicator */}
             {userReaction && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
                         <span>{t('retrospective.emojiReactions.reactions.yourReaction')} {userReaction}</span>
                         <button
                             onClick={() => {
@@ -277,8 +277,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
               flex items-center gap-1 px-2 py-1 rounded-full text-xs
               transition-all duration-200 min-w-[2rem] justify-center
               ${userReaction === reaction.emoji
-                                ? 'bg-blue-100 border-2 border-blue-300 text-blue-700'
-                                : 'bg-gray-100 hover:bg-gray-200 border border-gray-200 text-gray-600'
+                                ? 'bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300'
+                                : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300'
                             }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
@@ -301,8 +301,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
               flex items-center justify-center w-8 h-8 rounded-full
               transition-all duration-200
               ${showPicker
-                                ? 'bg-blue-100 text-blue-600 border-2 border-blue-300'
-                                : 'bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-200'
+                                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 border-2 border-blue-300 dark:border-blue-600'
+                                : 'bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-600'
                             }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}
             `}

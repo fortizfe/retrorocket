@@ -66,7 +66,7 @@ describe('cardColors utilities', () => {
             expect(config.name).toBe('Verde Menta Suave');
             expect(config.value).toBe('pastelGreen');
             expect(config.background).toBe('bg-green-50');
-            expect(config.border).toBe('border-green-200');
+            expect(config.border).toBe('border-green-200 dark:border-green-800');
         });
 
         it('should have all required properties in config', () => {

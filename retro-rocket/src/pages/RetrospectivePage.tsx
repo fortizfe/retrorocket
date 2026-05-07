@@ -154,10 +154,10 @@ const RetrospectivePageContent: React.FC = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
                 <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
                         Retrospectiva no encontrada
                     </h2>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-slate-600 dark:text-slate-300 mb-6">
                         No se pudo encontrar la retrospectiva solicitada.
                     </p>
                     <Button onClick={() => navigate('/dashboard')}>

@@ -18,8 +18,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Blanco',
         value: 'pastelWhite',
         background: 'bg-white',
-        border: 'border-gray-200',
-        text: 'text-gray-800',
+        border: 'border-gray-200 dark:border-slate-600',
+        text: 'text-gray-800 dark:text-slate-100',
         preview: 'bg-white border-gray-300',
         ariaLabel: 'Seleccionar color blanco',
         tooltip: 'Blanco clásico'
@@ -28,8 +28,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Verde Menta Suave',
         value: 'pastelGreen',
         background: 'bg-green-50',
-        border: 'border-green-200',
-        text: 'text-green-800',
+        border: 'border-green-200 dark:border-green-800',
+        text: 'text-green-800 dark:text-green-200',
         preview: 'bg-green-100',
         ariaLabel: 'Seleccionar color verde menta suave',
         tooltip: 'Verde menta suave - Ideal para aspectos positivos'
@@ -38,8 +38,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Rosa Coral Suave',
         value: 'pastelRed',
         background: 'bg-red-50',
-        border: 'border-red-200',
-        text: 'text-red-800',
+        border: 'border-red-200 dark:border-red-800',
+        text: 'text-red-800 dark:text-red-200',
         preview: 'bg-red-100',
         ariaLabel: 'Seleccionar color rosa coral suave',
         tooltip: 'Rosa coral suave - Ideal para áreas de mejora'
@@ -48,8 +48,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Amarillo Mantequilla',
         value: 'pastelYellow',
         background: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        text: 'text-yellow-800',
+        border: 'border-yellow-200 dark:border-yellow-800',
+        text: 'text-yellow-800 dark:text-yellow-200',
         preview: 'bg-yellow-100',
         ariaLabel: 'Seleccionar color amarillo mantequilla',
         tooltip: 'Amarillo mantequilla - Ideal para acciones'
@@ -58,8 +58,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Azul Suave',
         value: 'pastelBlue',
         background: 'bg-blue-50',
-        border: 'border-blue-200',
-        text: 'text-blue-800',
+        border: 'border-blue-200 dark:border-blue-800',
+        text: 'text-blue-800 dark:text-blue-200',
         preview: 'bg-blue-100',
         ariaLabel: 'Seleccionar color azul suave',
         tooltip: 'Azul suave - Perfecto para ideas'
@@ -68,8 +68,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Lavanda',
         value: 'pastelPurple',
         background: 'bg-purple-50',
-        border: 'border-purple-200',
-        text: 'text-purple-800',
+        border: 'border-purple-200 dark:border-purple-800',
+        text: 'text-purple-800 dark:text-purple-200',
         preview: 'bg-purple-100',
         ariaLabel: 'Seleccionar color lavanda',
         tooltip: 'Lavanda suave - Ideal para reflexiones'
@@ -78,8 +78,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Melocotón',
         value: 'pastelOrange',
         background: 'bg-orange-50',
-        border: 'border-orange-200',
-        text: 'text-orange-800',
+        border: 'border-orange-200 dark:border-orange-800',
+        text: 'text-orange-800 dark:text-orange-200',
         preview: 'bg-orange-100',
         ariaLabel: 'Seleccionar color melocotón',
         tooltip: 'Melocotón suave - Excelente para alertas'
@@ -88,8 +88,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Rosa Suave',
         value: 'pastelPink',
         background: 'bg-pink-50',
-        border: 'border-pink-200',
-        text: 'text-pink-800',
+        border: 'border-pink-200 dark:border-pink-800',
+        text: 'text-pink-800 dark:text-pink-200',
         preview: 'bg-pink-100',
         ariaLabel: 'Seleccionar color rosa suave',
         tooltip: 'Rosa suave - Perfecto para celebraciones'
@@ -98,8 +98,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Verde Azulado',
         value: 'pastelTeal',
         background: 'bg-teal-50',
-        border: 'border-teal-200',
-        text: 'text-teal-800',
+        border: 'border-teal-200 dark:border-teal-800',
+        text: 'text-teal-800 dark:text-teal-200',
         preview: 'bg-teal-100',
         ariaLabel: 'Seleccionar color verde azulado',
         tooltip: 'Verde azulado suave - Ideal para innovación'
@@ -108,8 +108,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Gris Perla',
         value: 'pastelGray',
         background: 'bg-gray-50',
-        border: 'border-gray-200',
-        text: 'text-gray-800',
+        border: 'border-gray-200 dark:border-slate-700',
+        text: 'text-gray-800 dark:text-slate-200',
         preview: 'bg-gray-100',
         ariaLabel: 'Seleccionar color gris perla',
         tooltip: 'Gris perla suave - Neutral y elegante'
@@ -118,8 +118,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Índigo Suave',
         value: 'pastelIndigo',
         background: 'bg-indigo-50',
-        border: 'border-indigo-200',
-        text: 'text-indigo-800',
+        border: 'border-indigo-200 dark:border-indigo-800',
+        text: 'text-indigo-800 dark:text-indigo-200',
         preview: 'bg-indigo-100',
         ariaLabel: 'Seleccionar color índigo suave',
         tooltip: 'Índigo suave - Perfecto para análisis profundo'
@@ -128,8 +128,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Esmeralda Suave',
         value: 'pastelEmerald',
         background: 'bg-emerald-50',
-        border: 'border-emerald-200',
-        text: 'text-emerald-800',
+        border: 'border-emerald-200 dark:border-emerald-800',
+        text: 'text-emerald-800 dark:text-emerald-200',
         preview: 'bg-emerald-100',
         ariaLabel: 'Seleccionar color esmeralda suave',
         tooltip: 'Esmeralda suave - Ideal para crecimiento y éxito'
@@ -138,8 +138,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Ámbar Suave',
         value: 'pastelAmber',
         background: 'bg-amber-50',
-        border: 'border-amber-200',
-        text: 'text-amber-800',
+        border: 'border-amber-200 dark:border-amber-800',
+        text: 'text-amber-800 dark:text-amber-200',
         preview: 'bg-amber-100',
         ariaLabel: 'Seleccionar color ámbar suave',
         tooltip: 'Ámbar suave - Excelente para advertencias importantes'
@@ -148,8 +148,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Cian Suave',
         value: 'pastelCyan',
         background: 'bg-cyan-50',
-        border: 'border-cyan-200',
-        text: 'text-cyan-800',
+        border: 'border-cyan-200 dark:border-cyan-800',
+        text: 'text-cyan-800 dark:text-cyan-200',
         preview: 'bg-cyan-100',
         ariaLabel: 'Seleccionar color cian suave',
         tooltip: 'Cian suave - Perfecto para información y datos'
@@ -158,8 +158,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Lima Suave',
         value: 'pastelLime',
         background: 'bg-lime-50',
-        border: 'border-lime-200',
-        text: 'text-lime-800',
+        border: 'border-lime-200 dark:border-lime-800',
+        text: 'text-lime-800 dark:text-lime-200',
         preview: 'bg-lime-100',
         ariaLabel: 'Seleccionar color lima suave',
         tooltip: 'Lima suave - Ideal para energía y motivación'
@@ -168,8 +168,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Rosa Intenso',
         value: 'pastelRose',
         background: 'bg-rose-50',
-        border: 'border-rose-200',
-        text: 'text-rose-800',
+        border: 'border-rose-200 dark:border-rose-800',
+        text: 'text-rose-800 dark:text-rose-200',
         preview: 'bg-rose-100',
         ariaLabel: 'Seleccionar color rosa intenso',
         tooltip: 'Rosa intenso - Perfecto para emociones y pasión'
@@ -178,8 +178,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Pizarra Suave',
         value: 'pastelSlate',
         background: 'bg-slate-50',
-        border: 'border-slate-200',
-        text: 'text-slate-800',
+        border: 'border-slate-200 dark:border-slate-700',
+        text: 'text-slate-800 dark:text-slate-200',
         preview: 'bg-slate-100',
         ariaLabel: 'Seleccionar color pizarra suave',
         tooltip: 'Pizarra suave - Elegante y profesional'
@@ -188,8 +188,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Violeta Suave',
         value: 'pastelViolet',
         background: 'bg-violet-50',
-        border: 'border-violet-200',
-        text: 'text-violet-800',
+        border: 'border-violet-200 dark:border-violet-800',
+        text: 'text-violet-800 dark:text-violet-200',
         preview: 'bg-violet-100 border-violet-300',
         ariaLabel: 'Seleccionar color violeta suave',
         tooltip: 'Violeta suave'
@@ -198,8 +198,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Azul Cielo Brillante',
         value: 'pastelSky',
         background: 'bg-sky-50',
-        border: 'border-sky-200',
-        text: 'text-sky-800',
+        border: 'border-sky-200 dark:border-sky-800',
+        text: 'text-sky-800 dark:text-sky-200',
         preview: 'bg-sky-100 border-sky-300',
         ariaLabel: 'Seleccionar color azul cielo brillante',
         tooltip: 'Azul cielo brillante'
@@ -208,8 +208,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Fucsia Suave',
         value: 'pastelFuchsia',
         background: 'bg-fuchsia-50',
-        border: 'border-fuchsia-200',
-        text: 'text-fuchsia-800',
+        border: 'border-fuchsia-200 dark:border-fuchsia-800',
+        text: 'text-fuchsia-800 dark:text-fuchsia-200',
         preview: 'bg-fuchsia-100 border-fuchsia-300',
         ariaLabel: 'Seleccionar color fucsia suave',
         tooltip: 'Fucsia suave'
@@ -218,8 +218,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Verde Menta',
         value: 'pastelMint',
         background: 'bg-emerald-25',
-        border: 'border-emerald-100',
-        text: 'text-emerald-800',
+        border: 'border-emerald-100 dark:border-emerald-700',
+        text: 'text-emerald-800 dark:text-emerald-200',
         preview: 'bg-emerald-50 border-emerald-200',
         ariaLabel: 'Seleccionar color verde menta',
         tooltip: 'Verde menta fresco'
@@ -228,8 +228,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Durazno',
         value: 'pastelPeach',
         background: 'bg-orange-25',
-        border: 'border-orange-100',
-        text: 'text-orange-800',
+        border: 'border-orange-100 dark:border-orange-700',
+        text: 'text-orange-800 dark:text-orange-200',
         preview: 'bg-orange-50 border-orange-200',
         ariaLabel: 'Seleccionar color durazno',
         tooltip: 'Durazno suave'
@@ -238,8 +238,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Lavanda Suave',
         value: 'pastelLavender',
         background: 'bg-purple-200',
-        border: 'border-purple-300',
-        text: 'text-purple-800',
+        border: 'border-purple-300 dark:border-purple-700',
+        text: 'text-purple-800 dark:text-purple-200',
         preview: 'bg-purple-200 border-purple-300',
         ariaLabel: 'Seleccionar color lavanda suave',
         tooltip: 'Lavanda suave'
@@ -248,8 +248,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Crema',
         value: 'pastelCream',
         background: 'bg-yellow-25',
-        border: 'border-yellow-50',
-        text: 'text-yellow-900',
+        border: 'border-yellow-50 dark:border-yellow-800',
+        text: 'text-yellow-900 dark:text-yellow-200',
         preview: 'bg-yellow-50 border-yellow-100',
         ariaLabel: 'Seleccionar color crema',
         tooltip: 'Crema cálido'
@@ -258,8 +258,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Coral',
         value: 'pastelCoral',
         background: 'bg-red-25',
-        border: 'border-red-100',
-        text: 'text-red-800',
+        border: 'border-red-100 dark:border-red-700',
+        text: 'text-red-800 dark:text-red-200',
         preview: 'bg-red-50 border-red-200',
         ariaLabel: 'Seleccionar color coral',
         tooltip: 'Coral vibrante'
@@ -268,8 +268,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Turquesa',
         value: 'pastelTurquoise',
         background: 'bg-cyan-25',
-        border: 'border-cyan-100',
-        text: 'text-cyan-800',
+        border: 'border-cyan-100 dark:border-cyan-700',
+        text: 'text-cyan-800 dark:text-cyan-200',
         preview: 'bg-cyan-50 border-cyan-200',
         ariaLabel: 'Seleccionar color turquesa',
         tooltip: 'Turquesa tropical'
@@ -278,8 +278,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Oro Suave',
         value: 'pastelGold',
         background: 'bg-amber-25',
-        border: 'border-amber-100',
-        text: 'text-amber-900',
+        border: 'border-amber-100 dark:border-amber-700',
+        text: 'text-amber-900 dark:text-amber-200',
         preview: 'bg-amber-50 border-amber-200',
         ariaLabel: 'Seleccionar color oro suave',
         tooltip: 'Oro elegante'
@@ -288,8 +288,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Plata',
         value: 'pastelSilver',
         background: 'bg-slate-25',
-        border: 'border-slate-100',
-        text: 'text-slate-700',
+        border: 'border-slate-100 dark:border-slate-700',
+        text: 'text-slate-700 dark:text-slate-200',
         preview: 'bg-slate-50 border-slate-200',
         ariaLabel: 'Seleccionar color plata',
         tooltip: 'Plata sofisticado'
@@ -298,8 +298,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Bronce',
         value: 'pastelBronze',
         background: 'bg-stone-50',
-        border: 'border-stone-200',
-        text: 'text-stone-800',
+        border: 'border-stone-200 dark:border-stone-700',
+        text: 'text-stone-800 dark:text-stone-200',
         preview: 'bg-stone-100 border-stone-300',
         ariaLabel: 'Seleccionar color bronce',
         tooltip: 'Bronce cálido'
@@ -308,8 +308,8 @@ export const CARD_COLORS: Record<CardColor, ColorConfig> = {
         name: 'Marfil',
         value: 'pastelIvory',
         background: 'bg-neutral-25',
-        border: 'border-neutral-100',
-        text: 'text-neutral-800',
+        border: 'border-neutral-100 dark:border-neutral-700',
+        text: 'text-neutral-800 dark:text-neutral-200',
         preview: 'bg-neutral-50 border-neutral-200',
         ariaLabel: 'Seleccionar color marfil',
         tooltip: 'Marfil clásico'
@@ -378,7 +378,7 @@ export const getSuggestedColorForColumn = (columnTitle: string, columnId?: strin
         const columnIdMap: Record<string, CardColor> = {
             // Plantilla por defecto
             'helped': 'pastelGreen',     // Primera columna - Verde menta suave
-            'hindered': 'pastelRed',     // Segunda columna - Rosa coral suave  
+            'hindered': 'pastelRed',     // Segunda columna - Rosa coral suave
             'improve': 'pastelYellow',   // Tercera columna - Amarillo mantequilla
 
             // Plantilla Mad-Sad-Glad
@@ -386,7 +386,7 @@ export const getSuggestedColorForColumn = (columnTitle: string, columnId?: strin
             'sad': 'pastelGray',         // Triste - Gris perla (melancolía, neutral)
             'glad': 'pastelGreen',       // Contento - Verde menta (alegría, positivo)
 
-            // Plantilla Start-Stop-Continue  
+            // Plantilla Start-Stop-Continue
             'start': 'pastelTeal',       // Empezar - Verde azulado (innovación, nuevos comienzos)
             'stop': 'pastelRed',         // Parar - Rosa coral (detener, advertencia suave)
             'continue': 'pastelBlue',    // Continuar - Azul cielo (continuidad, estabilidad)
