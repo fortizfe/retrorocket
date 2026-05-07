@@ -52,25 +52,15 @@ vi.mock('../../../components/ui/TextareaWithEmoji', () => ({
     ),
 }));
 
-vi.mock('../../../components/ui/ColorPicker', () => {
-    let currentColor = 'blue';
-    return {
-        default: ({ selectedColor, onColorSelect, ...props }: any) => {
-            const handleColorChange = (color: string) => {
-                currentColor = color;
-                onColorSelect?.(color);
-            };
-
-            return (
-                <div data-testid="color-picker" {...props}>
-                    <button onClick={() => handleColorChange('blue')}>Blue</button>
-                    <button onClick={() => handleColorChange('red')}>Red</button>
-                    <span>Selected: {selectedColor || currentColor}</span>
-                </div>
-            );
-        }
-    };
-});
+vi.mock('../../../components/ui/ColorPicker', () => ({
+    default: ({ selectedColor, onColorSelect, ...props }: any) => (
+        <div data-testid="color-picker" {...props}>
+            <button onClick={() => onColorSelect?.('blue')}>Blue</button>
+            <button onClick={() => onColorSelect?.('red')}>Red</button>
+            <span>Selected: {selectedColor ?? 'blue'}</span>
+        </div>
+    )
+}));
 
 vi.mock('../../../components/ui/TypingPreview', () => ({
     default: ({ typingUsers }: any) => (
@@ -570,7 +560,8 @@ describe('GroupableColumn', () => {
             await user.click(addButton);
 
             const textarea = screen.getByTestId('textarea-with-emoji');
-            await user.type(textarea, longContent);
+            // Use fireEvent.change to avoid simulating 1000 individual keystrokes
+            fireEvent.change(textarea, { target: { value: longContent } });
 
             expect(textarea).toHaveValue(longContent);
         });

@@ -146,7 +146,7 @@ describe('BoardCard Migration - Core Tests', () => {
         expect(screen.getByText('Test Retrospective')).toBeInTheDocument();
         expect(screen.getByText('Test description')).toBeInTheDocument();
         expect(screen.getByText('dashboard.boardCard.openBoard')).toBeInTheDocument();
-        // Participant count section exists - verified through date elements
-        expect(screen.getByText(/2025/)).toBeInTheDocument();
+        // Participant count section exists - verified through date elements (year-agnostic)
+        expect(screen.getByText(/\d{1,2} \w+ \d{4}/)).toBeInTheDocument();
     });
 });
