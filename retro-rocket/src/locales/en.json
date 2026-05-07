@@ -52,7 +52,16 @@
             "participants": "participants",
             "joined": "Joined",
             "creator": "Creator",
-            "deleteTitle": "Delete board"
+            "deleteTitle": "Delete board",
+            "editTitle": "Edit board",
+            "editBoard": "Edit board",
+            "editBoardDescription": "Update the title",
+            "editSuccess": "Board updated successfully",
+            "editError": "Error updating board",
+            "titleLabel": "Title",
+            "titlePlaceholder": "Retrospective title",
+            "saving": "Saving...",
+            "titleRequired": "Title is required"
         },
         "joinModal": {
             "title": "Join Retrospective",

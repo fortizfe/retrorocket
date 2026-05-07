@@ -53,7 +53,16 @@
             "participants": "participantes",
             "joined": "Unido",
             "creator": "Creador",
-            "deleteTitle": "Eliminar tablero"
+            "deleteTitle": "Eliminar tablero",
+            "editTitle": "Editar tablero",
+            "editBoard": "Editar tablero",
+            "editBoardDescription": "Modifica el título",
+            "editSuccess": "Tablero actualizado correctamente",
+            "editError": "Error al actualizar el tablero",
+            "titleLabel": "Título",
+            "titlePlaceholder": "Título de la retrospectiva",
+            "saving": "Guardando...",
+            "titleRequired": "El título es obligatorio"
         },
         "joinModal": {
             "title": "Unirse a Retrospectiva",

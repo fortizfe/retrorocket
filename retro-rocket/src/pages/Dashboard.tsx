@@ -150,6 +150,12 @@ const DashboardPage: React.FC = () => {
         setBoards(prev => prev.filter(board => board.id !== boardId));
     };
 
+    const handleBoardUpdated = (boardId: string, updates: { title: string }) => {
+        setBoards(prev => prev.map(board =>
+            board.id === boardId ? { ...board, ...updates } : board
+        ));
+    };
+
     // Hard delete handler used by the Dashboard view to permanently remove
     // retrospectives from Firestore when a user confirms deletion in "Mis tableros".
     const handleHardDelete = async (boardId: string, userId: string) => {
@@ -328,6 +334,7 @@ const DashboardPage: React.FC = () => {
                                                     currentUserId={user?.uid ?? ''}
                                                     onBoardDeleted={handleBoardDeleted}
                                                     onDelete={handleHardDelete}
+                                                    onBoardUpdated={handleBoardUpdated}
                                                 />
                                             </motion.div>
                                         ))}
@@ -355,6 +362,7 @@ const DashboardPage: React.FC = () => {
                                                     currentUserId={user?.uid ?? ''}
                                                     onBoardDeleted={handleBoardDeleted}
                                                     onDelete={handleHardDelete}
+                                                    onBoardUpdated={handleBoardUpdated}
                                                 />
                                             </motion.div>
                                         ))}

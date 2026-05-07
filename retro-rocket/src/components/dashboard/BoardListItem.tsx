@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Users, ArrowRight, Crown, UserPlus, Layout, Trash2, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, ArrowRight, Crown, UserPlus, Layout, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import EditRetrospectiveModal from './EditRetrospectiveModal';
 import { OptimizedRetrospectiveService } from '../../services/optimization/OptimizedRetrospectiveService';
 import toast from 'react-hot-toast';
 import { BOARD_TEMPLATES } from '../../templates/boardTemplates';
@@ -27,13 +28,15 @@ interface BoardListItemProps {
     currentUserId: string;
     onBoardDeleted?: (boardId: string) => void;
     onDelete?: (boardId: string, userId: string) => Promise<void>;
+    onBoardUpdated?: (boardId: string, updates: { title: string }) => void;
 }
 
-const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onBoardDeleted, onDelete }) => {
+const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onBoardDeleted, onDelete, onBoardUpdated }) => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     const handleViewBoard = () => navigate(`/retro/${board.id}`);
 
@@ -147,14 +150,26 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                     {/* Action buttons */}
                     <div className="ml-4 flex-shrink-0 flex items-center gap-2">
                         {board.createdBy === currentUserId && (
-                            <button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
-                                title={t('dashboard.boardCard.deleteTitle')}
-                                aria-label={t('dashboard.boardCard.deleteTitle')}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(true)}
+                                    className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400"
+                                    title={t('dashboard.boardCard.editTitle')}
+                                    aria-label={t('dashboard.boardCard.editTitle')}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
+                                    title={t('dashboard.boardCard.deleteTitle')}
+                                    aria-label={t('dashboard.boardCard.deleteTitle')}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </>
                         )}
 
                         <Button
@@ -169,6 +184,15 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                     </div>
                 </div>
             )}
+            <EditRetrospectiveModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                board={board}
+                onBoardUpdated={(boardId, updates) => {
+                    onBoardUpdated?.(boardId, updates);
+                    setShowEditModal(false);
+                }}
+            />
         </motion.div>
     );
 };
