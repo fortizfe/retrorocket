@@ -4,6 +4,7 @@
  */
 
 import { SentimentType } from './sentiment';
+import { ColumnRole } from '../hooks/useRetrospectiveColumns';
 
 // Métricas básicas del equipo por columna
 export interface ColumnMoodMetrics {
@@ -85,20 +86,39 @@ export const DEFAULT_TEAM_MOOD_CONFIG: TeamMoodConfig = {
     },
 };
 
+function moodFormula(posPercent: number, neuPercent: number, negPercent: number): number {
+    const weightedScore = (posPercent * 2 + neuPercent - negPercent * 1.5) / 100;
+    return Math.round(Math.max(1, Math.min(10, (weightedScore + 1.5) * 3.33)) * 10) / 10;
+}
+
 // Utilidades para determinar el estado de ánimo general
-export const calculateMoodScore = (metrics: TeamMoodMetrics): number => {
-    if (metrics.analyzedCards === 0) return 5; // Neutro si no hay datos
+export const calculateMoodScore = (
+    metrics: TeamMoodMetrics,
+    columnConfigs?: Record<string, { role?: ColumnRole }>
+): number => {
+    if (metrics.analyzedCards === 0) return 5;
 
-    // Fórmula: (positivos * 2 + neutrales - negativos * 1.5) normalizada a escala 1-10
-    const weightedScore = (
-        metrics.positivePercentage * 2 +
-        metrics.neutralPercentage -
-        metrics.negativePercentage * 1.5
-    ) / 100;
+    if (!columnConfigs) {
+        return moodFormula(metrics.positivePercentage, metrics.neutralPercentage, metrics.negativePercentage);
+    }
 
-    // Normalizar a escala 1-10
-    const normalizedScore = Math.max(1, Math.min(10, (weightedScore + 1.5) * 3.33));
-    return Math.round(normalizedScore * 10) / 10; // Redondear a 1 decimal
+    // Column-aware scoring: negative sentiment in a "negative-role" column (e.g., "what hindered")
+    // is expected, so it doesn't count against the team mood.
+    let adjPositive = 0, adjNeutral = 0, adjNegative = 0, total = 0;
+    metrics.columnMetrics.forEach(col => {
+        const role = columnConfigs[col.column]?.role ?? 'neutral';
+        adjPositive += col.positive;
+        adjNeutral += col.neutral + (role === 'negative' ? col.negative : 0);
+        adjNegative += role === 'negative' ? 0 : col.negative;
+        total += col.total;
+    });
+
+    if (total === 0) return 5;
+    return moodFormula(
+        (adjPositive / total) * 100,
+        (adjNeutral / total) * 100,
+        (adjNegative / total) * 100
+    );
 };
 
 export const getMoodScoreLabel = (score: number): string => {

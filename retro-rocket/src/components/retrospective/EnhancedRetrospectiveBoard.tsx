@@ -296,7 +296,6 @@ const EnhancedRetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     participants={participants}
                                     canConvertToAction={isFacilitator}
                                     onConvertToAction={handleConvertToActionItem}
-                                    sentimentHook={sentimentAnalysis}
                                 />
                             </motion.div>
                         );
@@ -371,7 +370,6 @@ const EnhancedRetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                         participants={participants}
                                         canConvertToAction={isFacilitator}
                                         onConvertToAction={handleConvertToActionItem}
-                                        sentimentHook={sentimentAnalysis}
                                     />
                                 </SwipeableColumnContainer>
                             );

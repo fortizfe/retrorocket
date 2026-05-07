@@ -8,6 +8,7 @@ import {
 import { useCountdown } from '../../hooks/useCountdown';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useLanguage } from '../../hooks/useLanguage';
+import { useSentimentContext } from '../../contexts/SentimentContext';
 import FacilitatorMenuTabs from '../facilitator/FacilitatorMenuTabs';
 import SentimentTab from '../facilitator/SentimentTab';
 import NotesTab from '../facilitator/NotesTab';
@@ -20,17 +21,6 @@ interface FacilitatorMenuProps {
     isOwner: boolean;
     cards?: any[];
     columnConfigs?: Record<string, any>;
-    sentimentAnalysis?: {
-        enabled: boolean;
-        ready: boolean;
-        loading: boolean;
-        error?: string;
-        config: any;
-        results?: Map<string, any>;
-        setEnabled: (enabled: boolean) => void;
-        updateConfig: (updates: any) => void;
-        getSentimentCounts: () => { positive: number; negative: number; neutral: number; total: number };
-    };
 }
 
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
@@ -39,9 +29,9 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     isOwner,
     cards = [],
     columnConfigs = {},
-    sentimentAnalysis
 }) => {
     const { t } = useLanguage();
+    const sentimentAnalysis = useSentimentContext();
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('controls');
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);

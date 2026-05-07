@@ -15,9 +15,7 @@ import ColumnHeaderMenu from './ColumnHeaderMenu';
 import GroupedCardList from './GroupedCardList';
 import { useTypingContext } from '../../contexts/TypingProvider';
 import { useLanguage } from '../../hooks/useLanguage';
-import { useSentiment } from '../../hooks/useSentiment';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '../../types/card';
-import { SentimentType } from '../../types/sentiment';
 import { DynamicColumnConfig } from '../../hooks/useRetrospectiveColumns';
 import { getCardStyling, getSuggestedColorForColumn } from '../../utils/cardColors';
 import { useColumnGrouping } from '../../hooks/useColumnGrouping';
@@ -46,8 +44,6 @@ interface GroupableColumnProps {
     participants?: any[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
-    // Sentiment analysis
-    sentimentHook?: ReturnType<typeof useSentiment>;
 }
 
 const GroupableColumn: React.FC<GroupableColumnProps> = ({
@@ -72,7 +68,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     participants = [],
     canConvertToAction = false,
     onConvertToAction,
-    sentimentHook
 }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [newCardContent, setNewCardContent] = useState('');
@@ -358,7 +353,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                 onCardReactionRemove={onCardReactionRemove}
                                 currentUserId={currentUser}
                                 isReadOnly={false}
-                                sentimentHook={sentimentHook}
                             />
                         </div>
                     );
@@ -379,7 +373,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     participants={participants}
                     canConvertToAction={canConvertToAction}
                     onConvertToAction={onConvertToAction}
-                    sentimentHook={sentimentHook}
                 />
 
                 {/* Empty State */}

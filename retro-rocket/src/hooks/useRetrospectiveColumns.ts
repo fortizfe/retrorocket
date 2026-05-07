@@ -11,6 +11,8 @@ export interface RetrospectiveColumn {
     defaultColor: string;
 }
 
+export type ColumnRole = 'positive' | 'negative' | 'neutral' | 'action';
+
 // Extended ColumnConfig that doesn't rely on the hardcoded ColumnType
 export interface DynamicColumnConfig {
     id: string;
@@ -18,6 +20,18 @@ export interface DynamicColumnConfig {
     description: string;
     color: string;
     icon: string;
+    role: ColumnRole;
+}
+
+const POSITIVE_COLUMN_IDS = new Set(['helped', 'glad', 'start', 'went_well']);
+const NEGATIVE_COLUMN_IDS = new Set(['hindered', 'mad', 'sad', 'stop', 'not_went_well']);
+const ACTION_COLUMN_IDS = new Set(['actions', 'actionItems', 'action_items']);
+
+export function getColumnRole(columnId: string): ColumnRole {
+    if (ACTION_COLUMN_IDS.has(columnId)) return 'action';
+    if (POSITIVE_COLUMN_IDS.has(columnId)) return 'positive';
+    if (NEGATIVE_COLUMN_IDS.has(columnId)) return 'negative';
+    return 'neutral';
 }
 
 export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
@@ -46,7 +60,8 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
                 title,
                 description,
                 color: column.defaultColor,
-                icon: getColumnIcon(column.id)
+                icon: getColumnIcon(column.id),
+                role: getColumnRole(column.id)
             };
         });
 

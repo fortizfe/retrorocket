@@ -7,6 +7,8 @@ export interface SentimentResult {
     confidence: number;
     cardId: string;
     timestamp: Date;
+    modelId?: string;
+    isOverride?: boolean;
 }
 
 export interface SentimentAnalysisState {
@@ -35,6 +37,9 @@ export interface SentimentBadgeProps {
     confidence: number;
     size?: 'sm' | 'md' | 'lg';
     showTooltip?: boolean;
+    isOverride?: boolean;
+    canOverride?: boolean;
+    onOverride?: (next: SentimentType) => void;
 }
 
 export interface SentimentFilterProps {
@@ -73,7 +78,7 @@ export const SENTIMENT_MODELS: ModelConfig[] = [
             // Map 1-2 stars = negative, 3 = neutral, 4-5 = positive
             const rating = labels[0]?.label?.match(/(\d)/)?.[1];
             if (!rating) return 'neutral';
-            const stars = parseInt(rating);
+            const stars = Number.parseInt(rating);
             if (stars <= 2) return 'negative';
             if (stars >= 4) return 'positive';
             return 'neutral';

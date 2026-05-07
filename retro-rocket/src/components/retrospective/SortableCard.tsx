@@ -3,7 +3,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, EmojiReaction } from '../../types/card';
 import { Participant } from '../../types/participant';
-import { SentimentResult } from '../../types/sentiment';
 import SelectableCard from './SelectableCard';
 
 interface SortableCardProps {
@@ -23,9 +22,6 @@ interface SortableCardProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
-    // Sentiment analysis result
-    sentimentResult?: SentimentResult;
-    sentimentThreshold?: number;
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({
@@ -44,8 +40,6 @@ const SortableCard: React.FC<SortableCardProps> = ({
     participants,
     canConvertToAction,
     onConvertToAction,
-    sentimentResult,
-    sentimentThreshold
 }) => {
     const {
         attributes,
@@ -92,8 +86,6 @@ const SortableCard: React.FC<SortableCardProps> = ({
                 participants={participants}
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}
-                sentimentResult={sentimentResult}
-                sentimentThreshold={sentimentThreshold}
             />
         </div>
     );

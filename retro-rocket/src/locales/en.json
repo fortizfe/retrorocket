@@ -147,7 +147,8 @@
                 "glad": "Achievements and moments that made us happy",
                 "start": "New practices we should begin",
                 "stop": "Activities we should stop doing",
-                "continue": "Good practices we should maintain"
+                "continue": "Good practices we should maintain",
+                "actionItems": "Action items to follow up on"
             },
             "helped": "What helped",
             "hindered": "What hindered",
@@ -749,6 +750,7 @@
         "negative": "Negative",
         "neutral": "Neutral",
         "tooltip": "{{sentiment}} sentiment with {{confidence}}% confidence",
+        "overridden": "manually set",
         "analysis": "Sentiment Analysis",
         "model": "AI Model",
         "confidenceThreshold": "Confidence Threshold",

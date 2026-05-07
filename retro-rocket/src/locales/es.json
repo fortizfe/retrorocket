@@ -148,7 +148,8 @@
                 "glad": "Logros y momentos que nos alegraron",
                 "start": "Nuevas prácticas que deberíamos comenzar",
                 "stop": "Actividades que deberíamos dejar de hacer",
-                "continue": "Buenas prácticas que debemos mantener"
+                "continue": "Buenas prácticas que debemos mantener",
+                "actionItems": "Elementos de acción a dar seguimiento"
             },
             "helped": "Qué me ayudó",
             "hindered": "Qué me retrasó",
@@ -758,6 +759,7 @@
         "negative": "Negativo",
         "neutral": "Neutral",
         "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza",
+        "overridden": "ajustado manualmente",
         "analysis": "Análisis de Sentimientos",
         "model": "Modelo de IA",
         "confidenceThreshold": "Umbral de confianza",

@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from './components/AuthGuard';
 import Layout from './components/layout/Layout';
+import { SentimentStoreProvider } from './contexts/SentimentContext';
+import { BoardDataStoreProvider } from './contexts/BoardDataContext';
 import NotFound from './pages/NotFound';
 import Loading from './components/ui/Loading';
 
@@ -17,6 +19,8 @@ const App: React.FC = () => {
   return (
     <AuthGuard>
       <Router>
+        <BoardDataStoreProvider>
+        <SentimentStoreProvider>
         <Layout>
           <Suspense fallback={<Loading />}>
             <Routes>
@@ -36,6 +40,8 @@ const App: React.FC = () => {
             </Suspense>
           )}
         </Layout>
+        </SentimentStoreProvider>
+        </BoardDataStoreProvider>
         <Toaster
           position="top-right"
           toastOptions={{

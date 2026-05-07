@@ -140,7 +140,8 @@ describe('useRetrospectiveColumns', () => {
                 title: 'Qué ayudó',
                 description: 'Cosas que ayudaron al equipo',
                 color: 'pastelGreen',
-                icon: '👍'
+                icon: '👍',
+                role: 'positive'
             });
         });
 

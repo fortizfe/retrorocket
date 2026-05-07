@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Card, EmojiReaction } from '../../types/card';
 import { Participant } from '../../types/participant';
-import { SentimentResult } from '../../types/sentiment';
 import DraggableCard from './DraggableCard';
 
 interface SelectableCardProps {
@@ -24,9 +23,6 @@ interface SelectableCardProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
-    // Sentiment analysis result
-    sentimentResult?: SentimentResult;
-    sentimentThreshold?: number;
 }
 
 const SelectableCard: React.FC<SelectableCardProps> = ({
@@ -46,8 +42,6 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
     participants,
     canConvertToAction,
     onConvertToAction,
-    sentimentResult,
-    sentimentThreshold
 }) => {
     const handleCardClick = (e: React.MouseEvent) => {
         if (isGroupingMode && onSelect) {
@@ -103,8 +97,6 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
                 participants={participants}
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}
-                sentimentResult={sentimentResult}
-                sentimentThreshold={sentimentThreshold}
             />
         </motion.div>
     );

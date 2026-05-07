@@ -74,6 +74,12 @@ service cloud.firestore {
                    request.auth.uid == resource.data.facilitatorId;
     }
     
+    // Resultados de análisis de sentimientos — cualquier participante autenticado puede leer/escribir
+    match /sentimentResults/{resultId} {
+      allow read: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      allow write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     // Reglas para elementos de acción - todos pueden leer, solo el facilitador puede escribir
     match /actionItems/{actionItemId} {
       // Todos pueden leer elementos de acción

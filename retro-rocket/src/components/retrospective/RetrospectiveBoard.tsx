@@ -12,6 +12,8 @@ import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useRetrospectiveColumns } from '../../hooks/useRetrospectiveColumns';
 import { useSentiment } from '../../hooks/useSentiment';
+import { useSentimentSetter } from '../../contexts/SentimentContext';
+import { useBoardDataSetter } from '../../contexts/BoardDataContext';
 import { Retrospective } from '../../types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '../../types/card';
 import { ActionItem } from '../../types/actionItem';
@@ -21,8 +23,7 @@ interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
-    participants?: any[]; // Necesitamos los participantes para el menú de conversión
-    onSentimentAnalysisReady?: (sentimentAnalysis: any) => void; // Callback to expose sentiment analysis
+    participants?: any[];
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
@@ -30,7 +31,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     currentUser,
     onDataChange,
     participants = [],
-    onSentimentAnalysisReady
 }) => {
     // Get language context to trigger re-render when language changes
     useLanguage();
@@ -90,51 +90,23 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         convertCardToActionItem
     } = useActionItems(retrospective.id);
 
-    // Sentiment analysis hook - initially disabled, enabled by facilitator
-    const sentimentAnalysis = useSentiment(cards, retrospective.id);
+    const { fullName, displayName, email, uid } = useCurrentUser();
+    const isFacilitatorFlag = uid === retrospective.createdBy;
 
-    // Expose sentiment analysis to parent component with stable callback
-    const sentimentAnalysisCallback = React.useCallback(() => ({
-        ...sentimentAnalysis,
-        columnConfigs, // Include column configurations for team mood analysis
-        cards, // Expose current cards so other UI (topbar) can use them for exports/analysis
-        groups, // Expose current groups
-        actionItems // Expose action items
-    }), [sentimentAnalysis, columnConfigs, cards, groups, actionItems]);
+    const sentimentAnalysis = useSentiment(cards, retrospective.id);
+    const setSentiment = useSentimentSetter();
+    const setBoardData = useBoardDataSetter();
+
+    // Register sentiment and board data into shared contexts; clean up on unmount.
+    React.useEffect(() => {
+        setSentiment(sentimentAnalysis);
+        return () => setSentiment(null);
+    }, [sentimentAnalysis, setSentiment]);
 
     React.useEffect(() => {
-        const base = sentimentAnalysisCallback();
-        const payload = {
-            ...base,
-            ready: !!base.ready,
-            version: Date.now()
-        };
-        if (onSentimentAnalysisReady) {
-            onSentimentAnalysisReady(payload);
-        }
-
-        // Publish to global in-memory store for other UI (topbar) to consume
-        (async () => {
-            try {
-                const mod = await import('../../lib/sentimentStore');
-                mod.setSentimentFor(retrospective.id, payload);
-            } catch {
-                // ignore - non-critical
-            }
-        })();
-
-        return () => {
-            (async () => {
-                try {
-                    const mod = await import('../../lib/sentimentStore');
-                    mod.setSentimentFor(retrospective.id, null);
-                } catch {
-                    // ignore
-                }
-            })();
-        };
-    }, [onSentimentAnalysisReady, sentimentAnalysisCallback, retrospective.id]);    // Get current user's name using useCurrentUser hook for more reliable data
-    const { fullName, displayName, email, uid } = useCurrentUser();
+        setBoardData({ cards, groups, actionItems, columnConfigs, isFacilitator: isFacilitatorFlag });
+        return () => setBoardData(null);
+    }, [cards, groups, actionItems, columnConfigs, isFacilitatorFlag, setBoardData]);
 
     // Notify parent component about data changes for export functionality
     React.useEffect(() => {
@@ -158,9 +130,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     }
 
     const currentUsername = fullName || displayName || email?.split('@')[0] || 'Usuario';
-
-    // Check if current user is facilitator (owner of the retrospective)
-    const isFacilitator = uid === retrospective.createdBy;
+    const isFacilitator = isFacilitatorFlag;
 
 
     const handleCardCreate = async (cardInput: CreateCardInput) => {
@@ -298,8 +268,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     participants={participants}
                                     canConvertToAction={isFacilitator}
                                     onConvertToAction={handleConvertToActionItem}
-                                    // Sentiment analysis
-                                    sentimentHook={sentimentAnalysis}
                                 />
                             </motion.div>
                         );

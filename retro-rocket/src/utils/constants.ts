@@ -64,6 +64,7 @@ export const FIRESTORE_COLLECTIONS = {
   CARDS: "cards",
   GROUPS: "groups",
   ACTION_ITEMS: "actionItems",
+  SENTIMENT_RESULTS: "sentimentResults",
 } as const;
 
 export const APP_NAME = 'RetroRocket';

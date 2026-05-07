@@ -17,7 +17,6 @@ import {
 } from '@dnd-kit/sortable';
 import { Card, EmojiReaction } from '../../types/card';
 import { Participant } from '../../types/participant';
-import { useSentiment } from '../../hooks/useSentiment';
 import SortableCard from './SortableCard';
 import DraggableCard from './DraggableCard';
 
@@ -42,8 +41,6 @@ interface DragDropColumnProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
-    // Sentiment analysis hook
-    sentimentHook?: ReturnType<typeof useSentiment>;
 }
 
 const DragDropColumn: React.FC<DragDropColumnProps> = ({
@@ -65,7 +62,6 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
     participants,
     canConvertToAction,
     onConvertToAction,
-    sentimentHook
 }) => {
     const [activeCard, setActiveCard] = React.useState<Card | null>(null);
 
@@ -151,9 +147,6 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                 <div className="space-y-3">
                     {children}
                     {React.useMemo(() => sortedCards.map((card) => {
-                        // Only get sentiment result if sentiment analysis is enabled
-                        const sentimentResult = (sentimentHook?.enabled && sentimentHook?.ready) ? sentimentHook?.getSentiment(card.id) : undefined;
-
                         return (
                             <SortableCard
                                 key={card.id}
@@ -172,11 +165,9 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                                 participants={participants}
                                 canConvertToAction={canConvertToAction}
                                 onConvertToAction={onConvertToAction}
-                                sentimentResult={sentimentResult}
-                                sentimentThreshold={sentimentHook?.config?.threshold}
                             />
                         );
-                    }), [sortedCards, sentimentHook?.enabled, sentimentHook?.ready, sentimentHook?.getSentiment, sentimentHook?.config?.threshold, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
+                    }), [sortedCards, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
                 </div>
             </SortableContext>
 
@@ -185,8 +176,6 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
                     <DraggableCard
                         card={activeCard}
                         isDragging={true}
-                        sentimentResult={(sentimentHook?.enabled && sentimentHook?.ready) ? sentimentHook?.getSentiment(activeCard.id) : undefined}
-                        sentimentThreshold={sentimentHook?.config?.threshold}
                     />
                 ) : null}
             </DragOverlay>

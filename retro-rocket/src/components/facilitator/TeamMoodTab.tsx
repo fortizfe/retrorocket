@@ -11,7 +11,7 @@ import TeamMoodDashboard from '../sentiment/TeamMoodDashboard';
 
 interface TeamMoodTabProps {
     cards: Card[];
-    sentimentResults: Map<string, any>;
+    sentimentResults: ReadonlyMap<string, any>;
     sentimentEnabled: boolean;
     sentimentReady: boolean;
     columnConfigs: Record<string, any>;

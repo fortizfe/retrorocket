@@ -19,7 +19,7 @@ import { SentimentResult, SentimentType } from '../types/sentiment';
 
 interface UseTeamMoodProps {
     cards: Card[];
-    sentimentResults: Map<string, SentimentResult>;
+    sentimentResults: ReadonlyMap<string, SentimentResult>;
     columnConfigs: Record<string, any>; // Para obtener títulos de columna
     config?: Partial<TeamMoodConfig>;
 }
@@ -253,8 +253,12 @@ export function useTeamMood({
             });
         }
 
-        // Análisis por columna más problemática
-        const mostNegativeColumn = columnMetrics.find(col => col.negativePercentage > 50);
+        // Análisis por columna más problemática — ignorar columnas cuyo rol es 'negative'
+        // (e.g., "qué no fue bien") porque allí el sentimiento negativo es esperado.
+        const mostNegativeColumn = columnMetrics.find(col =>
+            col.negativePercentage > 50 &&
+            columnConfigs[col.column]?.role !== 'negative'
+        );
         if (mostNegativeColumn) {
             insights.push({
                 type: 'critical',
@@ -315,7 +319,7 @@ export function useTeamMood({
 
     // Generar informe completo
     const report = useMemo((): TeamMoodReport => {
-        const moodScore = calculateMoodScore(teamMetrics);
+        const moodScore = calculateMoodScore(teamMetrics, columnConfigs);
 
         return {
             metrics: teamMetrics,

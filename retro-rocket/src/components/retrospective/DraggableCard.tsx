@@ -12,7 +12,8 @@ import CardMenu from './CardMenu';
 import SentimentBadge from '../sentiment/SentimentBadge';
 import { Card as CardType, EmojiReaction, CardColor } from '../../types/card';
 import { Participant } from '../../types/participant';
-import { SentimentResult } from '../../types/sentiment';
+import { useSentimentContext } from '../../contexts/SentimentContext';
+import { useBoardData } from '../../contexts/BoardDataContext';
 import { groupReactions, hasUserLiked } from '../../utils/cardHelpers';
 import { getCardStyling, validateColor } from '../../utils/cardColors';
 
@@ -31,9 +32,6 @@ interface DraggableCardProps {
     participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
-    // Sentiment analysis
-    sentimentResult?: SentimentResult;
-    sentimentThreshold?: number;
 }
 
 const DraggableCard: React.FC<DraggableCardProps> = ({
@@ -50,12 +48,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     participants = [],
     canConvertToAction = false,
     onConvertToAction,
-    sentimentResult,
-    sentimentThreshold = 0.6
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
     const [isDeleting, setIsDeleting] = useState(false);
+    const { enabled, ready, getSentiment, config, overrideSentiment } = useSentimentContext();
+    const { isFacilitator } = useBoardData();
+    const sentimentResult = (enabled && ready) ? getSentiment(card.id) : undefined;
+    const sentimentThreshold = config.threshold;
 
     // Calculate reactions directly from card data
     const likesCount = card.likes?.length ?? 0;
@@ -196,9 +196,12 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                         confidence={sentimentResult.confidence}
                                         size="sm"
                                         showTooltip={true}
+                                        isOverride={sentimentResult.isOverride === true}
+                                        canOverride={isFacilitator}
+                                        onOverride={(next) => overrideSentiment(card.id, next)}
                                     />
                                 );
-                            }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold])}
+                            }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold, isFacilitator, overrideSentiment])}
                         </div>
                         <div className="flex items-center gap-1">
                             {(card.votes !== undefined && card.votes > 0) && (
