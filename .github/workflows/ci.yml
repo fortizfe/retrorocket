@@ -6,14 +6,30 @@ on:
   pull_request:
     branches: [main]
 
-defaults:
-  run:
-    working-directory: retro-rocket
-
 jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
   checks:
     name: Type-check, lint, and test with coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: retro-rocket
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +54,9 @@ jobs:
   e2e:
     name: Playwright E2E (Firebase Emulator Suite)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: retro-rocket
     steps:
       - uses: actions/checkout@v4
 
@@ -63,26 +82,112 @@ jobs:
       - name: Run E2E suite against the Firebase Emulator Suite
         run: npm run e2e
 
+  # NOTE: deploy-preview and deploy-production intentionally do NOT use a
+  # `defaults.run.working-directory: retro-rocket` (unlike checks/e2e/version).
+  # The Vercel project's "Root Directory" setting is already "retro-rocket", and the
+  # Vercel CLI applies that offset itself — it must be invoked from the actual
+  # repository root, or the offset gets applied twice and it can't find index.html.
+  # Only the plain npm/dependency step below explicitly cds into retro-rocket/.
+  deploy-preview:
+    name: Deploy Preview
+    needs: [analyze, checks, e2e]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: retro-rocket/package-lock.json
+
+      - name: Install dependencies
+        working-directory: retro-rocket
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel preview environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build preview artifacts
+        run: vercel build
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL on pull request
+        if: always() && steps.deploy.outputs.url != ''
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
+        with:
+          header: gated-vercel-preview-deployment
+          message: |
+            Preview deployment: ${{ steps.deploy.outputs.url }}
+
+  deploy-production:
+    name: Deploy Production
+    needs: [analyze, checks, e2e]
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[version bump]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: retro-rocket/package-lock.json
+
+      - name: Install dependencies
+        working-directory: retro-rocket
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel production environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build production artifacts
+        run: vercel build --prod
+
+      - name: Deploy to Vercel production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
   version:
     name: Automated Semantic Versioning
     runs-on: ubuntu-latest
-    needs: [checks, e2e]
+    needs: [deploy-production]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[version bump]')
     permissions:
       contents: write
+    defaults:
+      run:
+        working-directory: retro-rocket
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Wait for CodeQL
-        uses: lewagon/wait-on-check-action@v1.8.1
-        timeout-minutes: 15
-        with:
-          ref: ${{ github.sha }}
-          check-name: 'CodeQL'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 15
 
       - uses: actions/setup-node@v4
         with:
