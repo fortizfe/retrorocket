@@ -1,29 +1,26 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 2.0.0
+- Version change: 2.0.0 → 3.0.0
 - Rationale: MAJOR bump. The "Development Workflow & Quality Gates" section is
-  redefined: it previously assumed CI ran automatically on every pull request
-  and gated merge on ESLint/type-check passing there. Feature
-  003-scripts-cleanup-ci-trigger changed the CI pipeline to trigger on push to
-  `main` instead of on pull requests, so that automated pre-merge gate no
-  longer exists. This is a backward-incompatible redefinition of how quality
-  gates are enforced (automated pre-merge PR gate → push-to-main gate plus
-  human pre-merge discipline), not a mere clarification, hence MAJOR per this
-  constitution's own versioning policy.
+  redefined again, reversing the 2.0.0 change: feature
+  004-remove-secrets-add-codeql reintroduces an automated pre-merge PR gate
+  (CI now runs on `pull_request` as well as on push to `main`) and adds a
+  required GitHub CodeQL code-scanning check enforced via branch protection.
+  This restores automatic pre-merge enforcement in place of the "push-to-main
+  gate plus human pre-merge discipline" model from 2.0.0 — a backward
+  incompatible redefinition of the enforcement mechanism, hence MAJOR per
+  this constitution's own versioning policy.
 - Modified principles/sections:
   - "Development Workflow & Quality Gates" — rewritten (see below); no other
     Core Principles (I–VII) changed.
 - Added sections: none
 - Removed sections: none
-- Follow-up TODOs / known residual inconsistency:
-  - The "Technology Stack & Additional Standards" section still contains the
-    line "ESLint MUST be a mandatory gate before merge," which carries the
-    same now-inaccurate assumption (automatic pre-merge enforcement) as the
-    old Development Workflow wording. It was intentionally left unchanged in
-    this amendment because the user scoped this update to the Development
-    Workflow & Quality Gates section only. Recommend a follow-up
-    `/speckit-constitution` pass to reconcile that line with the same
-    push-to-main model.
+- Resolved residual inconsistency: The 2.0.0 Sync Impact Report flagged that
+  "Technology Stack & Additional Standards" still said "ESLint MUST be a
+  mandatory gate before merge," which no longer matched the push-only model.
+  That line is accurate again as of this amendment (ESLint runs in the
+  `checks` job, which is a required PR status check once more) — left
+  unchanged, no further action needed.
 - Templates requiring updates:
   - ✅ .specify/templates/plan-template.md — Constitution Check section is
     generic/dynamic; no hardcoded "before merge"/PR-gate wording found, no
@@ -147,21 +144,26 @@ critical flows need end-to-end verification before shipping.
 
 ## Development Workflow & Quality Gates
 
-- CI MUST run automatically on every push to `main` and MUST execute the
-  full check suite (TypeScript type-check, ESLint, Vitest with coverage,
-  and the Playwright E2E suite) on that push.
-- Because CI no longer runs automatically on pull requests, contributors
-  MUST run type-check, lint, and the relevant test suite locally before
-  opening or merging a PR. Reviewers MUST treat a red CI run on `main` as
-  blocking: no further work may land on `main` until the failure is fixed
-  or the offending commit is reverted.
+- CI MUST run automatically on every pull request targeting `main` and on
+  every push to `main`, executing the full check suite (TypeScript
+  type-check, ESLint, Vitest with coverage, and the Playwright E2E suite)
+  on both triggers.
+- CI MUST additionally run a GitHub CodeQL analysis on the same triggers
+  (pull request and push to `main`), covering the languages used in the
+  project's source code.
+- Branch protection on `main` MUST require, as merge-blocking status
+  checks: the type-check/lint/test-with-coverage job, the Playwright E2E
+  job, and CodeQL code scanning results at minimum severity High. A pull
+  request with a failing required check — including a High or Critical
+  CodeQL finding newly introduced by that PR — MUST be blocked from
+  merging automatically; Medium/Low/style-level CodeQL findings MUST be
+  reported but MUST NOT block merge.
 - Every PR MUST still demonstrate TDD compliance (tests precede
-  implementation); this is verified through human code review rather than
-  an automated pre-merge CI gate.
-- CI MUST fail the push-triggered build if coverage drops below the
-  thresholds defined in `vitest.config.ts`, or if the Playwright E2E suite
-  fails on a critical flow; either failure blocks any further merge or
-  release until resolved.
+  implementation); this is verified through human code review in addition
+  to the automated pre-merge CI gate.
+- CI MUST fail the build if coverage drops below the thresholds defined in
+  `vitest.config.ts`, or if the Playwright E2E suite fails on a critical
+  flow; either failure blocks merge or release until resolved.
 - Any exception to a core principle (TDD, minimum coverage, E2E coverage of
   critical flows, or any other NON-NEGOTIABLE principle) MUST be documented
   explicitly in the PR description with a stated rationale.
@@ -184,4 +186,4 @@ incompatible governance/principle removals or redefinitions, MINOR for new
 principles or materially expanded guidance, PATCH for clarifications and
 non-semantic refinements.
 
-**Version**: 2.0.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-21
+**Version**: 3.0.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-21
