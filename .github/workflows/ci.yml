@@ -45,6 +45,13 @@ jobs:
           cache: npm
           cache-dependency-path: retro-rocket/package-lock.json
 
+      # firebase-tools' Firestore Emulator requires a JDK (21+); ubuntu-latest runners
+      # don't ship one new enough by default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install dependencies
         run: npm ci
 
