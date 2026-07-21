@@ -61,7 +61,7 @@ Single existing project: `retro-rocket/` (React/Vite SPA) plus repo-root `.githu
 ### Implementation for User Story 2
 
 - [X] T005 [P] [US2] Update `.github/workflows/ci.yml`: replace the `on.pull_request.branches: [main]` trigger with `on.push.branches: [main]`, leaving the `checks` and `e2e` jobs and all of their steps unchanged
-- [ ] T006 [US2] Validate User Story 2 per `specs/003-scripts-cleanup-ci-trigger/quickstart.md` steps 4-6: confirm `ci.yml`'s `on:` block only specifies `push: branches: [main]`; open/update a pull request against `main` and confirm no workflow run starts; then push to `main` and confirm both the `checks` and `e2e` jobs run to completion (depends on T005)
+- [~] T006 [US2] Validate User Story 2 per `specs/003-scripts-cleanup-ci-trigger/quickstart.md` steps 4-6 (depends on T005). Static check done: `ci.yml`'s `on:` block now specifies only `push: branches: [main]`. PR #3 was opened against `main` (which still carried the old `pull_request` trigger at open time) to observe live behavior, but no Actions run was recorded for it at all — not even the old pull_request-triggered workflow — after 30+ seconds of polling via `gh api .../actions/runs`. This looks like an account/repo-level Actions availability issue (e.g. a spending/usage limit on this private repo), not a defect in the workflow YAML. **Live confirmation that push-to-main triggers the pipeline is still outstanding** — recommend checking repo Settings → Actions once Actions runs are confirmed to fire again, then re-validating after merge.
 
 **Checkpoint**: At this point, both User Stories 1 and 2 work independently — no shell scripts remain, and CI runs only on pushes to `main`.
 
@@ -71,8 +71,8 @@ Single existing project: `retro-rocket/` (React/Vite SPA) plus repo-root `.githu
 
 **Purpose**: Final, whole-feature verification and governance documentation
 
-- [ ] T007 [P] Run the full `specs/003-scripts-cleanup-ci-trigger/quickstart.md` validation end-to-end and confirm success criteria SC-001 through SC-004 all hold
-- [ ] T008 Document the constitution exception (CI no longer gating pull requests before merge) in the pull request description, referencing `specs/003-scripts-cleanup-ci-trigger/plan.md`'s Complexity Tracking section, per the constitution's Governance requirement that exceptions be explicitly justified
+- [~] T007 [P] Run the full `specs/003-scripts-cleanup-ci-trigger/quickstart.md` validation end-to-end and confirm success criteria SC-001 through SC-004 all hold. SC-001/SC-002 confirmed locally (T004). SC-003/SC-004 blocked on the same Actions-run visibility issue as T006.
+- [X] T008 Document the constitution amendment context in the pull request description (PR #3 body references `.specify/memory/constitution.md` v2.0.0 and `plan.md`'s Constitution Check/Complexity Tracking) — no longer a literal "exception" to document since the constitution was amended to match FR-005, but the transparency this task called for is satisfied.
 
 ---
 
