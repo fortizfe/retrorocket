@@ -1,19 +1,19 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthGuard } from './components/AuthGuard';
-import Layout from './components/layout/Layout';
-import { SentimentStoreProvider } from './contexts/SentimentContext';
-import { BoardDataStoreProvider } from './contexts/BoardDataContext';
-import NotFound from './pages/NotFound';
-import Loading from './components/ui/Loading';
+import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import Layout from '@/lib/components/layout/Layout';
+import { SentimentStoreProvider } from '@/features/boards/sentiment/contexts/SentimentContext';
+import { BoardDataStoreProvider } from '@/features/boards/retrospective/contexts/BoardDataContext';
+import NotFound from '@/pages/NotFound';
+import Loading from '@/lib/components/ui/Loading';
 
-const Landing = lazy(() => import('./pages/Landing'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Profile = lazy(() => import('./pages/Profile'));
-const RetrospectivePage = lazy(() => import('./pages/RetrospectivePage'));
-const ColorSystemTest = lazy(() => import('./components/ColorSystemTest'));
-const MetricsDashboard = lazy(() => import('./components/optimization/MetricsDashboard'));
+const Landing = lazy(() => import('@/pages/Landing'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Profile = lazy(() => import('@/pages/Profile'));
+const RetrospectivePage = lazy(() => import('@/pages/RetrospectivePage'));
+const ColorSystemTest = lazy(() => import('@/features/dev-tools/components/ColorSystemTest'));
+const MetricsDashboard = lazy(() => import('@/features/dev-tools/components/MetricsDashboard'));
 
 const App: React.FC = () => {
   return (

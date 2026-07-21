@@ -2,8 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
-import i18n from '../../i18n/config';
-import DashboardPage from '../../pages/Dashboard';
+import i18n from '@/i18n/config';
+import DashboardPage from '@/pages/Dashboard';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -38,7 +38,7 @@ const mockUserProfile = {
     createdAt: new Date(),
 };
 
-vi.mock('../../contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/UserContext', () => ({
     useUser: () => ({
         user: mockUser,
         userProfile: mockUserProfile,
@@ -46,33 +46,33 @@ vi.mock('../../contexts/UserContext', () => ({
 }));
 
 // Mock services
-vi.mock('../../services/userService', () => ({
+vi.mock('@/features/auth/services/userService', () => ({
     userService: {
         getUserBoards: vi.fn(() => Promise.resolve([])),
     },
 }));
 
 const mockCreateRetrospective = vi.fn(() => Promise.resolve({ id: 'new-board-id' }));
-vi.mock('../../hooks/useRetrospective', () => ({
+vi.mock('@/features/boards/retrospective/hooks/useRetrospective', () => ({
     useRetrospective: () => ({
         createRetrospective: mockCreateRetrospective,
     }),
 }));
 
-vi.mock('../../services/participantService', () => ({
+vi.mock('@/features/boards/participants/services/participantService', () => ({
     addParticipant: vi.fn(),
 }));
 
-vi.mock('../../services/retrospectiveService', () => ({
+vi.mock('@/features/boards/retrospective/services/retrospectiveService', () => ({
     incrementParticipantCount: vi.fn(),
 }));
 
 // Mock components
-vi.mock('../../components/auth/AuthWrapper', () => ({
+vi.mock('@/features/auth/components/AuthWrapper', () => ({
     default: ({ children }: any) => <div data-testid="auth-wrapper">{children}</div>,
 }));
 
-vi.mock('../../components/dashboard/BoardCard', () => ({
+vi.mock('@/features/dashboard/components/BoardCard', () => ({
     default: ({ board }: any) => (
         <div data-testid="board-card">
             <h3>{board.title}</h3>
@@ -81,7 +81,7 @@ vi.mock('../../components/dashboard/BoardCard', () => ({
     ),
 }));
 
-vi.mock('../../components/dashboard/JoinRetrospectiveModal', () => ({
+vi.mock('@/features/dashboard/components/JoinRetrospectiveModal', () => ({
     default: ({ isOpen, onClose }: any) =>
         isOpen ? (
             <div data-testid="join-modal">
@@ -90,7 +90,7 @@ vi.mock('../../components/dashboard/JoinRetrospectiveModal', () => ({
         ) : null,
 }));
 
-vi.mock('../../components/ui/Button', () => ({
+vi.mock('@/lib/components/ui/Button', () => ({
     default: ({ children, onClick, ...props }: any) => (
         <button onClick={onClick} {...props}>
             {children}
@@ -98,7 +98,7 @@ vi.mock('../../components/ui/Button', () => ({
     ),
 }));
 
-vi.mock('../../components/ui/Input', () => ({
+vi.mock('@/lib/components/ui/Input', () => ({
     default: ({ value, onChange, ...props }: any) => (
         <input
             value={value}
@@ -108,7 +108,7 @@ vi.mock('../../components/ui/Input', () => ({
     ),
 }));
 
-vi.mock('../../components/create-board/BoardTemplateSelector', () => ({
+vi.mock('@/features/create-board/components/BoardTemplateSelector', () => ({
     default: ({ selectedTemplate, onTemplateChange }: any) => (
         <div data-testid="board-template-selector">
             <select
@@ -216,7 +216,7 @@ describe('DashboardPage', () => {
     });
 
     it('loads user boards on mount', async () => {
-        const { userService } = await import('../../services/userService');
+        const { userService } = await import('@/features/auth/services/userService');
 
         renderWithProviders(<DashboardPage />);
 

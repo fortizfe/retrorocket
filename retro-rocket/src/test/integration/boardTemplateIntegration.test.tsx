@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BOARD_TEMPLATES, getTemplateColumns, isValidTemplateId } from '../../templates/boardTemplates';
-import { getSuggestedColorForColumn, getAvailableColors, isValidColor } from '../../utils/cardColors';
+import { BOARD_TEMPLATES, getTemplateColumns, isValidTemplateId } from '@/features/create-board/boardTemplates';
+import { getSuggestedColorForColumn, getAvailableColors, isValidColor } from '@/lib/utils/cardColors';
 
 describe('Board Template System Integration Tests', () => {
     beforeEach(() => {

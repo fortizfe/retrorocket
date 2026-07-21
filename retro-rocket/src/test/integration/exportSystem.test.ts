@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getExportColumns, getExportColumnOrder, getTemplateName } from '../../utils/exportColumns';
+import { getExportColumns, getExportColumnOrder, getTemplateName } from '@/features/boards/export/utils/exportColumns';
 
 describe('Template-based Column System Integration', () => {
     const mockMadSadGladCards = [

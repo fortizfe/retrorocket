@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import RetrospectiveCard from '../../components/retrospective/RetrospectiveCard';
-import ActionItemCard from '../../components/retrospective/ActionItemCard';
-import { Card } from '../../types/card';
-import { ActionItem } from '../../types/actionItem';
-import { Participant } from '../../types/participant';
+import RetrospectiveCard from '@/features/boards/retrospective/components/RetrospectiveCard';
+import ActionItemCard from '@/features/boards/retrospective/components/ActionItemCard';
+import { Card } from '@/features/boards/types/card';
+import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 
 // Mock external dependencies
-vi.mock('../../services/cardService', () => ({
+vi.mock('@/features/boards/retrospective/services/cardService', () => ({
     createCard: vi.fn(),
     updateCard: vi.fn(),
     deleteCard: vi.fn(),
@@ -18,14 +18,14 @@ vi.mock('../../services/cardService', () => ({
     getCardsByRetrospective: vi.fn(),
 }));
 
-vi.mock('../../services/cardInteractionService', () => ({
+vi.mock('@/features/boards/retrospective/services/cardInteractionService', () => ({
     toggleLike: vi.fn(),
     addOrUpdateReaction: vi.fn(),
     removeReaction: vi.fn(),
     batchUpdateCardOrder: vi.fn(),
 }));
 
-vi.mock('../../hooks/useCurrentUser', () => ({
+vi.mock('@/lib/hooks/useCurrentUser', () => ({
     useCurrentUser: () => ({
         user: {
             uid: 'user-123',
@@ -36,7 +36,7 @@ vi.mock('../../hooks/useCurrentUser', () => ({
     })
 }));
 
-vi.mock('../../hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
     useAuth: () => ({
         user: {
             uid: 'user-123',
@@ -62,7 +62,7 @@ vi.mock('react-beautiful-dnd', () => ({
     }, {}),
 }));
 
-vi.mock('../../hooks/useLanguage', () => ({
+vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
         t: (key: string, params?: any) => {
             if (key === 'retrospective.cards.convertToAction') {

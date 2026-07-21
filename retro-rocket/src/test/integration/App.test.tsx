@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
 // Mock all external dependencies
-vi.mock('../services/firebase', () => ({
+vi.mock('@/lib/services/firebase', () => ({
     auth: {},
     db: {},
     onAuthStateChanged: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('react-hot-toast', () => ({
     },
 }));
 
-vi.mock('../contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/UserContext', () => ({
     UserProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="user-provider">{children}</div>,
     useUser: () => ({
         user: null,
@@ -52,7 +52,7 @@ vi.mock('../contexts/UserContext', () => ({
     }),
 }));
 
-import App from '../../App';
+import App from '@/App';
 
 describe('App Integration Tests', () => {
     beforeEach(() => {

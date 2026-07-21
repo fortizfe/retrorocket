@@ -1,0 +1,153 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Filter, ChevronDown } from 'lucide-react';
+import { SentimentFilterProps, SENTIMENT_COLORS } from '@/features/boards/types/sentiment';
+import Button from '@/lib/components/ui/Button';
+
+const SentimentFilter: React.FC<SentimentFilterProps> = ({
+    currentFilter,
+    onFilterChange,
+    counts
+}) => {
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const filterOptions = [
+        {
+            value: 'all' as const,
+            label: 'Todos',
+            count: counts.total,
+            icon: '📊',
+            colors: {
+                bg: 'bg-slate-100 dark:bg-slate-700',
+                text: 'text-slate-800 dark:text-slate-200',
+                border: 'border-slate-200 dark:border-slate-600'
+            }
+        },
+        {
+            value: 'positive' as const,
+            label: 'Positivos',
+            count: counts.positive,
+            icon: SENTIMENT_COLORS.positive.icon,
+            colors: SENTIMENT_COLORS.positive
+        },
+        {
+            value: 'neutral' as const,
+            label: 'Neutrales',
+            count: counts.neutral,
+            icon: SENTIMENT_COLORS.neutral.icon,
+            colors: SENTIMENT_COLORS.neutral
+        },
+        {
+            value: 'negative' as const,
+            label: 'Negativos',
+            count: counts.negative,
+            icon: SENTIMENT_COLORS.negative.icon,
+            colors: SENTIMENT_COLORS.negative
+        }
+    ];
+
+    const currentOption = filterOptions.find(opt => opt.value === currentFilter);
+
+    const handleFilterSelect = (value: typeof currentFilter) => {
+        onFilterChange(value);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="relative">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`
+                    flex items-center gap-2 text-xs
+                    ${currentFilter !== 'all'
+                        ? `${currentOption?.colors.bg} ${currentOption?.colors.text} border ${currentOption?.colors.border}`
+                        : 'text-slate-600 dark:text-slate-400'
+                    }
+                `}
+                aria-expanded={isOpen}
+                aria-haspopup="true"
+                title="Filtrar por sentimiento"
+            >
+                <Filter className="w-3 h-3" />
+                <span>{currentOption?.icon}</span>
+                <span>{currentOption?.label}</span>
+                {currentFilter !== 'all' && (
+                    <span className="bg-white dark:bg-slate-800 text-xs px-1.5 py-0.5 rounded-full">
+                        {currentOption?.count}
+                    </span>
+                )}
+                <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <button
+                            type="button"
+                            className="fixed inset-0 z-40 bg-transparent"
+                            onClick={() => setIsOpen(false)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    setIsOpen(false);
+                                }
+                            }}
+                            aria-label="Close filter menu"
+                        />
+
+                        {/* Dropdown */}
+                        <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 
+                                     rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 
+                                     py-1 z-50 min-w-[160px]"
+                        >
+                            {filterOptions.map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => handleFilterSelect(option.value)}
+                                    className={`
+                                        w-full flex items-center justify-between px-3 py-2 text-xs
+                                        transition-colors hover:bg-slate-50 dark:hover:bg-slate-700
+                                        ${currentFilter === option.value
+                                            ? `${option.colors.bg} ${option.colors.text}`
+                                            : 'text-slate-700 dark:text-slate-300'
+                                        }
+                                    `}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span>{option.icon}</span>
+                                        <span>{option.label}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <span className={`
+                                            text-xs px-1.5 py-0.5 rounded-full
+                                            ${option.value === 'all'
+                                                ? 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
+                                                : `${option.colors.bg} ${option.colors.text}`
+                                            }
+                                        `}>
+                                            {option.count}
+                                        </span>
+
+                                        {currentFilter === option.value && (
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                        )}
+                                    </div>
+                                </button>
+                            ))}
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+export default SentimentFilter;
