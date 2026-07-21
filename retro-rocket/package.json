@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "start": "./start.sh",
+    "start": "npm run dev",
     "lint": "eslint src --ext ts,tsx",
     "deploy": "npm run build && vercel --prod",
     "test": "vitest --config vitest.config.ts",
