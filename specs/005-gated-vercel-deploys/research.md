@@ -48,6 +48,8 @@ Both jobs run `working-directory: retro-rocket` (matching the existing `defaults
 - A single job with branching shell logic (`if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then ... else ... fi`) — works but is less legible in the Actions UI (one job either way) and mixes two independently-triggerable concerns into one job; two small `if:`-gated jobs are simpler to reason about and match FR-003/FR-004's mutual exclusivity more directly.
 - A third-party wrapper Action (e.g. `amondnet/vercel-action`) — adds an extra unmaintained-risk dependency for something the official CLI already does in four documented commands; rejected per Principle III (prefer the first-party tool already used by `npm run deploy`, over an unmaintained third-party wrapper).
 
+**Correction after first live run (2026-07-21)**: the documented four-command sequence alone (`vercel pull` → `vercel build` → `vercel deploy --prebuilt`) failed on the first real PR run with `sh: 1: vite: not found` — `vercel build` did not install project dependencies in this GitHub Actions runner (no "Installing dependencies" phase appeared in its output at all). An explicit `npm ci` step (matching the pattern `ci.yml` already uses) was added between `actions/setup-node` and the Vercel CLI steps in both jobs to guarantee `node_modules` exists before `vercel build` runs, rather than relying on undocumented install behavior.
+
 ## 5. Credential provisioning (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID)
 
 **Decision**: Treat provisioning these three values as GitHub Actions repository secrets as a required manual prerequisite (documented in `quickstart.md`), not something this feature's code changes can perform themselves.
