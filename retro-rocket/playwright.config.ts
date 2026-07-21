@@ -14,10 +14,18 @@ export default defineConfig({
     workers: 1,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
+    // CI runners are noticeably slower than a local dev machine for this app + emulator
+    // combo (observed: a few interactions crossed the 30s/5s defaults on GitHub Actions
+    // even though the same specs comfortably passed locally) — give both more headroom.
+    timeout: 60_000,
+    expect: {
+        timeout: 10_000,
+    },
     reporter: 'list',
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
+        actionTimeout: 15_000,
     },
     projects: [
         {
