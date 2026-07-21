@@ -1,26 +1,38 @@
 <!--
 Sync Impact Report
-- Version change: N/A (template) → 1.0.0
-- Rationale: Initial ratification of the RetroRocket constitution. The prior file
-  contained only unfilled template placeholders; this is the first concrete
-  version, so MAJOR is set to 1 per semantic versioning rules for initial adoption.
-- Modified principles: N/A (all principles newly defined)
-- Added sections:
-  - Core Principles I–VII (TDD, Library-First, Prefer Proven Third-Party
-    Libraries, SOLID, Simplicity/KISS+YAGNI, Mandatory Unit Testing &
-    Coverage Floor, E2E Testing with Playwright)
-  - Technology Stack & Additional Standards
-  - Development Workflow & Quality Gates
-  - Governance
-- Removed sections: none (template placeholders only)
+- Version change: 1.0.0 → 2.0.0
+- Rationale: MAJOR bump. The "Development Workflow & Quality Gates" section is
+  redefined: it previously assumed CI ran automatically on every pull request
+  and gated merge on ESLint/type-check passing there. Feature
+  003-scripts-cleanup-ci-trigger changed the CI pipeline to trigger on push to
+  `main` instead of on pull requests, so that automated pre-merge gate no
+  longer exists. This is a backward-incompatible redefinition of how quality
+  gates are enforced (automated pre-merge PR gate → push-to-main gate plus
+  human pre-merge discipline), not a mere clarification, hence MAJOR per this
+  constitution's own versioning policy.
+- Modified principles/sections:
+  - "Development Workflow & Quality Gates" — rewritten (see below); no other
+    Core Principles (I–VII) changed.
+- Added sections: none
+- Removed sections: none
+- Follow-up TODOs / known residual inconsistency:
+  - The "Technology Stack & Additional Standards" section still contains the
+    line "ESLint MUST be a mandatory gate before merge," which carries the
+    same now-inaccurate assumption (automatic pre-merge enforcement) as the
+    old Development Workflow wording. It was intentionally left unchanged in
+    this amendment because the user scoped this update to the Development
+    Workflow & Quality Gates section only. Recommend a follow-up
+    `/speckit-constitution` pass to reconcile that line with the same
+    push-to-main model.
 - Templates requiring updates:
-  - ✅ .specify/templates/tasks-template.md — updated to reflect that tests are
-    mandatory (not optional) per Principles I, VI, VII
   - ✅ .specify/templates/plan-template.md — Constitution Check section is
-    already generic/dynamic; no hardcoded conflicts found
+    generic/dynamic; no hardcoded "before merge"/PR-gate wording found, no
+    changes needed
+  - ✅ .specify/templates/tasks-template.md — TDD/testing guidance references
+    the constitution generically ("Per the project constitution (TDD,
+    NON-NEGOTIABLE)"); Principle I is unchanged, no changes needed
   - ✅ .specify/templates/spec-template.md — no conflicts found; no changes needed
   - ✅ .specify/templates/checklist-template.md — no conflicts found; no changes needed
-- Follow-up TODOs: none
 -->
 
 # RetroRocket Constitution
@@ -135,12 +147,21 @@ critical flows need end-to-end verification before shipping.
 
 ## Development Workflow & Quality Gates
 
-- Every PR MUST demonstrate TDD compliance (tests precede implementation)
-  and MUST pass the ESLint and TypeScript type-check gates before merge.
-- CI MUST fail the build if coverage drops below the thresholds defined in
-  `vitest.config.ts`.
-- The Playwright E2E suite MUST run in CI before every release; a failing
-  critical-flow E2E test blocks the release.
+- CI MUST run automatically on every push to `main` and MUST execute the
+  full check suite (TypeScript type-check, ESLint, Vitest with coverage,
+  and the Playwright E2E suite) on that push.
+- Because CI no longer runs automatically on pull requests, contributors
+  MUST run type-check, lint, and the relevant test suite locally before
+  opening or merging a PR. Reviewers MUST treat a red CI run on `main` as
+  blocking: no further work may land on `main` until the failure is fixed
+  or the offending commit is reverted.
+- Every PR MUST still demonstrate TDD compliance (tests precede
+  implementation); this is verified through human code review rather than
+  an automated pre-merge CI gate.
+- CI MUST fail the push-triggered build if coverage drops below the
+  thresholds defined in `vitest.config.ts`, or if the Playwright E2E suite
+  fails on a critical flow; either failure blocks any further merge or
+  release until resolved.
 - Any exception to a core principle (TDD, minimum coverage, E2E coverage of
   critical flows, or any other NON-NEGOTIABLE principle) MUST be documented
   explicitly in the PR description with a stated rationale.
@@ -163,4 +184,4 @@ incompatible governance/principle removals or redefinitions, MINOR for new
 principles or materially expanded guidance, PATCH for clarifications and
 non-semantic refinements.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-21
+**Version**: 2.0.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-21
