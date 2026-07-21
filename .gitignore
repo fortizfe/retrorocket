@@ -138,3 +138,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Claude Code (personal/local overrides only - .claude/skills and shared config stay tracked)
+.claude/settings.local.json
+.claude/*.local.json
+CLAUDE.local.md
+
+# Spec Kit (.specify/ and specs/ are tracked deliverables - no local artifacts to ignore yet)
