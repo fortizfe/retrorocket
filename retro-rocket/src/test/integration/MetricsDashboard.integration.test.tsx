@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import MetricsDashboard from '../../components/optimization/MetricsDashboard';
-import { FirebaseMetricsService } from '../../services/optimization/FirebaseMetricsService';
+import MetricsDashboard from '@/features/dev-tools/components/MetricsDashboard';
+import { FirebaseMetricsService } from '@/lib/services/FirebaseMetricsService';
 
 // Mock FirebaseMetricsService
-vi.mock('../../services/optimization/FirebaseMetricsService', () => ({
+vi.mock('@/lib/services/FirebaseMetricsService', () => ({
     FirebaseMetricsService: {
         getMetrics: vi.fn(),
     },

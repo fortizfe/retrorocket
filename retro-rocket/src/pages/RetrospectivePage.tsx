@@ -3,19 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Copy, Share2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Button from '../components/ui/Button';
-import Loading from '../components/ui/Loading';
-import RetrospectiveBoard from '../components/retrospective/RetrospectiveBoard';
-import ExportButtonGroup from '../components/retrospective/ExportButtonGroup';
-import { ResponsiveParticipantDisplay } from '../components/participants';
-import { CountdownTimer, FacilitatorMenu } from '../components/countdown';
-import AuthWrapper from '../components/auth/AuthWrapper';
-import { useRetrospective } from '../hooks/useRetrospective';
-import { useParticipants } from '../hooks/useParticipants';
-import { useCurrentUser } from '../hooks/useCurrentUser';
-import { useLanguage } from '../hooks/useLanguage';
-import { OptimizedRetrospectiveService } from '../services/optimization/OptimizedRetrospectiveService';
-import { Card, CardGroup } from '../types/card';
+import Button from '@/lib/components/ui/Button';
+import Loading from '@/lib/components/ui/Loading';
+import RetrospectiveBoard from '@/features/boards/retrospective/components/RetrospectiveBoard';
+import ExportButtonGroup from '@/features/boards/export/components/ExportButtonGroup';
+import { ResponsiveParticipantDisplay } from '@/features/boards/participants/components/index';
+import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/components/index';
+import AuthWrapper from '@/features/auth/components/AuthWrapper';
+import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
+import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
+import { Card, CardGroup } from '@/features/boards/types/card';
 // ...existing code...
 
 const RetrospectivePageContent: React.FC = () => {

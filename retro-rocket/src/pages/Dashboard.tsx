@@ -3,17 +3,17 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '../contexts/UserContext';
-import { userService } from '../services/userService';
-import AuthWrapper from '../components/auth/AuthWrapper';
-import BoardCard from '../components/dashboard/BoardCard';
-import { OptimizedRetrospectiveService } from '../services/optimization/OptimizedRetrospectiveService';
-import BoardListItem from '../components/dashboard/BoardListItem';
-import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '../components/dashboard/BoardControlsBar';
-import Pagination from '../components/dashboard/Pagination';
-import JoinRetrospectiveModal from '../components/dashboard/JoinRetrospectiveModal';
-import CreateBoardFlow from '../components/create-board/CreateBoardFlow';
-import Button from '../components/ui/Button';
+import { useUser } from '@/lib/contexts/UserContext';
+import { userService } from '@/features/auth/services/userService';
+import AuthWrapper from '@/features/auth/components/AuthWrapper';
+import BoardCard from '@/features/dashboard/components/BoardCard';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
+import BoardListItem from '@/features/dashboard/components/BoardListItem';
+import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '@/features/dashboard/components/BoardControlsBar';
+import Pagination from '@/features/dashboard/components/Pagination';
+import JoinRetrospectiveModal from '@/features/dashboard/components/JoinRetrospectiveModal';
+import CreateBoardFlow from '@/features/create-board/components/CreateBoardFlow';
+import Button from '@/lib/components/ui/Button';
 import toast from 'react-hot-toast';
 
 interface Board {

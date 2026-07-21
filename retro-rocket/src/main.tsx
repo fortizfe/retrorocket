@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App from '@/App';
 import './styles/globals.css';
 import './i18n/config';
-import { FirebaseMetricsService } from './services/optimization/FirebaseMetricsService';
+import { FirebaseMetricsService } from '@/lib/services/FirebaseMetricsService';
 
 // Configurar métricas de Firebase para monitoreo
 if (import.meta.env.PROD) {

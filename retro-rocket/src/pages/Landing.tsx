@@ -7,14 +7,14 @@ import {
     Play, Edit3, ArrowRight, Star,
     Download, Settings, CheckCircle
 } from 'lucide-react';
-import { useUser } from '../contexts/UserContext';
-import { useLanguage } from '../hooks/useLanguage';
-import AuthButtonGroup from '../components/auth/AuthButtonGroup';
-import UserProfileForm from '../components/auth/UserProfileForm';
-import AuthWrapper from '../components/auth/AuthWrapper';
-import ThemeToggle from '../components/ui/ThemeToggle';
-import { AuthProviderType } from '../types/user';
-import { APP_NAME } from '../utils/constants';
+import { useUser } from '@/lib/contexts/UserContext';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import AuthButtonGroup from '@/features/auth/components/AuthButtonGroup';
+import UserProfileForm from '@/features/auth/components/UserProfileForm';
+import AuthWrapper from '@/features/auth/components/AuthWrapper';
+import ThemeToggle from '@/lib/components/ui/ThemeToggle';
+import { AuthProviderType } from '@/features/auth/types/user';
+import { APP_NAME } from '@/lib/utils/constants';
 
 const LandingPage: React.FC = () => {
     const { signInWithGoogle, signInWithGithub, loading, user, userProfile, updateDisplayName } = useUser();

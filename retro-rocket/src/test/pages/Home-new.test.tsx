@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HomeNew from '../../pages/Home-new';
+import HomeNew from '@/pages/Home-new';
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
