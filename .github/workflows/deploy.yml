@@ -63,7 +63,9 @@ jobs:
           cache-dependency-path: retro-rocket/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -132,7 +134,9 @@ jobs:
           cache-dependency-path: retro-rocket/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest

@@ -50,6 +50,8 @@ Both jobs run `working-directory: retro-rocket` (matching the existing `defaults
 
 **Correction after first live run (2026-07-21)**: the documented four-command sequence alone (`vercel pull` → `vercel build` → `vercel deploy --prebuilt`) failed on the first real PR run with `sh: 1: vite: not found` — `vercel build` did not install project dependencies in this GitHub Actions runner (no "Installing dependencies" phase appeared in its output at all). An explicit `npm ci` step (matching the pattern `ci.yml` already uses) was added between `actions/setup-node` and the Vercel CLI steps in both jobs to guarantee `node_modules` exists before `vercel build` runs, rather than relying on undocumented install behavior.
 
+**Second correction after live run (2026-07-21)**: adding `npm ci` alone still produced `vite: not found`. Root cause: `vercel build` resolves `vercel.json`'s `buildCommand` ("npm run build") down to its underlying script content and execs it directly via `sh -c "vite build"`, bypassing `npm run`'s automatic `node_modules/.bin` PATH prepending — and each GitHub Actions `run:` step is its own shell process, so `npm ci`'s step doesn't leave `node_modules/.bin` on PATH for the later `vercel build` step either. Fix: the `npm ci` step now also runs `echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"`, which persists for all subsequent steps in the job.
+
 ## 5. Credential provisioning (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID)
 
 **Decision**: Treat provisioning these three values as GitHub Actions repository secrets as a required manual prerequisite (documented in `quickstart.md`), not something this feature's code changes can perform themselves.
