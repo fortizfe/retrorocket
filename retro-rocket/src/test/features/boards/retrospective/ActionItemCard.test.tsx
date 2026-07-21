@@ -548,8 +548,17 @@ describe('ActionItemCard', () => {
         it('displays correct date format for creation time', () => {
             render(<ActionItemCard {...defaultProps} />);
 
-            // Should display in Spanish format (DD/MM, HH:MM)
-            expect(screen.getByText(/Created: 15\/1, 11:30/)).toBeInTheDocument();
+            // Compute the expected string the same way the component does, rather than
+            // a hardcoded wall-clock string — toLocaleDateString renders in the runtime's
+            // local timezone, which differs between local dev machines and the UTC CI
+            // runner (a pre-existing gap only surfaced once CI started actually running).
+            const expected = defaultProps.actionItem.createdAt.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            expect(screen.getByText(new RegExp(`Created: ${expected}`))).toBeInTheDocument();
         });
     });
 });

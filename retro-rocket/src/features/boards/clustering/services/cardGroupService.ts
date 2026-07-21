@@ -16,7 +16,7 @@ import { db } from '@/lib/services/firebase';
 import { CardGroup, Card, Reaction } from '@/features/boards/types/card';
 import { FIRESTORE_COLLECTIONS } from '@/lib/utils/constants';
 
-const groupsCollection = collection(db as any, FIRESTORE_COLLECTIONS.GROUPS);
+const groupsCollection = collection(db!, FIRESTORE_COLLECTIONS.GROUPS);
 
 /**
  * Create a new card group
@@ -53,7 +53,7 @@ export const createCardGroup = async (
         console.log('Input validation passed, fetching head card...');
 
         // Get head card to determine column and order
-        const headCardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, headCardId);
+        const headCardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, headCardId);
         console.log('Head card reference created:', headCardRef.path);
         console.log('Head card reference created:', headCardRef.path);
 
@@ -111,7 +111,7 @@ export const createCardGroup = async (
 
         // Now update all cards with batch operation
         console.log('Starting batch update of cards...');
-        const batch = writeBatch(db as any);
+        const batch = writeBatch(db!);
 
         // Update head card
         console.log('Updating head card:', headCardId);
@@ -125,7 +125,7 @@ export const createCardGroup = async (
         console.log('Updating member cards:', memberCardIds);
         memberCardIds.forEach((cardId, index) => {
             console.log(`Updating member card ${index + 1}/${memberCardIds.length}:`, cardId);
-            const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+            const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
             batch.update(cardRef, {
                 groupId: groupId,
                 isGroupHead: false,
@@ -151,10 +151,10 @@ export const createCardGroup = async (
  */
 export const disbandCardGroup = async (groupId: string): Promise<void> => {
     try {
-        const batch = writeBatch(db as any);
+        const batch = writeBatch(db!);
 
         // Get group data
-        const groupRef = doc(db as any, FIRESTORE_COLLECTIONS.GROUPS, groupId);
+        const groupRef = doc(db!, FIRESTORE_COLLECTIONS.GROUPS, groupId);
         const groupSnap = await getDoc(groupRef);
 
         if (!groupSnap.exists()) {
@@ -167,7 +167,7 @@ export const disbandCardGroup = async (groupId: string): Promise<void> => {
         const allCardIds = [group.headCardId, ...group.memberCardIds];
 
         allCardIds.forEach(cardId => {
-            const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+            const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
             batch.update(cardRef, {
                 groupId: null,
                 isGroupHead: null,
@@ -191,10 +191,10 @@ export const disbandCardGroup = async (groupId: string): Promise<void> => {
  */
 export const addCardToGroup = async (groupId: string, cardId: string): Promise<void> => {
     try {
-        const batch = writeBatch(db as any);
+        const batch = writeBatch(db!);
 
         // Get group data
-        const groupRef = doc(db as any, FIRESTORE_COLLECTIONS.GROUPS, groupId);
+        const groupRef = doc(db!, FIRESTORE_COLLECTIONS.GROUPS, groupId);
         const groupSnap = await getDoc(groupRef);
 
         if (!groupSnap.exists()) {
@@ -211,7 +211,7 @@ export const addCardToGroup = async (groupId: string, cardId: string): Promise<v
         });
 
         // Update card
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
         batch.update(cardRef, {
             groupId,
             isGroupHead: false,
@@ -232,7 +232,7 @@ export const addCardToGroup = async (groupId: string, cardId: string): Promise<v
 export const removeCardFromGroup = async (cardId: string): Promise<void> => {
     try {
         // First get the card to find its group
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
         const cardSnap = await getDoc(cardRef);
 
         if (!cardSnap.exists()) {
@@ -244,10 +244,10 @@ export const removeCardFromGroup = async (cardId: string): Promise<void> => {
             throw new Error('Card is not in a group');
         }
 
-        const batch = writeBatch(db as any);
+        const batch = writeBatch(db!);
 
         // Get group data
-        const groupRef = doc(db as any, FIRESTORE_COLLECTIONS.GROUPS, card.groupId);
+        const groupRef = doc(db!, FIRESTORE_COLLECTIONS.GROUPS, card.groupId);
         const groupSnap = await getDoc(groupRef);
 
         if (!groupSnap.exists()) {
@@ -271,7 +271,7 @@ export const removeCardFromGroup = async (cardId: string): Promise<void> => {
                 });
 
                 // Update new head card
-                const newHeadCardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, newHeadCardId);
+                const newHeadCardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, newHeadCardId);
                 batch.update(newHeadCardRef, {
                     isGroupHead: true,
                     groupOrder: null,
@@ -280,7 +280,7 @@ export const removeCardFromGroup = async (cardId: string): Promise<void> => {
 
                 // Update remaining member cards order
                 newMemberCardIds.forEach((memberId, index) => {
-                    const memberRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, memberId);
+                    const memberRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, memberId);
                     batch.update(memberRef, {
                         groupOrder: index,
                         updatedAt: serverTimestamp()
@@ -301,7 +301,7 @@ export const removeCardFromGroup = async (cardId: string): Promise<void> => {
 
             // Update remaining member cards order
             newMemberCardIds.forEach((memberId, index) => {
-                const memberRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, memberId);
+                const memberRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, memberId);
                 batch.update(memberRef, {
                     groupOrder: index,
                     updatedAt: serverTimestamp()
@@ -329,7 +329,7 @@ export const removeCardFromGroup = async (cardId: string): Promise<void> => {
  */
 export const updateGroupCollapseState = async (groupId: string, isCollapsed: boolean): Promise<void> => {
     try {
-        const groupRef = doc(db as any, FIRESTORE_COLLECTIONS.GROUPS, groupId);
+        const groupRef = doc(db!, FIRESTORE_COLLECTIONS.GROUPS, groupId);
         await updateDoc(groupRef, {
             isCollapsed,
             updatedAt: serverTimestamp()

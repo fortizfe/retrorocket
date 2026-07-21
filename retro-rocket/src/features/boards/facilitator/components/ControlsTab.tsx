@@ -47,7 +47,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
         resetTimer,
         deleteTimer,
         formatTime,
-    } = countdown as any;
+    } = countdown;
 
     const [inputs, setInputs] = React.useState({ minutes: 0, seconds: 0 });
     const [isCreating, setIsCreating] = React.useState(false);

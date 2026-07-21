@@ -1,10 +1,10 @@
-import { EmojiReaction, Reaction, GroupedReaction } from '@/features/boards/types/card';
+import { Card, EmojiReaction, Like, Reaction, GroupedReaction } from '@/features/boards/types/card';
 
 /**
  * Groups reactions by emoji and counts them
  */
 export const groupReactions = (reactions: Reaction[]): GroupedReaction[] => {
-    const grouped: Record<EmojiReaction, GroupedReaction> = {} as any;
+    const grouped = {} as Record<EmojiReaction, GroupedReaction>;
 
     reactions.forEach(reaction => {
         if (!grouped[reaction.emoji]) {
@@ -24,7 +24,7 @@ export const groupReactions = (reactions: Reaction[]): GroupedReaction[] => {
 /**
  * Checks if a user has liked a card
  */
-export const hasUserLiked = (likes: any[], userId: string): boolean => {
+export const hasUserLiked = (likes: Like[], userId: string): boolean => {
     return likes?.some(like => like.userId === userId) ?? false;
 };
 
@@ -39,7 +39,7 @@ export const getUserReaction = (reactions: Reaction[], userId: string): EmojiRea
 /**
  * Calculates the next order position for a new card in a column
  */
-export const calculateNextOrder = (cards: any[], column: string): number => {
+export const calculateNextOrder = (cards: Card[], column: string): number => {
     const columnCards = cards.filter(card => card.column === column);
     if (columnCards.length === 0) return 0;
 
@@ -50,6 +50,6 @@ export const calculateNextOrder = (cards: any[], column: string): number => {
 /**
  * Sorts cards by order within each column
  */
-export const sortCardsByOrder = (cards: any[]): any[] => {
+export const sortCardsByOrder = (cards: Card[]): Card[] => {
     return [...cards].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 };

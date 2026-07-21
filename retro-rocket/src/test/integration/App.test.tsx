@@ -1,6 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
+// Override the global react-i18next passthrough mock (setup.ts: t = key => key) with the
+// real Spanish value for the auth-loading key AuthWrapper renders, so these integration
+// assertions match production text rather than a raw i18n key. Must restate the full
+// mock shape (I18nextProvider, initReactI18next) since a local vi.mock replaces the
+// global one for this file entirely rather than extending it.
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => (key === 'auth.wrapper.verifying' ? 'Verificando autenticación...' : key),
+        i18n: { changeLanguage: vi.fn(), language: 'es' },
+    }),
+    I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
+    initReactI18next: {
+        type: '3rdParty',
+        init: vi.fn(),
+    },
+}));
+
 // Mock all external dependencies
 vi.mock('@/lib/services/firebase', () => ({
     auth: {},

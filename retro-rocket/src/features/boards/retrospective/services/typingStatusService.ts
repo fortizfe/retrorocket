@@ -29,7 +29,7 @@ export class TypingStatusService {
             const typingId = `${update.retrospectiveId}_${update.userId}_${update.column}`;
 
             if (update.isActive) {
-                const typingRef = doc(db as any, TYPING_COLLECTION, typingId);
+                const typingRef = doc(db!, TYPING_COLLECTION, typingId);
 
                 await setDoc(typingRef, {
                     id: typingId,
@@ -44,7 +44,7 @@ export class TypingStatusService {
                 // Set auto-cleanup timer
                 this.setCleanupTimer(typingId, update);
             } else {
-                const typingRef = doc(db as any, TYPING_COLLECTION, typingId);
+                const typingRef = doc(db!, TYPING_COLLECTION, typingId);
                 await deleteDoc(typingRef);
                 this.clearCleanupTimer(typingId);
             }
@@ -62,7 +62,7 @@ export class TypingStatusService {
     ): () => void {
         try {
             const q = query(
-                collection(db as any, TYPING_COLLECTION),
+                collection(db!, TYPING_COLLECTION),
                 where('retrospectiveId', '==', retrospectiveId),
                 where('isActive', '==', true)
             );
@@ -135,7 +135,7 @@ export class TypingStatusService {
      */
     private static async cleanupExpiredStatus(typingId: string): Promise<void> {
         try {
-            const typingRef = doc(db as any, TYPING_COLLECTION, typingId);
+            const typingRef = doc(db!, TYPING_COLLECTION, typingId);
             await deleteDoc(typingRef);
             this.clearCleanupTimer(typingId);
         } catch (error) {
@@ -153,7 +153,7 @@ export class TypingStatusService {
             await Promise.all(
                 columns.map(async (column) => {
                     const typingId = `${retrospectiveId}_${userId}_${column}`;
-                    const typingRef = doc(db as any, TYPING_COLLECTION, typingId);
+                    const typingRef = doc(db!, TYPING_COLLECTION, typingId);
                     await deleteDoc(typingRef);
                     this.clearCleanupTimer(typingId);
                 })

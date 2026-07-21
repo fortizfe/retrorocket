@@ -4,13 +4,17 @@ import React from 'react';
 import { Download } from 'lucide-react';
 import ImprovedExportPopover from '@/features/boards/export/components/ImprovedExportPopover';
 import Button from '@/lib/components/ui/Button';
+import { Retrospective } from '@/features/boards/types/retrospective';
+import { Card, CardGroup } from '@/features/boards/types/card';
+import { Participant } from '@/features/boards/types/participant';
+import { ActionItem } from '@/features/boards/types/actionItem';
 
 interface RetrospectivePageProps {
-    retrospective: any;
-    cards: any[];
-    groups: any[];
-    participants: any[];
-    actionItems: any[];
+    retrospective: Retrospective;
+    cards: Card[];
+    groups: CardGroup[];
+    participants: Participant[];
+    actionItems: ActionItem[];
 }
 
 const RetrospectivePage: React.FC<RetrospectivePageProps> = ({

@@ -530,7 +530,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
         ]);
     };
 
-    const createStatsTable = (stats: any) => {
+    const createStatsTable = (stats: ReturnType<typeof calculateStatistics>) => {
         const statsData = [
             { number: stats.totalCards, label: 'Total de tarjetas' },
             { number: stats.totalVotes, label: 'Total de votos' },

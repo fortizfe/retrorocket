@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthContext } from '@/lib/contexts/UserContext';
 import Loading from '@/lib/components/ui/Loading';
 
@@ -11,13 +12,14 @@ interface AuthWrapperProps {
 const AuthWrapper: React.FC<AuthWrapperProps> = ({ children, requireAuth = true }) => {
     const { isAuthenticated, loading } = useAuthContext();
     const location = useLocation();
+    const { t } = useTranslation();
 
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                 <div className="text-center">
                     <Loading />
-                    <p className="mt-4 text-gray-600">Verificando autenticación...</p>
+                    <p className="mt-4 text-gray-600">{t('auth.wrapper.verifying')}</p>
                 </div>
             </div>
         );

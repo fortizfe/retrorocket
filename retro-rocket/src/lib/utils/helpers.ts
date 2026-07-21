@@ -10,6 +10,6 @@ export const generateUniqueId = (): string => {
     return 'id-' + Math.random().toString(36).substr(2, 16);
 };
 
-export const isEmpty = (value: any): boolean => {
+export const isEmpty = (value: unknown): boolean => {
     return value === null || value === undefined || value === '';
 };

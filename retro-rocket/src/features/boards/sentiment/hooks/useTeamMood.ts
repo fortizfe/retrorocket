@@ -16,11 +16,12 @@ import {
     calculateMoodScore
 } from '@/features/boards/types/teamMood';
 import { SentimentResult, SentimentType } from '@/features/boards/types/sentiment';
+import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 interface UseTeamMoodProps {
     cards: Card[];
     sentimentResults: ReadonlyMap<string, SentimentResult>;
-    columnConfigs: Record<string, any>; // Para obtener títulos de columna
+    columnConfigs: Record<string, DynamicColumnConfig>; // Para obtener títulos y rol de columna
     config?: Partial<TeamMoodConfig>;
 }
 

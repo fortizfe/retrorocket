@@ -14,7 +14,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
-import { UnifiedExportOptions, ExportFormat } from '@/features/boards/types/export';
+import { UnifiedExportOptions, ExportFormat, SortOrder } from '@/features/boards/types/export';
 import { useUnifiedExport } from '@/features/boards/export/hooks/useUnifiedExport';
 import { useFacilitatorNotes } from '@/features/boards/facilitator/hooks/useFacilitatorNotes';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -436,7 +436,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 name="sortOrder"
                                                 value="original"
                                                 checked={options.sortOrder === 'original'}
-                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as any })}
+                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as SortOrder })}
                                                 className="rounded-full border-slate-300 dark:border-slate-600"
                                                 id="sort-original"
                                             />
@@ -455,7 +455,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 name="sortOrder"
                                                 value="alphabetical"
                                                 checked={options.sortOrder === 'alphabetical'}
-                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as any })}
+                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as SortOrder })}
                                                 className="rounded-full border-slate-300 dark:border-slate-600"
                                                 id="sort-alphabetical"
                                             />
@@ -474,7 +474,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 name="sortOrder"
                                                 value="votes"
                                                 checked={options.sortOrder === 'votes'}
-                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as any })}
+                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as SortOrder })}
                                                 className="rounded-full border-slate-300 dark:border-slate-600"
                                                 id="sort-votes"
                                             />
@@ -493,7 +493,7 @@ const ExportPopover: React.FC<ExportPopoverProps> = ({
                                                 name="sortOrder"
                                                 value="likes"
                                                 checked={options.sortOrder === 'likes'}
-                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as any })}
+                                                onChange={(e) => setOptions({ ...options, sortOrder: e.target.value as SortOrder })}
                                                 className="rounded-full border-slate-300 dark:border-slate-600"
                                                 id="sort-likes"
                                             />

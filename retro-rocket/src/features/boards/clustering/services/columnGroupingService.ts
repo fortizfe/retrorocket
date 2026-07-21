@@ -18,7 +18,7 @@ export const saveColumnGroupingState = async (
     columnGroupingStates: ColumnGroupingStatesStore
 ): Promise<void> => {
     try {
-        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        const docRef = doc(db!, 'retrospectives', retrospectiveId);
         await updateDoc(docRef, {
             columnGroupingStates,
             updatedAt: serverTimestamp()
@@ -34,7 +34,7 @@ export const loadColumnGroupingState = async (
     retrospectiveId: string
 ): Promise<ColumnGroupingStatesStore> => {
     try {
-        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        const docRef = doc(db!, 'retrospectives', retrospectiveId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -54,7 +54,7 @@ export const initializeColumnGroupingState = async (
     retrospectiveId: string
 ): Promise<void> => {
     try {
-        const docRef = doc(db as any, 'retrospectives', retrospectiveId);
+        const docRef = doc(db!, 'retrospectives', retrospectiveId);
         await setDoc(docRef, {
             columnGroupingStates: {}
         }, { merge: true });

@@ -73,7 +73,8 @@
             "join": "Join",
             "closeModal": "Close modal",
             "helpText": "Don't have the ID? Ask the retrospective organizer to share it with you."
-        }
+        },
+        "loadingBoards": "Loading your boards..."
     },
     "boardTemplates": {
         "default": {
@@ -226,7 +227,19 @@
             "export": "Export {{format}}",
             "exporting": "Exporting...",
             "progress": "Progress",
-            "success": "Export completed successfully!"
+            "success": "Export completed successfully!",
+            "contentToInclude": "Content to include",
+            "pdfExporter": {
+                "exportPdf": "Export PDF",
+                "exportDefaultTitle": "Export retrospective to PDF with default settings",
+                "configureOptionsTitle": "Configure export options",
+                "exportSuccess": "PDF exported successfully",
+                "statsCards": "Cards",
+                "statsGroups": "Groups",
+                "statsParticipants": "Participants",
+                "exportFull": "Export Full PDF",
+                "exportCustom": "Export with Custom Options"
+            }
         },
         "grouping": {
             "noGrouping": "No grouping",
@@ -434,11 +447,18 @@
                         "description": "The team shows a balanced mix of perspectives, with good objectivity in their comments."
                     }
                 }
-            }
+            },
+            "sentiment": {
+                "notAvailable": "Sentiment analysis not available"
+            },
+            "hideActionItems": "Hide action items"
         },
         "groupSuggestion": {
             "group": "Group",
             "cardsInGroup": "{{count}} cards"
+        },
+        "errors": {
+            "loadCards": "Error loading cards"
         }
     },
     "datePicker": {
@@ -450,7 +470,9 @@
         "title": "Participants",
         "close": "Close",
         "closeList": "Close participants list",
-        "totalParticipants": "Total participants"
+        "totalParticipants": "Total participants",
+        "emptyTitle": "No participants",
+        "emptySubtitle": "The session is waiting for participants"
     },
     "typing": {
         "single": "{{username}} is typing",
@@ -557,7 +579,8 @@
             "states": {
                 "running": "Running",
                 "paused": "Paused",
-                "finished": "Finished"
+                "finished": "Finished",
+                "stopped": "Stopped"
             },
             "instructions": "How to use the timer",
             "step1": "As facilitator, access the control panel",
@@ -734,6 +757,9 @@
             "signingIn": "Signing in...",
             "comingSoon": "Coming Soon",
             "termsConditions": "By continuing, you accept our terms and conditions"
+        },
+        "wrapper": {
+            "verifying": "Verifying authentication..."
         }
     },
     "retrospectivePage": {
@@ -804,5 +830,10 @@
             "plural": "notes"
         },
         "createFirst": "Create first note"
+    },
+    "groupSuggestion": {
+        "analyzing": "Analyzing similarities...",
+        "suggestedHeadCard": "Suggested head card",
+        "createGroup": "Create Group"
     }
 }

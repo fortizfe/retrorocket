@@ -1,8 +1,9 @@
 import React from 'react';
+import { LucideIcon } from 'lucide-react';
 interface ControlCardProps {
     title: string;
     description?: string;
-    icon?: React.ComponentType<any> | null;
+    icon?: LucideIcon | null;
     children?: React.ReactNode;
     footer?: React.ReactNode;
     className?: string;

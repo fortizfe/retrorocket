@@ -20,6 +20,7 @@ import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRe
 import { getCardStyling, getSuggestedColorForColumn } from '@/lib/utils/cardColors';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
 import { GroupingCriteria } from '@/features/boards/types/columnGrouping';
+import { Participant } from '@/features/boards/types/participant';
 
 interface GroupableColumnProps {
     column: DynamicColumnConfig; // Changed from ColumnConfig to DynamicColumnConfig
@@ -41,7 +42,7 @@ interface GroupableColumnProps {
     currentUser?: string;
     retrospectiveId: string;
     // Props para elementos de acción
-    participants?: any[];
+    participants?: Participant[];
     canConvertToAction?: boolean;
     onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
 }

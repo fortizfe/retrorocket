@@ -146,7 +146,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     };
 
     const popup = isOpen ? (
-        // eslint-disable-next-line react/forbid-dom-props
         <div
             ref={popupRef}
             className={`
@@ -155,7 +154,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         ${config.popup}
         animate-in fade-in-0 zoom-in-95 duration-200
       `}
-            // eslint-disable-next-line react/forbid-dom-props
             style={{
                 top: popupPosition.top,
                 left: popupPosition.left,

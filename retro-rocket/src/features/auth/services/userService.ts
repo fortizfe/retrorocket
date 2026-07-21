@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, limit, Firestore } from 'firebase/firestore';
 import { db } from '@/lib/services/firebase';
 import { UserProfile, UserBoardHistory, AuthProviderType } from '@/features/auth/types/user';
+import { Retrospective } from '@/features/boards/types/retrospective';
 
 export class UserService {
     private static instance: UserService;
@@ -12,8 +13,10 @@ export class UserService {
         return UserService.instance;
     }
 
-    private isFirestoreInstance(db: any): db is Firestore {
-        return db && typeof db.collection === 'function' && db.type === 'firestore-lite' || db.app;
+    private isFirestoreInstance(db: unknown): db is Firestore {
+        if (!db || typeof db !== 'object') return false;
+        const candidate = db as { collection?: unknown; type?: unknown; app?: unknown };
+        return (typeof candidate.collection === 'function' && candidate.type === 'firestore-lite') || Boolean(candidate.app);
     }
 
     async createUserProfile(uid: string, userData: {
@@ -158,7 +161,7 @@ export class UserService {
         })) as UserBoardHistory[];
     }
 
-    async getUserBoards(userId: string): Promise<any[]> {
+    async getUserBoards(userId: string): Promise<(Retrospective & { isCreator: boolean })[]> {
         if (!db) {
             throw new Error('Firestore is not initialized');
         }
@@ -180,16 +183,18 @@ export class UserService {
         );
 
         const createdBoardsSnapshot = await getDocs(createdBoardsQuery);
+        // Firestore's doc.data() is inherently untyped (DocumentData); the shape is guaranteed
+        // by the 'retrospectives' collection's write path, not statically provable here.
         const createdBoards = createdBoardsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt?.toDate() ?? new Date(),
             updatedAt: doc.data().updatedAt?.toDate() ?? new Date(),
             isCreator: true
-        }));
+        }) as Retrospective & { isCreator: boolean });
 
         // Get joined boards (excluding ones created by user)
-        const joinedBoards: any[] = [];
+        const joinedBoards: (Retrospective & { isCreator: boolean })[] = [];
         if (joinedBoardIds.length > 0) {
             // Firestore 'in' queries have a limit of 10 items
             const chunks = [];
@@ -214,7 +219,7 @@ export class UserService {
                         createdAt: doc.data().createdAt?.toDate() ?? new Date(),
                         updatedAt: doc.data().updatedAt?.toDate() ?? new Date(),
                         isCreator: false
-                    }));
+                    }) as Retrospective & { isCreator: boolean });
 
                 joinedBoards.push(...chunkBoards);
             }

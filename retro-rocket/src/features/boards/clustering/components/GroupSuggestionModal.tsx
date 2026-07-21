@@ -119,7 +119,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                         {loading ? (
                             <div className="flex items-center justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                                <span className="ml-3 text-slate-600 dark:text-slate-300">Analizando similitudes...</span>
+                                <span className="ml-3 text-slate-600 dark:text-slate-300">{t('groupSuggestion.analyzing')}</span>
                             </div>
                         ) : suggestions.length === 0 ? (
                             <div className="text-center py-12">
@@ -157,10 +157,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         <div className="flex items-center space-x-2">
                                                             <Users className="w-5 h-5 text-gray-600 dark:text-slate-400" />
                                                             <span className="font-medium text-gray-900 dark:text-slate-100">
-                                                                {t('retrospective.groupSuggestion.group')} {index + 1}
+                                                                {t('groupSuggestion.group')} {index + 1}
                                                             </span>
                                                             <span className="text-sm text-gray-500 dark:text-slate-400">
-                                                                ({t('retrospective.groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
+                                                                ({t('groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
                                                             </span>
                                                         </div>
 
@@ -220,7 +220,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                                         <div className="mb-2">
                                                                             <span className="inline-flex items-center space-x-1 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                                                                                 <Sparkles className="w-3 h-3" />
-                                                                                <span>Tarjeta principal sugerida</span>
+                                                                                <span>{t('groupSuggestion.suggestedHeadCard')}</span>
                                                                             </span>
                                                                         </div>
                                                                     )}
@@ -256,7 +256,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         className="flex items-center space-x-2"
                                                     >
                                                         <Check className="w-4 h-4" />
-                                                        <span>Crear Grupo</span>
+                                                        <span>{t('groupSuggestion.createGroup')}</span>
                                                     </Button>
                                                 </div>
                                             </div>

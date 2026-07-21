@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, StickyNote, X, Users, Settings } from 'lucide-react';
+import { Brain, StickyNote, X, Users, Settings, LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface Tab {
     id: string;
     label: string;
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
     badge?: number | string;
 }
 

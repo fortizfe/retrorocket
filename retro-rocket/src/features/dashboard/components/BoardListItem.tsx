@@ -81,9 +81,10 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                                     setShowDeleteConfirm(false);
                                     toast.success(t('retrospective.deleteSuccess') || 'Retrospective moved to trash');
                                     onBoardDeleted?.(board.id);
-                                } catch (error: any) {
+                                } catch (error: unknown) {
                                     console.error('Error deleting retrospective:', error);
-                                    toast.error(error?.message || t('retrospective.deleteError') || 'Failed to delete retrospective');
+                                    const message = error instanceof Error ? error.message : undefined;
+                                    toast.error(message || t('retrospective.deleteError') || 'Failed to delete retrospective');
                                 } finally {
                                     setIsDeleting(false);
                                 }

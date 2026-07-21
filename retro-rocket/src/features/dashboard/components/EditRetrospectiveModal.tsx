@@ -51,9 +51,10 @@ const EditRetrospectiveModal: React.FC<EditRetrospectiveModalProps> = ({
             onBoardUpdated(board.id, updates);
             toast.success(t('dashboard.boardCard.editSuccess'));
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error updating retrospective:', error);
-            toast.error(error?.message || t('dashboard.boardCard.editError'));
+            const message = error instanceof Error ? error.message : undefined;
+            toast.error(message || t('dashboard.boardCard.editError'));
         } finally {
             setIsSaving(false);
         }

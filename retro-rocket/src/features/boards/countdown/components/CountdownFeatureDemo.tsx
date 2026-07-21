@@ -1,12 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Users, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Componente de demostración para mostrar las capacidades del Countdown Timer
  * Este componente puede ser usado para presentar las funcionalidades implementadas
+ *
+ * NOTE: not reachable from any app route (only referenced by its own test file).
+ * Only the 4 timer-status labels are internationalized here per the constitution
+ * compliance audit scope; the rest of this demo/presentation copy remains
+ * hardcoded Spanish and is tracked as a follow-up, not part of this effort.
  */
 const CountdownFeatureDemo: React.FC = () => {
+    const { t } = useTranslation();
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-8">
             <motion.div
@@ -104,19 +111,19 @@ const CountdownFeatureDemo: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-gray-200 dark:bg-gray-600 rounded-lg">
                         <div className="w-4 h-4 bg-gray-500 rounded-full mx-auto mb-2"></div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Detenido</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('countdown.demo.states.stopped')}</span>
                     </div>
                     <div className="text-center p-4 bg-green-100 dark:bg-green-900/30 rounded-lg">
                         <div className="w-4 h-4 bg-green-500 rounded-full mx-auto mb-2"></div>
-                        <span className="text-sm font-medium text-green-700 dark:text-green-300">En Curso</span>
+                        <span className="text-sm font-medium text-green-700 dark:text-green-300">{t('countdown.demo.states.running')}</span>
                     </div>
                     <div className="text-center p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                         <div className="w-4 h-4 bg-yellow-500 rounded-full mx-auto mb-2"></div>
-                        <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Pausado</span>
+                        <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">{t('countdown.demo.states.paused')}</span>
                     </div>
                     <div className="text-center p-4 bg-red-100 dark:bg-red-900/30 rounded-lg">
                         <div className="w-4 h-4 bg-red-500 rounded-full mx-auto mb-2 animate-pulse"></div>
-                        <span className="text-sm font-medium text-red-700 dark:text-red-300">Terminado</span>
+                        <span className="text-sm font-medium text-red-700 dark:text-red-300">{t('countdown.demo.states.finished')}</span>
                     </div>
                 </div>
             </motion.div>

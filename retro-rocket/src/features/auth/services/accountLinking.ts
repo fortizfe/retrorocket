@@ -66,16 +66,17 @@ export class AccountLinkingService {
                 };
             }
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.log('Sign in error:', error);
+            const authError = error as ProviderCredentialError;
 
             // Handle account exists with different credential
-            if (error.code === 'auth/account-exists-with-different-credential') {
-                return await this.handleAccountExistsError(error as ProviderCredentialError, providerType);
+            if (authError.code === 'auth/account-exists-with-different-credential') {
+                return await this.handleAccountExistsError(authError, providerType);
             }
 
             // Handle other errors
-            throw this.handleAuthError(error, providerType);
+            throw this.handleAuthError(authError, providerType);
         }
     }
 
@@ -126,21 +127,22 @@ export class AccountLinkingService {
                 wasLinked: true
             };
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error during provider linking:', error);
+            const authError = error as ProviderCredentialError;
 
-            if (error.code === 'auth/account-exists-with-different-credential') {
-                return await this.handleAccountExistsError(error, providerType);
+            if (authError.code === 'auth/account-exists-with-different-credential') {
+                return await this.handleAccountExistsError(authError, providerType);
             }
 
-            return await this.handleProviderLinkingError(error, currentUserEmail, providerType);
+            return await this.handleProviderLinkingError(authError, currentUserEmail, providerType);
         }
     }
 
     /**
      * Handles errors during provider linking
      */
-    private async handleProviderLinkingError(error: any, currentUserEmail: string, providerType: AuthProviderType): Promise<AccountLinkingResult> {
+    private async handleProviderLinkingError(error: ProviderCredentialError, currentUserEmail: string, providerType: AuthProviderType): Promise<AccountLinkingResult> {
         if (error.code === 'auth/account-exists-with-different-credential') {
             // Create error object compatible with new method
             const enhancedError = {
@@ -210,9 +212,9 @@ export class AccountLinkingService {
             console.log('Account linking flow initiated for email:', email);
             return await this.performAccountLinking(email, pendingCredential);
 
-        } catch (linkError: any) {
+        } catch (linkError: unknown) {
             console.error('Account linking failed:', linkError);
-            throw this.handleLinkingError(linkError);
+            throw this.handleLinkingError(linkError as AuthError);
         }
     }
 
@@ -288,7 +290,7 @@ export class AccountLinkingService {
     /**
      * Handles linking errors with user-friendly messages
      */
-    private handleLinkingError(linkError: any): Error {
+    private handleLinkingError(linkError: AuthError): Error {
         if (linkError.code === 'auth/popup-closed-by-user') {
             return new Error('La vinculación fue cancelada');
         }
@@ -366,7 +368,7 @@ export class AccountLinkingService {
     /**
      * Maps auth errors to user-friendly messages
      */
-    private handleAuthError(error: any, providerType: AuthProviderType): Error {
+    private handleAuthError(error: AuthError, providerType: AuthProviderType): Error {
         let providerName: string;
         if (providerType === 'google') {
             providerName = 'Google';
@@ -474,9 +476,9 @@ export class AccountLinkingService {
                 wasLinked: true
             };
 
-        } catch (linkError: any) {
+        } catch (linkError: unknown) {
             console.error('Direct linking failed:', linkError);
-            throw this.handleLinkingError(linkError);
+            throw this.handleLinkingError(linkError as AuthError);
         }
     }
 
@@ -575,9 +577,9 @@ export class AccountLinkingService {
                 wasLinked: true
             };
 
-        } catch (linkError: any) {
+        } catch (linkError: unknown) {
             console.error('Alternative linking failed:', linkError);
-            throw this.handleLinkingError(linkError);
+            throw this.handleLinkingError(linkError as AuthError);
         }
     }
 }
