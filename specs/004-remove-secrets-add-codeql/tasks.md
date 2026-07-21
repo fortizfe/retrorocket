@@ -34,7 +34,7 @@ This is the existing single-project `retro-rocket/` web app plus repository-leve
 - [X] T001 Install `git filter-repo` on the machine that will perform the history rewrite and confirm it runs (`git filter-repo --version`)
 - [X] T002 [P] Create a fresh `--mirror` clone of `https://github.com/fortizfe/retrorocket.git` into a dedicated scratch directory for the rewrite (quickstart.md Part 1 step 2)
 - [X] T003 [P] Confirm no branch protection currently blocks a force-push to `main` (`gh api repos/fortizfe/retrorocket/branches/main/protection`, expected 404 today); confirm `.env.production` is absent from current tracked files (`git ls-files | grep env.production` expected empty — guards FR-001 against regression); record the three stale merged branch names to be deleted (`001-restructure-project-files`, `002-constitution-compliance`, `003-scripts-cleanup-ci-trigger`)
-- [ ] T004 Obtain explicit repository-owner confirmation to proceed with the destructive force-push/history-rewrite operation before starting Phase 3 (plan.md Constraints: high-blast-radius, shared-history operation)
+- [X] T004 Obtain explicit repository-owner confirmation to proceed with the destructive force-push/history-rewrite operation before starting Phase 3 (plan.md Constraints: high-blast-radius, shared-history operation). **Done**: obtained (2026-07-21) before T006 started; a second, separate confirmation to disable the blocking ruleset was declined (see T009) and honored.
 
 **Checkpoint**: Tooling ready, baseline recorded, destructive-operation go-ahead obtained.
 
@@ -46,7 +46,7 @@ This is the existing single-project `retro-rocket/` web app plus repository-leve
 
 **⚠️ CRITICAL**: Complete before starting Phase 3 or Phase 4.
 
-- [ ] T005 Notify all collaborators (README/CONTRIBUTING note or team channel) that a one-time history rewrite requiring a fresh clone/hard-reset, and new required pull-request status checks, are both about to land
+- [ ] T005 Notify all collaborators (README/CONTRIBUTING note or team channel) that a one-time history rewrite requiring a fresh clone/hard-reset, and new required pull-request status checks, are both about to land. **Not done**: skipped in execution — every commit in this repository's history is authored by a single contributor (Fernando Ortiz), so there is no other collaborator to notify today. Revisit if/when a second contributor joins, and before the history rewrite (T009) actually runs, since that's the more disruptive of the two changes for anyone with an existing clone.
 
 **Checkpoint**: Collaborators informed — user story work can begin.
 
