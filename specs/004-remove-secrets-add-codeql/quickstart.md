@@ -42,20 +42,32 @@
 
 1. Confirm `.github/workflows/codeql.yml` exists with `on: pull_request` (to `main`) and `on: push` (to `main`), and that `.github/workflows/ci.yml`'s `checks`/`e2e` jobs now also trigger on `pull_request`.
 
-2. Confirm branch protection on `main` requires: the `checks` job, the `e2e` job, and CodeQL code scanning results at High severity (contracts/required-status-checks.md):
+2. Confirm branch protection on `main` requires: the `checks` job, the `e2e` job, and CodeQL code scanning results at High severity (contracts/required-status-checks.md). **Note**: `main` is protected by a GitHub *repository ruleset*, not classic branch protection, so check it via the rulesets endpoint (`branches/.../protection` returns 404 even when a ruleset is active):
    ```sh
-   gh api repos/fortizfe/retrorocket/branches/main/protection
+   gh api repos/fortizfe/retrorocket/rulesets/19373841
    ```
 
-3. Negative test — open a PR introducing a deliberate High-severity issue (e.g., a trivially-detectable command-injection or hardcoded-credential pattern in a throwaway file), and confirm:
-   - The CodeQL check appears on the PR and reports the finding.
-   - The PR is blocked from merging (merge button disabled / required check failing).
+3. Negative test — open a PR introducing a deliberate High-severity issue, and confirm:
+   - The `CodeQL` check (app: GitHub Advanced Security — distinct from the `CodeQL Analysis` workflow-job check) reports the finding.
+   - The PR is blocked from merging (`gh pr view <num> --json mergeStateStatus` reports `BLOCKED`).
+
+   **Verified working example (2026-07-21, PR #5)**: a command-injection pattern (`exec(\`echo ${input}\`)`) was **not** flagged by CodeQL's default query suite. GitHub's own documented bad example for `js/insecure-randomness` was: it reliably triggers.
+   ```ts
+   export function insecurePassword(): string {
+     const suffix = Math.random();
+     const password = "myPassword" + suffix;
+     return password;
+   }
+   ```
+   Prefer a pattern GitHub's own rule documentation shows as a bad example (`gh api repos/OWNER/REPO/code-scanning/alerts/<id>` on an existing alert shows the exact triggering shape) rather than guessing — not every intuitively-insecure snippet is covered by the default query suite.
 
 4. Positive test — remove the deliberate issue (or open a clean PR) and confirm:
    - `checks`, `e2e`, and the CodeQL check all pass.
-   - The PR becomes mergeable (SC-003, SC-004).
+   - The PR becomes mergeable (`mergeStateStatus: CLEAN`) (SC-003, SC-004).
 
-5. Regression check — confirm the existing coverage thresholds and Playwright suite still gate the PR exactly as they did on push-to-`main` before this change (SC-005): intentionally drop unit test coverage or break an E2E flow in a throwaway branch and confirm the PR is blocked by that existing check, not just by CodeQL.
+5. Regression check — confirm the existing coverage thresholds and Playwright suite still gate the PR exactly as they did on push-to-`main` before this change (SC-005). This can surface for free: on PR #5 a pre-existing flaky E2E test and a pre-existing flaky performance-assertion unit test each independently failed and kept `mergeStateStatus: BLOCKED` even while CodeQL was passing — confirming the existing gate blocks on its own. If nothing flakes, intentionally drop coverage or break an E2E flow in a throwaway branch instead.
+
+6. Distinguishing an infra failure from a real gate failure (spec.md Edge Cases): if the `CodeQL Analysis` *workflow job* itself fails (red X, non-zero exit from the `init`/`analyze` steps — e.g., a runner timeout or an `autobuild` failure), that is a **tooling failure**, not a finding — check the job's own logs, not the code-scanning alerts list. If `CodeQL Analysis` is green but the separate `CodeQL` check (GitHub Advanced Security app) is red, that is a **real gate failure** — read that check's summary ("New alerts in code changed by this pull request: N high") and/or `gh api repos/OWNER/REPO/code-scanning/alerts?ref=refs/pull/<num>/merge` for the specific alerts.
 
 ## Cleanup
 
