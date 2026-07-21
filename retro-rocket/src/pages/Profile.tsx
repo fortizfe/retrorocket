@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Calendar, LogOut } from 'lucide-react';
-import { useUser } from '../contexts/UserContext';
-import { useLanguage } from '../hooks/useLanguage';
-import AuthWrapper from '../components/auth/AuthWrapper';
-import UserProfileForm from '../components/auth/UserProfileForm';
-import LinkedProvidersCard from '../components/auth/LinkedProvidersCard';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import { useUser } from '@/lib/contexts/UserContext';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import AuthWrapper from '@/features/auth/components/AuthWrapper';
+import UserProfileForm from '@/features/auth/components/UserProfileForm';
+import LinkedProvidersCard from '@/features/auth/components/LinkedProvidersCard';
+import Button from '@/lib/components/ui/Button';
+import Card from '@/lib/components/ui/Card';
 
 const ProfilePage: React.FC = () => {
     const { userProfile, updateDisplayName, signOut } = useUser();

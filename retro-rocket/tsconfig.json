@@ -45,7 +45,7 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
-    "src/services/*.test.*",
+    "src/features/boards/retrospective/services/*.test.*",
     "src/test/**"
   ]
 }

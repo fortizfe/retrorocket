@@ -14,45 +14,45 @@ vi.mock('react-router-dom', () => ({
 
 const mockAddParticipant = vi.fn();
 
-vi.mock('../../hooks/useRetrospective', () => ({
+vi.mock('@/features/boards/retrospective/hooks/useRetrospective', () => ({
     useRetrospective: vi.fn(),
 }));
 
-vi.mock('../../hooks/useParticipants', () => ({
+vi.mock('@/features/boards/participants/hooks/useParticipants', () => ({
     useParticipants: vi.fn(),
 }));
 
-vi.mock('../../hooks/useCurrentUser', () => ({
+vi.mock('@/lib/hooks/useCurrentUser', () => ({
     useCurrentUser: vi.fn(),
 }));
 
-vi.mock('../../hooks/useLanguage', () => ({
+vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({ t: (key: string) => key, language: 'es' }),
 }));
 
-vi.mock('../../services/optimization/OptimizedRetrospectiveService', () => ({
+vi.mock('@/lib/services/OptimizedRetrospectiveService', () => ({
     OptimizedRetrospectiveService: {
         incrementParticipantCount: vi.fn().mockResolvedValue(undefined),
     },
 }));
 
-vi.mock('../../components/retrospective/RetrospectiveBoard', () => ({
+vi.mock('@/features/boards/retrospective/components/RetrospectiveBoard', () => ({
     default: () => <div data-testid="retrospective-board" />,
 }));
 
-vi.mock('../../components/auth/AuthWrapper', () => ({
+vi.mock('@/features/auth/components/AuthWrapper', () => ({
     default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('../../components/retrospective/ExportButtonGroup', () => ({
+vi.mock('@/features/boards/export/components/ExportButtonGroup', () => ({
     default: () => null,
 }));
 
-vi.mock('../../components/participants', () => ({
+vi.mock('@/features/boards/participants/components/index', () => ({
     ResponsiveParticipantDisplay: () => null,
 }));
 
-vi.mock('../../components/countdown', () => ({
+vi.mock('@/features/boards/countdown/components/index', () => ({
     CountdownTimer: () => null,
     FacilitatorMenu: () => null,
 }));
@@ -65,11 +65,11 @@ vi.mock('framer-motion', () => ({
     AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-vi.mock('../../components/ui/Button', () => ({
+vi.mock('@/lib/components/ui/Button', () => ({
     default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
 }));
 
-vi.mock('../../components/ui/Loading', () => ({
+vi.mock('@/lib/components/ui/Loading', () => ({
     default: () => <div data-testid="loading-spinner" />,
 }));
 
@@ -81,10 +81,10 @@ vi.mock('react-hot-toast', () => ({
     toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-import { useRetrospective } from '../../hooks/useRetrospective';
-import { useParticipants } from '../../hooks/useParticipants';
-import { useCurrentUser } from '../../hooks/useCurrentUser';
-import { OptimizedRetrospectiveService } from '../../services/optimization/OptimizedRetrospectiveService';
+import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
+import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 
 const mockUseRetrospective = vi.mocked(useRetrospective);
 const mockUseParticipants = vi.mocked(useParticipants);
@@ -141,7 +141,7 @@ const setupMocks = ({
 
 // Dynamic import the page after mocks are set up
 const renderPage = async () => {
-    const { default: RetrospectivePage } = await import('../../pages/RetrospectivePage');
+    const { default: RetrospectivePage } = await import('@/pages/RetrospectivePage');
     return render(<RetrospectivePage />);
 };
 
