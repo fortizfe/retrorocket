@@ -27,7 +27,7 @@ const CreateCardForm: React.FC<CreateCardFormProps> = ({
             try {
                 const cardInput: CreateCardInput = {
                     content: cardContent.trim(),
-                    column: columnId as any,
+                    column: columnId,
                     createdBy: participantName,
                     retrospectiveId
                 };

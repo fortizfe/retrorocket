@@ -18,7 +18,9 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
         t: (key: string) => {
             const translations: Record<string, string> = {
-                'participants.title': 'Participantes'
+                'participants.title': 'Participantes',
+                'participants.emptyTitle': 'No hay participantes',
+                'participants.emptySubtitle': 'La sesión está esperando participantes'
             };
             return translations[key] || key;
         },

@@ -7,7 +7,9 @@ import { Participant } from '@/features/boards/types/participant';
 // Mock language hook
 const mockT = vi.fn((key: string) => {
     const translations: Record<string, string> = {
-        'participants.title': 'Participantes'
+        'participants.title': 'Participantes',
+                'participants.emptyTitle': 'No hay participantes',
+                'participants.emptySubtitle': 'La sesión está esperando participantes'
     };
     return translations[key] || key;
 });

@@ -176,11 +176,9 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     };
 
     const popup = showPicker ? (
-        // eslint-disable-next-line react/forbid-dom-props
         <div
             ref={pickerRef}
             className="fixed z-[9999] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200"
-            // eslint-disable-next-line react/forbid-dom-props
             style={{
                 top: pickerPosition.top,
                 left: pickerPosition.left,

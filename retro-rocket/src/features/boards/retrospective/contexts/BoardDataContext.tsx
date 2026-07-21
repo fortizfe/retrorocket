@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 export interface BoardData {
     cards: Card[];
     groups: CardGroup[];
     actionItems: ActionItem[];
-    columnConfigs: Record<string, unknown>;
+    columnConfigs: Record<string, DynamicColumnConfig>;
     isFacilitator: boolean;
 }
 

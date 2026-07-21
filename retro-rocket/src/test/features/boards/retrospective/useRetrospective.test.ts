@@ -36,7 +36,7 @@ describe('useRetrospective Hook', () => {
 
         // Mock default behavior
         mockRetrospectiveService.getRetrospective.mockResolvedValue(mockRetrospective);
-        mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: Function) => {
+        mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: (...args: unknown[]) => void) => {
             // Use a minimal timeout to allow initial state to be observed
             const timeoutId = setTimeout(() => callback(mockRetrospective), 10);
             return () => clearTimeout(timeoutId); // Return cleanup function
@@ -88,7 +88,7 @@ describe('useRetrospective Hook', () => {
         });
 
         it('should handle null retrospective from subscription', async () => {
-            mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: Function) => {
+            mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: (...args: unknown[]) => void) => {
                 callback(null);
                 return vi.fn();
             });
@@ -190,7 +190,7 @@ describe('useRetrospective Hook', () => {
         });
 
         it('should set loading state during creation', async () => {
-            let resolveCreate: Function;
+            let resolveCreate: (...args: unknown[]) => void;
             const createPromise = new Promise((resolve) => {
                 resolveCreate = resolve;
             });
@@ -302,7 +302,7 @@ describe('useRetrospective Hook', () => {
 
     describe('Error Scenarios', () => {
         it('should handle subscription callback errors gracefully', async () => {
-            mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: Function) => {
+            mockRetrospectiveService.subscribeToRetrospective.mockImplementation((id: string, callback: (...args: unknown[]) => void) => {
                 try {
                     callback(mockRetrospective);
                 } catch (error) {

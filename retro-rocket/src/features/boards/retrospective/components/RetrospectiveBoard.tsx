@@ -10,20 +10,21 @@ import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups'
 import { useActionItems } from '@/features/boards/retrospective/hooks/useActionItems';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useRetrospectiveColumns } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
+import { useRetrospectiveColumns, DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
 import { useSentimentSetter } from '@/features/boards/sentiment/contexts/SentimentContext';
 import { useBoardDataSetter } from '@/features/boards/retrospective/contexts/BoardDataContext';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '@/features/boards/types/card';
-import { ActionItem } from '@/features/boards/types/actionItem';
+import { ActionItem, CreateActionItemInput } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { getColumns, COLUMN_ORDER } from '@/lib/utils/constants';
 
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
-    participants?: any[];
+    participants?: Participant[];
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
@@ -33,7 +34,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     participants = [],
 }) => {
     // Get language context to trigger re-render when language changes
-    useLanguage();
+    const { t } = useLanguage();
 
     // Get dynamic columns from Firestore or fallback to default
     const {
@@ -178,12 +179,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     };
 
     // Handler para crear elemento de acción
-    const handleCreateActionItem = (input: any) => {
+    const handleCreateActionItem = (input: CreateActionItemInput) => {
         createActionItem(input);
     };
 
     // Handler para editar elemento de acción
-    const handleEditActionItem = (id: string, updates: any) => {
+    const handleEditActionItem = (id: string, updates: Partial<ActionItem>) => {
         updateActionItem(id, updates);
     };
 
@@ -204,7 +205,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
-                    <p className="text-red-600 mb-2">Error al cargar las tarjetas</p>
+                    <p className="text-red-600 mb-2">{t('retrospective.errors.loadCards')}</p>
                     <p className="text-gray-500 text-sm">{cardsError}</p>
                 </div>
             </div>
@@ -242,7 +243,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                 className="flex flex-col min-h-0"
                             >
                                 <GroupableColumn
-                                    column={column as any} // Type assertion needed for compatibility
+                                    column={column as DynamicColumnConfig}
                                     cards={columnCards}
                                     groups={groups}
                                     onCardCreate={handleCardCreate}

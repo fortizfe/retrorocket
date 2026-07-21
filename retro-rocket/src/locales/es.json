@@ -74,7 +74,8 @@
             "join": "Unirse",
             "closeModal": "Cerrar modal",
             "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
-        }
+        },
+        "loadingBoards": "Cargando tus tableros..."
     },
     "boardTemplates": {
         "default": {
@@ -227,7 +228,19 @@
             "export": "Exportar {{format}}",
             "exporting": "Exportando...",
             "progress": "Progreso",
-            "success": "¡Exportación completada exitosamente!"
+            "success": "¡Exportación completada exitosamente!",
+            "contentToInclude": "Contenido a incluir",
+            "pdfExporter": {
+                "exportPdf": "Exportar PDF",
+                "exportDefaultTitle": "Exportar retrospectiva a PDF con configuración predeterminada",
+                "configureOptionsTitle": "Configurar opciones de exportación",
+                "exportSuccess": "PDF exportado exitosamente",
+                "statsCards": "Tarjetas",
+                "statsGroups": "Grupos",
+                "statsParticipants": "Participantes",
+                "exportFull": "Exportar PDF Completo",
+                "exportCustom": "Exportar con Opciones Personalizadas"
+            }
         },
         "groupCard": {
             "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
@@ -442,13 +455,23 @@
                 "noNotes": "No hay notas aún",
                 "noNotesSubtitle": "Añade notas para hacer seguimiento de la retrospectiva",
                 "loading": "Cargando notas..."
-            }
+            },
+            "sentiment": {
+                "notAvailable": "Análisis de sentimientos no disponible"
+            },
+            "hideActionItems": "Ocultar elementos de acción"
         },
-        "progress": "Progreso"
+        "progress": "Progreso",
+        "errors": {
+            "loadCards": "Error al cargar las tarjetas"
+        }
     },
     "groupSuggestion": {
         "group": "Grupo",
-        "cardsInGroup": "{{count}} tarjetas"
+        "cardsInGroup": "{{count}} tarjetas",
+        "analyzing": "Analizando similitudes...",
+        "suggestedHeadCard": "Tarjeta principal sugerida",
+        "createGroup": "Crear Grupo"
     },
     "datePicker": {
         "placeholder": "Seleccionar fecha",
@@ -459,7 +482,9 @@
         "title": "Participantes",
         "close": "Cerrar",
         "closeList": "Cerrar lista de participantes",
-        "totalParticipants": "Total de participantes"
+        "totalParticipants": "Total de participantes",
+        "emptyTitle": "No hay participantes",
+        "emptySubtitle": "La sesión está esperando participantes"
     },
     "typing": {
         "single": "{{username}} está escribiendo",
@@ -566,7 +591,8 @@
             "states": {
                 "running": "En ejecución",
                 "paused": "Pausado",
-                "finished": "Terminado"
+                "finished": "Terminado",
+                "stopped": "Detenido"
             },
             "instructions": "Cómo usar el temporizador",
             "step1": "Como facilitador, accede al panel de control",
@@ -743,6 +769,9 @@
             "signingIn": "Iniciando sesión...",
             "comingSoon": "Pronto",
             "termsConditions": "Al continuar, aceptas nuestros términos y condiciones"
+        },
+        "wrapper": {
+            "verifying": "Verificando autenticación..."
         }
     },
     "retrospectivePage": {

@@ -2,6 +2,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import CountdownFeatureDemo from '@/features/boards/countdown/components/CountdownFeatureDemo';
 
+// Override the global react-i18next passthrough mock (setup.ts: t = key => key) with the
+// real Spanish values for the keys this component actually uses, so assertions on the
+// rendered timer-state labels match production text rather than raw i18n keys.
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const translations: Record<string, string> = {
+                'countdown.demo.states.stopped': 'Detenido',
+                'countdown.demo.states.running': 'En ejecución',
+                'countdown.demo.states.paused': 'Pausado',
+                'countdown.demo.states.finished': 'Terminado',
+            };
+            return translations[key] ?? key;
+        },
+        i18n: { changeLanguage: vi.fn(), language: 'es' },
+    }),
+}));
+
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
     motion: {
@@ -81,7 +99,7 @@ describe('CountdownFeatureDemo', () => {
 
         expect(screen.getByText('Estados Visuales del Temporizador')).toBeInTheDocument();
         expect(screen.getByText('Detenido')).toBeInTheDocument();
-        expect(screen.getByText('En Curso')).toBeInTheDocument();
+        expect(screen.getByText('En ejecución')).toBeInTheDocument();
         expect(screen.getByText('Pausado')).toBeInTheDocument();
         expect(screen.getByText('Terminado')).toBeInTheDocument();
     });

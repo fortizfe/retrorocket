@@ -13,7 +13,9 @@ import {
     Info
 } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
 import { useTeamMood } from '@/features/boards/sentiment/hooks/useTeamMood';
+import { DynamicColumnConfig, getColumnRole } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
@@ -38,7 +40,7 @@ interface ImprovedExportPopoverProps {
     onClose: () => void;
     className?: string;
     // New sentiment analysis data
-    sentimentAnalysis?: any;
+    sentimentAnalysis?: ReturnType<typeof useSentiment>;
 }
 
 const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
@@ -63,12 +65,18 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
     useBodyScrollLock(isOpen);
     // Get team mood analysis if sentiment data is available
     const sentimentResults = sentimentAnalysis?.results || new Map();
-    const columnConfigs = {
-        'helped': { title: 'Qué nos ayudó' },
-        'hindered': { title: 'Qué nos obstaculizó' },
-        'improve': { title: 'Qué podemos mejorar' },
-        'actions': { title: 'Acciones' }
+    const columnConfigTitles: Record<string, string> = {
+        'helped': 'Qué nos ayudó',
+        'hindered': 'Qué nos obstaculizó',
+        'improve': 'Qué podemos mejorar',
+        'actions': 'Acciones'
     };
+    const columnConfigs: Record<string, DynamicColumnConfig> = Object.fromEntries(
+        Object.entries(columnConfigTitles).map(([id, title]) => [
+            id,
+            { id, title, description: '', color: '', icon: '', role: getColumnRole(id) }
+        ])
+    );
 
     const { report: teamMoodData } = useTeamMood({
         cards,
@@ -148,7 +156,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 
     const handleExport = async () => {
         // Extract sentiment data from the analysis object
-        const sentimentResults = sentimentAnalysis?.results;
+        const sentimentResults = sentimentAnalysis?.results
+            ? new Map(sentimentAnalysis.results)
+            : undefined;
 
         // Use the real team mood data instead of dummy data
         const teamMoodReport = teamMoodData || undefined;

@@ -71,7 +71,7 @@ describe('useCards Hook', () => {
 
         // Mock default behavior
         mockCardService.getCardsByRetrospective.mockResolvedValue(mockCards);
-        mockCardService.subscribeToCards.mockImplementation((id: string, callback: Function) => {
+        mockCardService.subscribeToCards.mockImplementation((id: string, callback: (...args: unknown[]) => void) => {
             // Use immediate callback to avoid timing issues
             const timeoutId = setTimeout(() => callback(mockCards), 0);
             return () => clearTimeout(timeoutId); // Return proper cleanup function

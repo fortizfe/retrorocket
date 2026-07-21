@@ -6,7 +6,7 @@ export class FirestoreListenerManager {
     private static readonly listeners = new Map<string, {
         unsubscribe: () => void;
         refCount: number;
-        callback?: (data: any) => void;
+        callback?: (data: unknown) => void;
     }>();
 
     /**

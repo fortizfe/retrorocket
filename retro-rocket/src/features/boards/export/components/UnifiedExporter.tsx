@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Download,
     Settings,
@@ -42,8 +43,11 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
     variant = 'button',
     className = ''
 }) => {
+    const { t } = useTranslation();
     const { isExporting, progress, error, success, currentFormat, exportRetrospective } = useUnifiedExport();
     const [showModal, setShowModal] = useState(false);
+    // Hooks must run unconditionally on every render; only the effect's condition is variant-gated.
+    useBodyScrollLock(variant === 'button' && showModal);
     const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
     const [options, setOptions] = useState<UnifiedExportOptions>({
         format: 'pdf',
@@ -144,8 +148,6 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
     };
 
     if (variant === 'button') {
-        // Ensure body scroll is locked when the settings modal is open
-        useBodyScrollLock(showModal);
         return (
             <div className={`relative ${className}`}>
                 <div className="flex items-center gap-2">
@@ -326,7 +328,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
 
                                         {/* Document Settings */}
                                         <div className="border-t pt-6">
-                                            <h4 className="text-sm font-medium text-gray-900 mb-4">Configuración del documento</h4>
+                                            <h4 className="text-sm font-medium text-gray-900 mb-4">{t('retrospective.export.documentConfig')}</h4>
                                             <div className="space-y-4">
                                                 <div>
                                                     <label htmlFor="custom-title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -360,7 +362,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
 
                                         {/* Content Options */}
                                         <div className="border-t pt-6">
-                                            <h4 className="text-sm font-medium text-gray-900 mb-4">Contenido a incluir</h4>
+                                            <h4 className="text-sm font-medium text-gray-900 mb-4">{t('retrospective.export.contentToInclude')}</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <label className="flex items-center gap-3">
                                                     <input
@@ -574,7 +576,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
             <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
                 {/* Document Settings */}
                 <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-4">Configuración del documento</h3>
+                    <h3 className="text-sm font-medium text-gray-900 mb-4">{t('retrospective.export.documentConfig')}</h3>
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="custom-title-full" className="block text-sm font-medium text-gray-700 mb-1">
@@ -607,7 +609,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
 
                 {/* Content Options */}
                 <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-4">Contenido a incluir</h3>
+                    <h3 className="text-sm font-medium text-gray-900 mb-4">{t('retrospective.export.contentToInclude')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <label className="flex items-center gap-3">
                             <input
@@ -766,7 +768,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                 {isExporting && (
                     <div className="mt-4">
                         <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                            <span>Progreso</span>
+                            <span>{t('retrospective.export.progress')}</span>
                             <span>{progress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">

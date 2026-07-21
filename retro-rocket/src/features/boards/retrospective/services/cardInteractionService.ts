@@ -4,10 +4,11 @@ import {
     getDoc,
     arrayUnion,
     arrayRemove,
-    serverTimestamp
+    serverTimestamp,
+    UpdateData
 } from 'firebase/firestore';
 import { db } from '@/lib/services/firebase';
-import { Like, Reaction, EmojiReaction } from '@/features/boards/types/card';
+import { Card, Like, Reaction, EmojiReaction } from '@/features/boards/types/card';
 import { FIRESTORE_COLLECTIONS } from '@/lib/utils/constants';
 
 /**
@@ -19,7 +20,7 @@ export const toggleLike = async (
     username: string
 ): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
         const cardSnapshot = await getDoc(cardRef);
 
         if (!cardSnapshot.exists()) {
@@ -68,7 +69,7 @@ export const addOrUpdateReaction = async (
 ): Promise<void> => {
     try {
         console.log('Adding reaction:', { cardId, userId, username, emoji });
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
         const cardSnapshot = await getDoc(cardRef);
 
         if (!cardSnapshot.exists()) {
@@ -114,7 +115,7 @@ export const removeReaction = async (
     userId: string
 ): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
         const cardSnapshot = await getDoc(cardRef);
 
         if (!cardSnapshot.exists()) {
@@ -147,8 +148,8 @@ export const updateCardOrder = async (
     newColumn?: string
 ): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
-        const updateData: any = {
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const updateData: UpdateData<Card> = {
             order: newOrder,
             updatedAt: serverTimestamp()
         };

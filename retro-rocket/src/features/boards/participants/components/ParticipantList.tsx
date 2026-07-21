@@ -57,8 +57,8 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
         return (
             <div className={`text-center py-6 text-slate-500 dark:text-slate-400 ${className}`}>
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-medium">No hay participantes</p>
-                <p className="text-xs mt-1 opacity-75">La sesión está esperando participantes</p>
+                <p className="text-sm font-medium">{t('participants.emptyTitle')}</p>
+                <p className="text-xs mt-1 opacity-75">{t('participants.emptySubtitle')}</p>
             </div>
         );
     }

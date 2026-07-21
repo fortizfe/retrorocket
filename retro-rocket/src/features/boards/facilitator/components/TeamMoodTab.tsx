@@ -6,15 +6,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/features/boards/types/card';
+import { SentimentResult } from '@/features/boards/types/sentiment';
 import { useTeamMood } from '@/features/boards/sentiment/hooks/useTeamMood';
 import TeamMoodDashboard from '@/features/boards/sentiment/components/TeamMoodDashboard';
+import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 interface TeamMoodTabProps {
     cards: Card[];
-    sentimentResults: ReadonlyMap<string, any>;
+    sentimentResults: ReadonlyMap<string, SentimentResult>;
     sentimentEnabled: boolean;
     sentimentReady: boolean;
-    columnConfigs: Record<string, any>;
+    columnConfigs: Record<string, DynamicColumnConfig>;
 }
 
 const TeamMoodTab: React.FC<TeamMoodTabProps> = ({

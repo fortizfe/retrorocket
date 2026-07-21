@@ -211,8 +211,8 @@ export class FirebaseMetricsService {
      * Resetear todas las métricas
      */
     static reset(): void {
-        Object.keys(this.metrics).forEach(key => {
-            (this.metrics as any)[key] = 0;
+        (Object.keys(this.metrics) as (keyof typeof FirebaseMetricsService.metrics)[]).forEach(key => {
+            this.metrics[key] = 0;
         });
         this.operationCosts.clear();
         this.operationCounts.clear();

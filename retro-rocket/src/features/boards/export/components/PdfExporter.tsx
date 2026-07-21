@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { FileDown, Settings, Check } from 'lucide-react';
 import Button from '@/lib/components/ui/Button';
 import { useExportPdf } from '@/features/boards/export/hooks/useExportPdf';
@@ -35,6 +36,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
     isOwner,
     hasFacilitatorNotes
 }) => {
+    const { t } = useTranslation();
     const [options, setOptions] = useState<ExportOptions>({
         includeParticipants: true,
         includeStatistics: true,
@@ -173,7 +175,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                             className="flex-1 flex items-center space-x-2"
                         >
                             <FileDown className="w-4 h-4" />
-                            <span>Exportar PDF</span>
+                            <span>{t('retrospective.export.pdfExporter.exportPdf')}</span>
                         </Button>
                     </div>
                 </div>
@@ -190,6 +192,7 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
     className = '',
     variant = 'button'
 }) => {
+    const { t } = useTranslation();
     const [showSettings, setShowSettings] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -237,10 +240,10 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                         loading={isExporting}
                         disabled={cards.length === 0}
                         className="flex items-center space-x-2"
-                        title="Exportar retrospectiva a PDF con configuración predeterminada"
+                        title={t('retrospective.export.pdfExporter.exportDefaultTitle')}
                     >
                         <FileDown className="w-4 h-4" />
-                        <span>Exportar PDF</span>
+                        <span>{t('retrospective.export.pdfExporter.exportPdf')}</span>
                     </Button>
 
                     <Button
@@ -248,7 +251,7 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                         onClick={() => setShowSettings(true)}
                         disabled={isExporting || cards.length === 0}
                         className="p-2"
-                        title="Configurar opciones de exportación"
+                        title={t('retrospective.export.pdfExporter.configureOptionsTitle')}
                     >
                         <Settings className="w-4 h-4" />
                     </Button>
@@ -263,7 +266,7 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                         className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50"
                     >
                         <Check className="w-4 h-4" />
-                        <span>PDF exportado exitosamente</span>
+                        <span>{t('retrospective.export.pdfExporter.exportSuccess')}</span>
                     </motion.div>
                 )}
 
@@ -317,15 +320,15 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                 <div className="grid grid-cols-3 gap-4 mb-6">
                     <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600">{cards.length}</div>
-                        <div className="text-xs text-gray-500">Tarjetas</div>
+                        <div className="text-xs text-gray-500">{t('retrospective.export.pdfExporter.statsCards')}</div>
                     </div>
                     <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">{groups.length}</div>
-                        <div className="text-xs text-gray-500">Grupos</div>
+                        <div className="text-xs text-gray-500">{t('retrospective.export.pdfExporter.statsGroups')}</div>
                     </div>
                     <div className="text-center">
                         <div className="text-2xl font-bold text-purple-600">{participants.length}</div>
-                        <div className="text-xs text-gray-500">Participantes</div>
+                        <div className="text-xs text-gray-500">{t('retrospective.export.pdfExporter.statsParticipants')}</div>
                     </div>
                 </div>
 
@@ -339,7 +342,7 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                         className="w-full flex items-center justify-center space-x-2"
                     >
                         <FileDown className="w-4 h-4" />
-                        <span>Exportar PDF Completo</span>
+                        <span>{t('retrospective.export.pdfExporter.exportFull')}</span>
                     </Button>
 
                     <Button
@@ -349,7 +352,7 @@ const PdfExporter: React.FC<PdfExporterProps> = ({
                         className="w-full flex items-center justify-center space-x-2"
                     >
                         <Settings className="w-4 h-4" />
-                        <span>Exportar con Opciones Personalizadas</span>
+                        <span>{t('retrospective.export.pdfExporter.exportCustom')}</span>
                     </Button>
                 </div>
 

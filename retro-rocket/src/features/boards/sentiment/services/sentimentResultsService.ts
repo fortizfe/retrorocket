@@ -13,7 +13,7 @@ import { SentimentResult, SentimentType } from '@/features/boards/types/sentimen
 import { hashContent } from '@/features/boards/sentiment/hooks/useSentimentCache';
 import { FIRESTORE_COLLECTIONS } from '@/lib/utils/constants';
 
-const col = () => collection(db as any, FIRESTORE_COLLECTIONS.SENTIMENT_RESULTS);
+const col = () => collection(db!, FIRESTORE_COLLECTIONS.SENTIMENT_RESULTS);
 
 /** Deterministic document ID — upsertable without a query. */
 function resultDocId(retrospectiveId: string, cardId: string): string {

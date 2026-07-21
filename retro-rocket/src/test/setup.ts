@@ -1,6 +1,25 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Node's own experimental `localStorage`/`sessionStorage` globals (unavailable without
+// --localstorage-file) already exist on globalThis before Vitest's jsdom environment
+// runs, so Vitest's global-key merge treats them as "already present" and skips copying
+// over jsdom's real implementation — `window.localStorage` resolves through that same
+// broken passthrough. The actual jsdom instance is reachable via `globalThis.jsdom`.
+const realWindow = (globalThis as unknown as { jsdom?: { window: Window } }).jsdom?.window;
+if (realWindow) {
+    Object.defineProperty(globalThis, 'localStorage', {
+        value: realWindow.localStorage,
+        configurable: true,
+        writable: true,
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+        value: realWindow.sessionStorage,
+        configurable: true,
+        writable: true,
+    });
+}
+
 // Mock react-hot-toast with simple mock
 vi.mock('react-hot-toast', () => ({
     default: {

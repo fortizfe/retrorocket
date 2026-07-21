@@ -93,6 +93,12 @@ async function analyzeText(cardId: string, content: string): Promise<void> {
     }
 
     try {
+        // @xenova/transformers' pipeline() return type is a broad union across every task
+        // type (text-classification, translation, image, etc.); once cached in a variable
+        // typed via Awaited<ReturnType<typeof pipeline>> for reuse across calls, TS loses the
+        // 'text-classification' narrowing it would have from an inline literal call. The task
+        // is fixed at initialization (line 65), so this call signature is safe at runtime.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above; library type erasure, not avoidable without a much larger refactor
         const output = await (sentimentPipeline as any)(clean);
         const { sentiment, confidence } = mapSentiment(output, currentModelId);
         send({ type: 'result', data: { cardId, sentiment, confidence, timestamp: new Date().toISOString() } });
@@ -117,7 +123,13 @@ async function analyzeBatch(requests: { cardId: string; content: string }[]): Pr
             continue;
         }
         try {
-            const output = await (sentimentPipeline as any)(clean);
+            // @xenova/transformers' pipeline() return type is a broad union across every task
+        // type (text-classification, translation, image, etc.); once cached in a variable
+        // typed via Awaited<ReturnType<typeof pipeline>> for reuse across calls, TS loses the
+        // 'text-classification' narrowing it would have from an inline literal call. The task
+        // is fixed at initialization (line 65), so this call signature is safe at runtime.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above; library type erasure, not avoidable without a much larger refactor
+        const output = await (sentimentPipeline as any)(clean);
             const { sentiment, confidence } = mapSentiment(output, modelId);
             results.push({ cardId: req.cardId, sentiment, confidence, timestamp: new Date().toISOString() });
         } catch (error) {

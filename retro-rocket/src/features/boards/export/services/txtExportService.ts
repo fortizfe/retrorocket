@@ -4,8 +4,8 @@ import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ActionItem } from '@/features/boards/types/actionItem';
 import { SentimentResult } from '@/features/boards/types/sentiment';
-import { TeamMoodReport } from '@/features/boards/types/teamMood';
-import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
+import { TeamMoodReport, TeamMoodMetrics, TeamMoodInsight } from '@/features/boards/types/teamMood';
+import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate, DynamicColumnConfig } from '@/features/boards/export/utils/exportColumns';
 
 export interface TxtExportOptions {
     includeParticipants?: boolean;
@@ -354,7 +354,7 @@ export class TxtExportService {
     /**
      * Build main content sections
      */
-    private buildMainContent(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions, columns: Record<string, any>, columnOrder: string[]): void {
+    private buildMainContent(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions, columns: Record<string, DynamicColumnConfig>, columnOrder: string[]): void {
         // Statistics section  
         if (options.includeStatistics) {
             this.addProfessionalStatistics(lines, data, columns, columnOrder);
@@ -400,7 +400,7 @@ export class TxtExportService {
     /**
      * Add professional statistics section
      */
-    private addProfessionalStatistics(lines: string[], data: RetrospectiveTxtData, columns: Record<string, any>, columnOrder: string[]): void {
+    private addProfessionalStatistics(lines: string[], data: RetrospectiveTxtData, columns: Record<string, DynamicColumnConfig>, columnOrder: string[]): void {
         const totalCards = data.cards.length;
         const totalVotes = data.cards.reduce((sum, card) => sum + (card.votes ?? 0), 0);
         const totalLikes = data.cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
@@ -437,7 +437,7 @@ export class TxtExportService {
     /**
      * Add professional cards organized by column
      */
-    private addProfessionalCardsByColumn(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions, columns: Record<string, any>, columnOrder: string[]): void {
+    private addProfessionalCardsByColumn(lines: string[], data: RetrospectiveTxtData, options: TxtExportOptions, columns: Record<string, DynamicColumnConfig>, columnOrder: string[]): void {
         columnOrder.forEach(columnId => {
             const columnConfig = columns[columnId];
             const columnCards = data.cards.filter(card => card.column === columnId);
@@ -658,7 +658,7 @@ export class TxtExportService {
     /**
      * Add sentiment distribution section
      */
-    private addSentimentDistribution(lines: string[], metrics: any): void {
+    private addSentimentDistribution(lines: string[], metrics: TeamMoodMetrics): void {
         lines.push('┌─ 😊 DISTRIBUCIÓN DE SENTIMIENTOS ' + '─'.repeat(16) + '┐');
         lines.push(`│ 😊 Positivo: ${metrics.totalPositive} tarjetas (${metrics.positivePercentage}%)`.padEnd(53) + '│');
         lines.push(`│ 😐 Neutral: ${metrics.totalNeutral} tarjetas (${metrics.neutralPercentage}%)`.padEnd(53) + '│');
@@ -670,12 +670,12 @@ export class TxtExportService {
     /**
      * Add column metrics section
      */
-    private addColumnMetrics(lines: string[], metrics: any): void {
+    private addColumnMetrics(lines: string[], metrics: TeamMoodMetrics): void {
         if (metrics.columnMetrics && metrics.columnMetrics.length > 0) {
             lines.push(...this.createSubsectionHeader('ANÁLISIS POR SECCIÓN', '📋'));
             lines.push('');
 
-            metrics.columnMetrics.forEach((column: any) => {
+            metrics.columnMetrics.forEach((column) => {
                 lines.push(`┌─ 📁 ${column.columnTitle.toUpperCase()} ${'─'.repeat(Math.max(0, 45 - column.columnTitle.length))}`);
                 lines.push(`│ 📝 Total: ${column.total} tarjetas`.padEnd(53) + '│');
                 lines.push(`│ 😊 Positivo: ${column.positive} (${column.positivePercentage}%)`.padEnd(53) + '│');
@@ -691,7 +691,7 @@ export class TxtExportService {
     /**
      * Add insights and recommendations section
      */
-    private addInsightsAndRecommendations(lines: string[], insights: any[]): void {
+    private addInsightsAndRecommendations(lines: string[], insights: TeamMoodInsight[]): void {
         if (insights && insights.length > 0) {
             lines.push(...this.createSubsectionHeader('INSIGHTS Y RECOMENDACIONES', '💡'));
             lines.push('');

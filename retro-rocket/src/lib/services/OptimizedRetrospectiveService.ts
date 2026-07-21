@@ -37,7 +37,7 @@ export class OptimizedRetrospectiveService {
         userId: string
     ): Promise<void> {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             await updateDoc(docRef, {
                 isDeleted: true,
@@ -65,7 +65,7 @@ export class OptimizedRetrospectiveService {
         userId?: string
     ): Promise<void> {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             await deleteDoc(docRef);
 
@@ -82,7 +82,7 @@ export class OptimizedRetrospectiveService {
      */
     static async restoreRetrospective(retrospectiveId: string): Promise<void> {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             await updateDoc(docRef, {
                 isDeleted: false,
@@ -110,7 +110,7 @@ export class OptimizedRetrospectiveService {
     ): (() => void) {
         try {
             let q = query(
-                collection(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
+                collection(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
                 where('facilitator', '==', userId),
                 where('isDeleted', '!=', true), // Filter out soft-deleted at DB level
                 orderBy('updatedAt', 'desc')
@@ -149,7 +149,7 @@ export class OptimizedRetrospectiveService {
         includeDeleted: boolean = false
     ): (() => void) {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             return onSnapshot(docRef, (doc) => {
                 if (doc.exists()) {
@@ -192,7 +192,7 @@ export class OptimizedRetrospectiveService {
     ): Promise<SoftDeleteRetrospective[]> {
         try {
             const q = query(
-                collection(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
+                collection(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
                 where('facilitator', '==', userId),
                 where('isDeleted', '==', true),
                 orderBy('deletedAt', 'desc'),
@@ -231,7 +231,7 @@ export class OptimizedRetrospectiveService {
             cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
             const q = query(
-                collection(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
+                collection(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
                 where('isDeleted', '==', true),
                 where('deletedAt', '<=', cutoffDate)
             );
@@ -278,14 +278,14 @@ export class OptimizedRetrospectiveService {
         try {
             // Count active retrospectives
             const activeQuery = query(
-                collection(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
+                collection(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
                 where('facilitator', '==', userId),
                 where('isDeleted', '!=', true)
             );
 
             // Count soft-deleted retrospectives
             const deletedQuery = query(
-                collection(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
+                collection(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES),
                 where('facilitator', '==', userId),
                 where('isDeleted', '==', true)
             );
@@ -313,7 +313,7 @@ export class OptimizedRetrospectiveService {
      */
     static async incrementParticipantCount(retrospectiveId: string): Promise<void> {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             await updateDoc(docRef, {
                 participantCount: increment(1),
@@ -333,7 +333,7 @@ export class OptimizedRetrospectiveService {
      */
     static async decrementParticipantCount(retrospectiveId: string): Promise<void> {
         try {
-            const docRef = doc(db as any, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
+            const docRef = doc(db!, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId);
 
             await updateDoc(docRef, {
                 participantCount: increment(-1),

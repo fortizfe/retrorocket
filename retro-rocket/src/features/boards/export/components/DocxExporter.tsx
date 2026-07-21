@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileText, Download, Settings, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Retrospective } from '@/features/boards/types/retrospective';
@@ -34,6 +35,7 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
     variant = 'button',
     className = ''
 }) => {
+    const { t } = useTranslation();
     const { isExporting, progress, error, success, exportToDocx } = useExportDocx();
     const [showSettings, setShowSettings] = useState(false);
     const [settings, setSettings] = useState<ExportSettings>({
@@ -487,7 +489,7 @@ const DocxExporter: React.FC<DocxExporterProps> = ({
                 {isExporting && (
                     <div className="mt-4">
                         <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                            <span>Progreso</span>
+                            <span>{t('retrospective.export.progress')}</span>
                             <span>{progress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">

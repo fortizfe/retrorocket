@@ -32,7 +32,7 @@ const MobileColumnNavigation: React.FC<MobileColumnNavigationProps> = ({
     const activeIndex = columns.findIndex(col => col.id === activeColumnId);
 
     // Handle swipe gestures
-    const handlePanEnd = (event: any, info: PanInfo) => {
+    const handlePanEnd = (_event: PointerEvent, info: PanInfo) => {
         const threshold = 50; // Minimum swipe distance
         const velocity = Math.abs(info.velocity.x);
 
@@ -50,7 +50,7 @@ const MobileColumnNavigation: React.FC<MobileColumnNavigationProps> = ({
         setDragProgress(0);
     };
 
-    const handlePan = (event: any, info: PanInfo) => {
+    const handlePan = (_event: PointerEvent, info: PanInfo) => {
         const containerWidth = containerRef.current?.offsetWidth || 0;
         const progress = Math.abs(info.offset.x) / (containerWidth / 3);
         setDragProgress(Math.min(progress, 1));
@@ -218,7 +218,7 @@ export const SwipeableColumnContainer: React.FC<SwipeableColumnContainerProps> =
     onSwipe,
     className = ''
 }) => {
-    const handlePanEnd = (event: any, info: PanInfo) => {
+    const handlePanEnd = (_event: PointerEvent, info: PanInfo) => {
         const threshold = 50;
         const velocity = Math.abs(info.velocity.x);
 

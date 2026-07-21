@@ -17,7 +17,7 @@ import { db } from '@/lib/services/firebase';
 import { Card, CreateCardInput } from '@/features/boards/types/card';
 import { FIRESTORE_COLLECTIONS } from '@/lib/utils/constants';
 
-const cardsCollection = collection(db as any, FIRESTORE_COLLECTIONS.CARDS);
+const cardsCollection = collection(db!, FIRESTORE_COLLECTIONS.CARDS);
 
 export const createCard = async (cardInput: CreateCardInput): Promise<string> => {
     try {
@@ -41,7 +41,7 @@ export const createCard = async (cardInput: CreateCardInput): Promise<string> =>
 
 export const updateCard = async (id: string, updates: Partial<Card>): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, id);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, id);
         const updateData = {
             ...updates,
             updatedAt: serverTimestamp()
@@ -56,7 +56,7 @@ export const updateCard = async (id: string, updates: Partial<Card>): Promise<vo
 
 export const deleteCard = async (id: string): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, id);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, id);
         await deleteDoc(cardRef);
     } catch (error) {
         console.error('Error deleting card:', error);
@@ -118,7 +118,7 @@ export const subscribeToCards = (
 
 export const voteCard = async (cardId: string, increment: boolean = true): Promise<void> => {
     try {
-        const cardRef = doc(db as any, FIRESTORE_COLLECTIONS.CARDS, cardId);
+        const cardRef = doc(db!, FIRESTORE_COLLECTIONS.CARDS, cardId);
 
         // For simplicity, we'll get the current votes and update
         // In a production app, you might want to use increment() for atomic updates

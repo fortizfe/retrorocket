@@ -14,13 +14,15 @@ import SentimentTab from '@/features/boards/facilitator/components/SentimentTab'
 import NotesTab from '@/features/boards/facilitator/components/NotesTab';
 import TeamMoodTab from '@/features/boards/facilitator/components/TeamMoodTab';
 import ControlsTab from '@/features/boards/facilitator/components/ControlsTab';
+import { Card } from '@/features/boards/types/card';
+import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
     facilitatorId: string;
     isOwner: boolean;
-    cards?: any[];
-    columnConfigs?: Record<string, any>;
+    cards?: Card[];
+    columnConfigs?: Record<string, DynamicColumnConfig>;
 }
 
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
@@ -180,7 +182,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                     />
                 ) : (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                        <p>Análisis de sentimientos no disponible</p>
+                        <p>{t('retrospective.facilitator.sentiment.notAvailable')}</p>
                     </div>
                 );
             case 'team-mood':

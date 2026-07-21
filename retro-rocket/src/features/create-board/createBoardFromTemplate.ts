@@ -51,7 +51,7 @@ export async function createBoardFromTemplate(params: CreateBoardParams): Promis
         const templateColumns = getTemplateColumns(templateId);
 
         // Crear las columnas en Firestore
-        const columnPromises = templateColumns.map(async (column: any, index: number) => {
+        const columnPromises = templateColumns.map(async (column, index: number) => {
             const columnData = {
                 i18nKey: column.i18nKey,
                 type: column.type || 'regular',

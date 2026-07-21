@@ -59,7 +59,7 @@ export interface ModelConfig {
     name: string;
     description: string;
     primary: boolean;
-    mapLabels?: (labels: any[]) => SentimentType;
+    mapLabels?: (labels: { label?: string; score?: number }[]) => SentimentType;
 }
 
 export const SENTIMENT_MODELS: ModelConfig[] = [
