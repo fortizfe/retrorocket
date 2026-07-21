@@ -1,0 +1,155 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# NOTE: no repo-wide `defaults.run.working-directory: retro-rocket` here (unlike ci.yml).
+# The Vercel project's "Root Directory" setting is already "retro-rocket", and the Vercel
+# CLI applies that offset itself — it must be invoked from the actual repository root, or
+# the offset gets applied twice and it can't find index.html. Only the plain npm/dependency
+# steps below explicitly cd into retro-rocket/.
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: write
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Type-check, lint, and test with coverage
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'Type-check, lint, and test with coverage'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - name: Wait for Playwright E2E (Firebase Emulator Suite)
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'Playwright E2E (Firebase Emulator Suite)'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - name: Wait for CodeQL
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'CodeQL'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: retro-rocket/package-lock.json
+
+      - name: Install dependencies
+        working-directory: retro-rocket
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel preview environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build preview artifacts
+        run: vercel build
+
+      - name: Deploy preview to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL on pull request
+        if: always() && steps.deploy.outputs.url != ''
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
+        with:
+          header: gated-vercel-preview-deployment
+          message: |
+            Preview deployment: ${{ steps.deploy.outputs.url }}
+
+  deploy-production:
+    name: Deploy Production
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Type-check, lint, and test with coverage
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'Type-check, lint, and test with coverage'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - name: Wait for Playwright E2E (Firebase Emulator Suite)
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'Playwright E2E (Firebase Emulator Suite)'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - name: Wait for CodeQL
+        uses: lewagon/wait-on-check-action@v1.8.1
+        timeout-minutes: 15
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'CodeQL'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: retro-rocket/package-lock.json
+
+      - name: Install dependencies
+        working-directory: retro-rocket
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel production environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build production artifacts
+        run: vercel build --prod
+
+      - name: Deploy to Vercel production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
