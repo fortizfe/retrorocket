@@ -6,9 +6,11 @@ on:
   push:
     branches: [main]
 
-defaults:
-  run:
-    working-directory: retro-rocket
+# NOTE: no repo-wide `defaults.run.working-directory: retro-rocket` here (unlike ci.yml).
+# The Vercel project's "Root Directory" setting is already "retro-rocket", and the Vercel
+# CLI applies that offset itself — it must be invoked from the actual repository root, or
+# the offset gets applied twice and it can't find index.html. Only the plain npm/dependency
+# steps below explicitly cd into retro-rocket/.
 
 permissions:
   contents: read
@@ -63,6 +65,7 @@ jobs:
           cache-dependency-path: retro-rocket/package-lock.json
 
       - name: Install dependencies
+        working-directory: retro-rocket
         run: |
           npm ci
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
@@ -134,6 +137,7 @@ jobs:
           cache-dependency-path: retro-rocket/package-lock.json
 
       - name: Install dependencies
+        working-directory: retro-rocket
         run: |
           npm ci
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
