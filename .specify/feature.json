@@ -1,3 +1,3 @@
 {
-  "feature_directory": "specs/004-remove-secrets-add-codeql"
+  "feature_directory": "specs/005-gated-vercel-deploys"
 }
