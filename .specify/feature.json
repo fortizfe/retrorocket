@@ -1,3 +1,3 @@
 {
-  "feature_directory": "specs/003-scripts-cleanup-ci-trigger"
+  "feature_directory": "specs/004-remove-secrets-add-codeql"
 }
