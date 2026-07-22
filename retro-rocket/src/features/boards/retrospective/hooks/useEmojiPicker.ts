@@ -4,6 +4,7 @@ import {
     offset,
     flip,
     shift,
+    size,
     autoUpdate,
     useClick,
     useDismiss,
@@ -57,7 +58,20 @@ export function useEmojiPicker({
             if (!disabled) setOpen(next);
         },
         placement: 'bottom-start',
-        middleware: [offset(8), flip({ padding: 8 }), shift({ padding: 8 })],
+        middleware: [
+            offset(8),
+            flip({ padding: 8 }),
+            shift({ padding: 8 }),
+            // Cap the panel height to the space available in the viewport so it
+            // never overflows the fold; the panel scrolls internally instead
+            // (FR-009: stays fully within the viewport).
+            size({
+                padding: 8,
+                apply({ availableHeight, elements }) {
+                    elements.floating.style.maxHeight = `${Math.max(180, availableHeight)}px`;
+                },
+            }),
+        ],
         whileElementsMounted: autoUpdate,
     });
 

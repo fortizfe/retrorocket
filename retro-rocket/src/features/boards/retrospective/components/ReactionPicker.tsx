@@ -43,11 +43,11 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
                     ref={setFloating}
                     style={floatingStyles}
                     {...getFloatingProps()}
-                    className="z-[9999] w-80 max-w-[calc(100vw-1rem)] bg-surface-raised border border-border-default rounded-xl shadow-2xl overflow-hidden"
+                    className="z-[9999] w-80 max-w-[calc(100vw-1rem)] flex flex-col bg-surface-raised border border-border-default rounded-xl shadow-2xl overflow-hidden"
                     aria-label={t('retrospective.emojiReactions.picker.ariaLabel')}
                 >
                     {/* Category tabs */}
-                    <div className="border-b border-border-default p-2">
+                    <div className="border-b border-border-default p-2 shrink-0">
                         <div className="flex flex-wrap gap-1">
                             {CATEGORY_KEYS.map((category) => (
                                 <button
@@ -66,8 +66,8 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
                         </div>
                     </div>
 
-                    {/* Emoji grid */}
-                    <div className="p-2 max-h-64 overflow-y-auto">
+                    {/* Emoji grid (scrolls within the height cap set by the `size` middleware) */}
+                    <div className="p-2 flex-1 min-h-0 overflow-y-auto">
                         <div className="grid grid-cols-8 gap-1">
                             {EMOJI_CATEGORIES[activeCategory].map((emoji, index) => {
                                 const isSelected = userReaction === emoji;
@@ -90,7 +90,7 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({
                     </div>
 
                     {/* Hint */}
-                    <div className="border-t border-border-default p-2 text-center">
+                    <div className="border-t border-border-default p-2 text-center shrink-0">
                         <p className="text-xs text-text-muted">
                             {t('retrospective.emojiReactions.picker.hint')}
                         </p>

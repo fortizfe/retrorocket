@@ -19,8 +19,10 @@ test('user adds cards, likes a card, and groups cards by creator', async ({ page
     // numeric vote stepper, always visible once a card exists. Its `title` attribute
     // changes once liked (interpolates the liker's username), so it can't be used as
     // a stable locator across the click; instead, scope to the card container and
-    // find the nested button whose accessible name is just the like count.
-    const cardOne = page.getByRole('button', { name: /Card one/ });
+    // find the nested button whose accessible name is just the like count. The card
+    // container is a plain region (its drag handle is a separate button now), so it is
+    // located by its test id + content rather than by role.
+    const cardOne = cardByContent(page, 'Card one');
     const likeButton = cardOne.getByRole('button', { name: /^\d+$/ });
     await expect(likeButton).toHaveText('0');
     await likeButton.click();
@@ -88,8 +90,9 @@ test('reaction picker appears anchored, stays in viewport, and dismisses cleanly
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    // Reopen and dismiss via outside click.
+    // Reopen and dismiss via outside click (click within the board area, away
+    // from the picker — not the top-left corner, which may hold nav controls).
     await openReactionPicker(page, card);
-    await page.mouse.click(5, 5);
+    await page.getByTestId('board-grid').click({ position: { x: 5, y: 5 } });
     await expect(page.getByRole('dialog')).toHaveCount(0);
 });
