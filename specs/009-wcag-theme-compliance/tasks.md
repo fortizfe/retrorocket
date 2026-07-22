@@ -140,8 +140,8 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 ### Implementation for User Story 3
 
 - [X] T035 [US3] Standardize a single `focus-visible:ring-focus` treatment across interactive components in `retro-rocket/src/lib/components/ui/` and shared `.btn`/`.input-focus` layers in `retro-rocket/src/styles/globals.css` until T032/T033 pass
-- [ ] T036 [P] [US3] Add non-color cues (lucide icon / text label / shape) to status and feedback elements (success/warning/error, informational) in `retro-rocket/src/lib/components/ui/` and toast usages; route any new visible text through i18next, adding keys to `retro-rocket/src/locales/es.json` and `retro-rocket/src/locales/en.json`
-- [ ] T037 [P] [US3] Add non-color cues to board state indicators — selected card, disabled controls, vote counts, sentiment/clustering categories — in `retro-rocket/src/features/boards/**` until T034 passes; add i18next keys to `retro-rocket/src/locales/es.json` and `en.json` for any new visible label, no hardcoded strings
+- [X] T036 [P] [US3] Add non-color cues (lucide icon / text label / shape) to status and feedback elements (success/warning/error, informational) in `retro-rocket/src/lib/components/ui/` and toast usages; route any new visible text through i18next, adding keys to `retro-rocket/src/locales/es.json` and `retro-rocket/src/locales/en.json`
+- [X] T037 [P] [US3] Add non-color cues to board state indicators — selected card, disabled controls, vote counts, sentiment/clustering categories — in `retro-rocket/src/features/boards/**` until T034 passes; add i18next keys to `retro-rocket/src/locales/es.json` and `en.json` for any new visible label, no hardcoded strings
 
 **Checkpoint**: All three user stories independently functional; keyboard + use-of-color compliant in both themes.
 
