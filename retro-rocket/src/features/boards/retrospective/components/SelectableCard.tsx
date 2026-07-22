@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Card, EmojiReaction } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
-import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
+import DraggableCard, { DragHandleProps } from '@/features/boards/retrospective/components/DraggableCard';
 
 interface SelectableCardProps {
     card: Card;
+    /** dnd-kit drag-handle wiring, applied to the card's grip handle. */
+    dragHandleProps?: DragHandleProps;
     onUpdate: (cardId: string, updates: Partial<Card>) => Promise<void>;
     onDelete: (cardId: string) => Promise<void>;
     onVote: (cardId: string, increment: boolean) => Promise<void>;
@@ -27,6 +29,7 @@ interface SelectableCardProps {
 
 const SelectableCard: React.FC<SelectableCardProps> = ({
     card,
+    dragHandleProps,
     onUpdate,
     onDelete,
     onVote,
@@ -62,16 +65,16 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
             {isGroupingMode && (
                 <div
                     className={`absolute inset-0 z-10 rounded-lg border-2 transition-all duration-200 ${isSelected
-                        ? 'border-blue-500 bg-blue-50 bg-opacity-20'
-                        : 'border-transparent hover:border-blue-300 hover:bg-blue-50 hover:bg-opacity-10'
+                        ? 'border-info-fg bg-info-bg'
+                        : 'border-transparent hover:border-info-fg hover:bg-info-bg'
                         }`}
                 >
                     {/* Selection Indicator */}
                     <div className="absolute top-2 right-2">
                         <div
                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isSelected
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'bg-white border-gray-300 hover:border-blue-400'
+                                ? 'bg-info-fg border-info-fg'
+                                : 'bg-surface border-border-default hover:border-info-fg'
                                 }`}
                         >
                             {isSelected && (
@@ -85,6 +88,7 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
             {/* Card Component */}
             <DraggableCard
                 card={card}
+                dragHandleProps={dragHandleProps}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onVote={onVote}

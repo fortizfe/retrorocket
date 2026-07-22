@@ -233,20 +233,20 @@ describe('DraggableCard', () => {
         it('shows edit controls for card owner', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             expect(editButton).toBeInTheDocument();
         });
 
         it('hides edit controls for non-owner', () => {
             render(<DraggableCard {...defaultProps} currentUser="user2" />);
 
-            expect(screen.queryByLabelText('Edit card')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
         });
 
         it('shows delete button for card owner', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            expect(screen.getByLabelText('Delete card')).toBeInTheDocument();
+            expect(screen.getByLabelText('retrospective.card.deleteCard')).toBeInTheDocument();
         });
 
         it('shows color picker when can edit', () => {
@@ -273,23 +273,23 @@ describe('DraggableCard', () => {
         it('enters edit mode when edit button is clicked', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             expect(screen.getByTestId('textarea-with-emoji')).toBeInTheDocument();
-            expect(screen.getByText('Guardar')).toBeInTheDocument();
-            expect(screen.getByText('Cancelar')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.card.save')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.card.cancel')).toBeInTheDocument();
         });
 
         it('exits edit mode when cancel button is clicked', () => {
             render(<DraggableCard {...defaultProps} />);
 
             // Enter edit mode
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             // Cancel edit
-            const cancelButton = screen.getByText('Cancelar');
+            const cancelButton = screen.getByText('retrospective.card.cancel');
             fireEvent.click(cancelButton);
 
             expect(screen.queryByTestId('textarea-with-emoji')).not.toBeInTheDocument();
@@ -300,7 +300,7 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} />);
 
             // Enter edit mode
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             // Modify content
@@ -308,7 +308,7 @@ describe('DraggableCard', () => {
             fireEvent.change(textarea, { target: { value: 'Updated content' } });
 
             // Save changes
-            const saveButton = screen.getByText('Guardar');
+            const saveButton = screen.getByText('retrospective.card.save');
             fireEvent.click(saveButton);
 
             await waitFor(() => {
@@ -322,11 +322,11 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} />);
 
             // Enter edit mode
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             // Save without changes
-            const saveButton = screen.getByText('Guardar');
+            const saveButton = screen.getByText('retrospective.card.save');
             fireEvent.click(saveButton);
 
             expect(defaultProps.onUpdate).not.toHaveBeenCalled();
@@ -336,7 +336,7 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} />);
 
             // Enter edit mode
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             // Clear content
@@ -344,7 +344,7 @@ describe('DraggableCard', () => {
             fireEvent.change(textarea, { target: { value: '   ' } }); // Only spaces
 
             // Save
-            const saveButton = screen.getByText('Guardar');
+            const saveButton = screen.getByText('retrospective.card.save');
             fireEvent.click(saveButton);
 
             expect(defaultProps.onUpdate).not.toHaveBeenCalled();
@@ -355,7 +355,7 @@ describe('DraggableCard', () => {
         it('calls onDelete when delete button is clicked', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const deleteButton = screen.getByLabelText('Delete card');
+            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
             fireEvent.click(deleteButton);
 
             expect(defaultProps.onDelete).toHaveBeenCalledWith('card-1');
@@ -364,7 +364,7 @@ describe('DraggableCard', () => {
         it('shows loading state when deleting', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const deleteButton = screen.getByLabelText('Delete card');
+            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
             fireEvent.click(deleteButton);
 
             expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -375,7 +375,7 @@ describe('DraggableCard', () => {
         it('handles upvote when upvote button is clicked', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const upvoteButton = screen.getByLabelText('Vote up');
+            const upvoteButton = screen.getByLabelText('retrospective.card.voteUp');
             fireEvent.click(upvoteButton);
 
             expect(defaultProps.onVote).toHaveBeenCalledWith('card-1', true);
@@ -384,7 +384,7 @@ describe('DraggableCard', () => {
         it('handles downvote when downvote button is clicked', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const downvoteButton = screen.getByLabelText('Vote down');
+            const downvoteButton = screen.getByLabelText('retrospective.card.voteDown');
             fireEvent.click(downvoteButton);
 
             expect(defaultProps.onVote).toHaveBeenCalledWith('card-1', false);
@@ -394,8 +394,8 @@ describe('DraggableCard', () => {
             const cardWithoutVotes = { ...mockCard, votes: 0 };
             render(<DraggableCard {...defaultProps} card={cardWithoutVotes} />);
 
-            expect(screen.queryByLabelText('Vote up')).not.toBeInTheDocument();
-            expect(screen.queryByLabelText('Vote down')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.voteUp')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.voteDown')).not.toBeInTheDocument();
         });
     });
 
@@ -459,14 +459,14 @@ describe('DraggableCard', () => {
         it('hides edit controls when canEdit is false', () => {
             render(<DraggableCard {...defaultProps} canEdit={false} />);
 
-            expect(screen.queryByLabelText('Edit card')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
             expect(screen.queryByTestId('color-picker')).not.toBeInTheDocument();
         });
 
         it('shows delete button only for card owner', () => {
             render(<DraggableCard {...defaultProps} currentUser="user2" />);
 
-            expect(screen.queryByLabelText('Delete card')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.deleteCard')).not.toBeInTheDocument();
         });
     });
 
@@ -496,8 +496,8 @@ describe('DraggableCard', () => {
         it('handles anonymous user correctly', () => {
             render(<DraggableCard {...defaultProps} currentUser="anonymous" />);
 
-            expect(screen.queryByLabelText('Edit card')).not.toBeInTheDocument();
-            expect(screen.queryByLabelText('Delete card')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
+            expect(screen.queryByLabelText('retrospective.card.deleteCard')).not.toBeInTheDocument();
         });
 
         it('handles error in update operation', async () => {
@@ -506,13 +506,13 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} onUpdate={mockUpdateWithError} />);
 
             // Enter edit mode and make changes
-            const editButton = screen.getByLabelText('Edit card');
+            const editButton = screen.getByLabelText('retrospective.card.editCard');
             fireEvent.click(editButton);
 
             const textarea = screen.getByTestId('textarea-with-emoji');
             fireEvent.change(textarea, { target: { value: 'Updated content' } });
 
-            const saveButton = screen.getByText('Guardar');
+            const saveButton = screen.getByText('retrospective.card.save');
             fireEvent.click(saveButton);
 
             await waitFor(() => {
@@ -527,7 +527,7 @@ describe('DraggableCard', () => {
 
             render(<DraggableCard {...defaultProps} onDelete={mockDeleteWithError} />);
 
-            const deleteButton = screen.getByLabelText('Delete card');
+            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
             fireEvent.click(deleteButton);
 
             await waitFor(() => {

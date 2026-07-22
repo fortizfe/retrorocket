@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
+import { addCardToFirstColumn, cardByContent, openReactionPicker } from './fixtures/board';
 
 /**
  * WCAG 2.1 AA audit gate (FR-013 / SC-003).
@@ -102,6 +103,53 @@ for (const theme of THEMES) {
         await expectNoViolations(page, `board (${theme})`);
     });
 }
+
+// --- Reaction picker surface (both themes) — US3 / FR-016 / SC-008 ----------
+
+for (const theme of THEMES) {
+    test(`open reaction picker has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Picker ${theme}`);
+        await waitForBoardReady(page);
+        await addCardToFirstColumn(page, 'Reactable card');
+        const card = cardByContent(page, 'Reactable card');
+        await openReactionPicker(page, card);
+        await applyThemeClass(page, theme);
+        await expectNoViolations(page, `reaction picker (${theme})`);
+    });
+}
+
+// --- Keyboard operability of board interactions — FR-018 / SC-008 -----------
+
+test('board cards, voting, reactions and drag-and-drop are keyboard operable', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Keyboard Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Keyboard card');
+
+    const card = cardByContent(page, 'Keyboard card');
+
+    // Reaction picker opens with the keyboard and closes on Escape.
+    const trigger = card.locator('button[aria-haspopup="dialog"]').first();
+    await trigger.focus();
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    // The like control is keyboard focusable.
+    const like = card.getByRole('button', { name: /^\d+$/ });
+    await like.focus();
+    await expect(like).toBeFocused();
+
+    // Drag-and-drop is keyboard operable: the sortable card exposes a keyboard
+    // drag affordance (dnd-kit KeyboardSensor + sortable roledescription).
+    const draggable = card.locator('[aria-roledescription]').first();
+    await expect(draggable).toHaveAttribute('aria-roledescription', /.+/);
+    await expect(draggable).toHaveAttribute('tabindex', '0');
+});
 
 // --- Runtime theme switch (T028a / FR-010) ----------------------------------
 

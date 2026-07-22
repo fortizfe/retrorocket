@@ -204,7 +204,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const totalItems = ungroupedCards.length + columnGroups.length;
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full min-w-0">
             {/* Column Header */}
             <Card variant="outlined" padding="sm" className={`mb-2 ${column.color}`}>
                 <div className="flex items-center space-x-2">

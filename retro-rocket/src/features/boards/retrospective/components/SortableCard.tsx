@@ -45,6 +45,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
         attributes,
         listeners,
         setNodeRef,
+        setActivatorNodeRef,
         transform,
         transition,
         isDragging,
@@ -62,14 +63,16 @@ const SortableCard: React.FC<SortableCardProps> = ({
         opacity: isDragging ? 0.5 : 1,
     };
 
+    // Drag activation lives on a dedicated handle inside the card (not the whole
+    // wrapper) so the card container is not an interactive `role="button"` that
+    // nests the card's own controls (WCAG nested-interactive) and so the keyboard
+    // sensor does not swallow Enter/Space meant for those controls.
+    const dragHandleProps = { attributes, listeners, setActivatorNodeRef };
+
     return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-        >
+        <div ref={setNodeRef} style={style}>
             <SelectableCard
+                dragHandleProps={dragHandleProps}
                 card={card}
                 onUpdate={onUpdate}
                 onDelete={onDelete}

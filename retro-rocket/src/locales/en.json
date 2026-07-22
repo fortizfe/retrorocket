@@ -290,7 +290,8 @@
                 "ariaLabel": "Emoji reaction picker",
                 "addReaction": "Add reaction",
                 "addReactionButton": "Add emoji reaction",
-                "openPicker": " (open)"
+                "openPicker": " (open)",
+                "hint": "Click an emoji to react"
             },
             "reactions": {
                 "reactWith": "React with {{emoji}}",
@@ -461,6 +462,20 @@
         },
         "errors": {
             "loadCards": "Error loading cards"
+        },
+        "card": {
+            "save": "Save",
+            "cancel": "Cancel",
+            "editPlaceholder": "Write your comment...",
+            "voteUp": "Vote up",
+            "voteDown": "Vote down",
+            "editCard": "Edit card",
+            "deleteCard": "Delete card",
+            "dragHandle": "Move card (drag)"
+        },
+        "board": {
+            "loading": "Loading retrospective...",
+            "loadError": "Could not load cards"
         }
     },
     "datePicker": {

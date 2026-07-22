@@ -11,6 +11,7 @@ import { useActionItems } from '@/features/boards/retrospective/hooks/useActionI
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useRetrospectiveColumns, DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
+import { useBoardGridColumns } from '@/lib/hooks/useBoardGridColumns';
 import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
 import { useSentimentSetter } from '@/features/boards/sentiment/contexts/SentimentContext';
 import { useBoardDataSetter } from '@/features/boards/retrospective/contexts/BoardDataContext';
@@ -50,6 +51,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         const unsub = uiPreferencesStore.subscribe((v) => setShowActionColumn(v));
         return unsub;
     }, []);
+
+    // Column count → non-purgeable grid classes (FR-004/FR-005).
+    const boardGrid = useBoardGridColumns(showActionColumn ? 4 : 3);
 
     const {
         cards,
@@ -196,7 +200,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     if (cardsLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <Loading size="lg" text="Cargando retrospectiva..." />
+                <Loading size="lg" text={t('retrospective.board.loading')} />
             </div>
         );
     }
@@ -205,8 +209,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
-                    <p className="text-red-600 mb-2">{t('retrospective.errors.loadCards')}</p>
-                    <p className="text-gray-500 text-sm">{cardsError}</p>
+                    <p className="text-error-fg mb-2">{t('retrospective.errors.loadCards')}</p>
+                    <p className="text-text-muted text-sm">{cardsError}</p>
                 </div>
             </div>
         );
@@ -220,9 +224,13 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         >
             <div className="h-full flex flex-col">
                 {/* Controls row: facilitator-only controls moved to FacilitatorMenu */}
-                {/* Board Grid - 3 columnas regulares + 1 columna de acciones */}
+                {/* Board Grid - 3 columnas regulares + 1 columna de acciones.
+                    Column count → grid classes come from useBoardGridColumns as
+                    literal, non-purgeable strings so all columns share the width
+                    without a horizontal scrollbar (FR-004, FR-005). */}
                 <div
-                    className={`flex-1 grid grid-cols-1 lg:grid-cols-${showActionColumn ? '4' : '3'} gap-4 min-h-0`}
+                    data-testid="board-grid"
+                    className={`flex-1 ${boardGrid.className} gap-4 min-h-0`}
                 >
                     {/* Columnas regulares de retrospectiva */}
                     {COLUMN_ORDER_ARRAY.map((columnId, index) => {
@@ -240,7 +248,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                                className="flex flex-col min-h-0"
+                                className="flex flex-col min-h-0 min-w-0"
                             >
                                 <GroupableColumn
                                     column={column as DynamicColumnConfig}

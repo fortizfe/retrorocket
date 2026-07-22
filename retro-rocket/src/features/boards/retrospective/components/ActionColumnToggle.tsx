@@ -17,7 +17,7 @@ const ActionColumnToggle: React.FC<Props> = ({ visible, onToggle }) => {
                 <Switch
                     checked={visible}
                     onChange={onToggle}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${visible ? 'bg-green-600' : 'bg-border-default'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${visible ? 'bg-success-fg' : 'bg-border-default'}`}
                     aria-label={visible ? t('retrospective.facilitator.hideActionItems') : t('retrospective.facilitator.showActionItems')}
                 >
                     <span

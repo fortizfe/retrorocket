@@ -70,7 +70,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full min-w-[320px] max-w-full bg-warning-bg/60 rounded-lg border border-warning-fg shadow-sm overflow-hidden">
+        <div className="flex flex-col h-full min-w-0 max-w-full bg-warning-bg/60 rounded-lg border border-warning-fg shadow-sm overflow-hidden">
             {/* Header */}
             <div className="p-2 border-b border-warning-fg">
                 <div className="flex items-center gap-2 mb-1">

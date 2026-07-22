@@ -202,7 +202,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                             role="menuitem"
                                             className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary"
                                         >
-                                            <Copy className="w-4 h-4 text-slate-500" />
+                                            <Copy className="w-4 h-4 text-text-muted" />
                                             <span>{t('retrospective.export.exportText') || 'Export'}</span>
                                         </button>
 
@@ -211,7 +211,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                             role="menuitem"
                                             className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
-                                            <Copy className="w-4 h-4 text-slate-500" />
+                                            <Copy className="w-4 h-4 text-text-muted" />
                                             <span>{t('retrospectivePage.copyId')}</span>
                                         </button>
 
@@ -220,7 +220,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                             role="menuitem"
                                             className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
-                                            <Share2 className="w-4 h-4 text-slate-500" />
+                                            <Share2 className="w-4 h-4 text-text-muted" />
                                             <span>{t('retrospectivePage.share')}</span>
                                         </button>
 
@@ -229,7 +229,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                             role="menuitem"
                                             className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
-                                            <ArrowLeft className="w-4 h-4 text-slate-500" />
+                                            <ArrowLeft className="w-4 h-4 text-text-muted" />
                                             <span>{t('retrospectivePage.exit')}</span>
                                         </button>
                                     </div>

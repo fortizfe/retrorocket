@@ -6,6 +6,7 @@ import {
     DragOverlay,
     DragStartEvent,
     PointerSensor,
+    KeyboardSensor,
     useSensor,
     useSensors,
     closestCorners,
@@ -13,6 +14,7 @@ import {
 import {
     SortableContext,
     verticalListSortingStrategy,
+    sortableKeyboardCoordinates,
     arrayMove,
 } from '@dnd-kit/sortable';
 import { Card, EmojiReaction } from '@/features/boards/types/card';
@@ -70,6 +72,11 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
             activationConstraint: {
                 distance: 8,
             },
+        }),
+        // Keyboard operability of drag & drop (FR-018 / Constitution VIII):
+        // arrow keys move a grabbed card; Space/Enter grabs and drops.
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
         })
     );
 
