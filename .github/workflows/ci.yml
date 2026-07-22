@@ -5,10 +5,15 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
 
 jobs:
   analyze:
     name: CodeQL Analysis
+    # Excludes workflow_dispatch (used only to manually trigger the orphan-domain cleanup
+    # job below) so a manual run doesn't also kick off the full CodeQL/lint/test/e2e suite.
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,6 +31,7 @@ jobs:
 
   checks:
     name: Type-check, lint, and test with coverage
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -53,6 +59,7 @@ jobs:
 
   e2e:
     name: Playwright E2E (Firebase Emulator Suite)
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -91,11 +98,15 @@ jobs:
   deploy-preview:
     name: Deploy Preview
     needs: [analyze, checks, e2e]
-    if: github.event_name == 'pull_request'
+    # Excludes the 'closed' PR action added above (for the domain-cleanup jobs) — a
+    # closing/merging PR must not trigger a new preview build/deploy.
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -136,6 +147,178 @@ jobs:
           header: gated-vercel-preview-deployment
           message: |
             Preview deployment: ${{ steps.deploy.outputs.url }}
+
+  sync-preview-domain:
+    name: Sync Firebase preview domain
+    needs: [deploy-preview]
+    # Excludes 'closed' — see cleanup-preview-domain below, which tears the domain down
+    # instead of (re)authorizing it.
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    concurrency:
+      # Every job that mutates retrorocket-staging's authorizedDomains array shares this
+      # group so concurrent PRs' read-modify-write cycles against that single shared array
+      # never race each other (FR-005) — the PATCH API has no atomic append/remove, only a
+      # full-array replace, so two simultaneous writers could otherwise drop each other's
+      # change.
+      group: firebase-staging-authorized-domains
+      cancel-in-progress: false
+    env:
+      CACHE_KEY: preview-domain-pr-${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore previously-authorized domain for this PR
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .preview-domain
+          key: ${{ env.CACHE_KEY }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_STAGING_SA_KEY }}
+          token_format: access_token
+
+      - name: Sync authorized domain
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          NEW_URL: ${{ needs.deploy-preview.outputs.url }}
+        run: |
+          new_hostname="${NEW_URL#https://}"
+          if [ -f .preview-domain ]; then
+            previous_hostname=$(cat .preview-domain)
+            node retro-rocket/scripts/firebase-preview-domains/sync-domain.mjs \
+              --project retrorocket-staging --add "$new_hostname" --remove "$previous_hostname"
+          else
+            node retro-rocket/scripts/firebase-preview-domains/sync-domain.mjs \
+              --project retrorocket-staging --add "$new_hostname"
+          fi
+          echo "$new_hostname" > .preview-domain
+
+      # actions/cache/save is a no-op (with a warning) if the exact key already exists, so
+      # the entry from this PR's previous deploy must be dropped before re-saving under the
+      # same key — otherwise every redeploy after the first would silently fail to update
+      # the cache, and the next run would keep restoring the original, now-stale hostname.
+      - name: Drop the stale cache entry before re-saving it
+        if: steps.restore.outputs.cache-hit == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh cache delete "${{ env.CACHE_KEY }}" --repo ${{ github.repository }} || true
+
+      - name: Save the newly-authorized domain for this PR
+        uses: actions/cache/save@v4
+        with:
+          path: .preview-domain
+          key: ${{ env.CACHE_KEY }}
+
+  cleanup-preview-domain:
+    name: Remove Firebase preview domain
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    concurrency:
+      group: firebase-staging-authorized-domains
+      cancel-in-progress: false
+    env:
+      CACHE_KEY: preview-domain-pr-${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Read-only: a PR closed without ever having a successful preview deploy has no
+      # cache entry, and that's a valid no-op (spec Acceptance Scenario 2), not an error.
+      - name: Restore this PR's authorized domain, if any
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .preview-domain
+          key: ${{ env.CACHE_KEY }}
+
+      - uses: actions/setup-node@v4
+        if: steps.restore.outputs.cache-hit == 'true'
+        with:
+          node-version: 22
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        if: steps.restore.outputs.cache-hit == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_STAGING_SA_KEY }}
+          token_format: access_token
+
+      - name: Remove authorized domain
+        if: steps.restore.outputs.cache-hit == 'true'
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          hostname=$(cat .preview-domain)
+          node retro-rocket/scripts/firebase-preview-domains/sync-domain.mjs \
+            --project retrorocket-staging --remove "$hostname"
+
+      - name: Delete this PR's cache entry
+        if: steps.restore.outputs.cache-hit == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh cache delete "${{ env.CACHE_KEY }}" --repo ${{ github.repository }} || true
+
+  cleanup-orphan-preview-domains:
+    name: Clean up orphaned Firebase preview domains
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    concurrency:
+      group: firebase-staging-authorized-domains
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: retro-rocket/package-lock.json
+
+      # Unlike sync-domain.mjs/domain-diff.mjs (zero runtime deps), cleanup-orphans.mjs
+      # imports @actions/cache, so node_modules must actually be installed here.
+      - name: Install dependencies
+        working-directory: retro-rocket
+        run: npm ci
+
+      - name: Resolve currently-open pull request numbers
+        id: open-prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          numbers=$(gh pr list --repo ${{ github.repository }} --state open --json number --jq '[.[].number] | join(",")')
+          echo "numbers=$numbers" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_STAGING_SA_KEY }}
+          token_format: access_token
+
+      - name: Clean up orphaned domains
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          node retro-rocket/scripts/firebase-preview-domains/cleanup-orphans.mjs \
+            --project retrorocket-staging --open-pr-numbers "${{ steps.open-prs.outputs.numbers }}"
 
   deploy-production:
     name: Deploy Production
