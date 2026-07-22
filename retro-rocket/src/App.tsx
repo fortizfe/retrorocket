@@ -54,12 +54,16 @@ const App: React.FC = () => {
             },
             success: {
               style: {
-                background: 'rgb(34 197 94)', // green-500
+                // green-700: white text meets WCAG 2.1 AA (~5.9:1); green-500 did not.
+                background: 'rgb(21 128 61)',
+                color: '#fff',
               },
             },
             error: {
               style: {
-                background: 'rgb(239 68 68)', // red-500
+                // red-700: white text meets WCAG 2.1 AA (~5.9:1); red-500 did not.
+                background: 'rgb(185 28 28)',
+                color: '#fff',
               },
             },
           }}

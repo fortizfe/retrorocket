@@ -68,7 +68,7 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 - [X] T013 [P] Migrate pages in `retro-rocket/src/pages/` (Landing, Dashboard, Profile, NotFound) to semantic token classes
 - [X] T014 [P] Migrate board/card/column feature surfaces in `retro-rocket/src/features/boards/**` (columns, draggable cards, voting, grouping/clustering indicators) to semantic token classes
 - [X] T015 [P] Migrate auth, dashboard, and create-board feature surfaces in `retro-rocket/src/features/auth/`, `retro-rocket/src/features/dashboard/`, `retro-rocket/src/features/create-board/`
-- [ ] T016 [P] Migrate overlay/transient styling: `react-hot-toast` toasts, tooltips/popovers, and the date picker in `retro-rocket/src/styles/datepicker.css` to token-based colors
+- [X] T016 [P] Migrate overlay/transient styling: `react-hot-toast` toasts, tooltips/popovers, and the date picker in `retro-rocket/src/styles/datepicker.css` to token-based colors
 - [X] T017 Migrate the base layer (body gradient, headings, scrollbar, `.glass`, `.btn`, `.input-focus`) in `retro-rocket/src/styles/globals.css` to token references
 - [ ] T018 Refactor `retro-rocket/src/lib/utils/cardColors.ts` structure so each swatch's `background`/`border`/`text` expose explicit per-theme (light + `dark:`) classes wired to tokens/palette (values corrected in US1/US2)
 - [X] T019 Route ThemeToggle/ThemeMenuToggle hardcoded Spanish labels through i18next: add keys to `retro-rocket/src/locales/es.json` and `retro-rocket/src/locales/en.json` and consume via `useTranslation` (satisfies i18n standard; no new hardcoded strings)
