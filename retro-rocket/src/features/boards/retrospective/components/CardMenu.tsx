@@ -147,7 +147,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
                                 className="w-full p-2 text-sm border border-border-default 
                            rounded bg-surface-raised 
                            text-text-primary
-                           focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                           focus:ring-2 focus:ring-focus focus:border-transparent"
                             >
                                 <option value="">{t('retrospective.cards.unassigned')}</option>
                                 {participants.map((participant) => (

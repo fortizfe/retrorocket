@@ -85,7 +85,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                                     ...prev,
                                     includeParticipants: e.target.checked
                                 }))}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-focus"
                                 aria-describedby="includeParticipants-desc"
                             />
                         </div>
@@ -107,7 +107,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                                     ...prev,
                                     includeStatistics: e.target.checked
                                 }))}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-focus"
                                 aria-describedby="includeStatistics-desc"
                             />
                         </div>
@@ -129,7 +129,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                                     ...prev,
                                     includeGroupDetails: e.target.checked
                                 }))}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-focus"
                                 aria-describedby="includeGroupDetails-desc"
                             />
                         </div>
@@ -152,7 +152,7 @@ const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({
                                         ...prev,
                                         includeFacilitatorNotes: e.target.checked
                                     }))}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-focus"
                                     aria-describedby="includeFacilitatorNotes-desc"
                                 />
                             </div>

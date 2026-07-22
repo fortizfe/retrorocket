@@ -214,7 +214,7 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             className={`
                                 w-8 h-8 flex items-center justify-center text-lg rounded transition-all duration-200
                                 hover:bg-surface-raised hover:scale-110 hover:shadow-md
-                                focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                                focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
                                 ${userReaction === emoji
                                     ? 'bg-info-bg ring-2 ring-info-fg scale-110'
                                     : ''

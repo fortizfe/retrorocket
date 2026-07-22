@@ -173,7 +173,7 @@ const SentimentTab: React.FC<SentimentTabProps> = ({
                             value={config.modelId}
                             onChange={(e) => onConfigUpdate({ modelId: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                         >
                             {SENTIMENT_MODELS.map((model) => (
                                 <option key={model.id} value={model.id}>
@@ -275,7 +275,7 @@ const SentimentTab: React.FC<SentimentTabProps> = ({
                                         value={config.batchSize}
                                         onChange={(e) => onConfigUpdate({ batchSize: parseInt(e.target.value) || 1 })}
                                         disabled={loading}
-                                        className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                     />
                                     <p className="text-xs text-text-secondary mt-1">
                                         {t('sentiment.settings.batchSizeDescription')}

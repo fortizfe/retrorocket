@@ -36,7 +36,7 @@ const TextareaWithEmoji = forwardRef<HTMLTextAreaElement, TextareaWithEmojiProps
         const variants = {
             default: 'border-border-strong bg-surface-raised focus:border-focus focus:ring-focus',
             outline: 'border-border-strong bg-transparent focus:border-focus focus:ring-focus',
-            filled: 'border-border-default bg-surface focus:border-focus focus:ring-primary-500/20 focus:bg-surface-raised focus:bg-surface'
+            filled: 'border-border-default bg-surface focus:border-focus focus:ring-focus focus:bg-surface-raised focus:bg-surface'
         };
 
         const sizes = {

@@ -77,7 +77,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                         rounded bg-surface-overlay 
                         text-text-primary
                         placeholder-text-muted
-                        focus:ring-2 focus:ring-amber-500 focus:border-transparent
+                        focus:ring-2 focus:ring-focus focus:border-transparent
                         transition-colors
                         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-raised'}
                         ${className}

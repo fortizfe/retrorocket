@@ -133,13 +133,13 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 
 ### Tests for User Story 3 (write first, must FAIL)
 
-- [ ] T032 [P] [US3] Add failing test `retro-rocket/src/test/lib/theme/contrast.focus.test.ts` asserting the `focus` token ≥3:1 vs adjacent surface in **both** themes
+- [X] T032 [P] [US3] Add failing test `retro-rocket/src/test/lib/theme/contrast.focus.test.ts` asserting the `focus` token ≥3:1 vs adjacent surface in **both** themes
 - [ ] T033 [P] [US3] Add a keyboard-navigation E2E in `retro-rocket/e2e/accessibility.spec.ts` (or a sibling spec) that tabs through Landing → Dashboard → Board and asserts a visible focus indicator on each focusable element in both themes
 - [ ] T034 [P] [US3] Add assertions that axe use-of-color-adjacent rules pass on the board (votes, sentiment/clustering indicators, status chips) in both themes
 
 ### Implementation for User Story 3
 
-- [ ] T035 [US3] Standardize a single `focus-visible:ring-focus` treatment across interactive components in `retro-rocket/src/lib/components/ui/` and shared `.btn`/`.input-focus` layers in `retro-rocket/src/styles/globals.css` until T032/T033 pass
+- [X] T035 [US3] Standardize a single `focus-visible:ring-focus` treatment across interactive components in `retro-rocket/src/lib/components/ui/` and shared `.btn`/`.input-focus` layers in `retro-rocket/src/styles/globals.css` until T032/T033 pass
 - [ ] T036 [P] [US3] Add non-color cues (lucide icon / text label / shape) to status and feedback elements (success/warning/error, informational) in `retro-rocket/src/lib/components/ui/` and toast usages; route any new visible text through i18next, adding keys to `retro-rocket/src/locales/es.json` and `retro-rocket/src/locales/en.json`
 - [ ] T037 [P] [US3] Add non-color cues to board state indicators — selected card, disabled controls, vote counts, sentiment/clustering categories — in `retro-rocket/src/features/boards/**` until T034 passes; add i18next keys to `retro-rocket/src/locales/es.json` and `en.json` for any new visible label, no hardcoded strings
 

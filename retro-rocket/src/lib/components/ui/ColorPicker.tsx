@@ -174,7 +174,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 border-2 rounded-full
                 transition-all duration-200
                 hover:scale-110 hover:shadow-md
-                focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
                 ${isSelected
                                     ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 border-blue-500'
                                     : 'border-border-strong hover:border-border-strong'
@@ -236,7 +236,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           flex items-center justify-center
           transition-all duration-200
           hover:scale-105 hover:shadow-md hover:border-border-strong
-          focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           relative
         `}

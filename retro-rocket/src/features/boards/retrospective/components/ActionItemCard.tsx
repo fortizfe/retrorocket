@@ -128,7 +128,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-2 text-xs border border-warning-fg rounded resize-none bg-surface-raised text-text-primary focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            className="w-full p-2 text-xs border border-warning-fg rounded resize-none bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                             rows={2}
                             placeholder={t('retrospective.actionItemCard.placeholder')}
                             autoFocus
@@ -142,7 +142,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 title={t('retrospective.actionItems.responsibleSelect')}
-                                className="w-full p-2 text-xs border border-warning-fg rounded bg-surface-raised text-text-primary focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                className="w-full p-2 text-xs border border-warning-fg rounded bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                             >
                                 <option value="">{t('retrospective.actionItemCard.unassigned')}</option>
                                 {participants.map((participant) => (

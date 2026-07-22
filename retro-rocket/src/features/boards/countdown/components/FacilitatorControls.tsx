@@ -123,7 +123,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
         <div className="bg-surface-raised border-2 border-info-fg rounded-lg shadow-lg">
             {/* Header */}
             <button
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-raised transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-raised transition-colors focus:outline-none focus:ring-2 focus:ring-focus focus:ring-inset"
                 onClick={() => setIsExpanded(!isExpanded)}
                 aria-expanded={isExpanded ? 'true' : 'false'}
                 aria-controls="facilitator-controls-content"

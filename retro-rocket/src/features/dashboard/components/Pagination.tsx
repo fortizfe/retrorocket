@@ -68,7 +68,7 @@ const Pagination: React.FC<PaginationProps> = ({
                         title={t('dashboard.controls.itemsPerPage')}
                         className="px-2 py-1 border border-border-strong rounded
                                  bg-surface-raised text-text-primary
-                                 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                 focus:ring-2 focus:ring-focus focus:border-transparent text-sm"
                     >
                         <option value={5}>5</option>
                         <option value={10}>10</option>
@@ -100,7 +100,7 @@ const Pagination: React.FC<PaginationProps> = ({
                         title={t('dashboard.controls.itemsPerPage')}
                         className="px-2 py-1 border border-border-strong rounded
                                  bg-surface-raised text-text-primary
-                                 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                 focus:ring-2 focus:ring-focus focus:border-transparent text-sm"
                     >
                         <option value={5}>5</option>
                         <option value={10}>10</option>

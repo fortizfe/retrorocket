@@ -83,7 +83,7 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                             className="w-full pl-10 pr-10 py-2 border border-border-strong rounded-md 
                                      bg-surface-raised text-text-primary
                                      placeholder-text-muted
-                                     focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                                     focus:ring-2 focus:ring-focus focus:border-transparent
                                      transition-colors duration-200"
                         />
                         {searchQuery && (

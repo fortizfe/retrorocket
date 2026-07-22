@@ -339,7 +339,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="text"
                                                         value={options.customTitle}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, customTitle: e.target.value }))}
-                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-focus sm:text-sm"
                                                         placeholder="Título de la retrospectiva"
                                                     />
                                                 </div>
@@ -349,7 +349,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeRetroRocketLogo}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeRetroRocketLogo: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                         aria-describedby="logo-description"
                                                     />
                                                     <FileImage className="w-4 h-4 text-gray-500" />
@@ -369,7 +369,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeParticipants}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeParticipants: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <User className="w-4 h-4 text-gray-500" />
                                                     <span className="text-sm font-medium text-gray-700">
@@ -382,7 +382,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeStatistics}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeStatistics: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <BarChart3 className="w-4 h-4 text-gray-500" />
                                                     <span className="text-sm font-medium text-gray-700">
@@ -395,7 +395,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeCardAuthors}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeCardAuthors: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <User className="w-4 h-4 text-gray-500" />
                                                     <span className="text-sm font-medium text-gray-700">
@@ -408,7 +408,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeReactions}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeReactions: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <Heart className="w-4 h-4 text-gray-500" />
                                                     <span className="text-sm font-medium text-gray-700">
@@ -421,7 +421,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeGroupDetails}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeGroupDetails: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <span className="text-sm font-medium text-gray-700">
                                                         Detalles de agrupaciones de tarjetas
@@ -433,7 +433,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                         type="checkbox"
                                                         checked={options.includeActionItems}
                                                         onChange={(e) => setOptions(prev => ({ ...prev, includeActionItems: e.target.checked }))}
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                     />
                                                     <span className="text-sm font-medium text-gray-700">
                                                         Elementos de acción
@@ -457,7 +457,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                             value={sortOrder.value}
                                                             checked={options.sortOrder === sortOrder.value}
                                                             onChange={(e) => setOptions(prev => ({ ...prev, sortOrder: e.target.value as SortOrder }))}
-                                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                            className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300"
                                                             aria-label={`Ordenar ${sortOrder.label}`}
                                                         />
                                                         <div>
@@ -476,7 +476,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                     type="checkbox"
                                                     checked={options.includeFacilitatorNotes}
                                                     onChange={(e) => setOptions(prev => ({ ...prev, includeFacilitatorNotes: e.target.checked }))}
-                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                                                 />
                                                 <span className="text-sm font-medium text-gray-700">
                                                     Agregar notas del facilitador
@@ -488,7 +488,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                                     value={options.facilitatorNotes}
                                                     onChange={(e) => setOptions(prev => ({ ...prev, facilitatorNotes: e.target.value }))}
                                                     rows={4}
-                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-focus sm:text-sm"
                                                     placeholder="Escribe aquí las notas adicionales para incluir en el documento..."
                                                 />
                                             )}
@@ -501,7 +501,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                             type="button"
                                             onClick={() => setShowModal(false)}
                                             disabled={isExporting}
-                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-focus disabled:opacity-50"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
@@ -510,7 +510,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                         <motion.button
                                             onClick={handleExport}
                                             disabled={isExporting}
-                                            className={`inline-flex items-center gap-2 px-6 py-2 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 ${getFormatColor(selectedFormat)}`}
+                                            className={`inline-flex items-center gap-2 px-6 py-2 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-focus disabled:opacity-50 ${getFormatColor(selectedFormat)}`}
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
@@ -587,7 +587,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="text"
                                 value={options.customTitle}
                                 onChange={(e) => setOptions(prev => ({ ...prev, customTitle: e.target.value }))}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-focus sm:text-sm"
                                 placeholder="Título de la retrospectiva"
                             />
                         </div>
@@ -597,7 +597,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeRetroRocketLogo}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeRetroRocketLogo: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <FileImage className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">
@@ -616,7 +616,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeParticipants}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeParticipants: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <User className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">
@@ -629,7 +629,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeStatistics}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeStatistics: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <BarChart3 className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">
@@ -642,7 +642,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeCardAuthors}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeCardAuthors: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <User className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">
@@ -655,7 +655,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeReactions}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeReactions: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <Heart className="w-4 h-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">
@@ -668,7 +668,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeGroupDetails}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeGroupDetails: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <span className="text-sm font-medium text-gray-700">
                                 Detalles de agrupaciones de tarjetas
@@ -680,7 +680,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                 type="checkbox"
                                 checked={options.includeActionItems}
                                 onChange={(e) => setOptions(prev => ({ ...prev, includeActionItems: e.target.checked }))}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                             />
                             <span className="text-sm font-medium text-gray-700">
                                 Elementos de acción
@@ -704,7 +704,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                                     value={sortOrder.value}
                                     checked={options.sortOrder === sortOrder.value}
                                     onChange={(e) => setOptions(prev => ({ ...prev, sortOrder: e.target.value as SortOrder }))}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                    className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300"
                                     aria-label={`Ordenar ${sortOrder.label}`}
                                 />
                                 <div>
@@ -723,7 +723,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                             type="checkbox"
                             checked={options.includeFacilitatorNotes}
                             onChange={(e) => setOptions(prev => ({ ...prev, includeFacilitatorNotes: e.target.checked }))}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-blue-600 focus:ring-focus border-gray-300 rounded"
                         />
                         <span className="text-sm font-medium text-gray-700">
                             Agregar notas del facilitador
@@ -735,7 +735,7 @@ const UnifiedExporter: React.FC<UnifiedExporterProps> = ({
                             value={options.facilitatorNotes}
                             onChange={(e) => setOptions(prev => ({ ...prev, facilitatorNotes: e.target.value }))}
                             rows={4}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-focus sm:text-sm"
                             placeholder="Escribe aquí las notas adicionales para incluir en el documento..."
                         />
                     )}

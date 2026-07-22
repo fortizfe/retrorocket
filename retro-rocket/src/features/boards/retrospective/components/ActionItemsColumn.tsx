@@ -125,7 +125,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                     value={newContent}
                                     onChange={(e) => setNewContent(e.target.value)}
                                     placeholder={t('retrospective.actionItems.newAction')}
-                                    className="w-full p-2 text-sm border border-warning-fg rounded resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    className="w-full p-2 text-sm border border-warning-fg rounded resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-focus focus:border-transparent"
                                     rows={2}
                                     autoFocus
                                 />
@@ -138,7 +138,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         value={selectedAssignee}
                                         onChange={(e) => setSelectedAssignee(e.target.value)}
                                         title={t('retrospective.actionItems.responsibleSelect')}
-                                        className="w-full p-2 text-xs border border-warning-fg rounded bg-surface-raised text-text-primary focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        className="w-full p-2 text-xs border border-warning-fg rounded bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                     >
                                         <option value="">{t('retrospective.cards.unassigned')}</option>
                                         {participants.map((participant) => (
