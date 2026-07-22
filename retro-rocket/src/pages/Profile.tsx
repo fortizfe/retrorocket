@@ -53,18 +53,18 @@ const ProfilePage: React.FC = () => {
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
-                                <User className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                            <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
+                                <User className="w-8 h-8 text-info-fg" />
                                 {t('profile.title')}
                             </h1>
-                            <p className="text-slate-600 dark:text-slate-300 mt-2">
+                            <p className="text-text-secondary mt-2">
                                 {t('profile.subtitle')}
                             </p>
                         </div>
                         <Button
                             onClick={handleSignOut}
                             variant="secondary"
-                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600 flex items-center gap-2"
+                            className="text-error-fg hover:bg-error-bg border-error-fg flex items-center gap-2"
                         >
                             <LogOut className="w-4 h-4" />
                             {t('profile.signOut')}
@@ -79,21 +79,21 @@ const ProfilePage: React.FC = () => {
                         animate={{ opacity: 1, x: 0 }}
                         className="lg:col-span-1 space-y-6"
                     >
-                        <Card className="p-6 glass border border-slate-200/50 dark:border-slate-700/50">
+                        <Card className="p-6 glass border border-border-default/50">
                             <div className="text-center">
                                 {userProfile?.photoURL && (
                                     <img
                                         src={userProfile.photoURL}
                                         alt="Avatar"
-                                        className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white dark:border-slate-700 shadow-soft"
+                                        className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-border-default shadow-soft"
                                     />
                                 )}
 
-                                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h2 className="text-xl font-semibold text-text-primary mb-2">
                                     {userProfile?.displayName}
                                 </h2>
 
-                                <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                                <div className="space-y-3 text-sm text-text-secondary">
                                     <div className="flex items-center justify-center gap-2">
                                         <Mail className="w-4 h-4" />
                                         <span>{userProfile?.email}</span>
@@ -107,9 +107,9 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('profile.primaryProvider')}</div>
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <div className="mt-4 pt-4 border-t border-border-default">
+                                    <div className="text-xs text-text-muted mb-1">{t('profile.primaryProvider')}</div>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface rounded-full text-sm font-medium text-text-secondary">
                                         {userProfile?.primaryProvider && getProviderName(userProfile.primaryProvider)}
                                     </div>
                                 </div>
@@ -117,7 +117,7 @@ const ProfilePage: React.FC = () => {
                         </Card>
 
                         {/* Linked Providers */}
-                        <LinkedProvidersCard className="glass border border-slate-200/50 dark:border-slate-700/50" />
+                        <LinkedProvidersCard className="glass border border-border-default/50" />
                     </motion.div>
 
                     {/* Edit Profile Form */}
@@ -130,7 +130,7 @@ const ProfilePage: React.FC = () => {
                             userProfile={userProfile}
                             onSave={updateDisplayName}
                             isFirstTime={false}
-                            className="glass border border-slate-200/50 dark:border-slate-700/50"
+                            className="glass border border-border-default/50"
                         />
                     </motion.div>
                 </div>
@@ -142,16 +142,16 @@ const ProfilePage: React.FC = () => {
                     transition={{ delay: 0.2 }}
                     className="mt-8"
                 >
-                    <Card className="p-6 glass border border-slate-200/50 dark:border-slate-700/50">
-                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+                    <Card className="p-6 glass border border-border-default/50">
+                        <h3 className="text-lg font-semibold text-text-primary mb-4">
                             {t('profile.accountActions.title')}
                         </h3>
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                            <div className="flex items-center justify-between p-4 bg-surface rounded-lg border border-border-default">
                                 <div>
-                                    <h4 className="font-medium text-slate-800 dark:text-slate-100">{t('profile.accountActions.exportData.title')}</h4>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    <h4 className="font-medium text-text-primary">{t('profile.accountActions.exportData.title')}</h4>
+                                    <p className="text-sm text-text-secondary">
                                         {t('profile.accountActions.exportData.description')}
                                     </p>
                                 </div>
@@ -160,16 +160,16 @@ const ProfilePage: React.FC = () => {
                                 </Button>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/50">
+                            <div className="flex items-center justify-between p-4 bg-error-bg rounded-lg border border-error-fg/50">
                                 <div>
-                                    <h4 className="font-medium text-red-800 dark:text-red-300">{t('profile.accountActions.deleteAccount.title')}</h4>
-                                    <p className="text-sm text-red-600 dark:text-red-400">
+                                    <h4 className="font-medium text-error-fg">{t('profile.accountActions.deleteAccount.title')}</h4>
+                                    <p className="text-sm text-error-fg">
                                         {t('profile.accountActions.deleteAccount.description')}
                                     </p>
                                 </div>
                                 <Button
                                     variant="secondary"
-                                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                    className="text-error-fg border-error-fg hover:bg-error-bg"
                                     disabled
                                 >
                                     {t('profile.accountActions.deleteAccount.button')}

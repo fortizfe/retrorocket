@@ -85,10 +85,10 @@ const LandingPage: React.FC = () => {
                                 {APP_NAME}
                             </h1>
                         </div>
-                        <p className="text-xl text-slate-600 dark:text-slate-300 mb-2">
+                        <p className="text-xl text-text-secondary mb-2">
                             {t('landing.hero.description')}
                         </p>
-                        <p className="text-lg text-slate-500 dark:text-slate-400">
+                        <p className="text-lg text-text-muted">
                             {t('landing.hero.tagline')}
                         </p>
                     </motion.div>
@@ -100,11 +100,11 @@ const LandingPage: React.FC = () => {
                         transition={{ delay: 0.2 }}
                         className="max-w-md mx-auto mb-16"
                     >
-                        <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30">
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 text-center">
+                        <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50">
+                            <h2 className="text-2xl font-bold text-text-primary mb-2 text-center">
                                 {t('landing.hero.cta.title')}
                             </h2>
-                            <p className="text-slate-600 dark:text-slate-300 mb-6 text-center">
+                            <p className="text-text-secondary mb-6 text-center">
                                 {t('landing.hero.cta.subtitle')}
                             </p>
 
@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
                                 loading={loading}
                             />
 
-                            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-4">
+                            <div className="flex items-center justify-center gap-2 text-sm text-text-muted mt-4">
                                 <CheckCircle className="w-4 h-4 text-green-500" />
                                 <span>{t('landing.hero.cta.freeForever')}</span>
                                 <span className="mx-2">•</span>
@@ -130,24 +130,24 @@ const LandingPage: React.FC = () => {
                         transition={{ delay: 0.4 }}
                         className="grid md:grid-cols-3 gap-6 mb-12"
                     >
-                        <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
                             <Users className="w-8 h-8 text-primary-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.connectTeams.title')}</h3>
-                            <p className="text-slate-600 dark:text-slate-300 text-sm">
+                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.connectTeams.title')}</h3>
+                            <p className="text-text-secondary text-sm">
                                 {t('landing.features.connectTeams.description')}
                             </p>
                         </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
                             <Zap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.immediateResults.title')}</h3>
-                            <p className="text-slate-600 dark:text-slate-300 text-sm">
+                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.immediateResults.title')}</h3>
+                            <p className="text-text-secondary text-sm">
                                 {t('landing.features.immediateResults.description')}
                             </p>
                         </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
                             <Heart className="w-8 h-8 text-sky-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.features.easyToAdopt.title')}</h3>
-                            <p className="text-slate-600 dark:text-slate-300 text-sm">
+                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.easyToAdopt.title')}</h3>
+                            <p className="text-text-secondary text-sm">
                                 {t('landing.features.easyToAdopt.description')}
                             </p>
                         </div>
@@ -161,89 +161,89 @@ const LandingPage: React.FC = () => {
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
                                 {t('landing.mainFeatures.title')}
                             </h2>
-                            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
                                 {t('landing.mainFeatures.subtitle')}
                             </p>
                         </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {/* Authentication */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Shield className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.advancedAuth.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.advancedAuth.description')}
                                 </p>
                             </div>
 
                             {/* Real-time Collaboration */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Users className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.realTimeCollab.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.realTimeCollab.description')}
                                 </p>
                             </div>
 
                             {/* Card System */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <MessageSquare className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.cardSystem.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.cardSystem.description')}
                                 </p>
                             </div>
 
                             {/* Smart Grouping */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Group className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.smartGrouping.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.smartGrouping.description')}
                                 </p>
                             </div>
 
                             {/* Professional Export */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <FileText className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.professionalExport.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.professionalExport.description')}
                                 </p>
                             </div>
 
                             {/* Modern UI */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Palette className="w-6 h-6 text-white" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('landing.mainFeatures.modernUI.title')}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     {t('landing.mainFeatures.modernUI.description')}
                                 </p>
                             </div>
@@ -258,10 +258,10 @@ const LandingPage: React.FC = () => {
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
                                 {t('landing.howItWorks.title')}
                             </h2>
-                            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
                                 {t('landing.howItWorks.subtitle')}
                             </p>
                         </div>
@@ -270,28 +270,28 @@ const LandingPage: React.FC = () => {
                             {/* Step 1 */}
                             <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20">
+                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                                                 1
                                             </div>
-                                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                            <h3 className="text-xl font-semibold text-text-primary">
                                                 {t('landing.howItWorks.step1.title')}
                                             </h3>
                                         </div>
-                                        <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                        <p className="text-text-secondary mb-4">
                                             {t('landing.howItWorks.step1.description')}
                                         </p>
-                                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                        <div className="flex items-center gap-2 text-sm text-text-muted">
                                             <Play className="w-4 h-4" />
                                             <span>{t('landing.howItWorks.step1.time')}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30 text-center">
+                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
                                         <Globe className="w-16 h-16 text-primary-500 mx-auto mb-4" />
-                                        <p className="text-slate-600 dark:text-slate-300">
+                                        <p className="text-text-secondary">
                                             {t('landing.howItWorks.step1.sharing')}
                                         </p>
                                     </div>
@@ -301,32 +301,32 @@ const LandingPage: React.FC = () => {
                             {/* Step 2 */}
                             <div className="flex flex-col md:flex-row-reverse items-center gap-8 mb-12">
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20">
+                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                                                 2
                                             </div>
-                                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                            <h3 className="text-xl font-semibold text-text-primary">
                                                 {t('landing.howItWorks.step2.title')}
                                             </h3>
                                         </div>
-                                        <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                        <p className="text-text-secondary mb-4">
                                             {t('landing.howItWorks.step2.description')}
                                         </p>
-                                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                        <div className="flex items-center gap-2 text-sm text-text-muted">
                                             <Edit3 className="w-4 h-4" />
                                             <span>{t('landing.howItWorks.step2.tip')}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30 text-center">
+                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
                                         <div className="flex justify-center gap-4 mb-4">
                                             <Vote className="w-12 h-12 text-green-500" />
                                             <Star className="w-12 h-12 text-yellow-500" />
                                             <Heart className="w-12 h-12 text-red-500" />
                                         </div>
-                                        <p className="text-slate-600 dark:text-slate-300">
+                                        <p className="text-text-secondary">
                                             {t('landing.howItWorks.step2.actions')}
                                         </p>
                                     </div>
@@ -336,28 +336,28 @@ const LandingPage: React.FC = () => {
                             {/* Step 3 */}
                             <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20">
+                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
                                                 3
                                             </div>
-                                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                                            <h3 className="text-xl font-semibold text-text-primary">
                                                 {t('landing.howItWorks.step3.title')}
                                             </h3>
                                         </div>
-                                        <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                        <p className="text-text-secondary mb-4">
                                             {t('landing.howItWorks.step3.description')}
                                         </p>
-                                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                        <div className="flex items-center gap-2 text-sm text-text-muted">
                                             <Settings className="w-4 h-4" />
                                             <span>{t('landing.howItWorks.step3.tip')}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-white/30 dark:border-slate-700/30 text-center">
+                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
                                         <Download className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                                        <p className="text-slate-600 dark:text-slate-300">
+                                        <p className="text-text-secondary">
                                             {t('landing.howItWorks.step3.sharing')}
                                         </p>
                                     </div>
@@ -374,50 +374,50 @@ const LandingPage: React.FC = () => {
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
                                 {t('landing.technology.title')}
                             </h2>
-                            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
                                 {t('landing.technology.subtitle')}
                             </p>
                         </div>
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Zap className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.reactTypeScript')}</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.reactTypeScript_desc')}</p>
+                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.reactTypeScript')}</h4>
+                                <p className="text-sm text-text-secondary">{t('landing.technology.reactTypeScript_desc')}</p>
                             </div>
 
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Shield className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.firebase')}</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.firebase_desc')}</p>
+                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.firebase')}</h4>
+                                <p className="text-sm text-text-secondary">{t('landing.technology.firebase_desc')}</p>
                             </div>
 
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Palette className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.tailwind')}</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.tailwind_desc')}</p>
+                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.tailwind')}</h4>
+                                <p className="text-sm text-text-secondary">{t('landing.technology.tailwind_desc')}</p>
                             </div>
 
-                            <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3">
                                     <Smartphone className="w-6 h-6 text-white" />
                                 </div>
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{t('landing.technology.mobileFirst')}</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">{t('landing.technology.mobileFirst_desc')}</p>
+                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.mobileFirst')}</h4>
+                                <p className="text-sm text-text-secondary">{t('landing.technology.mobileFirst_desc')}</p>
                             </div>
                         </div>
 
                         <div className="text-center mt-8">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success-bg text-success-fg">
                                 <CheckCircle className="w-4 h-4" />
                                 <span className="text-sm font-medium">{t('landing.technology.openSource')}</span>
                             </div>
@@ -431,15 +431,15 @@ const LandingPage: React.FC = () => {
                         transition={{ delay: 1.2 }}
                         className="text-center mb-16"
                     >
-                        <div className="glass rounded-xl p-6 shadow-soft border border-white/20 dark:border-slate-700/20 max-w-xl mx-auto">
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-3">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 max-w-xl mx-auto">
+                            <h2 className="text-xl font-bold text-text-primary mb-3">
                                 {t('landing.finalMessage.title')}
                             </h2>
-                            <p className="text-slate-600 dark:text-slate-300 mb-4">
+                            <p className="text-text-secondary mb-4">
                                 {t('landing.finalMessage.subtitle')}
                             </p>
 
-                            <div className="flex items-center justify-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center justify-center gap-1 text-xs text-text-muted">
                                 <Github className="w-3 h-3" />
                                 <span>{t('landing.finalMessage.githubLink')}</span>
                                 <ArrowRight className="w-3 h-3 ml-1" />
@@ -450,9 +450,9 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-white/20 dark:border-slate-700/20 bg-white/5 dark:bg-slate-900/20 backdrop-blur-sm">
+            <div className="border-t border-border-default/40 bg-surface-raised/10 backdrop-blur-sm">
                 <div className="container mx-auto px-2 py-8">
-                    <div className="text-center text-slate-600 dark:text-slate-400">
+                    <div className="text-center text-text-secondary">
                         <p className="text-sm">
                             {t('landing.footer.copyright', { appName: APP_NAME })}
                         </p>
