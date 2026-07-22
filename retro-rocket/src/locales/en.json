@@ -6,7 +6,9 @@
         "closeLanguageSelector": "Close language selector",
         "profile": "Profile",
         "signOut": "Sign Out",
-        "themeMode": "Dark/Light Mode"
+        "themeMode": "Dark/Light Mode",
+        "switchToLight": "Switch to light mode",
+        "switchToDark": "Switch to dark mode"
     },
     "dashboard": {
         "title": "My Retrospectives",

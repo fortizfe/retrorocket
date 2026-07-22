@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ThemeToggle: React.FC = () => {
+    const { t } = useTranslation();
     const [isDark, setIsDark] = useState(false);
 
     useEffect(() => {
@@ -40,14 +42,13 @@ const ThemeToggle: React.FC = () => {
             className="
         relative flex items-center justify-center
         w-10 h-10 rounded-lg
-        bg-slate-100 hover:bg-slate-200 
-        dark:bg-slate-800 dark:hover:bg-slate-700
-        border border-slate-200 dark:border-slate-700
+        bg-surface-raised hover:bg-surface
+        border border-border-default
         transition-all duration-200
-        focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface
       "
-            aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            aria-label={isDark ? t('header.switchToLight') : t('header.switchToDark')}
+            title={isDark ? t('header.switchToLight') : t('header.switchToDark')}
         >
             <motion.div
                 initial={false}

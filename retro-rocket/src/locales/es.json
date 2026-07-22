@@ -7,7 +7,9 @@
         "profile": "Perfil",
         "signOut": "Cerrar sesión",
         "language": "Idioma",
-        "themeMode": "Modo Claro/Oscuro"
+        "themeMode": "Modo Claro/Oscuro",
+        "switchToLight": "Cambiar a modo claro",
+        "switchToDark": "Cambiar a modo oscuro"
     },
     "dashboard": {
         "title": "Mis Retrospectivas",

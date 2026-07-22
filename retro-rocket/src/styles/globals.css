@@ -4,17 +4,69 @@
 @tailwind utilities;
 
 @layer base {
+  /* Semantic color tokens — single source of truth (see src/lib/theme/tokens.ts
+     and specs/009-wcag-theme-compliance/contracts/design-tokens.md).
+     Values are space-separated RGB channels so Tailwind opacity modifiers work
+     via rgb(var(--color-*) / <alpha-value>). Both themes meet WCAG 2.1 AA. */
+  :root {
+    --color-surface: 248 250 252;
+    --color-surface-raised: 255 255 255;
+    --color-surface-overlay: 255 255 255;
+    --color-text-primary: 15 23 42;
+    --color-text-secondary: 51 65 85;
+    --color-text-muted: 71 85 105;
+    --color-text-inverse: 255 255 255;
+    --color-border-default: 203 213 225;
+    --color-border-strong: 100 116 139;
+    --color-focus: 37 99 235;
+    --color-action: 29 78 216;
+    --color-action-hover: 30 64 175;
+    --color-action-active: 30 58 138;
+    --color-success-fg: 6 95 70;
+    --color-success-bg: 236 253 245;
+    --color-warning-fg: 146 64 14;
+    --color-warning-bg: 255 251 235;
+    --color-error-fg: 153 27 27;
+    --color-error-bg: 254 242 242;
+    --color-info-fg: 30 64 175;
+    --color-info-bg: 239 246 255;
+  }
+
+  .dark {
+    --color-surface: 2 6 23;
+    --color-surface-raised: 15 23 42;
+    --color-surface-overlay: 30 41 59;
+    --color-text-primary: 241 245 249;
+    --color-text-secondary: 203 213 225;
+    --color-text-muted: 148 163 184;
+    --color-text-inverse: 255 255 255;
+    --color-border-default: 51 65 85;
+    --color-border-strong: 148 163 184;
+    --color-focus: 96 165 250;
+    --color-action: 29 78 216;
+    --color-action-hover: 37 99 235;
+    --color-action-active: 30 64 175;
+    --color-success-fg: 110 231 183;
+    --color-success-bg: 6 78 59;
+    --color-warning-fg: 252 211 77;
+    --color-warning-bg: 120 53 15;
+    --color-error-fg: 252 165 165;
+    --color-error-bg: 127 29 29;
+    --color-info-fg: 147 197 253;
+    --color-info-bg: 30 58 138;
+  }
+
   html {
     font-family: 'Inter', system-ui, sans-serif;
   }
 
   body {
-    @apply bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800 antialiased transition-colors duration-300;
+    @apply bg-gradient-to-br from-slate-50 to-blue-50 text-text-primary antialiased transition-colors duration-300;
   }
 
-  /* Dark mode body */
+  /* Dark mode body — gradient only; text color comes from the token */
   .dark body {
-    @apply bg-gradient-to-br from-slate-900 to-blue-950 text-slate-100;
+    @apply bg-gradient-to-br from-slate-900 to-blue-950;
   }
 
   h1,
@@ -24,39 +76,21 @@
   h5,
   h6 {
     @apply font-semibold tracking-tight;
+    /* Color inherits from the text-primary token via body; no per-theme override needed. */
   }
 
-  /* Dark mode headings */
-  .dark h1,
-  .dark h2,
-  .dark h3,
-  .dark h4,
-  .dark h5,
-  .dark h6 {
-    @apply text-slate-100;
-  }
-
-  /* Custom scrollbar - Light mode */
+  /* Custom scrollbar — token-driven (both themes) */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-slate-100 rounded-full;
+    @apply bg-surface rounded-full;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
-  }
-
-  /* Custom scrollbar - Dark mode */
-  .dark ::-webkit-scrollbar-track {
-    @apply bg-slate-800 rounded-full;
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    @apply bg-slate-600 rounded-full hover:bg-slate-500 transition-colors;
+    @apply bg-border-strong rounded-full transition-colors;
   }
 }
 
@@ -72,43 +106,38 @@
   }
 
   .input-focus {
-    @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+    @apply focus:ring-2 focus:ring-focus focus:border-focus transition-colors duration-200;
   }
 
-  /* Glass morphism effect */
+  /* Glass morphism effect — token surface, both themes */
   .glass {
-    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20;
+    @apply bg-surface-raised/80 backdrop-blur-sm border border-border-default/40;
   }
 
   .glass-strong {
-    @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-white/30 dark:border-slate-700/30;
+    @apply bg-surface-raised/90 backdrop-blur-md border border-border-default/50;
   }
 
-  /* Button variants with new blue palette */
+  /* Button variants — semantic tokens (both themes) */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white shadow-sm;
-    @apply dark:bg-primary-500 dark:hover:bg-primary-600;
+    @apply bg-action hover:bg-action-hover active:bg-action-active text-text-inverse shadow-sm;
   }
 
   .btn-secondary {
-    @apply bg-slate-100 hover:bg-slate-200 text-slate-900 shadow-sm;
-    @apply dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100;
+    @apply bg-surface-raised hover:bg-surface text-text-primary border border-border-default shadow-sm;
   }
 
   .btn-ghost {
-    @apply text-slate-700 hover:bg-slate-100;
-    @apply dark:text-slate-300 dark:hover:bg-slate-700;
+    @apply text-text-secondary hover:bg-surface-raised;
   }
 
-  /* Card styles with dark mode support */
+  /* Card styles — token surface + border (both themes) */
   .card {
-    @apply bg-white border border-slate-200 shadow-soft;
-    @apply dark:bg-slate-800 dark:border-slate-700;
+    @apply bg-surface-raised border border-border-default shadow-soft;
   }
 
   .card-elevated {
-    @apply bg-white border border-slate-200 shadow-medium;
-    @apply dark:bg-slate-800 dark:border-slate-700 dark:shadow-slate-900/20;
+    @apply bg-surface-raised border border-border-default shadow-medium;
   }
 
   /* Enhanced card color styling with dark mode support */
@@ -215,7 +244,7 @@
 
   /* Focus states for accessibility */
   .card-color-bg:focus-within {
-    outline: 2px solid rgb(59 130 246);
+    outline: 2px solid rgb(var(--color-focus));
     outline-offset: 2px;
   }
 }
@@ -245,11 +274,11 @@
 }
 
 .error {
-  @apply text-red-500;
+  @apply text-error-fg;
 }
 
 .empty-state {
-  @apply text-gray-500 text-center;
+  @apply text-text-muted text-center;
 }
 
 /* Utility: clamp text to two lines (works without Tailwind plugin) */

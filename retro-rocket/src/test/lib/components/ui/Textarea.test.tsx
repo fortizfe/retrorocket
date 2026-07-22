@@ -72,25 +72,25 @@ describe('Textarea Component', () => {
         it('should apply default variant styles', () => {
             render(<Textarea variant="default" />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('border-slate-300', 'bg-white');
+            expect(textarea).toHaveClass('border-border-strong', 'bg-surface-raised');
         });
 
         it('should apply outline variant styles', () => {
             render(<Textarea variant="outline" />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('border-slate-300', 'bg-transparent');
+            expect(textarea).toHaveClass('border-border-strong', 'bg-transparent');
         });
 
         it('should apply filled variant styles', () => {
             render(<Textarea variant="filled" />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('border-slate-200', 'bg-slate-50');
+            expect(textarea).toHaveClass('border-border-default', 'bg-surface');
         });
 
         it('should default to default variant when not specified', () => {
             render(<Textarea />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('border-slate-300', 'bg-white');
+            expect(textarea).toHaveClass('border-border-strong', 'bg-surface-raised');
         });
     });
 
@@ -159,13 +159,13 @@ describe('Textarea Component', () => {
 
             const errorElement = screen.getByText(errorMessage);
             expect(errorElement).toBeInTheDocument();
-            expect(errorElement).toHaveClass('text-red-600');
+            expect(errorElement).toHaveClass('text-error-fg');
         });
 
         it('should apply error styles to textarea when error is present', () => {
             render(<Textarea error="Error message" />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('border-red-300', 'focus:border-red-500');
+            expect(textarea).toHaveClass('border-error-fg', 'focus:border-error-fg');
         });
 
         it('should not display helper text when error is present', () => {
@@ -191,7 +191,7 @@ describe('Textarea Component', () => {
 
             const helperElement = screen.getByText(helperText);
             expect(helperElement).toBeInTheDocument();
-            expect(helperElement).toHaveClass('text-slate-500');
+            expect(helperElement).toHaveClass('text-text-muted');
         });
 
         it('should not display helper text when not provided', () => {
@@ -337,22 +337,22 @@ describe('Textarea Component', () => {
         it('should include dark mode classes', () => {
             render(<Textarea />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('dark:bg-slate-800', 'dark:text-slate-100');
+            expect(textarea).toHaveClass('bg-surface-raised', 'text-text-primary');
         });
 
         it('should include dark mode classes for error state', () => {
             render(<Textarea error="Error message" />);
             const textarea = screen.getByRole('textbox');
-            expect(textarea).toHaveClass('dark:border-red-400');
+            expect(textarea).toHaveClass('border-error-fg');
 
             const errorElement = screen.getByText('Error message');
-            expect(errorElement).toHaveClass('dark:text-red-400');
+            expect(errorElement).toHaveClass('text-error-fg');
         });
 
         it('should include dark mode classes for helper text', () => {
             render(<Textarea helperText="Helper text" />);
             const helperElement = screen.getByText('Helper text');
-            expect(helperElement).toHaveClass('dark:text-slate-400');
+            expect(helperElement).toHaveClass('text-text-muted');
         });
     });
 });
