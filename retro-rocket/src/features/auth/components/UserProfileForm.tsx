@@ -44,7 +44,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-white rounded-xl shadow-lg p-6 ${className}`}
+            className={`bg-surface-raised rounded-xl shadow-lg p-6 ${className}`}
         >
             {isFirstTime && (
                 <div className="text-center mb-6">

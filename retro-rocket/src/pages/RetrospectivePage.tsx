@@ -153,7 +153,7 @@ const RetrospectivePageContent: React.FC = () => {
     if (retroError || !retrospective) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+                <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
                     <h2 className="text-xl font-semibold text-text-primary mb-4">
                         Retrospectiva no encontrada
                     </h2>
