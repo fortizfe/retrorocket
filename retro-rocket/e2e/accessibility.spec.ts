@@ -36,6 +36,12 @@ async function applyThemeClass(page: Page, theme: Theme): Promise<void> {
 
 /** Run axe and assert zero violations, with a readable failure message. */
 async function expectNoViolations(page: Page, context: string): Promise<void> {
+    // Let the page settle before scanning: entrance animations (framer-motion
+    // fade/slide) briefly lower element opacity, which would make axe compute a
+    // transient, lower color-contrast and flag false positives. Wait for network
+    // idle and for animations to finish so axe reads the final computed colors.
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.waitForTimeout(700);
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     const summary = results.violations
         .map((v) => `  [${v.id}] ${v.help} (${v.nodes.length} node(s))`)
@@ -96,19 +102,53 @@ test('toggling theme mid-session keeps the board WCAG 2.1 AA compliant', async (
 
 // --- Keyboard focus visibility (T033 / SC-004) ------------------------------
 
+/**
+ * Inspect the currently focused element in the browser context. `:focus-visible`
+ * is evaluated in-page (Chromium supports it) rather than via a Playwright
+ * locator (whose selector engine does not resolve `:focus-visible`).
+ */
+async function inspectFocus(page: Page) {
+    return page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        if (!el || el === document.body || el === document.documentElement) {
+            return { focused: false as const };
+        }
+        const s = getComputedStyle(el);
+        const hasOutline = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth || '0') > 0;
+        const hasBoxShadow = Boolean(s.boxShadow) && s.boxShadow !== 'none';
+        return {
+            focused: true as const,
+            tag: el.tagName.toLowerCase(),
+            hasIndicator: hasOutline || hasBoxShadow,
+        };
+    });
+}
+
 for (const theme of THEMES) {
     test(`focused elements are visibly indicated via keyboard (${theme})`, async ({ page }) => {
         await forceTheme(page, theme);
         await page.goto('/');
         await applyThemeClass(page, theme);
 
-        // Tab into the page and assert a real element receives focus with a
-        // visible outline/ring (focus-visible token). Repeated a few times to
-        // cover the primary interactive controls on the landing surface.
-        for (let i = 0; i < 5; i++) {
+        // Tab through the landing surface. Every element that actually receives
+        // keyboard focus MUST show a visible indicator (outline or ring); the tab
+        // order may return to the document after the last control, so we assert
+        // that at least one interactive element was reached and indicated.
+        let focusedElements = 0;
+        for (let i = 0; i < 8; i++) {
             await page.keyboard.press('Tab');
-            const focused = page.locator(':focus-visible');
-            await expect(focused, `focus-visible element after ${i + 1} tab(s) (${theme})`).toHaveCount(1);
+            const info = await inspectFocus(page);
+            if (info.focused) {
+                focusedElements++;
+                expect(
+                    info.hasIndicator,
+                    `focused <${info.tag}> has a visible focus indicator (${theme})`,
+                ).toBe(true);
+            }
         }
+        expect(
+            focusedElements,
+            `keyboard Tab reaches at least one indicated interactive element (${theme})`,
+        ).toBeGreaterThan(0);
     });
 }
