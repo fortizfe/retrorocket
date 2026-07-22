@@ -368,9 +368,16 @@ jobs:
       run:
         working-directory: retro-rocket
     steps:
+      # Uses RELEASE_TOKEN (a PAT owned by a repository admin) instead of the default
+      # GITHUB_TOKEN, so the version-bump commit/tag push below is attributed to an
+      # actor the main-protection ruleset's bypass list allows through. The default
+      # GITHUB_TOKEN pushes as the github-actions[bot] app, which the ruleset can't
+      # exempt on a personal (non-org) repo — GitHub only allows Integration-type
+      # bypass actors when the app is installed at the organization level.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -388,5 +395,5 @@ jobs:
 
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: npx semantic-release
