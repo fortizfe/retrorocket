@@ -70,7 +70,7 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 - [X] T015 [P] Migrate auth, dashboard, and create-board feature surfaces in `retro-rocket/src/features/auth/`, `retro-rocket/src/features/dashboard/`, `retro-rocket/src/features/create-board/`
 - [X] T016 [P] Migrate overlay/transient styling: `react-hot-toast` toasts, tooltips/popovers, and the date picker in `retro-rocket/src/styles/datepicker.css` to token-based colors
 - [X] T017 Migrate the base layer (body gradient, headings, scrollbar, `.glass`, `.btn`, `.input-focus`) in `retro-rocket/src/styles/globals.css` to token references
-- [ ] T018 Refactor `retro-rocket/src/lib/utils/cardColors.ts` structure so each swatch's `background`/`border`/`text` expose explicit per-theme (light + `dark:`) classes wired to tokens/palette (values corrected in US1/US2)
+- [X] T018 Refactor `retro-rocket/src/lib/utils/cardColors.ts` structure so each swatch's `background`/`border`/`text` expose explicit per-theme (light + `dark:`) classes wired to tokens/palette (values corrected in US1/US2)
 - [X] T019 Route ThemeToggle/ThemeMenuToggle hardcoded Spanish labels through i18next: add keys to `retro-rocket/src/locales/es.json` and `retro-rocket/src/locales/en.json` and consume via `useTranslation` (satisfies i18n standard; no new hardcoded strings)
 - [X] T019a Update existing theme tests for the i18n label change in `retro-rocket/src/test/lib/components/ui/ThemeToggle.test.tsx` and `retro-rocket/src/test/lib/components/layout/Header.test.tsx`: assert i18n-driven `aria-label`s and confirm the preserved binary toggle behavior (localStorage `theme` persistence + `prefers-color-scheme` first-visit seed) per FR-012 (depends on T019)
 
@@ -87,13 +87,13 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 ### Tests for User Story 1 (write first, must FAIL)
 
 - [X] T020 [P] [US1] Add failing test `retro-rocket/src/test/lib/theme/contrast.tokens.light.test.ts` asserting every text/border/focus/status token pairing meets its AA threshold using `light` values from `tokens.ts`
-- [ ] T021 [P] [US1] Extend `retro-rocket/src/test/lib/utils/cardColors.test.ts` with failing assertions that every swatch's `text` ≥4.5:1 vs `background` and `border` ≥3:1 in the **light** theme
+- [X] T021 [P] [US1] Extend `retro-rocket/src/test/lib/utils/cardColors.test.ts` with failing assertions that every swatch's `text` ≥4.5:1 vs `background` and `border` ≥3:1 in the **light** theme
 - [ ] T022 [P] [US1] Add light-theme axe cases to `retro-rocket/e2e/accessibility.spec.ts` covering `/`, `/dashboard`, `/perfil`, `/retrospective/:id`, plus an open modal, the theme menu, a toast, and the date picker
 
 ### Implementation for User Story 1
 
 - [ ] T023 [US1] Set compliant **light** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`light`) and `retro-rocket/src/styles/globals.css` (`:root`) until T020 passes; confirm the theme class is applied before first paint so the initial light render is already compliant (no flash of wrong theme, FR-011)
-- [ ] T024 [US1] Set compliant **light** swatch values (background/border/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T021 passes
+- [X] T024 [US1] Set compliant **light** swatch values (background/border/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T021 passes
 - [ ] T025 [US1] Fix any light-theme surface violations surfaced by T022 in the migrated components under `retro-rocket/src/lib/components/`, `retro-rocket/src/pages/`, and `retro-rocket/src/features/**` until all light axe scans in `retro-rocket/e2e/accessibility.spec.ts` pass
 
 **Checkpoint**: Light theme is fully AA-compliant and independently verifiable — MVP deliverable.
@@ -111,14 +111,14 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 ### Tests for User Story 2 (write first, must FAIL)
 
 - [X] T026 [P] [US2] Add failing test `retro-rocket/src/test/lib/theme/contrast.tokens.dark.test.ts` asserting every token pairing meets its AA threshold using `dark` values from `tokens.ts`
-- [ ] T027 [P] [US2] Extend `retro-rocket/src/test/lib/utils/cardColors.test.ts` with failing assertions that every swatch meets AA text/border contrast in the **dark** theme (fixes the current light-bg + light-text defect)
+- [X] T027 [P] [US2] Extend `retro-rocket/src/test/lib/utils/cardColors.test.ts` with failing assertions that every swatch meets AA text/border contrast in the **dark** theme (fixes the current light-bg + light-text defect)
 - [ ] T028 [P] [US2] Add dark-theme axe cases to `retro-rocket/e2e/accessibility.spec.ts` covering the same routes/overlays as T022
 - [ ] T028a [US2] Add a runtime theme-switch E2E in `retro-rocket/e2e/accessibility.spec.ts`: open a board, toggle theme mid-session, and re-run the axe scan in the switched theme asserting zero violations and that no surface retains prior-theme colors (FR-010) (same file as T028 — run after it)
 
 ### Implementation for User Story 2
 
 - [ ] T029 [US2] Set compliant **dark** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`dark`) and `retro-rocket/src/styles/globals.css` (`.dark`) until T026 passes; confirm the theme class is applied before first paint so the initial dark render is already compliant (no flash of wrong theme, FR-011)
-- [ ] T030 [US2] Set compliant **dark** swatch values (add proper `dark:` backgrounds/borders/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T027 passes
+- [X] T030 [US2] Set compliant **dark** swatch values (add proper `dark:` backgrounds/borders/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T027 passes
 - [ ] T031 [US2] Fix any dark-theme surface violations surfaced by T028 in the migrated components under `retro-rocket/src/lib/components/`, `retro-rocket/src/pages/`, and `retro-rocket/src/features/**` until all dark axe scans in `retro-rocket/e2e/accessibility.spec.ts` pass
 
 **Checkpoint**: Both themes independently pass the same WCAG 2.1 AA thresholds.
