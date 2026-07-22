@@ -86,16 +86,16 @@ describe('LikeButton Component', () => {
             render(<LikeButton {...defaultProps} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveClass('bg-slate-100');
-            expect(button).toHaveClass('text-slate-600');
+            expect(button).toHaveClass('bg-surface');
+            expect(button).toHaveClass('text-text-secondary');
         });
 
         it('shows liked state styling', () => {
             render(<LikeButton {...defaultProps} isLiked={true} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveClass('bg-primary-100');
-            expect(button).toHaveClass('text-primary-600');
+            expect(button).toHaveClass('bg-info-bg');
+            expect(button).toHaveClass('text-info-fg');
         });
 
         it('shows filled icon when liked', () => {

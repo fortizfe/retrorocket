@@ -402,7 +402,7 @@ const EnhancedRetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
 
                     {/* Enhanced mobile navigation with action items */}
                     <div className="fixed bottom-4 left-4 right-4 lg:hidden z-20">
-                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 p-2">
+                        <div className="bg-surface-raised/95 backdrop-blur-md rounded-xl shadow-lg border border-border-default/50 p-2">
                             <div className="flex justify-center space-x-2">
                                 {[...mobileNavigationTabs, {
                                     id: 'action-items',
@@ -417,7 +417,7 @@ const EnhancedRetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                             flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
                                             ${tab.id === activeColumnId
                                                 ? 'bg-blue-500 text-white shadow-sm'
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                : 'text-text-secondary hover:bg-surface-raised'
                                             }
                                         `}
                                     >
@@ -428,7 +428,7 @@ const EnhancedRetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                                 px-2 py-0.5 text-xs rounded-full min-w-[20px] text-center
                                                 ${tab.id === activeColumnId
                                                     ? 'bg-blue-400 text-white'
-                                                    : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
+                                                    : 'bg-border-default text-text-secondary'
                                                 }
                                             `}>
                                                 {tab.count}

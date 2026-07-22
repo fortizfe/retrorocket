@@ -82,13 +82,13 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className={`group relative bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-150 ${className}`}
+            className={`group relative bg-warning-bg border border-warning-fg rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-150 ${className}`}
         >
             {/* Header con indicador de elemento de acción */}
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-1">
-                    <span className="text-amber-600 dark:text-amber-400 text-base font-bold">🎯</span>
-                    <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
+                    <span className="text-warning-fg text-base font-bold">🎯</span>
+                    <span className="text-xs text-warning-fg font-bold">
                         {t('retrospective.actionItems.actionLabel')}
                     </span>
                 </div>
@@ -98,7 +98,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <button
                             onClick={() => setIsEditing(true)}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-800/30 text-amber-600 dark:text-amber-400 transition-colors"
+                            className="p-1 rounded hover:bg-warning-bg text-warning-fg transition-colors"
                             title={t('retrospective.actionItemCard.editAction')}
                         >
                             <Edit3 className="w-3 h-3" />
@@ -106,7 +106,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <button
                             onClick={handleDelete}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-800/30 text-red-500 dark:text-red-400 transition-colors"
+                            className="p-1 rounded hover:bg-error-bg text-error-fg transition-colors"
                             title={t('retrospective.actionItemCard.deleteAction')}
                         >
                             <Trash2 className="w-3 h-3" />
@@ -128,13 +128,13 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-2 text-xs border border-amber-200 dark:border-amber-700 rounded resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            className="w-full p-2 text-xs border border-warning-fg rounded resize-none bg-surface-raised text-text-primary focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             rows={2}
                             placeholder={t('retrospective.actionItemCard.placeholder')}
                             autoFocus
                         />
                         <div>
-                            <label htmlFor={`assignee-${actionItem.id}`} className="block text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
+                            <label htmlFor={`assignee-${actionItem.id}`} className="block text-xs font-medium text-warning-fg mb-1">
                                 {t('retrospective.actionItems.responsible')}
                             </label>
                             <select
@@ -142,7 +142,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 title={t('retrospective.actionItems.responsibleSelect')}
-                                className="w-full p-2 text-xs border border-amber-200 dark:border-amber-700 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                className="w-full p-2 text-xs border border-warning-fg rounded bg-surface-raised text-text-primary focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             >
                                 <option value="">{t('retrospective.actionItemCard.unassigned')}</option>
                                 {participants.map((participant) => (
@@ -194,20 +194,20 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                     >
                         <LinkifyText
                             text={actionItem.content}
-                            className="text-xs text-slate-700 dark:text-slate-300 mb-2 whitespace-pre-wrap"
+                            className="text-xs text-text-secondary mb-2 whitespace-pre-wrap"
                         />
                         {assignedParticipant && (
-                            <div className="flex items-center gap-1 p-1 bg-amber-100 dark:bg-amber-800/20 rounded border border-amber-200 dark:border-amber-700">
-                                <User className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                                <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                            <div className="flex items-center gap-1 p-1 bg-warning-bg rounded border border-warning-fg">
+                                <User className="w-3 h-3 text-warning-fg" />
+                                <span className="text-xs text-warning-fg font-medium">
                                     {t('retrospective.actionItemCard.responsible')}: {assignedParticipant.name}
                                 </span>
                             </div>
                         )}
                         {actionItem.dueDate && (
-                            <div className="flex items-center gap-1 p-1 bg-blue-100 dark:bg-blue-800/20 rounded border border-blue-200 dark:border-blue-700">
-                                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                            <div className="flex items-center gap-1 p-1 bg-info-bg rounded border border-info-fg">
+                                <Calendar className="w-3 h-3 text-info-fg" />
+                                <span className="text-xs text-info-fg font-medium">
                                     {t('retrospective.actionItems.dueDateDisplay', {
                                         date: actionItem.dueDate.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'es-ES', {
                                             day: '2-digit',
@@ -218,7 +218,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 </span>
                             </div>
                         )}
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-xs text-text-muted">
                             {t('retrospective.actionItemCard.created')}: {actionItem.createdAt.toLocaleDateString('es-ES', {
                                 day: '2-digit',
                                 month: '2-digit',
@@ -232,7 +232,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
 
             {/* Indicador de carga si se está eliminando */}
             {isDeleting && (
-                <div className="absolute inset-0 bg-red-50/80 dark:bg-red-900/20 
+                <div className="absolute inset-0 bg-error-bg/90 
                        rounded-lg flex items-center justify-center">
                     <div className="w-4 h-4 border-2 border-red-500 border-t-transparent 
                          rounded-full animate-spin" />

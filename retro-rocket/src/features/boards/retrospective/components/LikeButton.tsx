@@ -64,8 +64,8 @@ const LikeButton: React.FC<LikeButtonProps> = ({
         flex items-center gap-1 px-2 py-1 rounded-full text-sm
         transition-all duration-200 min-w-[2.5rem] justify-center
         ${isLiked
-                    ? 'bg-primary-100 dark:bg-primary-900/30 border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
-                    : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
+                    ? 'bg-info-bg border border-info-fg text-info-fg'
+                    : 'bg-surface hover:bg-surface-raised border border-border-default text-text-secondary'
                 }
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}
       `}

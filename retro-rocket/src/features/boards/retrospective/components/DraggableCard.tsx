@@ -167,14 +167,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 size="sm"
                             />
                             <div className="cursor-grab active:cursor-grabbing">
-                                <GripVertical size={14} className="text-slate-400 dark:text-slate-500" />
+                                <GripVertical size={14} className="text-text-muted" />
                             </div>
                         </div>
                     )}
 
                     {/* Header autor y sentimiento */}
                     <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 text-xs text-text-muted">
                             <User size={12} />
                             <span>{card.createdBy}</span>
                             {React.useMemo(() => {
@@ -205,20 +205,20 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         </div>
                         <div className="flex items-center gap-1">
                             {(card.votes !== undefined && card.votes > 0) && (
-                                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 rounded-full px-2 py-0.5">
+                                <div className="flex items-center gap-1 bg-surface rounded-full px-2 py-0.5">
                                     <button
                                         onClick={() => handleVote(true)}
-                                        className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                        className="text-text-secondary hover:text-info-fg transition-colors"
                                         aria-label="Vote up"
                                     >
                                         <ThumbsUp size={12} />
                                     </button>
-                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                    <span className="text-xs font-medium text-text-secondary">
                                         {card.votes ?? 0}
                                     </span>
                                     <button
                                         onClick={() => handleVote(false)}
-                                        className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                        className="text-text-secondary hover:text-error-fg transition-colors"
                                         aria-label="Vote down"
                                         disabled={!card.votes || card.votes === 0}
                                     >
@@ -244,7 +244,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         ) : (
                             <LinkifyText
                                 text={card.content}
-                                className="text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap text-sm"
+                                className="text-text-primary leading-relaxed whitespace-pre-wrap text-sm"
                             />
                         )}
                     </div>
@@ -273,7 +273,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 
                     {/* Footer compacto */}
                     <div className="flex items-center justify-between">
-                        <div className="text-xs text-slate-400 dark:text-slate-500">
+                        <div className="text-xs text-text-muted">
                             {card.createdAt && new Date(card.createdAt).toLocaleDateString('es-ES', {
                                 day: 'numeric',
                                 month: 'short',
@@ -318,7 +318,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                                 onClick={handleDelete}
                                                 loading={isDeleting}
                                                 aria-label="Delete card"
-                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                                className="text-error-fg hover:text-error-fg"
                                             >
                                                 <Trash2 size={12} />
                                             </Button>
