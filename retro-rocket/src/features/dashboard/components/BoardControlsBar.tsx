@@ -110,7 +110,7 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                                 className="px-3 py-1 text-xs"
                             >
                                 {t('dashboard.controls.showAll')}
-                                <span className="ml-1 text-xs opacity-75">({totalCount})</span>
+                                <span className="ml-1 text-xs">({totalCount})</span>
                             </Button>
                             <Button
                                 variant={filterBy === 'created' ? 'primary' : 'ghost'}
@@ -119,7 +119,7 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                                 className="px-3 py-1 text-xs"
                             >
                                 {t('dashboard.controls.showCreated')}
-                                <span className="ml-1 text-xs opacity-75">({createdCount})</span>
+                                <span className="ml-1 text-xs">({createdCount})</span>
                             </Button>
                             <Button
                                 variant={filterBy === 'joined' ? 'primary' : 'ghost'}
@@ -128,7 +128,7 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                                 className="px-3 py-1 text-xs"
                             >
                                 {t('dashboard.controls.showJoined')}
-                                <span className="ml-1 text-xs opacity-75">({joinedCount})</span>
+                                <span className="ml-1 text-xs">({joinedCount})</span>
                             </Button>
                         </div>
                     </div>

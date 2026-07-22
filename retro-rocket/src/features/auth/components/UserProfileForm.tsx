@@ -88,11 +88,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                    <label htmlFor="profile-email" className="block text-sm font-medium text-text-secondary mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.email')}
                     </label>
                     <Input
+                        id="profile-email"
                         type="email"
                         value={userProfile?.email ?? ''}
                         disabled
@@ -104,11 +105,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                    <label htmlFor="profile-display-name" className="block text-sm font-medium text-text-secondary mb-2">
                         <User className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.displayName')}
                     </label>
                     <Input
+                        id="profile-display-name"
                         type="text"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
