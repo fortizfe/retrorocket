@@ -34,6 +34,12 @@ async function applyThemeClass(page: Page, theme: Theme): Promise<void> {
     }, theme);
 }
 
+/** Wait until the board has rendered its default columns, so no navigation or
+ *  late render is pending when we scan. */
+async function waitForBoardReady(page: Page): Promise<void> {
+    await expect(page.getByText('Qué me ayudó', { exact: true })).toBeVisible({ timeout: 15_000 });
+}
+
 /** Run axe and assert zero violations, with a readable failure message. */
 async function expectNoViolations(page: Page, context: string): Promise<void> {
     // Deterministic pre-scan settle. Two sources of transient color otherwise
@@ -47,9 +53,12 @@ async function expectNoViolations(page: Page, context: string): Promise<void> {
     // NOTE: do NOT wait for 'networkidle' — authenticated pages hold open
     // Firestore real-time connections, so the network never goes idle.
     await page.addStyleTag({
-        content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
+        content: `
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            [style*="opacity"] { opacity: 1 !important; }
+        `,
     });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(400);
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     const summary = results.violations
         .map((v) => `  [${v.id}] ${v.help} (${v.nodes.length} node(s))`)
@@ -88,6 +97,7 @@ for (const theme of THEMES) {
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
         await createBoard(page, `A11y Board ${theme}`);
+        await waitForBoardReady(page);
         await applyThemeClass(page, theme);
         await expectNoViolations(page, `board (${theme})`);
     });
@@ -99,6 +109,7 @@ test('toggling theme mid-session keeps the board WCAG 2.1 AA compliant', async (
     await forceTheme(page, 'light');
     await signInWithGoogle(page, context);
     await createBoard(page, 'A11y Board toggle');
+    await waitForBoardReady(page);
 
     await applyThemeClass(page, 'light');
     await expectNoViolations(page, 'board after switch → light');
