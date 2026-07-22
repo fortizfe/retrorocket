@@ -151,9 +151,9 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 
 **Purpose**: Cleanup and end-to-end validation
 
-- [ ] T038 [P] Remove now-dead ad-hoc color utilities and any leftover raw `dark:` color pairs flagged by grep across `retro-rocket/src/**` (no behavior change)
-- [ ] T039 [P] Update contributor docs/CLAUDE.md note pointing to the semantic-token contract (`contracts/design-tokens.md`) as the required way to add colors
-- [ ] T040 Run `npm run test:coverage` and confirm coverage stays ≥ thresholds in `retro-rocket/vitest.config.ts` (branches 78 / functions 64 / lines 50 / statements 50); add unit tests if any new logic dropped it
+- [X] T038 [P] Remove now-dead ad-hoc color utilities and any leftover raw `dark:` color pairs flagged by grep across `retro-rocket/src/**` (no behavior change)
+- [X] T039 [P] Update contributor docs/CLAUDE.md note pointing to the semantic-token contract (`contracts/design-tokens.md`) as the required way to add colors
+- [X] T040 Run `npm run test:coverage` and confirm coverage stays ≥ thresholds in `retro-rocket/vitest.config.ts` (branches 78 / functions 64 / lines 50 / statements 50); add unit tests if any new logic dropped it
 - [ ] T041 Execute `specs/009-wcag-theme-compliance/quickstart.md` end-to-end (steps 1–4) and confirm all expected outcomes, including the merge-blocking `e2e` audit green in both themes
 
 ---
