@@ -92,7 +92,7 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 
 ### Implementation for User Story 1
 
-- [ ] T023 [US1] Set compliant **light** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`light`) and `retro-rocket/src/styles/globals.css` (`:root`) until T020 passes; confirm the theme class is applied before first paint so the initial light render is already compliant (no flash of wrong theme, FR-011)
+- [X] T023 [US1] Set compliant **light** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`light`) and `retro-rocket/src/styles/globals.css` (`:root`) until T020 passes; confirm the theme class is applied before first paint so the initial light render is already compliant (no flash of wrong theme, FR-011)
 - [X] T024 [US1] Set compliant **light** swatch values (background/border/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T021 passes
 - [ ] T025 [US1] Fix any light-theme surface violations surfaced by T022 in the migrated components under `retro-rocket/src/lib/components/`, `retro-rocket/src/pages/`, and `retro-rocket/src/features/**` until all light axe scans in `retro-rocket/e2e/accessibility.spec.ts` pass
 
@@ -117,7 +117,7 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Set compliant **dark** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`dark`) and `retro-rocket/src/styles/globals.css` (`.dark`) until T026 passes; confirm the theme class is applied before first paint so the initial dark render is already compliant (no flash of wrong theme, FR-011)
+- [X] T029 [US2] Set compliant **dark** values for all `--color-*` tokens in `retro-rocket/src/lib/theme/tokens.ts` (`dark`) and `retro-rocket/src/styles/globals.css` (`.dark`) until T026 passes; confirm the theme class is applied before first paint so the initial dark render is already compliant (no flash of wrong theme, FR-011)
 - [X] T030 [US2] Set compliant **dark** swatch values (add proper `dark:` backgrounds/borders/text) in `retro-rocket/src/lib/utils/cardColors.ts` until T027 passes
 - [ ] T031 [US2] Fix any dark-theme surface violations surfaced by T028 in the migrated components under `retro-rocket/src/lib/components/`, `retro-rocket/src/pages/`, and `retro-rocket/src/features/**` until all dark axe scans in `retro-rocket/e2e/accessibility.spec.ts` pass
 

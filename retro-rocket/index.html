@@ -26,6 +26,20 @@
 
     <link rel="icon" type="image/svg+xml" href="/rocket.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <!-- Apply the theme before first paint to avoid a flash of the wrong theme
+         (WCAG 2.1 feature FR-011). Mirrors the logic in ThemeToggle. -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) { /* localStorage/matchMedia unavailable — default to light */ }
+        })();
+    </script>
 </head>
 
 <body>
