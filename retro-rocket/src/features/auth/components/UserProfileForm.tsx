@@ -56,10 +56,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                     >
                         <User className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h2 className="text-2xl font-bold text-text-primary mb-2">
                         {t('auth.userProfileForm.welcome')}
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-text-secondary">
                         {t('auth.userProfileForm.welcomeSubtitle')}
                     </p>
                 </div>
@@ -67,10 +67,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             {!isFirstTime && (
                 <div className="text-center mb-6">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">
                         {t('auth.userProfileForm.editProfile')}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-text-secondary">
                         {t('auth.userProfileForm.editProfileSubtitle')}
                     </p>
                 </div>

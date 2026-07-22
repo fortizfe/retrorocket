@@ -19,7 +19,7 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children, requireAuth = true 
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                 <div className="text-center">
                     <Loading />
-                    <p className="mt-4 text-gray-600">{t('auth.wrapper.verifying')}</p>
+                    <p className="mt-4 text-text-secondary">{t('auth.wrapper.verifying')}</p>
                 </div>
             </div>
         );
