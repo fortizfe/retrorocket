@@ -19,9 +19,20 @@ import { useSentimentContext } from '@/features/boards/sentiment/contexts/Sentim
 import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
 import { groupReactions, hasUserLiked } from '@/lib/utils/cardHelpers';
 import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
+import type { DraggableAttributes } from '@dnd-kit/core';
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
+
+/** dnd-kit wiring for a dedicated drag handle (see SortableCard). */
+export interface DragHandleProps {
+    attributes: DraggableAttributes;
+    listeners: SyntheticListenerMap | undefined;
+    setActivatorNodeRef: (element: HTMLElement | null) => void;
+}
 
 interface DraggableCardProps {
     card: CardType;
+    /** When present, renders an operable drag handle wired to dnd-kit. */
+    dragHandleProps?: DragHandleProps;
     onUpdate?: (cardId: string, updates: Partial<CardType>) => Promise<void>;
     onDelete?: (cardId: string) => Promise<void>;
     onVote?: (cardId: string, increment: boolean) => Promise<void>;
@@ -39,6 +50,7 @@ interface DraggableCardProps {
 
 const DraggableCard: React.FC<DraggableCardProps> = ({
     card,
+    dragHandleProps,
     onUpdate,
     onDelete,
     onVote,
@@ -191,17 +203,34 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     customBackground={true}
                     className={`p-2 group relative transition-all duration-200 ${isDragging ? 'shadow-lg border-info-fg' : ''} ${cardStyling}`}
                 >
-                    {/* Drag handle y Color picker compactos */}
-                    {canEdit && !isEditing && (
-                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ColorPicker
-                                selectedColor={cardColor}
-                                onColorChange={handleColorChange}
-                                size="sm"
-                            />
-                            <div className="cursor-grab active:cursor-grabbing">
-                                <GripVertical size={14} className="text-text-muted" />
-                            </div>
+                    {/* Drag handle y Color picker compactos. The drag activator is a
+                        dedicated, keyboard-focusable handle (not the whole card) — see
+                        DragHandleProps. `focus-within` reveals it for keyboard users. */}
+                    {!isEditing && (canEdit || dragHandleProps) && (
+                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                            {canEdit && (
+                                <ColorPicker
+                                    selectedColor={cardColor}
+                                    onColorChange={handleColorChange}
+                                    size="sm"
+                                />
+                            )}
+                            {dragHandleProps ? (
+                                <button
+                                    type="button"
+                                    ref={dragHandleProps.setActivatorNodeRef}
+                                    {...dragHandleProps.attributes}
+                                    {...dragHandleProps.listeners}
+                                    aria-label={t('retrospective.card.dragHandle')}
+                                    className="cursor-grab active:cursor-grabbing text-text-muted rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                >
+                                    <GripVertical size={14} />
+                                </button>
+                            ) : (
+                                <div className="cursor-grab active:cursor-grabbing">
+                                    <GripVertical size={14} className="text-text-muted" />
+                                </div>
+                            )}
                         </div>
                     )}
 

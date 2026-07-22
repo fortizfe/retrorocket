@@ -475,7 +475,8 @@
             "voteUp": "Votar a favor",
             "voteDown": "Quitar voto",
             "editCard": "Editar tarjeta",
-            "deleteCard": "Eliminar tarjeta"
+            "deleteCard": "Eliminar tarjeta",
+            "dragHandle": "Mover tarjeta (arrastrar)"
         },
         "board": {
             "loading": "Cargando retrospectiva...",

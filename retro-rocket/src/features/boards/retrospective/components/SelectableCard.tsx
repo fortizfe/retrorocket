@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Card, EmojiReaction } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
-import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
+import DraggableCard, { DragHandleProps } from '@/features/boards/retrospective/components/DraggableCard';
 
 interface SelectableCardProps {
     card: Card;
+    /** dnd-kit drag-handle wiring, applied to the card's grip handle. */
+    dragHandleProps?: DragHandleProps;
     onUpdate: (cardId: string, updates: Partial<Card>) => Promise<void>;
     onDelete: (cardId: string) => Promise<void>;
     onVote: (cardId: string, increment: boolean) => Promise<void>;
@@ -27,6 +29,7 @@ interface SelectableCardProps {
 
 const SelectableCard: React.FC<SelectableCardProps> = ({
     card,
+    dragHandleProps,
     onUpdate,
     onDelete,
     onVote,
@@ -85,6 +88,7 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
             {/* Card Component */}
             <DraggableCard
                 card={card}
+                dragHandleProps={dragHandleProps}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onVote={onVote}

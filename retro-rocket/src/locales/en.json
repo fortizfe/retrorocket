@@ -470,7 +470,8 @@
             "voteUp": "Vote up",
             "voteDown": "Vote down",
             "editCard": "Edit card",
-            "deleteCard": "Delete card"
+            "deleteCard": "Delete card",
+            "dragHandle": "Move card (drag)"
         },
         "board": {
             "loading": "Loading retrospective...",
