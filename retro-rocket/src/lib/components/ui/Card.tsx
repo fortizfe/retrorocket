@@ -34,21 +34,21 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
 
     const variants = {
       default: customBackground
-        ? 'border border-slate-200 dark:border-slate-700'
-        : `bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${shadows.card}`,
+        ? 'border border-border-default'
+        : `bg-surface-raised border border-border-default ${shadows.card}`,
       outlined: customBackground
-        ? 'border-2 border-slate-200 dark:border-slate-700'
-        : `bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 ${shadows.card}`,
+        ? 'border-2 border-border-default'
+        : `bg-surface-raised border-2 border-border-default ${shadows.card}`,
       elevated: customBackground
-        ? `${shadows.cardElevated} border border-slate-100 dark:border-slate-700`
-        : `bg-white dark:bg-slate-800 ${shadows.cardElevated} border border-slate-100 dark:border-slate-700`,
+        ? `${shadows.cardElevated} border border-border-default`
+        : `bg-surface-raised ${shadows.cardElevated} border border-border-default`,
       filled: customBackground
-        ? 'border border-slate-200 dark:border-slate-700'
-        : 'bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700',
-      glass: 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20 shadow-lg',
+        ? 'border border-border-default'
+        : 'bg-surface border border-border-default',
+      glass: 'bg-surface-raised/80 backdrop-blur-sm border border-border-default/40 shadow-lg',
       interactive: customBackground
-        ? `border border-slate-200 dark:border-slate-700 ${interactiveStates.cardHover} ${a11y.focusVisible}`
-        : `bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 ${shadows.card} ${interactiveStates.cardHover} ${a11y.focusVisible}`
+        ? `border border-border-default ${interactiveStates.cardHover} ${a11y.focusVisible}`
+        : `bg-surface-raised border border-border-default ${shadows.card} ${interactiveStates.cardHover} ${a11y.focusVisible}`
     };
 
     const paddings = {
@@ -65,7 +65,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       variants[variant],
       paddings[padding],
       loading && 'pointer-events-none opacity-70',
-      hover && `${shadows.cardElevated} hover:border-primary-300 dark:hover:border-primary-500 cursor-pointer hover:-translate-y-1`,
+      hover && `${shadows.cardElevated} hover:border-action cursor-pointer hover:-translate-y-1`,
       interactive && 'cursor-pointer',
       className
     );
@@ -94,8 +94,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         {...motionProps}
       >
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-lg z-10">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-surface-raised/50 backdrop-blur-sm rounded-lg z-10">
+            <div className="w-6 h-6 border-2 border-action border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         <div {...props}>

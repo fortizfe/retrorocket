@@ -24,7 +24,7 @@ describe('Card Component', () => {
 
             const card = getCardWrapper('Test content');
             expect(card).toBeInTheDocument();
-            expect(card).toHaveClass('bg-white', 'dark:bg-slate-800');
+            expect(card).toHaveClass('bg-surface-raised');
             expect(screen.getByText('Test content')).toBeInTheDocument();
         });
 
@@ -48,7 +48,7 @@ describe('Card Component', () => {
 
             rerender(<Card variant="glass">Glass card</Card>);
             card = getCardWrapper('Glass card');
-            expect(card).toHaveClass('bg-white/80', 'backdrop-blur-sm');
+            expect(card).toHaveClass('bg-surface-raised/80', 'backdrop-blur-sm');
         });
 
         it('should handle different padding sizes', () => {
@@ -111,8 +111,8 @@ describe('Card Component', () => {
             render(<Card customBackground>Custom bg</Card>);
 
             const card = getCardWrapper('Custom bg');
-            expect(card).toHaveClass('border', 'border-slate-200', 'dark:border-slate-700');
-            expect(card).not.toHaveClass('bg-white', 'dark:bg-slate-800');
+            expect(card).toHaveClass('border', 'border-border-default');
+            expect(card).not.toHaveClass('bg-surface-raised');
         });
     });
 
@@ -121,8 +121,8 @@ describe('Card Component', () => {
             render(<Card>Dark mode test</Card>);
 
             const card = getCardWrapper('Dark mode test');
-            expect(card).toHaveClass('bg-white', 'dark:bg-slate-800');
-            expect(card).toHaveClass('border-slate-200', 'dark:border-slate-700');
+            expect(card).toHaveClass('bg-surface-raised');
+            expect(card).toHaveClass('border-border-default');
         });
 
         it('should handle dark mode for elevated variant', () => {
@@ -199,7 +199,7 @@ describe('Card Component', () => {
             render(<Card>{''}</Card>);
 
             // Component should still render
-            const container = document.querySelector('.bg-white');
+            const container = document.querySelector('.bg-surface-raised');
             expect(container).toBeInTheDocument();
         });
 

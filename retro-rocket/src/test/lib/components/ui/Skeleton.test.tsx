@@ -17,7 +17,7 @@ describe('Skeleton Components', () => {
             const skeleton = screen.getByRole('status');
 
             expect(skeleton).toBeInTheDocument();
-            expect(skeleton).toHaveClass('bg-slate-200', 'dark:bg-slate-700', 'animate-pulse');
+            expect(skeleton).toHaveClass('bg-border-default', 'animate-pulse');
             expect(skeleton).toHaveAttribute('aria-label', 'Cargando contenido');
         });
 
@@ -48,9 +48,9 @@ describe('Skeleton Components', () => {
             render(<ColumnHeaderSkeleton />);
 
             // Should render card container
-            const container = document.querySelector('.bg-white');
+            const container = document.querySelector('.bg-surface-raised');
             expect(container).toBeInTheDocument();
-            expect(container).toHaveClass('dark:bg-slate-800', 'p-4', 'mb-4');
+            expect(container).toHaveClass('p-4', 'mb-4');
 
             // Should have multiple skeleton elements
             const skeletons = screen.getAllByRole('status');
@@ -60,7 +60,7 @@ describe('Skeleton Components', () => {
         it('should have proper spacing and layout', () => {
             render(<ColumnHeaderSkeleton />);
 
-            const container = document.querySelector('.bg-white');
+            const container = document.querySelector('.bg-surface-raised');
             expect(container).toHaveClass('rounded-lg'); // From borderRadius.card
 
             const flexContainer = container?.querySelector('.flex.items-center.space-x-3');
@@ -87,9 +87,9 @@ describe('Skeleton Components', () => {
         it('should render card structure with motion', () => {
             render(<CardSkeleton />);
 
-            const container = document.querySelector('.bg-white');
+            const container = document.querySelector('.bg-surface-raised');
             expect(container).toBeInTheDocument();
-            expect(container).toHaveClass('dark:bg-slate-800', 'p-4', 'mb-3');
+            expect(container).toHaveClass('p-4', 'mb-3');
 
             const skeletons = screen.getAllByRole('status');
             expect(skeletons.length).toBeGreaterThan(3); // Content + footer elements
@@ -152,9 +152,9 @@ describe('Skeleton Components', () => {
         it('should render mobile navigation skeleton', () => {
             render(<RetrospectiveBoardSkeleton />);
 
-            const mobileNav = document.querySelector('.bg-white\\/95');
+            const mobileNav = document.querySelector('.bg-surface-raised\\/95');
             expect(mobileNav).toBeInTheDocument();
-            expect(mobileNav).toHaveClass('dark:bg-slate-900/95', 'border-b');
+            expect(mobileNav).toHaveClass('border-b');
         });
 
         it('should have proper spacing between elements', () => {
@@ -223,7 +223,7 @@ describe('Skeleton Components', () => {
 
             const skeleton = screen.getByRole('status');
             // Motion-reduce token may not be present on Skeleton; ensure it at least renders without motion when requested
-            expect(skeleton).toHaveClass('bg-slate-200');
+            expect(skeleton).toHaveClass('bg-border-default');
         });
     });
 
@@ -232,18 +232,18 @@ describe('Skeleton Components', () => {
             render(<Skeleton />);
 
             const skeleton = screen.getByRole('status');
-            expect(skeleton).toHaveClass('bg-slate-200', 'dark:bg-slate-700');
+            expect(skeleton).toHaveClass('bg-border-default');
         });
 
         it('should maintain contrast in dark mode', () => {
             render(<ColumnHeaderSkeleton />);
 
-            const container = document.querySelector('.bg-white');
-            expect(container).toHaveClass('dark:bg-slate-800');
+            const container = document.querySelector('.bg-surface-raised');
+            expect(container).toHaveClass('bg-surface-raised');
 
             const skeletons = screen.getAllByRole('status');
             skeletons.forEach(skeleton => {
-                expect(skeleton).toHaveClass('dark:bg-slate-700');
+                expect(skeleton).toHaveClass('bg-border-default');
             });
         });
     });
@@ -295,7 +295,7 @@ describe('Skeleton Components', () => {
         it('should use consistent border radius', () => {
             render(<ColumnHeaderSkeleton />);
 
-            const container = document.querySelector('.bg-white');
+            const container = document.querySelector('.bg-surface-raised');
             expect(container).toHaveClass('rounded-lg'); // From borderRadius.card
         });
 
@@ -303,7 +303,7 @@ describe('Skeleton Components', () => {
             render(<Skeleton />);
 
             const skeleton = screen.getByRole('status');
-            expect(skeleton).toHaveClass('bg-slate-200', 'dark:bg-slate-700');
+            expect(skeleton).toHaveClass('bg-border-default');
         });
 
         it('should use consistent spacing', () => {

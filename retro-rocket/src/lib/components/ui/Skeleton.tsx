@@ -15,7 +15,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     rounded = 'md'
 }) => {
     const baseClasses = `
-    bg-slate-200 dark:bg-slate-700
+    bg-border-default
     ${borderRadius[rounded]}
     ${animations.pulse}
     ${className}
@@ -34,7 +34,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
  */
 export const ColumnHeaderSkeleton: React.FC = () => {
     return (
-        <div className={`${borderRadius.card} ${shadows.card} bg-white dark:bg-slate-800 p-4 mb-4`}>
+        <div className={`${borderRadius.card} ${shadows.card} bg-surface-raised p-4 mb-4`}>
             <div className="flex items-center space-x-3">
                 {/* Icon skeleton */}
                 <Skeleton className="w-8 h-8" rounded="md" />
@@ -66,7 +66,7 @@ export const CardSkeleton: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
-            className={`${borderRadius.card} ${shadows.card} bg-white dark:bg-slate-800 p-4 mb-3`}
+            className={`${borderRadius.card} ${shadows.card} bg-surface-raised p-4 mb-3`}
         >
             {/* Card content */}
             <div className="space-y-3">
@@ -139,7 +139,7 @@ export const RetrospectiveBoardSkeleton: React.FC = () => {
             {/* Mobile: Single column */}
             <div className="lg:hidden">
                 {/* Mobile navigation skeleton */}
-                <div className="bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/50 dark:border-slate-700/50 p-4 mb-4">
+                <div className="bg-surface-raised/95 border-b border-border-default/50 p-4 mb-4">
                     <div className="flex items-center justify-between">
                         <Skeleton className="w-8 h-8" />
                         <div className="flex space-x-2">
@@ -176,7 +176,7 @@ export const ActionItemsSkeleton: React.FC = () => {
     return (
         <div className="flex flex-col">
             {/* Header */}
-            <div className={`${borderRadius.card} ${shadows.card} bg-white dark:bg-slate-800 p-4 mb-4`}>
+            <div className={`${borderRadius.card} ${shadows.card} bg-surface-raised p-4 mb-4`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <Skeleton className="w-6 h-6" />
@@ -189,7 +189,7 @@ export const ActionItemsSkeleton: React.FC = () => {
             {/* Action items */}
             <div className="space-y-3">
                 {actionItems.map((itemId) => (
-                    <div key={itemId} className={`${borderRadius.card} ${shadows.card} bg-white dark:bg-slate-800 p-4`}>
+                    <div key={itemId} className={`${borderRadius.card} ${shadows.card} bg-surface-raised p-4`}>
                         <div className="space-y-3">
                             <Skeleton className="h-4 w-5/6" />
                             <div className="flex items-center justify-between">
@@ -221,7 +221,7 @@ export const ParticipantListSkeleton: React.FC = () => {
                 <Skeleton key={participantId} className="w-8 h-8" rounded="full" />
             ))}
             <div className="flex items-center space-x-1 ml-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">+</span>
+                <span className="text-sm text-text-muted">+</span>
                 <Skeleton className="h-3 w-4" />
             </div>
         </div>
@@ -239,14 +239,14 @@ export const ShimmerSkeleton: React.FC<SkeletonProps> = ({
         <output
             className={`
         relative overflow-hidden
-        bg-slate-200 dark:bg-slate-700
+        bg-border-default
         ${borderRadius[rounded]}
         ${className}
       `}
             aria-label="Cargando contenido"
         >
             <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent dark:via-slate-600/10"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-border-default/20 to-transparent"
                 animate={{
                     x: ['-100%', '100%'],
                 }}
