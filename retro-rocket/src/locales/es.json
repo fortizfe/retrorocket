@@ -283,7 +283,8 @@
                 "ariaLabel": "Selector de reacciones emoji",
                 "addReaction": "Agregar reacción",
                 "addReactionButton": "Agregar reacción emoji",
-                "openPicker": " (abierto)"
+                "openPicker": " (abierto)",
+                "hint": "Haz clic en un emoji para reaccionar"
             },
             "reactions": {
                 "reactWith": "Reaccionar con {{emoji}}",
@@ -466,6 +467,19 @@
         "progress": "Progreso",
         "errors": {
             "loadCards": "Error al cargar las tarjetas"
+        },
+        "card": {
+            "save": "Guardar",
+            "cancel": "Cancelar",
+            "editPlaceholder": "Escribe tu comentario...",
+            "voteUp": "Votar a favor",
+            "voteDown": "Quitar voto",
+            "editCard": "Editar tarjeta",
+            "deleteCard": "Eliminar tarjeta"
+        },
+        "board": {
+            "loading": "Cargando retrospectiva...",
+            "loadError": "No se pudieron cargar las tarjetas"
         }
     },
     "groupSuggestion": {

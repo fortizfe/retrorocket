@@ -219,7 +219,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                             </div>
                         )}
                         <div className="mt-1 text-xs text-text-muted">
-                            {t('retrospective.actionItemCard.created')}: {actionItem.createdAt.toLocaleDateString('es-ES', {
+                            {t('retrospective.actionItemCard.created')}: {actionItem.createdAt.toLocaleDateString(currentLanguage === 'en' ? 'en-US' : 'es-ES', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 hour: '2-digit',
@@ -234,7 +234,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
             {isDeleting && (
                 <div className="absolute inset-0 bg-error-bg/90 
                        rounded-lg flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent 
+                    <div className="w-4 h-4 border-2 border-error-fg border-t-transparent 
                          rounded-full animate-spin" />
                 </div>
             )}

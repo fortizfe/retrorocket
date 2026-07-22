@@ -17,6 +17,7 @@ vi.mock('@dnd-kit/core', () => ({
     useSensor: vi.fn(() => ({})),
     useSensors: vi.fn(() => []),
     PointerSensor: vi.fn(),
+    KeyboardSensor: vi.fn(),
     closestCorners: vi.fn()
 }));
 
@@ -27,6 +28,7 @@ vi.mock('@dnd-kit/sortable', () => ({
         </div>
     ),
     verticalListSortingStrategy: 'vertical-list-sorting',
+    sortableKeyboardCoordinates: vi.fn(),
     arrayMove: vi.fn((array, oldIndex, newIndex) => {
         const result = [...array];
         const [removed] = result.splice(oldIndex, 1);

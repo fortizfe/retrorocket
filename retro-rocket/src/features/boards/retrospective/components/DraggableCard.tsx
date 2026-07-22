@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, ThumbsUp, Edit2, User, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import Card from '@/lib/components/ui/Card';
-import Button from '@/lib/components/ui/Button';
 import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
 import ColorPicker from '@/lib/components/ui/ColorPicker';
-import LinkifyText from '@/lib/components/ui/LinkifyText';
+import CardContent from '@/features/boards/retrospective/components/CardContent';
+import CardHeader from '@/features/boards/retrospective/components/CardHeader';
+import CardVoteControl from '@/features/boards/retrospective/components/CardVoteControl';
+import CardFooter from '@/features/boards/retrospective/components/CardFooter';
 import LikeButton from '@/features/boards/retrospective/components/LikeButton';
 import EmojiReactions from '@/features/boards/retrospective/components/EmojiReactions';
 import CardMenu from '@/features/boards/retrospective/components/CardMenu';
 import SentimentBadge from '@/features/boards/sentiment/components/SentimentBadge';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
 import { useSentimentContext } from '@/features/boards/sentiment/contexts/SentimentContext';
@@ -49,6 +52,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     canConvertToAction = false,
     onConvertToAction,
 }) => {
+    const { t } = useLanguage();
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -142,21 +146,50 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const isOwner = currentUser === card.createdBy;
     const canEditCard = canEdit && isOwner;
 
+    // Sentiment badge (shown only when analysis is confident enough and not an action card).
+    const sentimentBadge = React.useMemo(() => {
+        if (!sentimentResult || card.column === 'actions') {
+            return null;
+        }
+        const thresholds = {
+            positive: sentimentThreshold || 0.4,
+            negative: sentimentThreshold || 0.4,
+            neutral: 0.25,
+        };
+        const requiredThreshold = thresholds[sentimentResult.sentiment] || sentimentThreshold;
+        if (sentimentResult.confidence < requiredThreshold) {
+            return null;
+        }
+        return (
+            <SentimentBadge
+                sentiment={sentimentResult.sentiment}
+                confidence={sentimentResult.confidence}
+                size="sm"
+                showTooltip={true}
+                isOverride={sentimentResult.isOverride === true}
+                canOverride={isFacilitator}
+                onOverride={(next) => overrideSentiment(card.id, next)}
+            />
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold, isFacilitator, overrideSentiment]);
+
     return (
         <AnimatePresence>
             <motion.div
                 layout
+                data-testid="draggable-card"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.18 }}
-                className={`group relative transition-all duration-200 ${isDragging ? 'rotate-2 shadow-xl border-blue-300' : 'mb-2'} ${cardStyling}`}
+                className={`group relative min-w-0 transition-all duration-200 ${isDragging ? 'rotate-2 shadow-xl border-info-fg' : 'mb-2'} ${cardStyling}`}
             >
                 <Card
                     variant="elevated"
                     hover={!isEditing && !isDragging}
                     customBackground={true}
-                    className={`p-2 group relative transition-all duration-200 ${isDragging ? 'shadow-lg border-blue-300' : ''} ${cardStyling}`}
+                    className={`p-2 group relative transition-all duration-200 ${isDragging ? 'shadow-lg border-info-fg' : ''} ${cardStyling}`}
                 >
                     {/* Drag handle y Color picker compactos */}
                     {canEdit && !isEditing && (
@@ -173,58 +206,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     )}
 
                     {/* Header autor y sentimiento */}
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1 text-xs text-text-muted">
-                            <User size={12} />
-                            <span>{card.createdBy}</span>
-                            {React.useMemo(() => {
-                                if (!sentimentResult || card.column === 'actions') {
-                                    return null;
-                                }
-                                const thresholds = {
-                                    positive: sentimentThreshold || 0.4,
-                                    negative: sentimentThreshold || 0.4,
-                                    neutral: 0.25
-                                };
-                                const requiredThreshold = thresholds[sentimentResult.sentiment] || sentimentThreshold;
-                                if (sentimentResult.confidence < requiredThreshold) {
-                                    return null;
-                                }
-                                return (
-                                    <SentimentBadge
-                                        sentiment={sentimentResult.sentiment}
-                                        confidence={sentimentResult.confidence}
-                                        size="sm"
-                                        showTooltip={true}
-                                        isOverride={sentimentResult.isOverride === true}
-                                        canOverride={isFacilitator}
-                                        onOverride={(next) => overrideSentiment(card.id, next)}
-                                    />
-                                );
-                            }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold, isFacilitator, overrideSentiment])}
-                        </div>
-                        <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <CardHeader
+                            author={card.createdBy}
+                            badge={sentimentBadge}
+                        />
+                        <div className="flex items-center gap-1 shrink-0">
                             {(card.votes !== undefined && card.votes > 0) && (
-                                <div className="flex items-center gap-1 bg-surface rounded-full px-2 py-0.5">
-                                    <button
-                                        onClick={() => handleVote(true)}
-                                        className="text-text-secondary hover:text-info-fg transition-colors"
-                                        aria-label="Vote up"
-                                    >
-                                        <ThumbsUp size={12} />
-                                    </button>
-                                    <span className="text-xs font-medium text-text-secondary">
-                                        {card.votes ?? 0}
-                                    </span>
-                                    <button
-                                        onClick={() => handleVote(false)}
-                                        className="text-text-secondary hover:text-error-fg transition-colors"
-                                        aria-label="Vote down"
-                                        disabled={!card.votes || card.votes === 0}
-                                    >
-                                        <ThumbsUp size={12} className="rotate-180" />
-                                    </button>
-                                </div>
+                                <CardVoteControl votes={card.votes} onVote={handleVote} />
                             )}
                         </div>
                     </div>
@@ -235,17 +224,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             <TextareaWithEmoji
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                placeholder="Escribe tu comentario..."
+                                placeholder={t('retrospective.card.editPlaceholder')}
                                 rows={2}
                                 autoFocus
                                 className="w-full text-sm"
                                 showEmojiPicker={true}
                             />
                         ) : (
-                            <LinkifyText
-                                text={card.content}
-                                className="text-text-primary leading-relaxed whitespace-pre-wrap text-sm"
-                            />
+                            <CardContent content={card.content} />
                         )}
                     </div>
 
@@ -272,72 +258,27 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     </div>
 
                     {/* Footer compacto */}
-                    <div className="flex items-center justify-between">
-                        <div className="text-xs text-text-muted">
-                            {card.createdAt && new Date(card.createdAt).toLocaleDateString('es-ES', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            {canEditCard && (
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {isEditing ? (
-                                        <>
-                                            <Button
-                                                size="sm"
-                                                variant="primary"
-                                                onClick={handleSaveEdit}
-                                                disabled={!editContent.trim()}
-                                            >
-                                                Guardar
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={handleCancelEdit}
-                                            >
-                                                Cancelar
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={() => setIsEditing(true)}
-                                                aria-label="Edit card"
-                                            >
-                                                <Edit2 size={12} />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={handleDelete}
-                                                loading={isDeleting}
-                                                aria-label="Delete card"
-                                                className="text-error-fg hover:text-error-fg"
-                                            >
-                                                <Trash2 size={12} />
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                            {canConvertToAction && onConvertToAction && !isEditing && (
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <CardMenu
-                                        card={card}
-                                        participants={participants}
-                                        canConvertToAction={canConvertToAction}
-                                        onConvertToAction={onConvertToAction}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <CardFooter
+                        createdAt={card.createdAt}
+                        canEdit={canEditCard}
+                        isEditing={isEditing}
+                        isDeleting={isDeleting}
+                        canSave={!!editContent.trim()}
+                        onEdit={() => setIsEditing(true)}
+                        onDelete={handleDelete}
+                        onSave={handleSaveEdit}
+                        onCancel={handleCancelEdit}
+                        actions={canConvertToAction && onConvertToAction && !isEditing ? (
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <CardMenu
+                                    card={card}
+                                    participants={participants}
+                                    canConvertToAction={canConvertToAction}
+                                    onConvertToAction={onConvertToAction}
+                                />
+                            </div>
+                        ) : undefined}
+                    />
                 </Card>
             </motion.div>
         </AnimatePresence>

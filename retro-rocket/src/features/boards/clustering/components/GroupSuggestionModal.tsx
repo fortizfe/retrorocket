@@ -44,8 +44,8 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
     const getCardById = (cardId: string) => cards.find(card => card.id === cardId);
 
     const getSimilarityColor = (similarity: number) => {
-        if (similarity >= 0.8) return 'text-green-600 bg-green-50';
-        if (similarity >= 0.6) return 'text-blue-600 bg-blue-50';
+        if (similarity >= 0.8) return 'text-success-fg bg-success-bg';
+        if (similarity >= 0.6) return 'text-info-fg bg-info-bg';
         return 'text-yellow-600 bg-yellow-50';
     };
 
@@ -218,7 +218,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                                 >
                                                                     {cardIndex === 0 && (
                                                                         <div className="mb-2">
-                                                                            <span className="inline-flex items-center space-x-1 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                                                            <span className="inline-flex items-center space-x-1 text-xs font-medium text-info-fg bg-info-bg px-2 py-1 rounded-full">
                                                                                 <Sparkles className="w-3 h-3" />
                                                                                 <span>{t('groupSuggestion.suggestedHeadCard')}</span>
                                                                             </span>
