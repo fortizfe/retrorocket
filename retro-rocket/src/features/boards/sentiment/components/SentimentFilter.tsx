@@ -18,9 +18,9 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
             count: counts.total,
             icon: '📊',
             colors: {
-                bg: 'bg-slate-100 dark:bg-slate-700',
-                text: 'text-slate-800 dark:text-slate-200',
-                border: 'border-slate-200 dark:border-slate-600'
+                bg: 'bg-surface',
+                text: 'text-text-primary',
+                border: 'border-border-default'
             }
         },
         {
@@ -63,7 +63,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                     flex items-center gap-2 text-xs
                     ${currentFilter !== 'all'
                         ? `${currentOption?.colors.bg} ${currentOption?.colors.text} border ${currentOption?.colors.border}`
-                        : 'text-slate-600 dark:text-slate-400'
+                        : 'text-text-secondary'
                     }
                 `}
                 aria-expanded={isOpen}
@@ -74,7 +74,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                 <span>{currentOption?.icon}</span>
                 <span>{currentOption?.label}</span>
                 {currentFilter !== 'all' && (
-                    <span className="bg-white dark:bg-slate-800 text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="bg-surface-raised text-xs px-1.5 py-0.5 rounded-full">
                         {currentOption?.count}
                     </span>
                 )}
@@ -103,8 +103,8 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 
-                                     rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 
+                            className="absolute top-full right-0 mt-1 bg-surface-raised 
+                                     rounded-lg shadow-lg border border-border-default 
                                      py-1 z-50 min-w-[160px]"
                         >
                             {filterOptions.map((option) => (
@@ -113,10 +113,10 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                                     onClick={() => handleFilterSelect(option.value)}
                                     className={`
                                         w-full flex items-center justify-between px-3 py-2 text-xs
-                                        transition-colors hover:bg-slate-50 dark:hover:bg-slate-700
+                                        transition-colors hover:bg-surface-raised
                                         ${currentFilter === option.value
                                             ? `${option.colors.bg} ${option.colors.text}`
-                                            : 'text-slate-700 dark:text-slate-300'
+                                            : 'text-text-secondary'
                                         }
                                     `}
                                 >
@@ -129,7 +129,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                                         <span className={`
                                             text-xs px-1.5 py-0.5 rounded-full
                                             ${option.value === 'all'
-                                                ? 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
+                                                ? 'bg-border-default text-text-secondary'
                                                 : `${option.colors.bg} ${option.colors.text}`
                                             }
                                         `}>

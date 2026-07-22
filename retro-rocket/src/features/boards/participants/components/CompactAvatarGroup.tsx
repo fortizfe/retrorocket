@@ -64,14 +64,14 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
                                 photoURL: participant.photoURL
                             }}
                             size={size}
-                            className="ring-2 ring-white dark:ring-slate-800"
+                            className="ring-2 ring-surface"
                         />
                     </div>
                 ))}
 
                 {/* Remaining count indicator */}
                 {remainingCount > 0 && (
-                    <div className={`${config.counter} bg-slate-200 dark:bg-slate-600 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-800 text-slate-600 dark:text-slate-300 font-medium`}>
+                    <div className={`${config.counter} bg-border-default rounded-full flex items-center justify-center ring-2 ring-surface text-text-secondary font-medium`}>
                         <span className={config.text}>
                             +{remainingCount}
                         </span>
@@ -81,7 +81,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
 
             {/* Count with icon (optional) */}
             {showCount && (
-                <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                <div className="flex items-center gap-1 text-text-secondary">
                     <Users className={config.icon} />
                     <span className={`font-medium ${config.text}`}>
                         {totalCount}
@@ -95,7 +95,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
         return (
             <button
                 onClick={handleClick}
-                className="transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg p-1 -m-1"
+                className="transition-all duration-200 hover:bg-surface-raised rounded-lg p-1 -m-1"
                 title={`Ver todos los participantes (${totalCount})`}
             >
                 {groupElement}

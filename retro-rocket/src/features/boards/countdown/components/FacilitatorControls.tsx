@@ -120,17 +120,17 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
     const canDelete = timer && countdownState.totalDuration > 0;
 
     return (
-        <div className="bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-lg shadow-lg">
+        <div className="bg-surface-raised border-2 border-info-fg rounded-lg shadow-lg">
             {/* Header */}
             <button
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-surface-raised transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                 onClick={() => setIsExpanded(!isExpanded)}
                 aria-expanded={isExpanded ? 'true' : 'false'}
                 aria-controls="facilitator-controls-content"
             >
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-semibold text-text-primary">
                         {t('retrospective.facilitator.menu')}
                     </span>
                 </div>
@@ -146,14 +146,14 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="border-t border-gray-200 dark:border-gray-700"
+                        className="border-t border-border-default"
                     >
                         <div className="p-4 space-y-4">
 
                             {/* Timer Configuration */}
                             {(!timer || countdownState.totalDuration === 0) && (
                                 <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                         <Settings className="w-4 h-4" />
                                         Configurar Tiempo
                                     </div>
@@ -166,10 +166,10 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                                                 max="60"
                                                 value={inputs.minutes}
                                                 onChange={(e) => handleInputChange('minutes', parseInt(e.target.value) || 0)}
-                                                className="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                className="w-16 px-2 py-1 text-center border border-border-strong rounded bg-surface-raised text-text-primary"
                                                 placeholder="5"
                                             />
-                                            <span className="text-sm text-gray-500 dark:text-gray-400">min</span>
+                                            <span className="text-sm text-text-muted">min</span>
                                         </div>
 
                                         <span className="text-gray-400">:</span>
@@ -181,10 +181,10 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                                                 max="59"
                                                 value={inputs.seconds}
                                                 onChange={(e) => handleInputChange('seconds', parseInt(e.target.value) || 0)}
-                                                className="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                className="w-16 px-2 py-1 text-center border border-border-strong rounded bg-surface-raised text-text-primary"
                                                 placeholder="00"
                                             />
-                                            <span className="text-sm text-gray-500 dark:text-gray-400">seg</span>
+                                            <span className="text-sm text-text-muted">seg</span>
                                         </div>
 
                                         <Button
@@ -203,7 +203,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                             {/* Timer Controls */}
                             {timer && countdownState.totalDuration > 0 && (
                                 <div className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                                         <Settings className="w-4 h-4" />
                                         Controlar Temporizador
                                     </div>
@@ -215,7 +215,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                                                 disabled={loading}
                                                 variant="primary"
                                                 size="sm"
-                                                className="flex items-center gap-1 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+                                                className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
                                             >
                                                 <Play className="w-4 h-4" />
                                                 Iniciar
@@ -228,7 +228,7 @@ const FacilitatorControls: React.FC<CountdownControlsProps> = ({
                                                 disabled={loading}
                                                 variant="secondary"
                                                 size="sm"
-                                                className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700"
+                                                className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700"
                                             >
                                                 <Pause className="w-4 h-4" />
                                                 Pausar

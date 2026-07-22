@@ -14,17 +14,17 @@ const CountdownTimer: React.FC<CountdownDisplayProps> = ({ retrospectiveId }) =>
     const { timeRemaining, isRunning, isPaused, isFinished } = countdownState;
 
     const getStatusColor = () => {
-        if (isFinished) return 'text-red-500 dark:text-red-400';
-        if (isPaused) return 'text-yellow-500 dark:text-yellow-400';
-        if (isRunning) return 'text-green-500 dark:text-green-400';
-        return 'text-gray-500 dark:text-gray-400';
+        if (isFinished) return 'text-error-fg';
+        if (isPaused) return 'text-warning-fg';
+        if (isRunning) return 'text-success-fg';
+        return 'text-text-muted';
     };
 
     const getStatusBg = () => {
-        if (isFinished) return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-        if (isPaused) return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-        if (isRunning) return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+        if (isFinished) return 'bg-error-bg border-error-fg';
+        if (isPaused) return 'bg-warning-bg border-warning-fg';
+        if (isRunning) return 'bg-success-bg border-success-fg';
+        return 'bg-surface border-border-default';
     };
 
     const getStatusIcon = () => {

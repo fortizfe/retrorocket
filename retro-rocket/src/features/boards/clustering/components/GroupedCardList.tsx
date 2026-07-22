@@ -87,15 +87,15 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                             <div className="flex items-center gap-2 mb-3 px-2">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                     {groupBy === 'user' ? (
-                                        <Users className="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                                        <Users className="w-4 h-4 text-info-fg flex-shrink-0" />
                                     ) : (
-                                        <Hash className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+                                        <Hash className="w-4 h-4 text-text-muted flex-shrink-0" />
                                     )}
-                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                                    <h4 className="text-sm font-medium text-text-secondary truncate">
                                         {groupName}
                                     </h4>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                <div className="flex items-center gap-1 text-xs text-text-muted">
                                     <span>{t('retrospective.groupCard.cardsCount', { count: cardsInGroup.length, totalCards: cardsInGroup.length })}</span>
                                 </div>
                             </div>
@@ -104,7 +104,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                             <div className="absolute left-0 top-6 w-8 h-px bg-gradient-to-r from-slate-300 dark:from-slate-600 to-transparent"></div>
 
                             {/* Cards in this group */}
-                            <div className="pl-6 border-l-2 border-slate-100 dark:border-slate-700">
+                            <div className="pl-6 border-l-2 border-border-default">
                                 <DragDropColumn
                                     cards={cardsInGroup}
                                     column={cardsInGroup[0]?.column || 'what-went-well'} // Use column from first card or default

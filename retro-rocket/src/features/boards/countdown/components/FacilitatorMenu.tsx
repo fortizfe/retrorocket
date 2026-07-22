@@ -181,7 +181,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                         cardCount={sentimentAnalysis.getSentimentCounts().total}
                     />
                 ) : (
-                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                    <div className="text-center py-8 text-text-muted">
                         <p>{t('retrospective.facilitator.sentiment.notAvailable')}</p>
                     </div>
                 );
@@ -220,7 +220,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
             <button
                 ref={buttonRef}
                 onClick={handleToggle}
-                className="p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm flex items-center gap-2"
+                className="p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default/50 hover:border-border-strong shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm flex items-center gap-2"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
                 aria-haspopup="true"

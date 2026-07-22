@@ -24,7 +24,7 @@ const SentimentProgressBar: React.FC<SentimentProgressBarProps> = ({
     ].filter(segment => segment.percentage > 0);
 
     return (
-        <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 mb-2 overflow-hidden">
+        <div className="w-full bg-border-default rounded-full h-2 mb-2 overflow-hidden">
             <div className="h-full flex">
                 {segments.map((segment) => (
                     <div

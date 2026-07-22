@@ -216,26 +216,26 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                             transition={{ duration: 0.15 }}
-                            className="relative w-96 max-w-[95vw] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-[80vh] overflow-y-auto"
+                            className="relative w-96 max-w-[95vw] bg-surface-raised border border-border-default rounded-lg shadow-xl max-h-[80vh] overflow-y-auto"
                         >
                             {/* Arrow/pointer */}
-                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white dark:border-b-slate-800"></div>
+                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-surface-overlay"></div>
                             {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between p-4 border-b border-border-default">
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
-                                        <Download className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100" id="export-dialog-title">
+                                        <Download className="w-5 h-5 text-info-fg" />
+                                        <h3 className="font-semibold text-text-primary" id="export-dialog-title">
                                             {t('retrospective.export.title')}
                                         </h3>
                                     </div>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                    <p className="text-sm text-text-muted mt-1">
                                         {t('retrospective.export.improvedDescription')}
                                     </p>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                    className="p-1 rounded-lg hover:bg-surface-raised text-text-muted hover:text-text-secondary transition-colors"
                                     title={t('common.close')}
                                     aria-label={t('common.close')}
                                 >
@@ -247,7 +247,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                             <div className="p-4 space-y-6">
                                 {/* Format Selection */}
                                 <div>
-                                    <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                                    <h4 className="text-sm font-medium text-text-primary mb-3">
                                         {t('retrospective.export.format')}
                                     </h4>
                                     <div className="grid grid-cols-3 gap-3">
@@ -263,8 +263,8 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                     key={format}
                                                     onClick={() => updateFormat(format)}
                                                     className={`flex flex-col items-start gap-2 p-3 rounded-lg border transition-colors text-left ${exportOptions.format === format
-                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                        : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
+                                                        ? 'border-blue-500 bg-info-bg'
+                                                        : 'border-border-default hover:border-border-strong'
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                             {format.toUpperCase()}
                                                         </span>
                                                     </div>
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                    <span className="text-xs text-text-muted">
                                                         {descriptions[format]}
                                                     </span>
                                                 </button>
@@ -284,19 +284,19 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 
                                 {/* Document Configuration */}
                                 <div>
-                                    <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                                    <h4 className="text-sm font-medium text-text-primary mb-3">
                                         {t('retrospective.export.documentConfig')}
                                     </h4>
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                            <label className="block text-xs font-medium text-text-secondary mb-1">
                                                 {t('retrospective.export.customTitle')}
                                             </label>
                                             <input
                                                 type="text"
                                                 value={exportOptions.documentConfig.customTitle}
                                                 onChange={(e) => updateDocumentConfig({ customTitle: e.target.value })}
-                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                                                className="w-full px-3 py-2 text-sm border border-border-default rounded-lg bg-surface-raised text-text-primary"
                                                 placeholder={retrospective.title}
                                             />
                                         </div>
@@ -305,9 +305,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                 type="checkbox"
                                                 checked={exportOptions.documentConfig.includeRetroRocketLogo}
                                                 onChange={(e) => updateDocumentConfig({ includeRetroRocketLogo: e.target.checked })}
-                                                className="rounded border-slate-300 dark:border-slate-600"
+                                                className="rounded border-border-strong"
                                             />
-                                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                                            <span className="text-sm text-text-secondary">
                                                 {t('retrospective.export.includeLogo')}
                                             </span>
                                         </label>
@@ -315,14 +315,14 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                 </div>
 
                                 {/* Información sobre contenido siempre incluido */}
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                <div className="bg-info-bg border border-info-fg rounded-lg p-3">
                                     <div className="flex items-start gap-2">
-                                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                        <Info className="w-4 h-4 text-info-fg mt-0.5" />
                                         <div>
-                                            <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                                            <h5 className="text-sm font-medium text-info-fg mb-1">
                                                 {t('retrospective.export.alwaysIncluded.title')}
                                             </h5>
-                                            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                                            <ul className="text-xs text-info-fg space-y-1">
                                                 <li>• {t('retrospective.export.alwaysIncluded.participants')}</li>
                                                 <li>• {t('retrospective.export.alwaysIncluded.cardAuthors')}</li>
                                                 <li>• {t('retrospective.export.alwaysIncluded.reactions')}</li>
@@ -335,7 +335,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 
                                 {/* Contenido opcional básico */}
                                 <div>
-                                    <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                                    <h4 className="text-sm font-medium text-text-primary mb-3">
                                         {t('retrospective.export.optionalContent')}
                                     </h4>
                                     <div className="space-y-3">
@@ -344,9 +344,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                 type="checkbox"
                                                 checked={exportOptions.basicOptions.includeActionItems}
                                                 onChange={(e) => updateBasicOptions({ includeActionItems: e.target.checked })}
-                                                className="rounded border-slate-300 dark:border-slate-600"
+                                                className="rounded border-border-strong"
                                             />
-                                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                                            <span className="text-sm text-text-secondary">
                                                 {t('retrospective.export.actionItems')}
                                             </span>
                                         </label>
@@ -355,9 +355,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                 type="checkbox"
                                                 checked={exportOptions.basicOptions.includeStatistics}
                                                 onChange={(e) => updateBasicOptions({ includeStatistics: e.target.checked })}
-                                                className="rounded border-slate-300 dark:border-slate-600"
+                                                className="rounded border-border-strong"
                                             />
-                                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                                            <span className="text-sm text-text-secondary">
                                                 {t('retrospective.export.statistics')}
                                             </span>
                                         </label>
@@ -366,14 +366,14 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 
                                 {/* Zona exclusiva del facilitador */}
                                 {isFacilitator && (
-                                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                    <div className="bg-warning-bg border border-warning-fg rounded-lg p-4">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                            <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                            <Shield className="w-4 h-4 text-warning-fg" />
+                                            <h4 className="text-sm font-medium text-warning-fg">
                                                 {t('retrospective.export.facilitatorZone.title')}
                                             </h4>
                                         </div>
-                                        <p className="text-xs text-amber-800 dark:text-amber-200 mb-3">
+                                        <p className="text-xs text-warning-fg mb-3">
                                             {t('retrospective.export.facilitatorZone.description')}
                                         </p>
                                         <div className="space-y-3">
@@ -382,9 +382,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                     type="checkbox"
                                                     checked={exportOptions.facilitatorOptions.includeFacilitatorNotes}
                                                     onChange={(e) => updateFacilitatorOptions({ includeFacilitatorNotes: e.target.checked })}
-                                                    className="rounded border-amber-300 dark:border-amber-600"
+                                                    className="rounded border-warning-fg"
                                                 />
-                                                <span className="text-sm text-amber-900 dark:text-amber-100">
+                                                <span className="text-sm text-warning-fg">
                                                     {t('retrospective.export.facilitatorZone.notes')}
                                                 </span>
                                             </label>
@@ -393,9 +393,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                     type="checkbox"
                                                     checked={exportOptions.facilitatorOptions.includeSentimentBadges}
                                                     onChange={(e) => updateFacilitatorOptions({ includeSentimentBadges: e.target.checked })}
-                                                    className="rounded border-amber-300 dark:border-amber-600"
+                                                    className="rounded border-warning-fg"
                                                 />
-                                                <span className="text-sm text-amber-900 dark:text-amber-100">
+                                                <span className="text-sm text-warning-fg">
                                                     {t('retrospective.export.facilitatorZone.sentimentBadges')}
                                                 </span>
                                             </label>
@@ -404,9 +404,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                     type="checkbox"
                                                     checked={exportOptions.facilitatorOptions.includeTeamMoodAnalysis}
                                                     onChange={(e) => updateFacilitatorOptions({ includeTeamMoodAnalysis: e.target.checked })}
-                                                    className="rounded border-amber-300 dark:border-amber-600"
+                                                    className="rounded border-warning-fg"
                                                 />
-                                                <span className="text-sm text-amber-900 dark:text-amber-100">
+                                                <span className="text-sm text-warning-fg">
                                                     {t('retrospective.export.facilitatorZone.teamMoodAnalysis')}
                                                 </span>
                                             </label>
@@ -415,7 +415,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                 )}
 
                                 {/* Action Buttons */}
-                                <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex gap-2 pt-4 border-t border-border-default">
                                     <Button
                                         variant="outline"
                                         onClick={onClose}
@@ -448,10 +448,10 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+                                        className="flex items-center gap-2 p-3 bg-error-bg border border-error-fg rounded-lg"
                                     >
-                                        <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                        <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+                                        <AlertCircle className="w-4 h-4 text-error-fg" />
+                                        <span className="text-sm text-error-fg">{error}</span>
                                     </motion.div>
                                 )}
 
@@ -459,10 +459,10 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                                        className="flex items-center gap-2 p-3 bg-success-bg border border-success-fg rounded-lg"
                                     >
-                                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                        <span className="text-sm text-green-700 dark:text-green-300">
+                                        <CheckCircle className="w-4 h-4 text-success-fg" />
+                                        <span className="text-sm text-success-fg">
                                             {t('retrospective.export.success')}
                                         </span>
                                     </motion.div>

@@ -109,10 +109,10 @@ describe('ColumnHeaderMenu', () => {
             const { rerender } = render(<ColumnHeaderMenu {...defaultProps} currentGrouping="none" />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveClass('text-slate-600', 'dark:text-slate-400');
+            expect(button).toHaveClass('text-text-secondary');
 
             rerender(<ColumnHeaderMenu {...defaultProps} currentGrouping="user" />);
-            expect(button).toHaveClass('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+            expect(button).toHaveClass('bg-info-bg', 'text-info-fg');
         });
 
         it('should not render when disabled', () => {
@@ -172,7 +172,7 @@ describe('ColumnHeaderMenu', () => {
             render(<ColumnHeaderMenu {...defaultProps} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveClass('hover:bg-slate-100', 'dark:hover:bg-slate-700');
+            expect(button).toHaveClass('hover:bg-surface-raised');
         });
     });
 
@@ -211,7 +211,7 @@ describe('ColumnHeaderMenu', () => {
             await user.click(screen.getByRole('button'));
 
             const userOption = screen.getByText('Por usuario').closest('button');
-            expect(userOption).toHaveClass('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+            expect(userOption).toHaveClass('text-info-fg', 'bg-info-bg');
         });
 
         it('should call onGroupingChange when option is selected', async () => {

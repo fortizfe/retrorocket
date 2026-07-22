@@ -73,9 +73,9 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
     };
 
     return (
-        <div className="w-96 max-w-[90vw] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+        <div className="w-96 max-w-[90vw] bg-surface-raised border border-border-default rounded-xl shadow-xl overflow-hidden">
             {/* Header con tabs */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-600">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-border-default">
                 <div className="flex items-center justify-between p-4 pb-2">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden />
@@ -83,7 +83,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-600/50 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-surface-raised/50 text-text-muted hover:text-text-secondary transition-colors"
                             title={t('common.close')}
                             aria-label={t('common.close')}
                         >
@@ -105,8 +105,8 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                                 className={`
                                     group relative flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 min-w-[70px] flex-1
                                     ${isActive
-                                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm scale-105'
-                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/30 dark:hover:bg-slate-600/30 hover:scale-102'
+                                        ? 'bg-surface-raised text-info-fg shadow-sm scale-105'
+                                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised/30 hover:scale-102'
                                     }
                                 `}
                                 title={tab.label} // Tooltip para accesibilidad
@@ -155,7 +155,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className="max-h-[65vh] overflow-y-auto bg-white dark:bg-slate-800">
+            <div className="max-h-[65vh] overflow-y-auto bg-surface-raised">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeTab}
@@ -171,7 +171,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             </div>
 
             {/* Footer (text removed per request) */}
-            <div className="bg-slate-50 dark:bg-slate-700/50 px-6 py-3 border-t border-slate-100 dark:border-slate-700" />
+            <div className="bg-surface px-6 py-3 border-t border-border-default" />
         </div>
     );
 };

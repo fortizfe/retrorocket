@@ -144,7 +144,7 @@ describe('ParticipantList - Optimized UX', () => {
             const { container } = render(<ParticipantList participants={participants} />);
 
             // Should use subtle slate colors instead of bright blue
-            const countBadge = container.querySelector('.bg-slate-100');
+            const countBadge = container.querySelector('.bg-surface');
             expect(countBadge).toBeInTheDocument();
         });
 
@@ -160,7 +160,7 @@ describe('ParticipantList - Optimized UX', () => {
             const participant = createMockParticipant();
             const { container } = render(<ParticipantList participants={[participant]} />);
 
-            const participantItem = container.querySelector('.hover\\:bg-slate-50');
+            const participantItem = container.querySelector('.hover\\:bg-surface-raised');
             expect(participantItem).toBeInTheDocument();
         });
     });

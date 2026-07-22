@@ -66,7 +66,7 @@ description: "Task list for WCAG 2.1-Compliant Light & Dark Themes"
 - [X] T011 [P] Migrate UI primitives to semantic token classes in `retro-rocket/src/lib/components/ui/` (Button, Input, Textarea, Modal, ThemeToggle, ThemeMenuToggle, ColorPicker chrome) — replace ad-hoc `bg-slate-*/dark:*` with `bg-surface`, `text-text-primary`, `border-border-default`, etc.
 - [X] T012 [P] Migrate layout components in `retro-rocket/src/lib/components/layout/` (Header and nav/footer) to semantic token classes
 - [X] T013 [P] Migrate pages in `retro-rocket/src/pages/` (Landing, Dashboard, Profile, NotFound) to semantic token classes
-- [ ] T014 [P] Migrate board/card/column feature surfaces in `retro-rocket/src/features/boards/**` (columns, draggable cards, voting, grouping/clustering indicators) to semantic token classes
+- [X] T014 [P] Migrate board/card/column feature surfaces in `retro-rocket/src/features/boards/**` (columns, draggable cards, voting, grouping/clustering indicators) to semantic token classes
 - [ ] T015 [P] Migrate auth, dashboard, and create-board feature surfaces in `retro-rocket/src/features/auth/`, `retro-rocket/src/features/dashboard/`, `retro-rocket/src/features/create-board/`
 - [ ] T016 [P] Migrate overlay/transient styling: `react-hot-toast` toasts, tooltips/popovers, and the date picker in `retro-rocket/src/styles/datepicker.css` to token-based colors
 - [X] T017 Migrate the base layer (body gradient, headings, scrollbar, `.glass`, `.btn`, `.input-focus`) in `retro-rocket/src/styles/globals.css` to token references

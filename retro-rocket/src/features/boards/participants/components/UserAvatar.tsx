@@ -48,13 +48,13 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         <img
             src={user.photoURL!}
             alt={`Avatar de ${user.name}`}
-            className={`${sizeClasses[size]} rounded-full border-2 border-white dark:border-slate-700 shadow-sm object-cover ${className}`}
+            className={`${sizeClasses[size]} rounded-full border-2 border-border-default shadow-sm object-cover ${className}`}
         />
     );
 
     const renderInitialsAvatar = () => (
         <div
-            className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm border-2 border-white dark:border-slate-700 text-white font-medium ${className}`}
+            className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm border-2 border-border-default text-white font-medium ${className}`}
             title={user.name}
         >
             {user.name.length > 0 ? (
@@ -73,7 +73,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         return (
             <div className="flex items-center gap-2">
                 {avatarElement}
-                <span className={`font-medium text-slate-700 dark:text-slate-300 ${textSizes[size]}`}>
+                <span className={`font-medium text-text-secondary ${textSizes[size]}`}>
                     {user.name}
                 </span>
             </div>

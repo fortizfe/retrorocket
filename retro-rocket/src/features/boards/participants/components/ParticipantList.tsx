@@ -55,7 +55,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
 
     if (participants.length === 0) {
         return (
-            <div className={`text-center py-6 text-slate-500 dark:text-slate-400 ${className}`}>
+            <div className={`text-center py-6 text-text-muted ${className}`}>
                 <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm font-medium">{t('participants.emptyTitle')}</p>
                 <p className="text-xs mt-1 opacity-75">{t('participants.emptySubtitle')}</p>
@@ -71,14 +71,14 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
         <div className={`${className}`}>
             {/* Clean header with count */}
             {showCount && (
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-default">
                     <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <Users className="w-4 h-4 text-text-secondary" />
+                        <span className="text-sm font-medium text-text-primary">
                             {t('participants.title')}
                         </span>
                     </div>
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                    <span className="text-xs font-medium text-text-secondary bg-surface px-2 py-1 rounded-md">
                         {participants.length}
                     </span>
                 </div>
@@ -98,7 +98,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                     {sortedParticipants.map((participant) => (
                         <div
                             key={participant.id}
-                            className={`flex items-center gap-3 ${itemPadding} rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-150 group`}
+                            className={`flex items-center gap-3 ${itemPadding} rounded-lg hover:bg-surface-raised transition-colors duration-150 group`}
                         >
                             <UserAvatar
                                 user={{
@@ -106,10 +106,10 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                                     photoURL: participant.photoURL
                                 }}
                                 size={avatarSize}
-                                className="ring-1 ring-slate-200 dark:ring-slate-700 group-hover:ring-slate-300 dark:group-hover:ring-slate-600 transition-colors"
+                                className="ring-1 ring-border-default group-hover:ring-border-default transition-colors"
                             />
                             <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">
+                                <h4 className="font-medium text-text-primary truncate text-sm">
                                     {participant.name}
                                 </h4>
                             </div>

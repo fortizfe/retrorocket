@@ -466,8 +466,8 @@ describe('ParticipantPopover', () => {
             render(<ParticipantPopover {...defaultProps} />);
 
             // Check if any element has dark mode classes (they should be in the DOM)
-            expect(document.body.innerHTML).toContain('dark:bg-slate-800');
-            expect(document.body.innerHTML).toContain('dark:border-slate-700');
+            expect(document.body.innerHTML).toContain('bg-surface-raised');
+            expect(document.body.innerHTML).toContain('border-border-default');
         });
 
         it('renders arrow with correct positioning classes', () => {

@@ -43,7 +43,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <div className="flex items-center justify-center p-12">
                 <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm">
+                    <p className="text-text-secondary text-sm">
                         {t('retrospective.facilitator.teamMood.analyzing')}
                     </p>
                 </div>
@@ -55,13 +55,13 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
         return (
             <div className="text-center p-8">
                 <div className="text-6xl mb-4">📊</div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                <h3 className="text-lg font-medium text-text-primary mb-2">
                     {t('retrospective.facilitator.teamMood.insufficientData.title')}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 max-w-md mx-auto">
+                <p className="text-sm text-text-secondary mb-4 max-w-md mx-auto">
                     {t('retrospective.facilitator.teamMood.insufficientData.description')}
                 </p>
-                <div className="text-xs text-slate-500 dark:text-slate-500">
+                <div className="text-xs text-text-muted">
                     💡 {t('retrospective.facilitator.teamMood.insufficientData.tip')}
                 </div>
             </div>
@@ -125,11 +125,11 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
 
     const getInsightBgColor = (type: string) => {
         switch (type) {
-            case 'success': return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-            case 'positive': return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-            case 'warning': return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-            case 'critical': return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-            default: return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+            case 'success': return 'bg-success-bg border-success-fg';
+            case 'positive': return 'bg-success-bg border-success-fg';
+            case 'warning': return 'bg-warning-bg border-warning-fg';
+            case 'critical': return 'bg-error-bg border-error-fg';
+            default: return 'bg-info-bg border-info-fg';
         }
     };
 
@@ -139,15 +139,15 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center pb-4 border-b border-slate-200 dark:border-slate-700"
+                className="text-center pb-4 border-b border-border-default"
             >
                 <div className="flex items-center justify-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    <Users className="w-5 h-5 text-info-fg" />
+                    <h2 className="text-lg font-semibold text-text-primary">
                         {t('retrospective.facilitator.teamMood.title')}
                     </h2>
                 </div>
-                <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-center gap-2 text-xs text-text-muted">
                     <Clock className="w-3 h-3" />
                     <span>{t('retrospective.facilitator.teamMood.updated')} {report.timestamp.toLocaleTimeString('es-ES', {
                         hour: '2-digit',
@@ -169,7 +169,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 <div className={`text-lg font-medium mb-2 ${getMoodScoreColor(moodScore)}`}>
                     {getMoodScoreLabel(moodScore)}
                 </div>
-                <div className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="text-sm text-text-secondary">
                     {t('retrospective.facilitator.teamMood.basedOn', { count: metrics.analyzedCards })}
                 </div>
             </motion.div>
@@ -181,27 +181,27 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 transition={{ delay: 0.1 }}
                 className="grid grid-cols-3 gap-3"
             >
-                <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <div className="text-center p-3 bg-success-bg rounded-lg border border-success-fg">
+                    <div className="text-2xl font-bold text-success-fg">
                         {metrics.positivePercentage}%
                     </div>
-                    <div className="text-xs text-green-700 dark:text-green-300 font-medium">
+                    <div className="text-xs text-success-fg font-medium">
                         {t('retrospective.facilitator.teamMood.sentiments.positive')}
                     </div>
                 </div>
-                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
-                    <div className="text-2xl font-bold text-slate-600 dark:text-slate-400">
+                <div className="text-center p-3 bg-surface rounded-lg border border-border-default">
+                    <div className="text-2xl font-bold text-text-secondary">
                         {metrics.neutralPercentage}%
                     </div>
-                    <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    <div className="text-xs text-text-secondary font-medium">
                         {t('retrospective.facilitator.teamMood.sentiments.neutral')}
                     </div>
                 </div>
-                <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                <div className="text-center p-3 bg-error-bg rounded-lg border border-error-fg">
+                    <div className="text-2xl font-bold text-error-fg">
                         {metrics.negativePercentage}%
                     </div>
-                    <div className="text-xs text-red-700 dark:text-red-300 font-medium">
+                    <div className="text-xs text-error-fg font-medium">
                         {t('retrospective.facilitator.teamMood.sentiments.negative')}
                     </div>
                 </div>
@@ -215,8 +215,8 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 className="space-y-3"
             >
                 <div className="flex items-center gap-2 mb-3">
-                    <BarChart3 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                    <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <BarChart3 className="w-4 h-4 text-text-secondary" />
+                    <h3 className="text-sm font-medium text-text-primary">
                         {t('retrospective.facilitator.teamMood.sections.columnAnalysis')}
                     </h3>
                 </div>
@@ -230,13 +230,13 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 + index * 0.1 }}
-                                className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3"
+                                className="bg-surface rounded-lg p-3"
                             >
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    <span className="text-sm font-medium text-text-primary">
                                         {getTranslatedColumnTitle(column.columnTitle, column.column)}
                                     </span>
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    <span className="text-xs text-text-muted">
                                         {column.total} {column.total === 1 ?
                                             t('retrospective.facilitator.teamMood.stats.cards_singular') :
                                             t('retrospective.facilitator.teamMood.stats.cards_plural')
@@ -251,7 +251,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                                     negativePercentage={column.negativePercentage}
                                 />
 
-                                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+                                <div className="flex justify-between text-xs text-text-secondary">
                                     <span>➕ {column.positivePercentage}%</span>
                                     <span>➖ {column.neutralPercentage}%</span>
                                     <span>❌ {column.negativePercentage}%</span>
@@ -271,8 +271,8 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                     className="space-y-3"
                 >
                     <div className="flex items-center gap-2 mb-3">
-                        <Target className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                        <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <Target className="w-4 h-4 text-text-secondary" />
+                        <h3 className="text-sm font-medium text-text-primary">
                             {t('retrospective.facilitator.teamMood.sections.insights')}
                         </h3>
                     </div>
@@ -291,15 +291,15 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                                         {getInsightIcon(insight.type)}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">
+                                        <h4 className="text-sm font-medium text-text-primary mb-1">
                                             {insight.title}
                                         </h4>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                        <p className="text-xs text-text-secondary leading-relaxed">
                                             {insight.description}
                                         </p>
                                         {insight.actionable && (
                                             <div className="mt-2">
-                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                                                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 bg-info-bg text-info-fg rounded-full">
                                                     <Target className="w-3 h-3" />
                                                     {t('retrospective.facilitator.teamMood.actionable')}
                                                 </span>
@@ -313,7 +313,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
 
                     {insights.length > 4 && (
                         <div className="text-center">
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-text-muted">
                                 {insights.length - 4 === 1 ?
                                     t('retrospective.facilitator.teamMood.moreInsights', { count: insights.length - 4 }) :
                                     t('retrospective.facilitator.teamMood.moreInsights_plural', { count: insights.length - 4 })
@@ -329,33 +329,33 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-4"
+                className="bg-surface rounded-lg p-4"
             >
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">
+                <h3 className="text-sm font-medium text-text-primary mb-3">
                     {t('retrospective.facilitator.teamMood.sections.detailedStats')}
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                        <span className="text-slate-600 dark:text-slate-400">{t('retrospective.facilitator.teamMood.stats.totalCards')}</span>
-                        <span className="font-medium text-slate-900 dark:text-slate-100 ml-2">
+                        <span className="text-text-secondary">{t('retrospective.facilitator.teamMood.stats.totalCards')}</span>
+                        <span className="font-medium text-text-primary ml-2">
                             {metrics.totalCards}
                         </span>
                     </div>
                     <div>
-                        <span className="text-slate-600 dark:text-slate-400">{t('retrospective.facilitator.teamMood.stats.analyzed')}</span>
-                        <span className="font-medium text-slate-900 dark:text-slate-100 ml-2">
+                        <span className="text-text-secondary">{t('retrospective.facilitator.teamMood.stats.analyzed')}</span>
+                        <span className="font-medium text-text-primary ml-2">
                             {metrics.analyzedCards} ({Math.round(metrics.analysisCompleteness)}%)
                         </span>
                     </div>
                     <div>
-                        <span className="text-slate-600 dark:text-slate-400">{t('retrospective.facilitator.teamMood.stats.averageConfidence')}</span>
-                        <span className="font-medium text-slate-900 dark:text-slate-100 ml-2">
+                        <span className="text-text-secondary">{t('retrospective.facilitator.teamMood.stats.averageConfidence')}</span>
+                        <span className="font-medium text-text-primary ml-2">
                             {Math.round(metrics.overallConfidence * 100)}%
                         </span>
                     </div>
                     <div>
-                        <span className="text-slate-600 dark:text-slate-400">{t('retrospective.facilitator.teamMood.stats.dominantSentiment')}</span>
-                        <span className="font-medium text-slate-900 dark:text-slate-100 ml-2">
+                        <span className="text-text-secondary">{t('retrospective.facilitator.teamMood.stats.dominantSentiment')}</span>
+                        <span className="font-medium text-text-primary ml-2">
                             {(() => {
                                 if (metrics.overallSentiment === 'positive') return `😊 ${t('retrospective.facilitator.teamMood.sentiments.positive')}`;
                                 if (metrics.overallSentiment === 'negative') return `😞 ${t('retrospective.facilitator.teamMood.sentiments.negative')}`;
@@ -371,7 +371,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="text-center text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3"
+                className="text-center text-xs text-text-muted bg-surface rounded-lg p-3"
             >
                 <div className="flex items-center justify-center gap-2 mb-1">
                     <Info className="w-3 h-3" />

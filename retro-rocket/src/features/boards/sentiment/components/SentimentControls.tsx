@@ -50,11 +50,11 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
     };
 
     const getStatusColor = () => {
-        if (!enabled) return 'text-slate-500 dark:text-slate-400';
-        if (loading) return 'text-blue-600 dark:text-blue-400';
-        if (error) return 'text-red-600 dark:text-red-400';
-        if (ready) return 'text-green-600 dark:text-green-400';
-        return 'text-slate-600 dark:text-slate-300';
+        if (!enabled) return 'text-text-muted';
+        if (loading) return 'text-info-fg';
+        if (error) return 'text-error-fg';
+        if (ready) return 'text-success-fg';
+        return 'text-text-secondary';
     };
 
     return (
@@ -62,8 +62,8 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                    <Brain className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-text-primary">
                         Análisis de Sentimientos
                     </span>
                 </div>
@@ -74,8 +74,8 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                     className={`
                         relative inline-flex h-5 w-9 items-center rounded-full transition-colors
                         ${enabled
-                            ? 'bg-purple-600 dark:bg-purple-500'
-                            : 'bg-slate-300 dark:bg-slate-600'
+                            ? 'bg-purple-600'
+                            : 'bg-border-default'
                         }
                     `}
                     aria-label={enabled ? 'Desactivar análisis' : 'Activar análisis'}
@@ -96,7 +96,7 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                     {getStatusText()}
                 </span>
                 {ready && cardCount > 0 && (
-                    <span className="text-slate-500 dark:text-slate-400 text-xs">
+                    <span className="text-text-muted text-xs">
                         • {cardCount} tarjetas para analizar
                     </span>
                 )}
@@ -109,8 +109,8 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 
-                                 p-2 rounded border border-red-200 dark:border-red-800"
+                        className="text-xs text-error-fg bg-error-bg 
+                                 p-2 rounded border border-error-fg"
                     >
                         {error}
                     </motion.div>
@@ -122,7 +122,7 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-xs text-slate-500 dark:text-slate-400 space-y-1"
+                    className="text-xs text-text-muted space-y-1"
                 >
                     <p>
                         🎯 Detecta automáticamente el sentimiento de las tarjetas (positivo, negativo, neutral)
@@ -159,20 +159,20 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="space-y-3 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border 
-                                         border-slate-200 dark:border-slate-700"
+                                className="space-y-3 bg-surface p-3 rounded-lg border 
+                                         border-border-default"
                             >
                                 {/* Model Selection */}
                                 <div>
-                                    <label htmlFor={modelSelectId} className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    <label htmlFor={modelSelectId} className="block text-xs font-medium text-text-secondary mb-1">
                                         Modelo de IA
                                     </label>
                                     <select
                                         id={modelSelectId}
                                         value={config.modelId}
                                         onChange={(e) => onConfigUpdate({ modelId: e.target.value })}
-                                        className="w-full text-xs p-2 border border-slate-300 dark:border-slate-600 
-                                                 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                                        className="w-full text-xs p-2 border border-border-strong 
+                                                 rounded bg-surface-raised text-text-primary"
                                         disabled={loading}
                                         title="Seleccionar modelo de IA para análisis de sentimientos"
                                     >
@@ -182,14 +182,14 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                                             </option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    <p className="text-xs text-text-muted mt-1">
                                         {SENTIMENT_MODELS.find(m => m.id === config.modelId)?.description}
                                     </p>
                                 </div>
 
                                 {/* Confidence Threshold */}
                                 <div>
-                                    <label htmlFor={thresholdId} className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    <label htmlFor={thresholdId} className="block text-xs font-medium text-text-secondary mb-1">
                                         Umbral de confianza: {Math.round(config.threshold * 100)}%
                                     </label>
                                     <input
@@ -200,19 +200,19 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                                         step="0.1"
                                         value={config.threshold}
                                         onChange={(e) => onConfigUpdate({ threshold: parseFloat(e.target.value) })}
-                                        className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer"
+                                        className="w-full h-2 bg-border-default rounded-lg appearance-none cursor-pointer"
                                         disabled={loading}
                                         title={`Umbral de confianza: ${Math.round(config.threshold * 100)}%`}
                                         aria-label={`Umbral de confianza: ${Math.round(config.threshold * 100)}%`}
                                     />
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    <p className="text-xs text-text-muted mt-1">
                                         Solo mostrar resultados con alta confianza
                                     </p>
                                 </div>
 
                                 {/* Batch Size */}
                                 <div>
-                                    <label htmlFor={batchSizeId} className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    <label htmlFor={batchSizeId} className="block text-xs font-medium text-text-secondary mb-1">
                                         Tarjetas por lote: {config.batchSize}
                                     </label>
                                     <input
@@ -223,12 +223,12 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                                         step="1"
                                         value={config.batchSize}
                                         onChange={(e) => onConfigUpdate({ batchSize: parseInt(e.target.value) })}
-                                        className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer"
+                                        className="w-full h-2 bg-border-default rounded-lg appearance-none cursor-pointer"
                                         disabled={loading}
                                         title={`Tarjetas por lote: ${config.batchSize}`}
                                         aria-label={`Tarjetas por lote: ${config.batchSize}`}
                                     />
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    <p className="text-xs text-text-muted mt-1">
                                         Controla la velocidad de procesamiento
                                     </p>
                                 </div>
@@ -243,9 +243,9 @@ const SentimentControls: React.FC<SentimentControlsProps> = ({
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="pt-2 border-t border-slate-200 dark:border-slate-700"
+                    className="pt-2 border-t border-border-default"
                 >
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-xs text-text-muted">
                         💡 Los badges de sentimiento aparecerán automáticamente en las tarjetas
                     </div>
                 </motion.div>
