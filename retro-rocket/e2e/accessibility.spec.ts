@@ -36,12 +36,20 @@ async function applyThemeClass(page: Page, theme: Theme): Promise<void> {
 
 /** Run axe and assert zero violations, with a readable failure message. */
 async function expectNoViolations(page: Page, context: string): Promise<void> {
-    // Let the page settle before scanning: entrance animations (framer-motion
-    // fade/slide) briefly lower element opacity, which would make axe compute a
-    // transient, lower color-contrast and flag false positives. Wait for network
-    // idle and for animations to finish so axe reads the final computed colors.
-    await page.waitForLoadState('networkidle').catch(() => {});
-    await page.waitForTimeout(700);
+    // Deterministic pre-scan settle. Two sources of transient color otherwise
+    // cause false color-contrast positives:
+    //   1. Decorative *infinite* CSS animations (animate-float / animate-pulse-
+    //      soft) continuously vary opacity — freeze all CSS animations/transitions.
+    //   2. framer-motion *entrance* animations fade opacity 0 → 1 via JS inline
+    //      styles which this CSS freeze cannot stop. On Landing they are staggered
+    //      up to `delay: 1.2s`, so wait comfortably past the last one (~1.7s) for
+    //      elements to reach their final opacity before axe reads computed colors.
+    // NOTE: do NOT wait for 'networkidle' — authenticated pages hold open
+    // Firestore real-time connections, so the network never goes idle.
+    await page.addStyleTag({
+        content: '*, *::before, *::after { animation: none !important; transition: none !important; }',
+    });
+    await page.waitForTimeout(2500);
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     const summary = results.violations
         .map((v) => `  [${v.id}] ${v.help} (${v.nodes.length} node(s))`)
