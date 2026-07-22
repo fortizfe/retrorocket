@@ -88,7 +88,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.email')}
                     </label>
@@ -96,15 +96,15 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         type="email"
                         value={userProfile?.email ?? ''}
                         disabled
-                        className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        className="bg-surface text-text-muted"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                         {t('auth.userProfileForm.emailNotEditable')}
                     </p>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                         <User className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.displayName')}
                     </label>
@@ -115,7 +115,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                         placeholder={t('auth.userProfileForm.displayNamePlaceholder')}
                         required
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                         {t('auth.userProfileForm.displayNameHelp')}
                     </p>
                 </div>
@@ -141,7 +141,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
             </form>
 
             {isFirstTime && (
-                <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-4 text-center text-xs text-text-muted">
                     {t('auth.userProfileForm.editLaterNote')}
                 </div>
             )}

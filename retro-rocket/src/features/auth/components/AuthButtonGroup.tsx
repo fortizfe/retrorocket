@@ -34,7 +34,7 @@ const getProviderIcon = (provider: AuthProviderType) => {
 
 const getProviderStyles = (providerId: AuthProviderType) => {
     // Todos los proveedores usan los mismos estilos base
-    return '!bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-slate-100 border border-slate-300 dark:border-slate-600 hover:!bg-slate-50 dark:hover:!bg-slate-700 hover:border-primary-400 dark:hover:border-primary-500';
+    return '!bg-surface-raised !text-text-primary border border-border-strong hover:!bg-surface hover:border-info-fg';
 };
 
 const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
@@ -90,7 +90,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
               w-full h-12 text-sm font-medium flex items-center justify-center gap-3
               ${provider.available
                                 ? getProviderStyles(provider.id)
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                : 'bg-surface text-text-muted cursor-not-allowed'
                             }
               ${loading ? 'opacity-50' : ''}
             `}
@@ -100,7 +100,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                             {loading ? t('auth.authButtonGroup.signingIn') : provider.name}
                         </span>
                         {provider.comingSoon && (
-                            <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-1 rounded-full">
+                            <span className="text-xs bg-border-default text-text-muted px-2 py-1 rounded-full">
                                 {t('auth.authButtonGroup.comingSoon')}
                             </span>
                         )}
@@ -108,7 +108,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                 </motion.div>
             ))}
 
-            <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+            <div className="text-center text-xs text-text-muted mt-4">
                 {t('auth.authButtonGroup.termsConditions')}
             </div>
         </div>

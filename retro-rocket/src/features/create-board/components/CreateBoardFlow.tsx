@@ -138,17 +138,17 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-2xl font-bold text-text-primary">
                             {t('dashboard.createBoard')}
                         </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        <p className="text-sm text-text-secondary mt-1">
                             {t('createBoard.step', { current: currentStep === 'template' ? 1 : 2, total: 2 })}
                         </p>
                     </div>
                     <button
                         onClick={handleClose}
                         disabled={isCreating}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-2"
+                        className="text-slate-400 hover:text-text-secondary transition-colors p-2"
                         aria-label={t('common.close')}
                     >
                         ✕
@@ -179,10 +179,10 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                             className="space-y-6"
                         >
                             <div className="text-center mb-6">
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h3 className="text-lg font-semibold text-text-primary mb-2">
                                     {t('dashboard.newBoardTitle')}
                                 </h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                <p className="text-sm text-text-secondary">
                                     {t(`boardTemplates.${selectedTemplate}.name`)}
                                 </p>
                             </div>
@@ -191,7 +191,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                 <div>
                                     <label
                                         htmlFor="boardTitle"
-                                        className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                                        className="block text-sm font-medium text-text-secondary mb-2"
                                     >
                                         {t('dashboard.newBoardTitle')} *
                                     </label>
@@ -213,7 +213,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                 </AnimatePresence>
 
                 {/* Footer Actions */}
-                <div className="flex justify-between pt-6 mt-6 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between pt-6 mt-6 border-t border-border-default">
                     <div>
                         {currentStep === 'details' && (
                             <Button

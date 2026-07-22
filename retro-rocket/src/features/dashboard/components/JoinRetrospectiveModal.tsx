@@ -71,23 +71,23 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                         <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-blue-600 rounded-lg flex items-center justify-center">
                             <Users className="w-5 h-5 text-white" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                        <h3 className="text-xl font-bold text-text-primary">
                             {t('dashboard.joinModal.title')}
                         </h3>
                     </div>
                     <button
                         onClick={handleClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
                         disabled={isJoining}
                         title={t('dashboard.joinModal.closeModal')}
                         aria-label={t('dashboard.joinModal.closeModal')}
                     >
-                        <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                        <X className="w-4 h-4 text-text-muted" />
                     </button>
                 </div>
 
                 {/* Description */}
-                <p className="text-slate-600 dark:text-slate-300 mb-6">
+                <p className="text-text-secondary mb-6">
                     {t('dashboard.joinModal.description')}
                 </p>
 
@@ -96,7 +96,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                     <div>
                         <label
                             htmlFor="boardId"
-                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                            className="block text-sm font-medium text-text-secondary mb-2"
                         >
                             {t('dashboard.joinModal.boardIdLabel')}
                         </label>
@@ -111,7 +111,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             autoFocus
                             disabled={isJoining}
                         />
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-xs text-text-muted mt-1">
                             {t('dashboard.joinModal.boardIdHelp')}
                         </p>
                     </div>
@@ -121,10 +121,10 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                         <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start gap-3"
+                            className="bg-error-bg border border-error-fg rounded-lg p-3 flex items-start gap-3"
                         >
-                            <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-red-700 dark:text-red-300">
+                            <AlertCircle className="w-4 h-4 text-error-fg mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-error-fg">
                                 {error}
                             </p>
                         </motion.div>
@@ -152,8 +152,8 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                 </form>
 
                 {/* Help Text */}
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                <div className="mt-6 pt-4 border-t border-border-default">
+                    <p className="text-xs text-text-muted text-center">
                         {t('dashboard.joinModal.helpText')}
                     </p>
                 </div>

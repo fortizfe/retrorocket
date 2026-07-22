@@ -68,21 +68,21 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-4 mb-6 shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="bg-surface-raised rounded-lg p-4 mb-6 shadow-sm border border-border-default">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 {/* Left side - Search and Sort */}
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
                     {/* Search */}
                     <div className="relative flex-1 sm:max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
                         <input
                             type="text"
                             placeholder={t('dashboard.controls.filterPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-10 pr-10 py-2 border border-slate-300 dark:border-slate-600 rounded-md 
-                                     bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
-                                     placeholder-slate-500 dark:placeholder-slate-400
+                            className="w-full pl-10 pr-10 py-2 border border-border-strong rounded-md 
+                                     bg-surface-raised text-text-primary
+                                     placeholder-text-muted
                                      focus:ring-2 focus:ring-primary-500 focus:border-transparent
                                      transition-colors duration-200"
                         />
@@ -90,7 +90,7 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                             <button
                                 onClick={handleClearSearch}
                                 title={t('dashboard.controls.clearFilter')}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-text-secondary"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -99,10 +99,10 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
 
                     {/* Filter by Type */}
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="text-sm text-text-secondary whitespace-nowrap">
                             {t('dashboard.controls.filterBy')}
                         </span>
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-1">
+                        <div className="flex bg-surface rounded-md p-1">
                             <Button
                                 variant={filterBy === 'all' ? 'primary' : 'ghost'}
                                 size="sm"
@@ -135,10 +135,10 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
 
                     {/* Sort Controls */}
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="text-sm text-text-secondary whitespace-nowrap">
                             {t('dashboard.controls.sortBy')}
                         </span>
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-1">
+                        <div className="flex bg-surface rounded-md p-1">
                             <Button
                                 variant={sortBy === 'name' ? 'primary' : 'ghost'}
                                 size="sm"
@@ -169,17 +169,17 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                 <div className="flex items-center gap-4">
                     {/* Results count */}
                     {searchQuery && (
-                        <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="text-sm text-text-secondary whitespace-nowrap">
                             {filteredCount} de {totalCount}
                         </span>
                     )}
 
                     {/* View Mode Toggle */}
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                        <span className="text-sm text-text-secondary whitespace-nowrap">
                             {t('dashboard.controls.viewMode')}
                         </span>
-                        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-1">
+                        <div className="flex bg-surface rounded-md p-1">
                             <Button
                                 variant={viewMode === 'grid' ? 'primary' : 'ghost'}
                                 size="sm"
