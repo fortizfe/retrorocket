@@ -100,7 +100,7 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={mockUser} showName={true} />);
 
             const nameElement = screen.getByText('John Doe');
-            expect(nameElement).toHaveClass('font-medium', 'text-slate-700', 'dark:text-slate-300', 'text-xs');
+            expect(nameElement).toHaveClass('font-medium', 'text-text-secondary', 'text-xs');
         });
 
         it('should render avatar and name in flex container when showName is true', () => {
@@ -198,7 +198,7 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={mockUser} />);
 
             const img = screen.getByRole('img');
-            expect(img).toHaveClass('rounded-full', 'border-2', 'border-white', 'dark:border-slate-700', 'shadow-sm', 'object-cover');
+            expect(img).toHaveClass('rounded-full', 'border-2', 'border-border-default', 'shadow-sm', 'object-cover');
         });
 
         it('should apply correct background and styling to initials avatar', () => {
@@ -215,8 +215,7 @@ describe('UserAvatar', () => {
                 'justify-center',
                 'shadow-sm',
                 'border-2',
-                'border-white',
-                'dark:border-slate-700',
+                'border-border-default',
                 'text-white',
                 'font-medium'
             );

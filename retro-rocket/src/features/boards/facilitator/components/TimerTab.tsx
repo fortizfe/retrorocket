@@ -61,30 +61,30 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
     const getTimerStatus = () => {
         if (!timer) return {
             text: t('timer.status.ready'),
-            color: 'text-slate-600 dark:text-slate-400',
-            bg: 'bg-slate-50 dark:bg-slate-700/50',
-            border: 'border-slate-200 dark:border-slate-600'
+            color: 'text-text-secondary',
+            bg: 'bg-surface',
+            border: 'border-border-default'
         };
 
         if (countdownState.isFinished) return {
             text: t('timer.status.finished'),
-            color: 'text-red-600 dark:text-red-400',
-            bg: 'bg-red-50 dark:bg-red-900/20',
-            border: 'border-red-200 dark:border-red-800'
+            color: 'text-error-fg',
+            bg: 'bg-error-bg',
+            border: 'border-error-fg'
         };
 
         if (countdownState.isRunning) return {
             text: t('timer.status.running'),
-            color: 'text-green-600 dark:text-green-400',
-            bg: 'bg-green-50 dark:bg-green-900/20',
-            border: 'border-green-200 dark:border-green-800'
+            color: 'text-success-fg',
+            bg: 'bg-success-bg',
+            border: 'border-success-fg'
         };
 
         return {
             text: t('timer.status.paused'),
-            color: 'text-yellow-600 dark:text-yellow-400',
-            bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-            border: 'border-yellow-200 dark:border-yellow-800'
+            color: 'text-warning-fg',
+            bg: 'bg-warning-bg',
+            border: 'border-warning-fg'
         };
     }; const getProgressBarColor = () => {
         if (countdownState.isFinished) return 'bg-red-500';
@@ -101,12 +101,12 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 rounded-lg p-4 border border-blue-100 dark:border-slate-600"
+                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 rounded-lg p-4 border border-border-default"
                 >
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                            <TimerIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                            <TimerIcon className="w-5 h-5 text-info-fg" />
+                            <span className="font-medium text-text-primary">
                                 {t('retrospective.facilitator.countdown.title')}
                             </span>
                         </div>
@@ -118,17 +118,17 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                     </div>
 
                     <div className="text-center">
-                        <div className="text-3xl font-mono font-bold text-slate-900 dark:text-slate-100 mb-2">
+                        <div className="text-3xl font-mono font-bold text-text-primary mb-2">
                             {formatTime ? formatTime(countdownState.timeRemaining) : '00:00'}
                         </div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                        <div className="text-sm text-text-secondary">
                             {t('retrospective.facilitator.countdown.totalTime')}: {formatTime ? formatTime(countdownState.totalDuration) : '00:00'}
                         </div>
                     </div>
 
                     {/* Progress Bar */}
                     <div className="mt-4">
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-border-default rounded-full h-2 overflow-hidden">
                             <motion.div
                                 initial={{ width: '100%' }}
                                 animate={{
@@ -149,15 +149,15 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-4"
                 >
-                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-2 text-text-secondary">
                         <Settings className="w-5 h-5" />
                         <h3 className="font-medium">{t('retrospective.facilitator.configureTime')}</h3>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-4">
+                    <div className="bg-surface rounded-lg p-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-text-secondary mb-2">
                                     {t('retrospective.facilitator.countdown.minutes')}
                                 </label>
                                 <div className="relative">
@@ -167,14 +167,14 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                                         max="60"
                                         value={inputs.minutes}
                                         onChange={(e) => handleInputChange('minutes', parseInt(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                         placeholder="0"
                                     />
                                     <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-text-secondary mb-2">
                                     {t('retrospective.facilitator.countdown.seconds')}
                                 </label>
                                 <div className="relative">
@@ -184,7 +184,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                                         max="59"
                                         value={inputs.seconds}
                                         onChange={(e) => handleInputChange('seconds', parseInt(e.target.value) || 0)}
-                                        className="w-full px-3 py-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                         placeholder="0"
                                     />
                                     <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -227,7 +227,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-4"
                 >
-                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center gap-2 text-text-secondary">
                         <Settings className="w-5 h-5" />
                         <h3 className="font-medium">{t('retrospective.facilitator.countdown.control')}</h3>
                     </div>
@@ -238,7 +238,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                                 onClick={startTimer}
                                 disabled={loading}
                                 variant="primary"
-                                className="h-12 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 border-green-600 text-white"
+                                className="h-12 bg-green-600 hover:bg-green-700 border-green-600 text-white"
                             >
                                 <Play className="w-4 h-4 mr-2" />
                                 {t('retrospective.facilitator.countdown.start')}
@@ -250,7 +250,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                                 onClick={pauseTimer}
                                 disabled={loading}
                                 variant="secondary"
-                                className="h-12 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 border-yellow-500 text-white"
+                                className="h-12 bg-yellow-500 hover:bg-yellow-700 border-yellow-500 text-white"
                             >
                                 <Pause className="w-4 h-4 mr-2" />
                                 {t('retrospective.facilitator.countdown.pause')}
@@ -291,7 +291,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-3"
                 >
-                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <h4 className="text-sm font-medium text-text-secondary">
                         {t('retrospective.facilitator.quickTimers')}
                     </h4>
                     <div className="grid grid-cols-3 gap-2">
@@ -303,7 +303,7 @@ const TimerTab: React.FC<TimerTabProps> = ({ retrospectiveId }) => {
                             <button
                                 key={preset.minutes}
                                 onClick={() => setInputs({ minutes: preset.minutes, seconds: 0 })}
-                                className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                className="px-3 py-2 text-sm font-medium text-info-fg bg-info-bg border border-info-fg rounded-lg hover:bg-info-bg transition-colors"
                             >
                                 {preset.label}
                             </button>

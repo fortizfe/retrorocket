@@ -44,7 +44,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-white rounded-xl shadow-lg p-6 ${className}`}
+            className={`bg-surface-raised rounded-xl shadow-lg p-6 ${className}`}
         >
             {isFirstTime && (
                 <div className="text-center mb-6">
@@ -56,10 +56,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
                     >
                         <User className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h2 className="text-2xl font-bold text-text-primary mb-2">
                         {t('auth.userProfileForm.welcome')}
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-text-secondary">
                         {t('auth.userProfileForm.welcomeSubtitle')}
                     </p>
                 </div>
@@ -67,10 +67,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             {!isFirstTime && (
                 <div className="text-center mb-6">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    <h3 className="text-xl font-semibold text-text-primary mb-2">
                         {t('auth.userProfileForm.editProfile')}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-text-secondary">
                         {t('auth.userProfileForm.editProfileSubtitle')}
                     </p>
                 </div>
@@ -88,34 +88,36 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label htmlFor="profile-email" className="block text-sm font-medium text-text-secondary mb-2">
                         <Mail className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.email')}
                     </label>
                     <Input
+                        id="profile-email"
                         type="email"
                         value={userProfile?.email ?? ''}
                         disabled
-                        className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        className="bg-surface text-text-muted"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                         {t('auth.userProfileForm.emailNotEditable')}
                     </p>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label htmlFor="profile-display-name" className="block text-sm font-medium text-text-secondary mb-2">
                         <User className="w-4 h-4 inline mr-2" />
                         {t('auth.userProfileForm.displayName')}
                     </label>
                     <Input
+                        id="profile-display-name"
                         type="text"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder={t('auth.userProfileForm.displayNamePlaceholder')}
                         required
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                         {t('auth.userProfileForm.displayNameHelp')}
                     </p>
                 </div>
@@ -141,7 +143,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
             </form>
 
             {isFirstTime && (
-                <div className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-4 text-center text-xs text-text-muted">
                     {t('auth.userProfileForm.editLaterNote')}
                 </div>
             )}

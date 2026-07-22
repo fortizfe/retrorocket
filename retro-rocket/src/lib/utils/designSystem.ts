@@ -197,8 +197,8 @@ export const interactiveStates = {
     cardActive: 'ring-2 ring-blue-500 ring-offset-2',
 
     // Input states
-    inputFocus: 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-    inputError: 'border-red-300 focus:border-red-500 focus:ring-red-500/20',
+    inputFocus: 'focus:ring-2 focus:ring-focus focus:border-blue-500',
+    inputError: 'border-red-300 focus:border-red-500 focus:ring-focus',
 
     // Touch-friendly states (mobile)
     touchTarget: 'min-h-[44px] min-w-[44px]', // WCAG touch target size
@@ -213,7 +213,7 @@ export const a11y = {
     srOnly: 'sr-only',
 
     // Focus management
-    focusVisible: 'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+    focusVisible: 'focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
     skipLink: 'absolute left-[-10000px] top-auto width-[1px] height-[1px] overflow-hidden focus:left-0 focus:top-0 focus:width-auto focus:height-auto focus:overflow-visible',
 
     // High contrast mode support

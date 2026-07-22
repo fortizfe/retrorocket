@@ -25,28 +25,28 @@
 
 /* Contenedor principal del calendario */
 .react-datepicker {
-    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl;
+    @apply bg-surface-overlay border border-border-default rounded-lg shadow-xl;
     font-family: inherit;
 }
 
 /* Header del calendario */
 .react-datepicker__header {
-    @apply bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700;
+    @apply bg-surface border-b border-border-default;
     border-top-left-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
 }
 
 /* Navegación del mes */
 .react-datepicker__current-month {
-    @apply text-slate-900 dark:text-slate-100 font-semibold text-sm;
+    @apply text-text-primary font-semibold text-sm;
 }
 
 .react-datepicker__navigation {
-    @apply text-slate-600 dark:text-slate-400;
+    @apply text-text-secondary;
 }
 
 .react-datepicker__navigation:hover {
-    @apply text-slate-900 dark:text-slate-100;
+    @apply text-text-primary;
 }
 
 .react-datepicker__navigation--previous {
@@ -59,11 +59,11 @@
 
 /* Nombres de los días */
 .react-datepicker__day-names {
-    @apply border-b border-slate-200 dark:border-slate-700;
+    @apply border-b border-border-default;
 }
 
 .react-datepicker__day-name {
-    @apply text-slate-500 dark:text-slate-400 text-xs font-medium;
+    @apply text-text-muted text-xs font-medium;
 }
 
 /* Días del calendario */
@@ -72,14 +72,14 @@
 }
 
 .react-datepicker__day {
-    @apply text-slate-700 dark:text-slate-300 text-sm rounded transition-colors;
+    @apply text-text-secondary text-sm rounded transition-colors;
     width: 2rem;
     height: 2rem;
     line-height: 2rem;
 }
 
 .react-datepicker__day:hover {
-    @apply bg-slate-100 dark:bg-slate-700;
+    @apply bg-surface;
 }
 
 .react-datepicker__day--selected {
@@ -91,7 +91,7 @@
 }
 
 .react-datepicker__day--today {
-    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium;
+    @apply bg-info-bg text-info-fg font-medium;
 }
 
 .react-datepicker__day--disabled {
@@ -99,18 +99,18 @@
 }
 
 .react-datepicker__day--outside-month {
-    @apply text-slate-400 dark:text-slate-600;
+    @apply text-text-muted;
 }
 
 /* Dropdowns para mes y año */
 .react-datepicker__month-dropdown,
 .react-datepicker__year-dropdown {
-    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-lg;
+    @apply bg-surface-overlay border border-border-default rounded shadow-lg;
 }
 
 .react-datepicker__month-option,
 .react-datepicker__year-option {
-    @apply text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700;
+    @apply text-text-secondary hover:bg-surface;
 }
 
 .react-datepicker__month-option--selected,
@@ -120,11 +120,11 @@
 
 /* Botón de limpiar */
 .react-datepicker__close-icon {
-    @apply text-slate-400 dark:text-slate-500;
+    @apply text-text-muted;
 }
 
 .react-datepicker__close-icon:hover {
-    @apply text-slate-600 dark:text-slate-300;
+    @apply text-text-secondary;
 }
 
 /* Triángulo del popper */

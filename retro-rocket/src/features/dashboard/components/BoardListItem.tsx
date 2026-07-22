@@ -54,18 +54,18 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
         <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+            className="bg-surface-raised border border-border-default rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
         >
             {showDeleteConfirm ? (
-                <Card className="p-4 border-2 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                <Card className="p-4 border-2 border-error-fg bg-error-bg">
                     <div className="text-center space-y-3">
                         <div className="flex justify-center">
-                            <AlertTriangle className="h-10 w-10 text-red-500 dark:text-red-400" />
+                            <AlertTriangle className="h-10 w-10 text-error-fg" />
                         </div>
                         <div>
-                            <h4 className="text-md font-semibold text-red-900 dark:text-red-100">{t('dashboard.boardCard.deleteBoard')}</h4>
-                            <p className="text-sm text-red-700 dark:text-red-300"><strong>"{board.title}"</strong></p>
-                            <p className="text-xs text-red-600 dark:text-red-400">{t('dashboard.boardCard.deleteConfirmation')}</p>
+                            <h4 className="text-md font-semibold text-error-fg">{t('dashboard.boardCard.deleteBoard')}</h4>
+                            <p className="text-sm text-error-fg"><strong>"{board.title}"</strong></p>
+                            <p className="text-xs text-error-fg">{t('dashboard.boardCard.deleteConfirmation')}</p>
                         </div>
                         <div className="flex gap-2 justify-center">
                             <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>{t('common.cancel')}</Button>
@@ -101,11 +101,11 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                     <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 truncate mb-1" title={board.title} aria-label={board.title}>
+                                <h3 className="text-lg font-semibold text-text-primary truncate mb-1" title={board.title} aria-label={board.title}>
                                     {board.title}
                                 </h3>
                                 {board.description && (
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-1 mb-2">
+                                    <p className="text-sm text-text-secondary line-clamp-1 mb-2">
                                         {board.description}
                                     </p>
                                 )}
@@ -113,7 +113,7 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                         </div>
 
                         {/* Metadata row */}
-                        <div className="flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-6 text-sm text-text-muted">
                             {/* Template */}
                             <div className="flex items-center gap-1">
                                 <Layout className="h-4 w-4" />
@@ -136,13 +136,13 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                             {board.isCreator === false && (
                                 <div className="flex items-center gap-1">
                                     <UserPlus className="h-4 w-4 text-blue-500" />
-                                    <span className="text-blue-600 dark:text-blue-400">{t('dashboard.boardCard.joined')}</span>
+                                    <span className="text-info-fg">{t('dashboard.boardCard.joined')}</span>
                                 </div>
                             )}
                             {board.isCreator === true && (
                                 <div className="flex items-center gap-1">
                                     <Crown className="h-4 w-4 text-amber-500" />
-                                    <span className="text-amber-600 dark:text-amber-400">{t('dashboard.boardCard.creator')}</span>
+                                    <span className="text-warning-fg">{t('dashboard.boardCard.creator')}</span>
                                 </div>
                             )}
                         </div>
@@ -155,7 +155,7 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                                 <button
                                     type="button"
                                     onClick={() => setShowEditModal(true)}
-                                    className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400"
+                                    className="p-1.5 rounded-lg hover:bg-info-bg text-text-muted hover:text-info-fg"
                                     title={t('dashboard.boardCard.editTitle')}
                                     aria-label={t('dashboard.boardCard.editTitle')}
                                 >
@@ -164,7 +164,7 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                                 <button
                                     type="button"
                                     onClick={() => setShowDeleteConfirm(true)}
-                                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
+                                    className="p-1.5 rounded-lg hover:bg-error-bg text-text-muted hover:text-error-fg"
                                     title={t('dashboard.boardCard.deleteTitle')}
                                     aria-label={t('dashboard.boardCard.deleteTitle')}
                                 >

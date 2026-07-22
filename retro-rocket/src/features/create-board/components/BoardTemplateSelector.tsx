@@ -21,9 +21,9 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
                 {allColumns.map((column, index) => (
                     <div
                         key={column.id}
-                        className={`flex-1 h-8 rounded text-xs flex items-center justify-center text-slate-600 dark:text-slate-300 ${column.type === 'action'
-                            ? 'bg-blue-100 dark:bg-blue-800/30 border-2 border-dashed border-blue-300 dark:border-blue-600'
-                            : 'bg-slate-100 dark:bg-slate-700'
+                        className={`flex-1 h-8 rounded text-xs flex items-center justify-center text-text-secondary ${column.type === 'action'
+                            ? 'bg-info-bg border-2 border-dashed border-info-fg'
+                            : 'bg-surface'
                             }`}
                         title={t(column.i18nKey)}
                     >
@@ -36,7 +36,7 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
 
     return (
         <div className="space-y-4">
-            <h3 id="template-selector-title" className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+            <h3 id="template-selector-title" className="text-lg font-semibold text-text-primary mb-4">
                 {t('createBoard.selectTemplate.title')}
             </h3>
 
@@ -52,8 +52,8 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 block ${isSelected
-                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-soft'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600'
+                                ? 'border-primary-500 bg-info-bg shadow-soft'
+                                : 'border-border-default bg-surface-raised hover:border-info-fg'
                                 }`}
                         >
                             {/* Hidden Radio Input */}
@@ -72,7 +72,7 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
                             <div className="absolute top-3 right-3">
                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected
                                     ? 'border-primary-500 bg-primary-500'
-                                    : 'border-slate-300 dark:border-slate-600'
+                                    : 'border-border-strong'
                                     }`}>
                                     {isSelected && (
                                         <Check className="w-3 h-3 text-white" />
@@ -82,20 +82,20 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
 
                             {/* Template Info */}
                             <div className="pr-8">
-                                <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                                <h4 className="font-semibold text-text-primary mb-2">
                                     {t(template.i18nNameKey)}
                                 </h4>
 
                                 <p
                                     id={`template-${template.id}-desc`}
-                                    className="text-sm text-slate-600 dark:text-slate-300 mb-3"
+                                    className="text-sm text-text-secondary mb-3"
                                 >
                                     {t(template.i18nDescriptionKey)}
                                 </p>
 
                                 {/* Column Preview */}
                                 <div>
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    <span className="text-xs font-medium text-text-muted">
                                         {t('createBoard.selectTemplate.preview')}:
                                     </span>
                                     {renderColumnPreview(template.id)}
@@ -106,7 +106,7 @@ const BoardTemplateSelector: React.FC<Props> = ({ value, onChange }) => {
                 })}
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
+            <p className="text-xs text-text-muted text-center mt-4">
                 {t('createBoard.selectTemplate.actionItemsNote')}
             </p>
         </div>

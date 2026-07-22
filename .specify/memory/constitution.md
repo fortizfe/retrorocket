@@ -1,35 +1,38 @@
 <!--
 Sync Impact Report
-- Version change: 2.0.0 → 3.0.0
-- Rationale: MAJOR bump. The "Development Workflow & Quality Gates" section is
-  redefined again, reversing the 2.0.0 change: feature
-  004-remove-secrets-add-codeql reintroduces an automated pre-merge PR gate
-  (CI now runs on `pull_request` as well as on push to `main`) and adds a
-  required GitHub CodeQL code-scanning check enforced via branch protection.
-  This restores automatic pre-merge enforcement in place of the "push-to-main
-  gate plus human pre-merge discipline" model from 2.0.0 — a backward
-  incompatible redefinition of the enforcement mechanism, hence MAJOR per
-  this constitution's own versioning policy.
+- Version change: 3.0.0 → 3.1.0
+- Rationale: MINOR bump. Adds a new Core Principle (VIII. Accessibility
+  Compliance — WCAG 2.1 AA) making conformance to WCAG 2.1 Level AA a
+  governing, non-negotiable standard for all user-facing development. This is
+  additive/materially expanded guidance, not a backward-incompatible removal
+  or redefinition, hence MINOR per this constitution's versioning policy. The
+  pre-existing "Accessibility (a11y)" entry under "Technology Stack &
+  Additional Standards" is retained but now cross-references Principle VIII and
+  is strengthened to cite the WCAG 2.1 AA contrast, focus-visibility, and
+  use-of-color requirements. A verification expectation is added to
+  "Development Workflow & Quality Gates".
 - Modified principles/sections:
-  - "Development Workflow & Quality Gates" — rewritten (see below); no other
-    Core Principles (I–VII) changed.
-- Added sections: none
+  - Added: "VIII. Accessibility Compliance — WCAG 2.1 AA (NON-NEGOTIABLE)"
+  - "Technology Stack & Additional Standards" → "Accessibility (a11y)" bullet
+    expanded to reference Principle VIII and WCAG 2.1 AA
+  - "Development Workflow & Quality Gates" → added an accessibility
+    verification / merge-blocking gate bullet
+  - Core Principles I–VII unchanged
+- Added sections: none (new principle added within existing Core Principles)
 - Removed sections: none
-- Resolved residual inconsistency: The 2.0.0 Sync Impact Report flagged that
-  "Technology Stack & Additional Standards" still said "ESLint MUST be a
-  mandatory gate before merge," which no longer matched the push-only model.
-  That line is accurate again as of this amendment (ESLint runs in the
-  `checks` job, which is a required PR status check once more) — left
-  unchanged, no further action needed.
 - Templates requiring updates:
   - ✅ .specify/templates/plan-template.md — Constitution Check section is
-    generic/dynamic; no hardcoded "before merge"/PR-gate wording found, no
+    generic/dynamic ("Gates determined based on constitution file"); no
+    hardcoded principle list, no changes needed
+  - ✅ .specify/templates/tasks-template.md — references the constitution
+    generically (TDD, NON-NEGOTIABLE); no hardcoded principle enumeration, no
     changes needed
-  - ✅ .specify/templates/tasks-template.md — TDD/testing guidance references
-    the constitution generically ("Per the project constitution (TDD,
-    NON-NEGOTIABLE)"); Principle I is unchanged, no changes needed
-  - ✅ .specify/templates/spec-template.md — no conflicts found; no changes needed
-  - ✅ .specify/templates/checklist-template.md — no conflicts found; no changes needed
+  - ✅ .specify/templates/spec-template.md — generic; features add
+    accessibility requirements as needed (see feature 009-wcag-theme-
+    compliance), no forced section added, no changes needed
+  - ✅ .specify/templates/checklist-template.md — no conflicts found, no
+    changes needed
+- Follow-up TODOs: none
 -->
 
 # RetroRocket Constitution
@@ -114,6 +117,33 @@ E2E coverage with Playwright. Playwright is adopted as a new project tool
 integration failures across real-time sync, UI, and export pipelines;
 critical flows need end-to-end verification before shipping.
 
+### VIII. Accessibility Compliance — WCAG 2.1 AA (NON-NEGOTIABLE)
+
+All development that produces or modifies a user-facing surface MUST conform
+to the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA. At minimum
+this requires:
+
+- Text contrast of at least 4.5:1 for normal text and 3:1 for large text
+  against its background.
+- Non-text contrast of at least 3:1 for meaningful graphical objects,
+  interactive-control boundaries, and focus indicators against adjacent
+  colors.
+- A visible focus indicator on every focusable element.
+- No information, state, action, or distinction conveyed by color alone; a
+  redundant cue (text, icon, shape, or pattern) MUST accompany it.
+- Full keyboard operability of interactive components (drag & drop, voting,
+  modals) with correct ARIA roles and accessible names.
+
+Both the light and dark themes MUST independently satisfy these requirements.
+No user-facing change may be approved or merged that introduces a WCAG 2.1 AA
+violation.
+
+**Rationale**: RetroRocket is a collaborative tool used daily by whole teams,
+including members with low vision, color-vision deficiencies, or who rely on
+the keyboard. A fixed, verifiable accessibility bar (WCAG 2.1 AA) makes
+inclusion a contract rather than a best-effort afterthought, and prevents
+inaccessible surfaces from reaching `main`.
+
 ## Technology Stack & Additional Standards
 
 - **Strict Type Safety**: TypeScript `strict` mode (already enabled) MUST
@@ -130,9 +160,12 @@ critical flows need end-to-end verification before shipping.
   hardcoded strings in components are prohibited. Every new feature that
   introduces user-visible text MUST add the corresponding keys to all
   supported locales.
-- **Accessibility (a11y)**: Interactive components (drag & drop, voting,
-  modals) MUST be operable via keyboard and MUST expose correct ARIA roles,
-  given that this is a collaborative tool used daily by teams.
+- **Accessibility (a11y)**: Accessibility is governed by Principle VIII
+  (WCAG 2.1 AA). Interactive components (drag & drop, voting, modals) MUST be
+  operable via keyboard and MUST expose correct ARIA roles, and all
+  user-facing surfaces MUST meet the WCAG 2.1 AA contrast, focus-visibility,
+  and use-of-color requirements defined there, in both the light and dark
+  themes.
 - **Error Handling & Resilience**: Because the application depends on
   real-time synchronization, every operation against Firestore MUST
   explicitly handle loading, error, and reconnection states. Silent
@@ -158,6 +191,12 @@ critical flows need end-to-end verification before shipping.
   CodeQL finding newly introduced by that PR — MUST be blocked from
   merging automatically; Medium/Low/style-level CodeQL findings MUST be
   reported but MUST NOT block merge.
+- Any pull request that adds or changes a user-facing surface MUST verify
+  WCAG 2.1 AA conformance (contrast, visible focus, and use-of-color) per
+  Principle VIII. Where an automated accessibility audit exists in CI, it
+  MUST run as a required merge-blocking check and MUST fail the build on any
+  WCAG 2.1 AA violation; until such automation exists, conformance MUST be
+  verified in human code review.
 - Every PR MUST still demonstrate TDD compliance (tests precede
   implementation); this is verified through human code review in addition
   to the automated pre-merge CI gate.
@@ -165,8 +204,9 @@ critical flows need end-to-end verification before shipping.
   `vitest.config.ts`, or if the Playwright E2E suite fails on a critical
   flow; either failure blocks merge or release until resolved.
 - Any exception to a core principle (TDD, minimum coverage, E2E coverage of
-  critical flows, or any other NON-NEGOTIABLE principle) MUST be documented
-  explicitly in the PR description with a stated rationale.
+  critical flows, WCAG 2.1 AA accessibility conformance, or any other
+  NON-NEGOTIABLE principle) MUST be documented explicitly in the PR
+  description with a stated rationale.
 
 ## Governance
 
@@ -186,4 +226,4 @@ incompatible governance/principle removals or redefinitions, MINOR for new
 principles or materially expanded guidance, PATCH for clarifications and
 non-semantic refinements.
 
-**Version**: 3.0.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-21
+**Version**: 3.1.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-22

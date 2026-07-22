@@ -38,13 +38,13 @@ const TeamMoodTab: React.FC<TeamMoodTabProps> = ({
         return (
             <div className="text-center p-8">
                 <div className="text-6xl mb-4">🧠</div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                <h3 className="text-lg font-medium text-text-primary mb-2">
                     {t('retrospective.facilitator.teamMood.disabled.title')}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 max-w-md mx-auto">
+                <p className="text-sm text-text-secondary mb-4 max-w-md mx-auto">
                     {t('retrospective.facilitator.teamMood.disabled.description')}
                 </p>
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-300">
+                <div className="bg-info-bg border border-info-fg rounded-lg p-3 text-xs text-info-fg">
                     💡 <strong>{t('sentiment.help.tip')}</strong> {t('retrospective.facilitator.teamMood.disabled.tip')}
                 </div>
             </div>
@@ -56,10 +56,10 @@ const TeamMoodTab: React.FC<TeamMoodTabProps> = ({
         return (
             <div className="text-center p-8">
                 <div className="animate-pulse text-6xl mb-4">🤖</div>
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                <h3 className="text-lg font-medium text-text-primary mb-2">
                     {t('retrospective.facilitator.teamMood.initializing.title')}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                <p className="text-sm text-text-secondary mb-4">
                     {t('retrospective.facilitator.teamMood.initializing.description')}
                 </p>
                 <div className="flex items-center justify-center gap-2">

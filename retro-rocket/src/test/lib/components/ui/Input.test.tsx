@@ -71,25 +71,25 @@ describe('Input Component', () => {
         it('should apply default variant styles', () => {
             render(<Input variant="default" />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('border-slate-300', 'bg-white');
+            expect(input).toHaveClass('border-border-strong', 'bg-surface-raised');
         });
 
         it('should apply outline variant styles', () => {
             render(<Input variant="outline" />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('border-slate-300', 'bg-transparent');
+            expect(input).toHaveClass('border-border-strong', 'bg-transparent');
         });
 
         it('should apply filled variant styles', () => {
             render(<Input variant="filled" />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('border-slate-200', 'bg-slate-50');
+            expect(input).toHaveClass('border-border-default', 'bg-surface');
         });
 
         it('should default to default variant when not specified', () => {
             render(<Input />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('border-slate-300', 'bg-white');
+            expect(input).toHaveClass('border-border-strong', 'bg-surface-raised');
         });
     });
 
@@ -126,13 +126,13 @@ describe('Input Component', () => {
 
             const errorElement = screen.getByText(errorMessage);
             expect(errorElement).toBeInTheDocument();
-            expect(errorElement).toHaveClass('text-red-600');
+            expect(errorElement).toHaveClass('text-error-fg');
         });
 
         it('should apply error styles to input when error is present', () => {
             render(<Input error="Error message" />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('border-red-300', 'focus:border-red-500');
+            expect(input).toHaveClass('border-error-fg', 'focus:border-error-fg');
         });
 
         it('should not display helper text when error is present', () => {
@@ -158,7 +158,7 @@ describe('Input Component', () => {
 
             const helperElement = screen.getByText(helperText);
             expect(helperElement).toBeInTheDocument();
-            expect(helperElement).toHaveClass('text-slate-500');
+            expect(helperElement).toHaveClass('text-text-muted');
         });
 
         it('should not display helper text when not provided', () => {
@@ -302,26 +302,28 @@ describe('Input Component', () => {
         });
     });
 
-    describe('Theme variations', () => {
-        it('should include dark mode classes', () => {
+    describe('Theme variations (semantic tokens)', () => {
+        // Theming is driven by CSS-variable-backed semantic tokens (see
+        // src/lib/theme/tokens.ts), which are theme-aware without `dark:` utilities.
+        it('should use theme-aware surface/text tokens', () => {
             render(<Input />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('dark:bg-slate-800', 'dark:text-slate-100');
+            expect(input).toHaveClass('bg-surface-raised', 'text-text-primary');
         });
 
-        it('should include dark mode classes for error state', () => {
+        it('should use theme-aware error tokens for error state', () => {
             render(<Input error="Error message" />);
             const input = screen.getByRole('textbox');
-            expect(input).toHaveClass('dark:border-red-400');
+            expect(input).toHaveClass('border-error-fg');
 
             const errorElement = screen.getByText('Error message');
-            expect(errorElement).toHaveClass('dark:text-red-400');
+            expect(errorElement).toHaveClass('text-error-fg');
         });
 
-        it('should include dark mode classes for helper text', () => {
+        it('should use theme-aware muted token for helper text', () => {
             render(<Input helperText="Helper text" />);
             const helperElement = screen.getByText('Helper text');
-            expect(helperElement).toHaveClass('dark:text-slate-400');
+            expect(helperElement).toHaveClass('text-text-muted');
         });
     });
 });

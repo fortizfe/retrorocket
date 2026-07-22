@@ -19,14 +19,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     disabled,
     ...props
   }, ref) => {
-    const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    // Standardized focus-visible ring uses the `focus` token (≥3:1 both themes),
+    // with the offset matching the page surface so the ring reads in both themes.
+    const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm dark:bg-primary-500 dark:hover:bg-primary-600',
-      secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 focus:ring-slate-500 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600',
-      outline: 'border border-slate-300 text-slate-700 hover:bg-slate-50 focus:ring-slate-500 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800',
-      ghost: 'text-slate-700 hover:bg-slate-100 focus:ring-slate-500 dark:text-slate-300 dark:hover:bg-slate-700',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm dark:bg-red-500 dark:hover:bg-red-600'
+      primary: 'bg-action text-text-inverse hover:bg-action-hover active:bg-action-active shadow-sm',
+      secondary: 'bg-surface-raised text-text-primary hover:bg-surface border border-border-default shadow-sm',
+      outline: 'border border-border-strong text-text-primary hover:bg-surface-raised',
+      ghost: 'text-text-secondary hover:bg-surface-raised',
+      // Deliberate fixed red (not a status token): a solid danger fill whose white
+      // label meets AA in both themes (red-700/800). Documented exception.
+      danger: 'bg-red-700 text-white hover:bg-red-800 shadow-sm'
     };
 
     const sizes = {

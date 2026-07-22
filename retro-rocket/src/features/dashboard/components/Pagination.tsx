@@ -53,22 +53,22 @@ const Pagination: React.FC<PaginationProps> = ({
 
     if (totalPages <= 1) {
         return (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border-default">
+                <div className="text-sm text-text-secondary">
                     {t('dashboard.controls.showingResults', { start: startItem, end: endItem, total: totalItems })}
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                    <span className="text-sm text-text-secondary">
                         {t('dashboard.controls.itemsPerPage')}:
                     </span>
                     <select
                         value={itemsPerPage}
                         onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
                         title={t('dashboard.controls.itemsPerPage')}
-                        className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded
-                                 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
-                                 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                        className="px-2 py-1 border border-border-strong rounded
+                                 bg-surface-raised text-text-primary
+                                 focus:ring-2 focus:ring-focus focus:border-transparent text-sm"
                     >
                         <option value={5}>5</option>
                         <option value={10}>10</option>
@@ -81,9 +81,9 @@ const Pagination: React.FC<PaginationProps> = ({
     }
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-border-default">
             {/* Results info */}
-            <div className="text-sm text-slate-600 dark:text-slate-400">
+            <div className="text-sm text-text-secondary">
                 {t('dashboard.controls.showingResults', { start: startItem, end: endItem, total: totalItems })}
             </div>
 
@@ -91,16 +91,16 @@ const Pagination: React.FC<PaginationProps> = ({
             <div className="flex items-center gap-2">
                 {/* Items per page */}
                 <div className="flex items-center gap-2 mr-4">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                    <span className="text-sm text-text-secondary">
                         {t('dashboard.controls.itemsPerPage')}:
                     </span>
                     <select
                         value={itemsPerPage}
                         onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
                         title={t('dashboard.controls.itemsPerPage')}
-                        className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded
-                                 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100
-                                 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                        className="px-2 py-1 border border-border-strong rounded
+                                 bg-surface-raised text-text-primary
+                                 focus:ring-2 focus:ring-focus focus:border-transparent text-sm"
                     >
                         <option value={5}>5</option>
                         <option value={10}>10</option>
@@ -124,7 +124,7 @@ const Pagination: React.FC<PaginationProps> = ({
                 {getVisiblePages().map((page) => (
                     <React.Fragment key={`page-${page}`}>
                         {page === '...' ? (
-                            <span className="px-3 py-1 text-slate-400 dark:text-slate-500">...</span>
+                            <span className="px-3 py-1 text-text-muted">...</span>
                         ) : (
                             <Button
                                 variant={currentPage === page ? 'primary' : 'outline'}

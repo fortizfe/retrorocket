@@ -32,7 +32,7 @@ describe('Loading Component', () => {
 
             const spinner = mainDiv.querySelector('[data-animate]');
             expect(spinner).toBeInTheDocument();
-            expect(spinner).toHaveClass('border-2', 'border-slate-200', 'dark:border-slate-600');
+            expect(spinner).toHaveClass('border-2', 'border-border-default');
         });
 
         it('should render without text by default', () => {
@@ -48,8 +48,8 @@ describe('Loading Component', () => {
             const { container } = render(<Loading variant="spinner" />);
 
             const spinner = container.querySelector('[data-animate]') as HTMLElement;
-            expect(spinner).toHaveClass('border-2', 'border-slate-200', 'dark:border-slate-600');
-            expect(spinner).toHaveClass('border-t-primary-600', 'dark:border-t-primary-400');
+            expect(spinner).toHaveClass('border-2', 'border-border-default');
+            expect(spinner).toHaveClass('border-t-action');
             expect(spinner).toHaveClass('rounded-full');
         });
 
@@ -108,7 +108,7 @@ describe('Loading Component', () => {
 
             const firstDot = container.querySelector('[data-animate]');
 
-            expect(firstDot).toHaveClass('bg-primary-600', 'dark:bg-primary-400');
+            expect(firstDot).toHaveClass('bg-action');
             expect(firstDot).toHaveClass('rounded-full');
         });
     });
@@ -118,7 +118,7 @@ describe('Loading Component', () => {
             const { container } = render(<Loading variant="pulse" />);
 
             const pulseElement = container.querySelector('[data-animate]') as HTMLElement;
-            expect(pulseElement).toHaveClass('bg-primary-600', 'dark:bg-primary-400', 'rounded-full');
+            expect(pulseElement).toHaveClass('bg-action', 'rounded-full');
         });
 
         it('should have scale and opacity animation', () => {
@@ -250,7 +250,7 @@ describe('Loading Component', () => {
             render(<Loading text="Loading..." />);
 
             const textElement = screen.getByText('Loading...');
-            expect(textElement).toHaveClass('mt-2', 'text-slate-600', 'dark:text-slate-400');
+            expect(textElement).toHaveClass('mt-2', 'text-text-secondary');
         });
 
         it('should apply correct text size for different loading sizes', () => {
@@ -435,7 +435,7 @@ describe('Loading Component', () => {
 
             const text = screen.getByText('Loading...');
             expect(text).toBeInTheDocument();
-            expect(text).toHaveClass('mt-2', 'text-slate-600', 'dark:text-slate-400', 'text-base');
+            expect(text).toHaveClass('mt-2', 'text-text-secondary', 'text-base');
         });
 
         it('should not render text when not provided', () => {
@@ -458,7 +458,7 @@ describe('Loading Component', () => {
             const { container } = render(<Loading variant="spinner" />);
 
             const spinner = container.querySelector('[data-animate]');
-            expect(spinner).toHaveClass('border-2', 'border-slate-200', 'dark:border-slate-600', 'border-t-primary-600', 'dark:border-t-primary-400', 'rounded-full');
+            expect(spinner).toHaveClass('border-2', 'border-border-default', 'border-t-action', 'rounded-full');
         });
 
         it('should have rotation animation', () => {
@@ -519,7 +519,7 @@ describe('Loading Component', () => {
 
             const firstDot = container.querySelector('[data-animate]');
 
-            expect(firstDot).toHaveClass('bg-primary-600', 'dark:bg-primary-400', 'rounded-full', 'w-6', 'h-6');
+            expect(firstDot).toHaveClass('bg-action', 'rounded-full', 'w-6', 'h-6');
         });
     });
 
@@ -528,7 +528,7 @@ describe('Loading Component', () => {
             const { container } = render(<Loading variant="pulse" />);
 
             const pulseElement = container.querySelector('[data-animate]');
-            expect(pulseElement).toHaveClass('bg-primary-600', 'dark:bg-primary-400', 'rounded-full');
+            expect(pulseElement).toHaveClass('bg-action', 'rounded-full');
         });
 
         it('should have scale and opacity animation', () => {
@@ -779,7 +779,7 @@ describe('Loading Component', () => {
 
             const spinner = container.querySelector('[data-animate]');
             expect(spinner).toBeInTheDocument();
-            expect(spinner).toHaveClass('border-2', 'border-slate-200', 'dark:border-slate-600', 'border-t-primary-600', 'dark:border-t-primary-400', 'rounded-full');
+            expect(spinner).toHaveClass('border-2', 'border-border-default', 'border-t-action', 'rounded-full');
         });
 
         it('should use medium size by default', () => {
@@ -873,7 +873,7 @@ describe('Loading Component', () => {
             const dotsContainer = container.querySelector('.flex.space-x-1');
             const firstDot = dotsContainer?.querySelector('[data-animate]');
 
-            expect(firstDot).toHaveClass('bg-primary-600', 'dark:bg-primary-400', 'rounded-full');
+            expect(firstDot).toHaveClass('bg-action', 'rounded-full');
         });
     });
 
@@ -882,7 +882,7 @@ describe('Loading Component', () => {
             const { container } = render(<Loading variant="pulse" />);
 
             const pulseElement = container.querySelector('[data-animate]');
-            expect(pulseElement).toHaveClass('bg-primary-600', 'dark:bg-primary-400', 'rounded-full');
+            expect(pulseElement).toHaveClass('bg-action', 'rounded-full');
         });
 
         it('should have scale and opacity animation', () => {
@@ -1006,7 +1006,7 @@ describe('Loading Component', () => {
 
             const text = screen.getByText('Loading data...');
             expect(text).toBeInTheDocument();
-            expect(text).toHaveClass('mt-2', 'text-slate-600', 'dark:text-slate-400');
+            expect(text).toHaveClass('mt-2', 'text-text-secondary');
         });
 
         it('should display text when provided for dots', () => {
@@ -1014,7 +1014,7 @@ describe('Loading Component', () => {
 
             const text = screen.getByText('Processing...');
             expect(text).toBeInTheDocument();
-            expect(text).toHaveClass('mt-2', 'text-slate-600', 'dark:text-slate-400');
+            expect(text).toHaveClass('mt-2', 'text-text-secondary');
         });
 
         it('should display text when provided for pulse', () => {
@@ -1022,7 +1022,7 @@ describe('Loading Component', () => {
 
             const text = screen.getByText('Please wait...');
             expect(text).toBeInTheDocument();
-            expect(text).toHaveClass('mt-2', 'text-slate-600', 'dark:text-slate-400');
+            expect(text).toHaveClass('mt-2', 'text-text-secondary');
         });
 
         it('should not display text when not provided', () => {

@@ -189,7 +189,7 @@ const Modal: React.FC<ModalProps> = ({
                         transition={{ duration: 0.2, ease: [0.4, 0.0, 0.2, 1] }}
                         className={`
                             relative w-full ${maxWidthClasses[maxWidth]}
-                            bg-white dark:bg-slate-800 
+                            bg-surface-overlay
                             rounded-xl shadow-2xl
                             transform transition-all
                             max-h-[90vh] overflow-hidden
@@ -200,11 +200,11 @@ const Modal: React.FC<ModalProps> = ({
                     >
                         {/* Header */}
                         {(title || description || Icon || showCloseButton) && (
-                            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between p-6 border-b border-border-default">
                                 <div className="flex items-center gap-3 min-w-0">
                                     {Icon && (
-                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
-                                            <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-info-bg shrink-0">
+                                            <Icon className="w-5 h-5 text-info-fg" />
                                         </div>
                                     )}
                                     {(title || description) && (
@@ -212,7 +212,7 @@ const Modal: React.FC<ModalProps> = ({
                                             {title && (
                                                 <h3
                                                     id="modal-title"
-                                                    className="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate"
+                                                    className="text-lg font-semibold text-text-primary truncate"
                                                 >
                                                     {title}
                                                 </h3>
@@ -220,7 +220,7 @@ const Modal: React.FC<ModalProps> = ({
                                             {description && (
                                                 <p
                                                     id="modal-description"
-                                                    className="text-sm text-slate-500 dark:text-slate-400 mt-1"
+                                                    className="text-sm text-text-muted mt-1"
                                                 >
                                                     {description}
                                                 </p>
@@ -232,7 +232,7 @@ const Modal: React.FC<ModalProps> = ({
                                 {showCloseButton && (
                                     <button
                                         onClick={onClose}
-                                        className="shrink-0 rounded-lg p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                        className="shrink-0 rounded-lg p-2 text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                         title="Cerrar"
                                         aria-label="Cerrar modal"
                                     >

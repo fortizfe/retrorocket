@@ -78,30 +78,30 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
     const getTimerStatus = () => {
         if (!timer) return {
             text: t('timer.status.ready'),
-            color: 'text-slate-600 dark:text-slate-400',
-            bg: 'bg-slate-50 dark:bg-slate-700/50',
-            border: 'border-slate-200 dark:border-slate-600'
+            color: 'text-text-secondary',
+            bg: 'bg-surface',
+            border: 'border-border-default'
         };
 
         if (countdownState.isFinished) return {
             text: t('timer.status.finished'),
-            color: 'text-red-600 dark:text-red-400',
-            bg: 'bg-red-50 dark:bg-red-900/20',
-            border: 'border-red-200 dark:border-red-800'
+            color: 'text-error-fg',
+            bg: 'bg-error-bg',
+            border: 'border-error-fg'
         };
 
         if (countdownState.isRunning) return {
             text: t('timer.status.running'),
-            color: 'text-green-600 dark:text-green-400',
-            bg: 'bg-green-50 dark:bg-green-900/20',
-            border: 'border-green-200 dark:border-green-800'
+            color: 'text-success-fg',
+            bg: 'bg-success-bg',
+            border: 'border-success-fg'
         };
 
         return {
             text: t('timer.status.paused'),
-            color: 'text-yellow-600 dark:text-yellow-400',
-            bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-            border: 'border-yellow-200 dark:border-yellow-800'
+            color: 'text-warning-fg',
+            bg: 'bg-warning-bg',
+            border: 'border-warning-fg'
         };
     };
 
@@ -146,25 +146,25 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                 <motion.div
                                     initial={{ opacity: 0, y: -6 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-blue-100 dark:border-slate-600"
+                                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-border-default"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                                         <div className="md:col-span-1 flex items-center gap-3">
-                                            <div className="p-2 rounded-md bg-white/60 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
-                                                <TimerIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                            <div className="p-2 rounded-md bg-surface-raised/60 border border-border-default">
+                                                <TimerIcon className="w-6 h-6 text-info-fg" />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('retrospective.facilitator.countdown.title')}</div>
-                                                <div className="text-xs text-slate-600 dark:text-slate-400">{status.text}</div>
+                                                <div className="text-sm font-medium text-text-primary">{t('retrospective.facilitator.countdown.title')}</div>
+                                                <div className="text-xs text-text-secondary">{status.text}</div>
                                             </div>
                                         </div>
 
                                         <div className="md:col-span-2 text-center">
-                                            <div className="text-4xl font-mono font-bold text-slate-900 dark:text-slate-100 tracking-wide">{formatTime ? formatTime(countdownState.timeRemaining) : '00:00'}</div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('retrospective.facilitator.countdown.totalTime')}: {formatTime ? formatTime(countdownState.totalDuration) : '00:00'}</div>
+                                            <div className="text-4xl font-mono font-bold text-text-primary tracking-wide">{formatTime ? formatTime(countdownState.timeRemaining) : '00:00'}</div>
+                                            <div className="text-xs text-text-muted mt-1">{t('retrospective.facilitator.countdown.totalTime')}: {formatTime ? formatTime(countdownState.totalDuration) : '00:00'}</div>
 
                                             <div className="mt-3">
-                                                <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div className="h-2 w-full bg-border-default rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: '100%' }}
                                                         animate={{ width: `${countdownState.totalDuration > 0 ? (countdownState.timeRemaining / countdownState.totalDuration) * 100 : 100}%` }}
@@ -185,15 +185,15 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-4"
                                 >
-                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                    <div className="flex items-center gap-2 text-text-secondary">
                                         <Settings className="w-5 h-5" />
                                         <h3 className="font-medium">{t('retrospective.facilitator.configureTime')}</h3>
                                     </div>
 
-                                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-4">
+                                    <div className="bg-surface rounded-lg p-4 space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                <label className="block text-sm font-medium text-text-secondary mb-2">
                                                     {t('retrospective.facilitator.countdown.minutes')}
                                                 </label>
                                                 <div className="relative">
@@ -203,14 +203,14 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                                         max="60"
                                                         value={inputs.minutes}
                                                         onChange={(e) => handleInputChange('minutes', parseInt(e.target.value) || 0)}
-                                                        className="w-full px-3 py-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                                         placeholder="0"
                                                     />
                                                     <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                <label className="block text-sm font-medium text-text-secondary mb-2">
                                                     {t('retrospective.facilitator.countdown.seconds')}
                                                 </label>
                                                 <div className="relative">
@@ -220,7 +220,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                                         max="59"
                                                         value={inputs.seconds}
                                                         onChange={(e) => handleInputChange('seconds', parseInt(e.target.value) || 0)}
-                                                        className="w-full px-3 py-2 text-center border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                        className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                                         placeholder="0"
                                                     />
                                                     <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -263,7 +263,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-4"
                                 >
-                                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                    <div className="flex items-center gap-2 text-text-secondary">
                                         <Settings className="w-5 h-5" />
                                         <h3 className="font-medium">{t('retrospective.facilitator.countdown.control')}</h3>
                                     </div>
@@ -274,7 +274,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                                 onClick={startTimer}
                                                 disabled={loading}
                                                 variant="primary"
-                                                className="h-12 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 border-green-600 text-white"
+                                                className="h-12 bg-green-600 hover:bg-green-700 border-green-600 text-white"
                                             >
                                                 <Play className="w-4 h-4 mr-2" />
                                                 {t('retrospective.facilitator.countdown.start')}
@@ -286,7 +286,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                                 onClick={pauseTimer}
                                                 disabled={loading}
                                                 variant="secondary"
-                                                className="h-12 bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 border-yellow-500 text-white"
+                                                className="h-12 bg-yellow-500 hover:bg-yellow-700 border-yellow-500 text-white"
                                             >
                                                 <Pause className="w-4 h-4 mr-2" />
                                                 {t('retrospective.facilitator.countdown.pause')}
@@ -327,7 +327,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="space-y-3"
                                 >
-                                    <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    <h4 className="text-sm font-medium text-text-secondary">
                                         {t('retrospective.facilitator.quickTimers')}
                                     </h4>
                                     <div className="grid grid-cols-3 gap-2">
@@ -339,7 +339,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
                                             <button
                                                 key={preset.minutes}
                                                 onClick={() => setInputs({ minutes: preset.minutes, seconds: 0 })}
-                                                className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                                className="px-3 py-2 text-sm font-medium text-info-fg bg-info-bg border border-info-fg rounded-lg hover:bg-info-bg transition-colors"
                                             >
                                                 {preset.label}
                                             </button>

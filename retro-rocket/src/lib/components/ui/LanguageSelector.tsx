@@ -73,7 +73,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.15 }}
-                className="fixed z-50 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-2 min-w-[140px]"
+                className="fixed z-50 bg-surface-overlay rounded-lg shadow-lg border border-border-default py-2 min-w-[140px]"
                 style={{
                     top: dropdownPosition.top,
                     left: dropdownPosition.left
@@ -84,10 +84,10 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                         key={language.code}
                         onClick={() => handleLanguageChange(language.code)}
                         className={`w-full flex items-center gap-3 px-4 py-2 text-sm 
-                           transition-colors hover:bg-slate-50 dark:hover:bg-slate-700
+                           transition-colors hover:bg-surface-raised
                            ${currentLanguage === language.code
-                                ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                                : 'text-slate-700 dark:text-slate-300'
+                                ? 'text-info-fg bg-info-bg'
+                                : 'text-text-secondary'
                             }`}
                     >
                         <span className="text-base">{language.flag}</span>
@@ -104,9 +104,9 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                 ref={buttonRef}
                 onClick={handleToggle}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium 
-                           text-slate-600 dark:text-slate-300 
-                           hover:text-slate-900 dark:hover:text-slate-100 
-                           hover:bg-slate-100 dark:hover:bg-slate-800 
+                           text-text-secondary 
+                           hover:text-text-primary 
+                           hover:bg-surface-raised 
                            transition-all duration-200"
                 title="Change language"
             >

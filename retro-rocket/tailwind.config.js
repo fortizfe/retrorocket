@@ -5,6 +5,30 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Semantic theme tokens (WCAG 2.1 AA) — driven by CSS custom properties
+        // defined in src/styles/globals.css. Single source of truth:
+        // src/lib/theme/tokens.ts. Prefer these over raw palette utilities.
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        'surface-raised': 'rgb(var(--color-surface-raised) / <alpha-value>)',
+        'surface-overlay': 'rgb(var(--color-surface-overlay) / <alpha-value>)',
+        'text-primary': 'rgb(var(--color-text-primary) / <alpha-value>)',
+        'text-secondary': 'rgb(var(--color-text-secondary) / <alpha-value>)',
+        'text-muted': 'rgb(var(--color-text-muted) / <alpha-value>)',
+        'text-inverse': 'rgb(var(--color-text-inverse) / <alpha-value>)',
+        'border-default': 'rgb(var(--color-border-default) / <alpha-value>)',
+        'border-strong': 'rgb(var(--color-border-strong) / <alpha-value>)',
+        focus: 'rgb(var(--color-focus) / <alpha-value>)',
+        action: 'rgb(var(--color-action) / <alpha-value>)',
+        'action-hover': 'rgb(var(--color-action-hover) / <alpha-value>)',
+        'action-active': 'rgb(var(--color-action-active) / <alpha-value>)',
+        'success-fg': 'rgb(var(--color-success-fg) / <alpha-value>)',
+        'success-bg': 'rgb(var(--color-success-bg) / <alpha-value>)',
+        'warning-fg': 'rgb(var(--color-warning-fg) / <alpha-value>)',
+        'warning-bg': 'rgb(var(--color-warning-bg) / <alpha-value>)',
+        'error-fg': 'rgb(var(--color-error-fg) / <alpha-value>)',
+        'error-bg': 'rgb(var(--color-error-bg) / <alpha-value>)',
+        'info-fg': 'rgb(var(--color-info-fg) / <alpha-value>)',
+        'info-bg': 'rgb(var(--color-info-bg) / <alpha-value>)',
         // Sistema de colores azules moderno
         primary: {
           50: '#eff6ff',

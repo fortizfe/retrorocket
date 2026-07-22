@@ -56,7 +56,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
                     {label}
                 </label>
             )}
@@ -73,13 +73,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     showPopperArrow={false}
                     popperClassName={`datepicker-popper-z${zIndex}`}
                     className={`
-                        w-full p-2 text-sm border border-slate-200 dark:border-slate-700 
-                        rounded bg-white dark:bg-slate-800 
-                        text-slate-900 dark:text-slate-100
-                        placeholder-slate-500 dark:placeholder-slate-400
-                        focus:ring-2 focus:ring-amber-500 focus:border-transparent
+                        w-full p-2 text-sm border border-border-default 
+                        rounded bg-surface-overlay 
+                        text-text-primary
+                        placeholder-text-muted
+                        focus:ring-2 focus:ring-focus focus:border-transparent
                         transition-colors
-                        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750'}
+                        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-raised'}
                         ${className}
                     `}
                     wrapperClassName="w-full"
@@ -89,7 +89,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                     isClearable
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <Calendar className="w-4 h-4 text-text-muted" />
                 </div>
             </div>
         </div>

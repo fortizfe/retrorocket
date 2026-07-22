@@ -228,8 +228,8 @@ describe('AuthButtonGroup', () => {
             const buttons = screen.getAllByTestId('auth-button');
 
             // Check Google and GitHub buttons have available styles
-            expect(buttons[0].className).toContain('!bg-white');
-            expect(buttons[1].className).toContain('!bg-white');
+            expect(buttons[0].className).toContain('!bg-surface-raised');
+            expect(buttons[1].className).toContain('!bg-surface-raised');
         });
 
         it('should apply disabled styles for unavailable providers', () => {
@@ -238,7 +238,7 @@ describe('AuthButtonGroup', () => {
             const buttons = screen.getAllByTestId('auth-button');
 
             // Check Apple button has disabled styles
-            expect(buttons[2].className).toContain('bg-slate-100');
+            expect(buttons[2].className).toContain('bg-surface');
             expect(buttons[2].className).toContain('cursor-not-allowed');
         });
 
@@ -248,8 +248,8 @@ describe('AuthButtonGroup', () => {
             const buttons = screen.getAllByTestId('auth-button');
 
             // Check dark mode classes are present
-            expect(buttons[0].className).toContain('dark:!bg-slate-800');
-            expect(buttons[0].className).toContain('dark:!text-slate-100');
+            expect(buttons[0].className).toContain('!bg-surface-raised');
+            expect(buttons[0].className).toContain('!text-text-primary');
         });
     });
 

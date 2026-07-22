@@ -175,8 +175,8 @@ const DashboardPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center transition-colors duration-300">
                 <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-300">{t('dashboard.loadingBoards')}</p>
+                    <div className="w-8 h-8 border-4 border-info-fg border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-text-secondary">{t('dashboard.loadingBoards')}</p>
                 </div>
             </div>
         );
@@ -193,11 +193,11 @@ const DashboardPage: React.FC = () => {
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3">
-                                <LayoutGrid className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                            <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
+                                <LayoutGrid className="w-8 h-8 text-info-fg" />
                                 {t('dashboard.title')}
                             </h1>
-                            <p className="text-slate-600 dark:text-slate-300 mt-2">
+                            <p className="text-text-secondary mt-2">
                                 {t('dashboard.subtitle')}
                             </p>
                         </div>
@@ -205,7 +205,7 @@ const DashboardPage: React.FC = () => {
                             <Button
                                 onClick={() => setShowJoinModal(true)}
                                 variant="outline"
-                                className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
+                                className="border-info-fg text-info-fg hover:bg-info-bg font-medium px-6 py-3 flex items-center gap-2"
                             >
                                 <Users className="w-5 h-5" />
                                 {t('dashboard.joinRetro')}
@@ -260,20 +260,20 @@ const DashboardPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center py-16"
                     >
-                        <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <LayoutGrid className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                        <div className="w-16 h-16 bg-border-default rounded-full flex items-center justify-center mx-auto mb-4">
+                            <LayoutGrid className="w-8 h-8 text-text-muted" />
                         </div>
-                        <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        <h3 className="text-xl font-semibold text-text-secondary mb-2">
                             {t('dashboard.noBoards')}
                         </h3>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        <p className="text-text-muted mb-6">
                             {t('dashboard.createFirst')}
                         </p>
                         <div className="flex gap-3 justify-center">
                             <Button
                                 onClick={() => setShowJoinModal(true)}
                                 variant="outline"
-                                className="border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-300 dark:hover:bg-primary-900/20 font-medium px-6 py-3 flex items-center gap-2"
+                                className="border-info-fg text-info-fg hover:bg-info-bg font-medium px-6 py-3 flex items-center gap-2"
                             >
                                 <Users className="w-5 h-5" />
                                 {t('dashboard.joinRetro')}
@@ -295,10 +295,10 @@ const DashboardPage: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-center py-16"
                             >
-                                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <LayoutGrid className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                                <div className="w-16 h-16 bg-border-default rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <LayoutGrid className="w-8 h-8 text-text-muted" />
                                 </div>
-                                <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                <h3 className="text-xl font-semibold text-text-secondary mb-2">
                                     {t('dashboard.controls.noResults')}
                                 </h3>
                                 <Button

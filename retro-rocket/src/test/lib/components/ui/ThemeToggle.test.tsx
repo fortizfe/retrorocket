@@ -203,14 +203,15 @@ describe('ThemeToggle Component', () => {
             render(<ThemeToggle />);
             const button = screen.getByRole('button');
 
+            // Labels are i18n keys (react-i18next is mocked to return the key).
             // Initially light theme - should show option to switch to dark
-            expect(button).toHaveAttribute('aria-label', 'Cambiar a modo oscuro');
+            expect(button).toHaveAttribute('aria-label', 'header.switchToDark');
 
             // Click to toggle to dark
             await user.click(button);
 
             // Now dark theme - should show option to switch to light
-            expect(button).toHaveAttribute('aria-label', 'Cambiar a modo claro');
+            expect(button).toHaveAttribute('aria-label', 'header.switchToLight');
         });
 
         it('should update title when theme changes', async () => {
@@ -220,14 +221,14 @@ describe('ThemeToggle Component', () => {
             render(<ThemeToggle />);
             const button = screen.getByRole('button');
 
-            // Initially light theme
-            expect(button).toHaveAttribute('title', 'Cambiar a modo oscuro');
+            // Initially light theme (i18n keys via mocked react-i18next)
+            expect(button).toHaveAttribute('title', 'header.switchToDark');
 
             // Click to toggle to dark
             await user.click(button);
 
             // Now dark theme
-            expect(button).toHaveAttribute('title', 'Cambiar a modo claro');
+            expect(button).toHaveAttribute('title', 'header.switchToLight');
         });
     });
 
@@ -299,11 +300,11 @@ describe('ThemeToggle Component', () => {
             render(<ThemeToggle />);
             const button = screen.getByRole('button');
 
+            // Theme-aware surface tokens (no `dark:` utilities needed).
             expect(button).toHaveClass(
-                'bg-slate-100',
-                'hover:bg-slate-200',
-                'dark:bg-slate-800',
-                'dark:hover:bg-slate-700'
+                'bg-surface-raised',
+                'hover:bg-surface',
+                'border-border-default'
             );
         });
 
@@ -311,11 +312,12 @@ describe('ThemeToggle Component', () => {
             render(<ThemeToggle />);
             const button = screen.getByRole('button');
 
+            // Standardized focus-visible ring using the focus token.
             expect(button).toHaveClass(
                 'focus:outline-none',
-                'focus:ring-2',
-                'focus:ring-primary-500',
-                'focus:ring-offset-2'
+                'focus-visible:ring-2',
+                'focus-visible:ring-focus',
+                'focus-visible:ring-offset-2'
             );
         });
     });

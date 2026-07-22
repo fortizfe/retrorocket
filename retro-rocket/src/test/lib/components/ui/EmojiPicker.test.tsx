@@ -240,7 +240,7 @@ describe('EmojiPicker Component', () => {
 
         it('should have Emociones as default active category', () => {
             const emotionsButton = screen.getByText('Emociones');
-            expect(emotionsButton).toHaveClass('bg-primary-100');
+            expect(emotionsButton).toHaveClass('bg-info-bg');
         });
 
         it('should switch active category when category button is clicked', async () => {
@@ -249,7 +249,7 @@ describe('EmojiPicker Component', () => {
             const gesturesButton = screen.getByText('Gestos');
             await user.click(gesturesButton);
 
-            expect(gesturesButton).toHaveClass('bg-primary-100');
+            expect(gesturesButton).toHaveClass('bg-info-bg');
         });
 
         it('should display emojis for the active category', () => {
@@ -426,8 +426,7 @@ describe('EmojiPicker Component', () => {
                 'items-center',
                 'justify-center',
                 'text-lg',
-                'hover:bg-slate-100',
-                'dark:hover:bg-slate-700',
+                'hover:bg-surface-raised',
                 'rounded',
                 'transition-colors'
             );

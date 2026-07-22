@@ -153,11 +153,11 @@ const RetrospectivePageContent: React.FC = () => {
     if (retroError || !retrospective) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
+                <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">
                         Retrospectiva no encontrada
                     </h2>
-                    <p className="text-slate-600 dark:text-slate-300 mb-6">
+                    <p className="text-text-secondary mb-6">
                         No se pudo encontrar la retrospectiva solicitada.
                     </p>
                     <Button onClick={() => navigate('/dashboard')}>
@@ -172,12 +172,12 @@ const RetrospectivePageContent: React.FC = () => {
     if (isJoining) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
-                <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
+                <div className="bg-surface-raised/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
                     <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">
                         Uniéndose a la retrospectiva...
                     </h2>
-                    <p className="text-slate-600 dark:text-slate-300">
+                    <p className="text-text-secondary">
                         Espera un momento mientras te conectamos.
                     </p>
                 </div>
@@ -215,11 +215,11 @@ const RetrospectivePageContent: React.FC = () => {
     // This should not happen with auto-join, but keeping as fallback
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
-            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
-                <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">
+            <div className="bg-surface-raised/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
+                <h2 className="text-xl font-semibold text-text-primary mb-4">
                     Error de conexión
                 </h2>
-                <p className="text-slate-600 dark:text-slate-300 mb-6">
+                <p className="text-text-secondary mb-6">
                     No se pudo conectar a la retrospectiva. Inténtalo de nuevo.
                 </p>
                 <Button onClick={() => window.location.reload()}>

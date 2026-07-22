@@ -124,19 +124,19 @@ const CardMenu: React.FC<CardMenuProps> = ({
                         left: menuPosition.left,
                         zIndex: 9999,
                     }}
-                    className="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 
+                    className="bg-surface-raised rounded-lg shadow-lg border border-border-default 
                        min-w-[280px] max-h-[90vh] overflow-visible"
                 >
                     <div className="p-4">
                         <div className="flex items-center gap-2 mb-3">
-                            <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                            <Target className="w-5 h-5 text-warning-fg" />
+                            <h4 className="font-medium text-text-primary">
                                 {t('retrospective.cards.convertToActionTitle')}
                             </h4>
                         </div>
 
                         <div className="mb-4">
-                            <label htmlFor={`assign-${card.id}`} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            <label htmlFor={`assign-${card.id}`} className="block text-sm font-medium text-text-secondary mb-2">
                                 {t('retrospective.cards.assignResponsible')}
                             </label>
                             <select
@@ -144,10 +144,10 @@ const CardMenu: React.FC<CardMenuProps> = ({
                                 value={selectedAssignee}
                                 onChange={(e) => setSelectedAssignee(e.target.value)}
                                 title={t('retrospective.cards.selectResponsible')}
-                                className="w-full p-2 text-sm border border-slate-200 dark:border-slate-600 
-                           rounded bg-white dark:bg-slate-800 
-                           text-slate-900 dark:text-slate-100
-                           focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                className="w-full p-2 text-sm border border-border-default 
+                           rounded bg-surface-raised 
+                           text-text-primary
+                           focus:ring-2 focus:ring-focus focus:border-transparent"
                             >
                                 <option value="">{t('retrospective.cards.unassigned')}</option>
                                 {participants.map((participant) => (
@@ -180,8 +180,8 @@ const CardMenu: React.FC<CardMenuProps> = ({
                             </button>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400 
-                           hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                                className="px-3 py-2 text-sm text-text-secondary 
+                           hover:bg-surface-raised rounded transition-colors"
                             >
                                 {t('common.cancel')}
                             </button>
@@ -197,8 +197,8 @@ const CardMenu: React.FC<CardMenuProps> = ({
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 
-                   text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400
+                className={`p-1 rounded hover:bg-surface-raised 
+                   text-text-muted hover:text-warning-fg
                    transition-colors ${className}`}
                 title={t('retrospective.cards.convertToAction')}
             >

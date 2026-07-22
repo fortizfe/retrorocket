@@ -199,7 +199,7 @@ describe('CompactAvatarGroup', () => {
 
             const avatars = screen.getAllByTestId('user-avatar');
             avatars.forEach(avatar => {
-                expect(avatar).toHaveClass('ring-2', 'ring-white', 'dark:ring-slate-800');
+                expect(avatar).toHaveClass('ring-2', 'ring-surface');
             });
         });
     });
@@ -246,7 +246,7 @@ describe('CompactAvatarGroup', () => {
 
             const button = screen.getByRole('button');
             expect(button).toBeInTheDocument();
-            expect(button).toHaveClass('transition-all', 'duration-200', 'hover:bg-slate-50', 'dark:hover:bg-slate-800', 'rounded-lg', 'p-1', '-m-1');
+            expect(button).toHaveClass('transition-all', 'duration-200', 'hover:bg-surface-raised', 'rounded-lg', 'p-1', '-m-1');
         });
 
         it('should call onShowAll when clicked', async () => {
@@ -304,17 +304,14 @@ describe('CompactAvatarGroup', () => {
 
             const indicator = screen.getByText('+3').closest('div');
             expect(indicator).toHaveClass(
-                'bg-slate-200',
-                'dark:bg-slate-600',
+                'bg-border-default',
                 'rounded-full',
                 'flex',
                 'items-center',
                 'justify-center',
                 'ring-2',
-                'ring-white',
-                'dark:ring-slate-800',
-                'text-slate-600',
-                'dark:text-slate-300',
+                'ring-surface',
+                'text-text-secondary',
                 'font-medium'
             );
         });

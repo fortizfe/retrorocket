@@ -210,14 +210,14 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 <div className="flex items-center space-x-2">
                     <span className="text-lg">{column.icon}</span>
                     <div className="flex-1">
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        <h2 className="text-lg font-semibold text-text-primary">
                             {column.title}
                         </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">{column.description}</p>
+                        <p className="text-sm text-text-secondary">{column.description}</p>
                     </div>
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center space-x-2 text-sm text-text-muted">
                         <span>
                             {totalItems} {totalItems === 1 ? t('retrospective.columns.element') : t('retrospective.columns.elements')}
                         </span>
@@ -276,7 +276,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                 className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)}`}
                             >
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                                    <span className="text-xs text-text-muted italic">
                                         Vista previa del color
                                     </span>
                                     <ColorPicker
@@ -387,7 +387,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                             className="text-center py-8"
                         >
                             <div className="text-4xl mb-2">{column.icon}</div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
+                            <p className="text-text-muted text-sm mb-3">
                                 {t('retrospective.columns.noCards')}
                             </p>
                             {currentUser && (

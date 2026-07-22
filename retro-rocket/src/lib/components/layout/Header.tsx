@@ -85,7 +85,7 @@ const Header: React.FC = () => {
     }
 
     return (
-        <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-soft border-b border-slate-200/50 dark:border-slate-700/50 sticky top-0 z-40">
+        <header className="bg-surface-raised/90 backdrop-blur-md shadow-soft border-b border-border-default/50 sticky top-0 z-40">
             <div className="container mx-auto px-2">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
@@ -106,8 +106,8 @@ const Header: React.FC = () => {
                             <Link
                                 to="/mis-tableros"
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActivePath('/mis-tableros')
-                                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    ? 'bg-info-bg text-info-fg shadow-sm'
+                                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
                                     }`}
                             >
                                 <LayoutGrid className="w-4 h-4" />
@@ -123,23 +123,23 @@ const Header: React.FC = () => {
                             <button
                                 ref={userMenuButtonRef}
                                 onClick={handleUserMenuToggle}
-                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-raised transition-colors"
                             >
                                 {userProfile?.photoURL ? (
                                     <img
                                         src={userProfile.photoURL}
                                         alt="Avatar"
-                                        className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-700 shadow-sm"
+                                        className="w-8 h-8 rounded-full border-2 border-border-default shadow-sm"
                                     />
                                 ) : (
                                     <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
                                         <User className="w-4 h-4 text-white" data-testid="user-icon" />
                                     </div>
                                 )}
-                                <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <span className="hidden md:block text-sm font-medium text-text-secondary">
                                     {userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || t('header.user')}
                                 </span>
-                                <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <ChevronDown className="w-4 h-4 text-text-muted" />
                             </button>
                         </div>
 
@@ -162,14 +162,14 @@ const Header: React.FC = () => {
                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                                             transition={{ duration: 0.15 }}
-                                            className="fixed z-50 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-medium border border-slate-200 dark:border-slate-700 py-2"
+                                            className="fixed z-50 w-56 bg-surface-overlay rounded-lg shadow-medium border border-border-default py-2"
                                             style={{
                                                 top: userMenuPosition.top,
                                                 left: userMenuPosition.left
                                             }}
                                         >
                                             {/* User Info */}
-                                            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                                            <div className="px-4 py-3 border-b border-border-default">
                                                 <div className="flex items-center gap-3">
                                                     {userProfile?.photoURL ? (
                                                         <img
@@ -183,10 +183,10 @@ const Header: React.FC = () => {
                                                         </div>
                                                     )}
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                                                        <p className="text-sm font-medium text-text-primary truncate">
                                                             {userProfile?.displayName}
                                                         </p>
-                                                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                                        <p className="text-xs text-text-muted truncate">
                                                             {userProfile?.email}
                                                         </p>
                                                     </div>
@@ -198,7 +198,7 @@ const Header: React.FC = () => {
                                                 <Link
                                                     to="/perfil"
                                                     onClick={() => setShowUserMenu(false)}
-                                                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                    className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
                                                 >
                                                     <User className="w-4 h-4" />
                                                     {t('header.profile')}
@@ -208,7 +208,7 @@ const Header: React.FC = () => {
                                                 <Link
                                                     to="/mis-tableros"
                                                     onClick={() => setShowUserMenu(false)}
-                                                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                    className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
                                                 >
                                                     <LayoutGrid className="w-4 h-4" />
                                                     {t('header.myBoards')}
@@ -216,7 +216,7 @@ const Header: React.FC = () => {
 
                                                 {/* Language selector rendered as menu rows to match other items */}
                                                 <div className="px-2 py-2" role="presentation" aria-label={t('header.language')}>
-                                                    <div className="text-xs text-slate-400 dark:text-slate-500 px-4 mb-2">{t('header.language')}</div>
+                                                    <div className="text-xs text-text-muted px-4 mb-2">{t('header.language')}</div>
                                                     <div className="px-0">
                                                         <LanguageMenuList onClose={() => setShowUserMenu(false)} />
                                                     </div>
@@ -229,13 +229,13 @@ const Header: React.FC = () => {
                                             </div>
 
                                             {/* Sign Out */}
-                                            <div className="border-t border-slate-100 dark:border-slate-700 pt-1">
+                                            <div className="border-t border-border-default pt-1">
                                                 <button
                                                     onClick={() => {
                                                         setShowUserMenu(false);
                                                         handleSignOut();
                                                     }}
-                                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-error-fg hover:bg-error-bg transition-colors"
                                                 >
                                                     <LogOut className="w-4 h-4" />
                                                     {t('header.signOut')}

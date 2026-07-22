@@ -350,7 +350,7 @@ describe('ColorPicker', () => {
             const { container } = render(<ColorPicker {...defaultProps} />);
 
             const triggerButton = container.querySelector('button');
-            expect(triggerButton).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400');
+            expect(triggerButton).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-focus');
         });
 
         it('color buttons in popup are focusable', async () => {
@@ -363,8 +363,8 @@ describe('ColorPicker', () => {
                 const popup = container.querySelector('[class*="fixed"]');
                 const colorButtons = popup?.querySelectorAll('button');
 
-                expect(colorButtons?.[0]).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400');
-                expect(colorButtons?.[1]).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400');
+                expect(colorButtons?.[0]).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-focus');
+                expect(colorButtons?.[1]).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-focus');
             });
         });
     });
@@ -542,7 +542,7 @@ describe('ColorPicker', () => {
             const { container } = render(<ColorPicker {...defaultProps} />);
 
             const triggerButton = container.querySelector('button');
-            expect(triggerButton).toHaveClass('hover:scale-105', 'hover:shadow-md', 'hover:border-gray-400');
+            expect(triggerButton).toHaveClass('hover:scale-105', 'hover:shadow-md', 'hover:border-border-strong');
         });
 
         it('applies hover effects to color buttons', async () => {

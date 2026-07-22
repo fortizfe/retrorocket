@@ -34,9 +34,9 @@ const TextareaWithEmoji = forwardRef<HTMLTextAreaElement, TextareaWithEmojiProps
         const baseClasses = 'block w-full rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1';
 
         const variants = {
-            default: 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-primary-500 focus:ring-primary-500/20 dark:focus:border-primary-400',
-            outline: 'border-slate-300 dark:border-slate-600 bg-transparent focus:border-primary-500 focus:ring-primary-500/20 dark:focus:border-primary-400',
-            filled: 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary-500 focus:ring-primary-500/20 focus:bg-white dark:focus:bg-slate-700'
+            default: 'border-border-strong bg-surface-raised focus:border-focus focus:ring-focus',
+            outline: 'border-border-strong bg-transparent focus:border-focus focus:ring-focus',
+            filled: 'border-border-default bg-surface focus:border-focus focus:ring-focus focus:bg-surface-raised focus:bg-surface'
         };
 
         const sizes = {
@@ -61,8 +61,8 @@ const TextareaWithEmoji = forwardRef<HTMLTextAreaElement, TextareaWithEmojiProps
             sizes[size],
             resizeClasses[resize],
             textareaPadding,
-            error && 'border-red-300 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400',
-            'text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400',
+            error && 'border-error-fg focus:border-error-fg',
+            'text-text-primary placeholder-text-muted',
             className
         );
 
@@ -132,7 +132,7 @@ const TextareaWithEmoji = forwardRef<HTMLTextAreaElement, TextareaWithEmojiProps
         return (
             <div className="w-full">
                 {label && (
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                         {label}
                     </label>
                 )}
@@ -156,10 +156,10 @@ const TextareaWithEmoji = forwardRef<HTMLTextAreaElement, TextareaWithEmojiProps
                     )}
                 </div>
                 {error && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <p className="mt-1 text-sm text-error-fg">{error}</p>
                 )}
                 {helperText && !error && (
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{helperText}</p>
+                    <p className="mt-1 text-sm text-text-muted">{helperText}</p>
                 )}
             </div>
         );

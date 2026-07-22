@@ -135,10 +135,10 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
             <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="min-w-0">
-                        <h2 className="text-base md:text-lg font-semibold text-slate-800 dark:text-slate-100 truncate">
+                        <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">
                             {id ? 'Cargando...' : ''}
                         </h2>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 truncate">&nbsp;</p>
+                        <p className="text-xs text-text-secondary truncate">&nbsp;</p>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
         <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="min-w-0">
-                    <h2 className="text-base md:text-lg font-semibold text-slate-800 dark:text-slate-100 truncate">
+                    <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">
                         {retrospective.title}
                     </h2>
                     {/* subtitle removed: redundant with user menu */}
@@ -167,7 +167,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                     <button
                         ref={menuButtonRef}
                         onClick={() => (optionsOpen ? setOptionsOpen(false) : openOptionsMenu())}
-                        className="hidden sm:inline-flex p-2.5 rounded-lg bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/50 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm items-center gap-2"
+                        className="hidden sm:inline-flex p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default/50 hover:border-border-strong shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm items-center gap-2"
                         title={t('retrospectivePage.options') || 'Opciones'}
                         aria-label={t('retrospectivePage.options') || 'Opciones'}
                         aria-haspopup="true"
@@ -195,12 +195,12 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                 className="fixed z-[99999]"
                                 style={getPositionStyles()}
                             >
-                                <div className="w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl overflow-hidden" role="menu" tabIndex={-1}>
+                                <div className="w-56 bg-surface-raised border border-border-default rounded-lg shadow-xl overflow-hidden" role="menu" tabIndex={-1}>
                                     <div className="p-2">
                                         <button
                                             onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
                                             role="menuitem"
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
+                                            className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary"
                                         >
                                             <Copy className="w-4 h-4 text-slate-500" />
                                             <span>{t('retrospective.export.exportText') || 'Export'}</span>
@@ -209,7 +209,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                         <button
                                             onClick={() => { handleCopyId(); setOptionsOpen(false); }}
                                             role="menuitem"
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 mt-1"
+                                            className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
                                             <Copy className="w-4 h-4 text-slate-500" />
                                             <span>{t('retrospectivePage.copyId')}</span>
@@ -218,7 +218,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                         <button
                                             onClick={() => { handleShare(); setOptionsOpen(false); }}
                                             role="menuitem"
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 mt-1"
+                                            className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
                                             <Share2 className="w-4 h-4 text-slate-500" />
                                             <span>{t('retrospectivePage.share')}</span>
@@ -227,7 +227,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                                         <button
                                             onClick={() => { handleLeaveRetrospective(); setOptionsOpen(false); }}
                                             role="menuitem"
-                                            className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 mt-1"
+                                            className="w-full text-left px-3 py-2 rounded hover:bg-surface-raised flex items-center gap-2 text-sm text-text-secondary mt-1"
                                         >
                                             <ArrowLeft className="w-4 h-4 text-slate-500" />
                                             <span>{t('retrospectivePage.exit')}</span>

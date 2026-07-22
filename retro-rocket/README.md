@@ -163,6 +163,28 @@ src/
 └── styles/              # Estilos globales
 ```
 
+## 🎨 Theming & Accesibilidad (WCAG 2.1 AA)
+
+Los temas claro y oscuro cumplen **WCAG 2.1 nivel AA** (requisito de la
+constitución del proyecto). Todo el color se define **una sola vez por rol**
+mediante *tokens semánticos*:
+
+- **Fuente de verdad:** `src/lib/theme/tokens.ts` (canales RGB por tema),
+  reflejados como variables CSS en `src/styles/globals.css` (`:root` / `.dark`)
+  y expuestos en `tailwind.config.js`.
+- **Cómo usarlos:** en los componentes usa clases semánticas
+  (`bg-surface`, `text-text-primary`, `border-border-default`,
+  `focus-visible:ring-focus`, `bg-info-bg`/`text-info-fg`, etc.) en lugar de
+  utilidades de paleta cruda (`bg-slate-800`, pares `dark:*`).
+- **Contrato completo y reglas:** ver
+  `specs/009-wcag-theme-compliance/contracts/design-tokens.md`.
+- **Verificación:** los tests en `src/test/lib/theme/` comprueban el contraste
+  AA de cada token/combinación en ambos temas, y una auditoría axe
+  (`e2e/accessibility.spec.ts`) escanea las pantallas en claro y oscuro.
+
+> Al añadir color nuevo, decide el *rol* y añade/usa un token — no introduzcas
+> pares `dark:` ad-hoc.
+
 ## 🚀 Instalación y Configuración
 
 ### Prerequisitos

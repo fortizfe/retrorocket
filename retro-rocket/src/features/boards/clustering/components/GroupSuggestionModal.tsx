@@ -85,31 +85,31 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+                    className="bg-surface-raised rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20">
+                    <div className="px-6 py-4 border-b border-border-default bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                    <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                <div className="p-2 bg-info-bg rounded-lg">
+                                    <Sparkles className="w-6 h-6 text-info-fg" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                                    <h2 className="text-xl font-semibold text-text-primary">
                                         Sugerencias de Agrupación
                                     </h2>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    <p className="text-sm text-text-secondary">
                                         {suggestions.length} sugerencias encontradas automáticamente
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                className="p-2 hover:bg-surface-raised rounded-lg transition-colors"
                                 title="Cerrar modal"
                             >
-                                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                                <X className="w-5 h-5 text-text-muted" />
                             </button>
                         </div>
                     </div>
@@ -118,16 +118,16 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                     <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                         {loading ? (
                             <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                                <span className="ml-3 text-slate-600 dark:text-slate-300">{t('groupSuggestion.analyzing')}</span>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info-fg"></div>
+                                <span className="ml-3 text-text-secondary">{t('groupSuggestion.analyzing')}</span>
                             </div>
                         ) : suggestions.length === 0 ? (
                             <div className="text-center py-12">
-                                <Info className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                                <Info className="w-12 h-12 text-text-muted mx-auto mb-4" />
+                                <h3 className="text-lg font-medium text-text-primary mb-2">
                                     No se encontraron sugerencias
                                 </h3>
-                                <p className="text-slate-500 dark:text-slate-400">
+                                <p className="text-text-muted">
                                     No hay suficientes tarjetas similares para crear grupos automáticamente.
                                 </p>
                             </div>
@@ -147,19 +147,19 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: index * 0.1 }}
-                                            className={`border rounded-xl overflow-hidden ${isSelected ? 'border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20' : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800'
+                                            className={`border rounded-xl overflow-hidden ${isSelected ? 'border-info-fg bg-info-bg' : 'border-border-default bg-surface-raised'
                                                 }`}
                                         >
                                             {/* Suggestion Header */}
-                                            <div className="p-4 border-b border-gray-100 dark:border-slate-700">
+                                            <div className="p-4 border-b border-border-default">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-3">
                                                         <div className="flex items-center space-x-2">
-                                                            <Users className="w-5 h-5 text-gray-600 dark:text-slate-400" />
-                                                            <span className="font-medium text-gray-900 dark:text-slate-100">
+                                                            <Users className="w-5 h-5 text-text-secondary" />
+                                                            <span className="font-medium text-text-primary">
                                                                 {t('groupSuggestion.group')} {index + 1}
                                                             </span>
-                                                            <span className="text-sm text-gray-500 dark:text-slate-400">
+                                                            <span className="text-sm text-text-muted">
                                                                 ({t('groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
                                                             </span>
                                                         </div>
@@ -172,13 +172,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                     <div className="flex items-center space-x-2">
                                                         <button
                                                             onClick={() => togglePreview(suggestion.id)}
-                                                            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                                            className="p-2 hover:bg-surface-raised rounded-lg transition-colors"
                                                             title={isPreviewMode ? 'Ocultar tarjetas' : 'Mostrar tarjetas'}
                                                         >
                                                             {isPreviewMode ? (
-                                                                <EyeOff className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                                                <EyeOff className="w-4 h-4 text-text-muted" />
                                                             ) : (
-                                                                <Eye className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                                                <Eye className="w-4 h-4 text-text-muted" />
                                                             )}
                                                         </button>
                                                     </div>
@@ -186,10 +186,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 
                                                 {/* Suggestion Details */}
                                                 <div className="mt-3">
-                                                    <p className="text-sm text-gray-700 dark:text-slate-300 mb-2">
+                                                    <p className="text-sm text-text-secondary mb-2">
                                                         <span className="font-medium">Razón:</span> {suggestion.reason}
                                                     </p>
-                                                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-400">
+                                                    <div className="flex items-center space-x-4 text-xs text-text-muted">
                                                         <span>Algoritmo: {suggestion.algorithm}</span>
                                                         {suggestion.keywords && suggestion.keywords.length > 0 && (
                                                             <span>
@@ -210,7 +210,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         transition={{ duration: 0.2 }}
                                                         className="overflow-hidden"
                                                     >
-                                                        <div className="p-4 bg-gray-50 dark:bg-slate-700/50 space-y-3">
+                                                        <div className="p-4 bg-surface space-y-3">
                                                             {suggestionCards.map((card, cardIndex) => (
                                                                 <div
                                                                     key={card.id}
@@ -238,13 +238,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                             </AnimatePresence>
 
                                             {/* Actions */}
-                                            <div className="p-4 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-100 dark:border-slate-600">
+                                            <div className="p-4 bg-surface border-t border-border-default">
                                                 <div className="flex items-center justify-between">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => handleReject(suggestion.id)}
-                                                        className="text-gray-600 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"
+                                                        className="text-text-secondary hover:text-text-primary"
                                                     >
                                                         Descartar
                                                     </Button>
@@ -269,9 +269,9 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 
                     {/* Footer */}
                     {!loading && suggestions.length > 0 && (
-                        <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800/50">
+                        <div className="px-6 py-4 border-t border-border-default bg-surface">
                             <div className="flex items-center justify-between">
-                                <p className="text-sm text-gray-600 dark:text-slate-300">
+                                <p className="text-sm text-text-secondary">
                                     Puedes aceptar múltiples sugerencias o crear grupos manualmente.
                                 </p>
                                 <Button variant="ghost" onClick={onClose}>

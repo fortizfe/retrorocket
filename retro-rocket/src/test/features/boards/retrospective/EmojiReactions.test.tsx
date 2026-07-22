@@ -115,7 +115,7 @@ describe('EmojiReactions Component', () => {
             button.textContent?.includes('😄')
         );
 
-        expect(reactionButton).toHaveClass('border-blue-300');
+        expect(reactionButton).toHaveClass('border-info-fg');
     });
 
     it('handles multiple reactions correctly', () => {

@@ -83,20 +83,20 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                     animate={{ opacity: 1, scale: 1 }}
                     className="relative"
                 >
-                    <Card className="p-6 border-2 border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                    <Card className="p-6 border-2 border-error-fg bg-error-bg">
                         <div className="text-center space-y-4">
                             <div className="flex justify-center">
-                                <AlertTriangle className="h-12 w-12 text-red-500 dark:text-red-400" />
+                                <AlertTriangle className="h-12 w-12 text-error-fg" />
                             </div>
 
                             <div>
-                                <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
+                                <h3 className="text-lg font-semibold text-error-fg mb-2">
                                     {t('dashboard.boardCard.deleteBoard')}
                                 </h3>
-                                <p className="text-sm text-red-700 dark:text-red-300 mb-1">
+                                <p className="text-sm text-error-fg mb-1">
                                     <strong>"{board.title}"</strong>
                                 </p>
-                                <p className="text-xs text-red-600 dark:text-red-400">
+                                <p className="text-xs text-error-fg">
                                     {t('dashboard.boardCard.deleteConfirmation')}
                                 </p>
                             </div>
@@ -130,13 +130,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                     whileHover={{ y: -2 }}
                     className="relative group"
                 >
-                    <Card className="p-6 h-full flex flex-col hover:shadow-medium transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600">
+                    <Card className="p-6 h-full flex flex-col hover:shadow-medium transition-all duration-300 border border-border-default hover:border-info-fg">
                         {/* Header with title and action buttons */}
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex-1 mr-2">
                                 <div className="flex items-start gap-2">
                                     <h3
-                                        className="text-lg font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 flex-1"
+                                        className="text-lg font-semibold text-text-primary line-clamp-2 flex-1"
                                         title={board.title}
                                         aria-label={board.title}
                                     >
@@ -144,13 +144,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                                     </h3>
                                     {/* Role indicator */}
                                     {board.isCreator === false && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 mt-0.5">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-info-bg text-info-fg mt-0.5">
                                             <UserPlus className="w-3 h-3 mr-1" />
                                             {t('dashboard.boardCard.joined')}
                                         </span>
                                     )}
                                     {board.isCreator === true && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 mt-0.5">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-bg text-warning-fg mt-0.5">
                                             <Crown className="w-3 h-3 mr-1" />
                                             {t('dashboard.boardCard.creator')}
                                         </span>
@@ -164,8 +164,8 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                                         type="button"
                                         onClick={() => setShowEditModal(true)}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                                                 p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20
-                                                 text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400"
+                                                 p-1.5 rounded-lg hover:bg-info-bg
+                                                 text-text-muted hover:text-info-fg"
                                         title={t('dashboard.boardCard.editTitle')}
                                         aria-label={t('dashboard.boardCard.editTitle')}
                                     >
@@ -175,8 +175,8 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                                         type="button"
                                         onClick={() => setShowDeleteConfirm(true)}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                                                 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20
-                                                 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400"
+                                                 p-1.5 rounded-lg hover:bg-error-bg
+                                                 text-text-muted hover:text-error-fg"
                                         title={t('dashboard.boardCard.deleteTitle')}
                                         aria-label={t('dashboard.boardCard.deleteTitle')}
                                     >
@@ -188,14 +188,14 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
                         {/* Description */}
                         {board.description && (
-                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 line-clamp-2">
+                            <p className="text-sm text-text-secondary mb-4 line-clamp-2">
                                 {board.description}
                             </p>
                         )}
 
                         {/* Metadata */}
                         <div className="flex-1 flex flex-col justify-end space-y-3">
-                            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center justify-between text-xs text-text-muted">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
                                     <span>{formatDate(board.createdAt)}</span>
