@@ -542,7 +542,7 @@ describe('ColorPicker', () => {
             const { container } = render(<ColorPicker {...defaultProps} />);
 
             const triggerButton = container.querySelector('button');
-            expect(triggerButton).toHaveClass('hover:scale-105', 'hover:shadow-md', 'hover:border-gray-400');
+            expect(triggerButton).toHaveClass('hover:scale-105', 'hover:shadow-md', 'hover:border-border-strong');
         });
 
         it('applies hover effects to color buttons', async () => {

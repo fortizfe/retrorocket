@@ -155,7 +155,7 @@ describe("LanguageSelector", () => {
                 expect(dropdown?.textContent).toContain('English');
 
                 // Verify current language is highlighted
-                const currentLangButton = dropdown?.querySelector('[class*="text-primary-600"]');
+                const currentLangButton = dropdown?.querySelector('[class*="text-info-fg"]');
                 expect(currentLangButton).toBeInTheDocument();
                 expect(currentLangButton?.textContent).toContain('Español');
             });

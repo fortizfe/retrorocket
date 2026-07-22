@@ -42,7 +42,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                 }}
                 className={`
           bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-950/50 dark:to-blue-950/50
-          border border-primary-200/50 dark:border-primary-700/50
+          border border-info-fg/40
           rounded-xl p-3 
           shadow-soft shadow-primary-100/50 dark:shadow-primary-900/20
           backdrop-blur-sm
@@ -64,7 +64,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                   bg-gradient-to-br from-primary-400 to-blue-500
                   text-white text-xs font-medium 
                   rounded-full 
-                  ring-2 ring-white dark:ring-slate-800
+                  ring-2 ring-surface
                   shadow-sm
                 "
                                 title={user.username}
@@ -83,7 +83,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                   bg-gradient-to-br from-slate-400 to-slate-500
                   text-white text-xs font-medium 
                   rounded-full 
-                  ring-2 ring-white dark:ring-slate-800
+                  ring-2 ring-surface
                   shadow-sm
                 "
                                 title={`+${typingUsers.length - 3} más`}
@@ -125,7 +125,7 @@ const TypingDots: React.FC = () => {
                         delay: index * 0.2,
                         ease: "easeInOut",
                     }}
-                    className="w-1 h-1 bg-primary-500 dark:bg-primary-400 rounded-full"
+                    className="w-1 h-1 bg-action rounded-full"
                 />
             ))}
         </div>

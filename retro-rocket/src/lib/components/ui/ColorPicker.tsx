@@ -150,7 +150,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             ref={popupRef}
             className={`
         fixed z-[9999] 
-        bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-2xl
+        bg-surface-overlay border border-border-default rounded-xl shadow-2xl
         ${config.popup}
         animate-in fade-in-0 zoom-in-95 duration-200
       `}
@@ -177,7 +177,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
                 ${isSelected
                                     ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 border-blue-500'
-                                    : 'border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-400'
+                                    : 'border-border-strong hover:border-border-strong'
                                 }
               `}
                             aria-label={colorConfig.ariaLabel}
@@ -204,17 +204,17 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             </div>
 
             {/* Color name display with enhanced info */}
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+            <div className="mt-3 pt-3 border-t border-border-default">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 dark:text-slate-300 font-medium">
+                    <span className="text-xs text-text-secondary font-medium">
                         {selectedConfig.name}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-slate-400">
+                    <span className="text-xs text-text-muted">
                         {colors.indexOf(selectedColor) + 1}/{colors.length}
                     </span>
                 </div>
                 {selectedConfig.tooltip && (
-                    <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                    <div className="text-xs text-text-muted mt-1">
                         {selectedConfig.tooltip}
                     </div>
                 )}
@@ -232,10 +232,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 className={`
           ${config.trigger}
           ${selectedConfig.preview}
-          border-2 border-gray-300 dark:border-slate-600 rounded-full
+          border-2 border-border-strong rounded-full
           flex items-center justify-center
           transition-all duration-200
-          hover:scale-105 hover:shadow-md hover:border-gray-400 dark:hover:border-slate-400
+          hover:scale-105 hover:shadow-md hover:border-border-strong
           focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           relative
@@ -246,13 +246,13 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 {/* Palette icon overlay for better visibility */}
                 <Palette
                     size={getIconSize(size)}
-                    className="text-gray-600 dark:text-slate-400 drop-shadow-sm"
+                    className="text-text-secondary drop-shadow-sm"
                 />
             </button>
 
             {/* Color name label */}
             {showLabel && (
-                <span className="block text-xs text-gray-600 dark:text-slate-400 mt-1 text-center">
+                <span className="block text-xs text-text-secondary mt-1 text-center">
                     {selectedConfig.name}
                 </span>
             )}

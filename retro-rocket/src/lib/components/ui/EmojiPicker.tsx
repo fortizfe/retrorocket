@@ -131,7 +131,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                 variant="ghost"
                 onClick={handleToggle}
                 disabled={disabled}
-                className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-700 ${className}`}
+                className={`p-1 hover:bg-surface-raised ${className}`}
                 aria-label="Seleccionar emoji"
             >
                 <Smile className={sizes[size]} />
@@ -146,22 +146,22 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="fixed z-[9999] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl w-72 sm:w-80 max-h-96 overflow-hidden"
+                        className="fixed z-[9999] bg-surface-overlay border border-border-default rounded-lg shadow-xl w-72 sm:w-80 max-h-96 overflow-hidden"
                         style={{
                             top: pickerPosition.top,
                             left: pickerPosition.left
                         }}
                     >
                         {/* Header with categories */}
-                        <div className="border-b border-slate-200 dark:border-slate-700 p-2">
+                        <div className="border-b border-border-default p-2">
                             <div className="flex flex-wrap gap-1">
                                 {Object.keys(EMOJI_CATEGORIES).map((category) => (
                                     <button
                                         key={category}
                                         onClick={() => setActiveCategory(category)}
                                         className={`px-2 py-1 text-xs rounded transition-colors ${activeCategory === category
-                                            ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300'
-                                            : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                            ? 'bg-info-bg text-info-fg'
+                                            : 'hover:bg-surface-raised text-text-secondary'
                                             }`}
                                     >
                                         {category}
@@ -177,7 +177,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                                     <button
                                         key={`${emoji}-${index}`}
                                         onClick={() => handleEmojiClick(emoji)}
-                                        className="w-8 h-8 flex items-center justify-center text-lg hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                                        className="w-8 h-8 flex items-center justify-center text-lg hover:bg-surface-raised rounded transition-colors"
                                         title={emoji}
                                     >
                                         {emoji}
@@ -187,8 +187,8 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                         </div>
 
                         {/* Footer */}
-                        <div className="border-t border-slate-200 dark:border-slate-700 p-2 text-center">
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="border-t border-border-default p-2 text-center">
+                            <p className="text-xs text-text-muted">
                                 Haz clic en un emoji para añadirlo a tu tarjeta
                             </p>
                         </div>
