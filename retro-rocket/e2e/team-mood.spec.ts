@@ -40,9 +40,10 @@ test('facilitator team-mood panel opens and renders a coherent state on a seeded
     await seedCard(page, 'Estoy muy contento con los resultados del sprint');
     await seedCard(page, 'La comunicación fue estupenda y muy fluida');
 
-    // Open the facilitator menu → "Estado del Equipo" (team-mood) tab.
+    // Open the facilitator menu → team-mood tab. The tab shows the compact label
+    // "Equipo"; its stable full label lives on the button's `title` attribute.
     await page.getByText('Facilitador', { exact: true }).click();
-    await page.getByText('Estado del Equipo', { exact: true }).click();
+    await page.locator('button[title="Estado del Equipo"]').click();
 
     // The panel must reach a coherent state (never the disabled/crash state): a mood
     // score X/10, the model-initializing state, or an explicit insufficient-data state.
