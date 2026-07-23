@@ -1,542 +1,338 @@
 # 🚀 RetroRocket
 
-**RetroRocket** es una herramienta moderna y colaborativa diseñada para ayudar a equipos Scrum a gestionar sus retrospectivas de manera divertida y efectiva. La aplicación permite a los usuarios crear y participar en paneles de retrospectiva con tres columnas estructuradas para facilitar la reflexión del equipo.
+**RetroRocket** is a modern, collaborative tool that helps Scrum teams run fun and
+effective retrospectives. Teams work together on real-time boards whose columns are
+defined by the chosen template, plus an automatic **action items** column for
+follow-ups.
 
-## ✨ Características Principales
+🔗 **Live app:** [retro-rocket.vercel.app](https://retro-rocket.vercel.app)
 
-### 🔐 Sistema de Autenticación Avanzado
-- **Múltiples Proveedores**: Soporte para Google, GitHub (con preparación para Apple)
-- **Vinculación Automática**: Un solo perfil por email, sin importar el proveedor usado
-- **Sincronización Inteligente**: Detecta y vincula automáticamente cuentas existentes
-- **Gestión de Proveedores**: Añade y gestiona múltiples métodos de autenticación desde el perfil
+## ✨ Key Features
 
-### 👥 Colaboración en Tiempo Real
-- **Múltiples Participantes**: Trabaja simultáneamente con tu equipo
-- **Sincronización Instantánea**: Cambios en tiempo real para todos los usuarios
-- **Sistema de Participantes Avanzado**: 
-  - Avatares apilados con visualización compacta
-  - Popover interactivo con lista completa
-  - Información temporal (tiempo de conexión)
-  - Contador de participantes activos vs totales
-  - Estados de conexión en tiempo real
+### 🔐 Authentication
+- **Multiple providers**: sign in with **Google** or **GitHub**.
+- **Multi-provider profiles**: view and manage the sign-in methods linked to your
+  account from your **Profile**.
 
-### 📝 Sistema Completo de Tarjetas
-- **Plantillas de Tableros**: Múltiples formatos (Default, Mad-Sad-Glad, Start-Stop-Continue)
-- **Columna de Elementos de Acción**: Incluida automáticamente en todas las plantillas
-- **Votación y Reacciones**: Sistema completo de thumbs up/down, likes y reacciones emoji
-- **Emojis en Tarjetas**: Selector integrado con 6 categorías (240+ emojis)
-- **Edición en Tiempo Real**: Edita y elimina tus propias tarjetas
-- **Colores Personalizables**: Sistema de colores pastel para organización visual
+### 👥 Real-Time Collaboration
+- **Multiple participants** working on the same board simultaneously.
+- **Instant synchronization** of every change for all users.
+- **Participant presence**: stacked avatars with a compact display, an interactive
+  popover with the full list, and live connection state (active vs. total).
 
-### 🎯 Modo Facilitador Avanzado
-- **Countdown Timer**: Temporizador configurable con controles completos
-  - Configuración flexible (minutos y segundos)
-  - Estados visuales (en curso, pausado, terminado)
-  - Barra de progreso con indicadores
-  - Sincronización en tiempo real para todos los participantes
-  - Notificación sonora al finalizar
-  - Controles exclusivos para el facilitador (crear, iniciar, pausar, reiniciar, eliminar)
-- **Notas del Facilitador**: Sistema de anotaciones privadas
-  - Creación y edición de notas durante la retrospectiva
-  - Persistencia en tiempo real
-  - Formato de fecha y hora automático
-  - Control completo (crear, editar, eliminar)
+### 📝 Cards & Board Templates
+- **Board templates**: **Default** (What helped / What hindered / What to improve),
+  **Mad-Sad-Glad**, and **Start-Stop-Continue** — each with an automatic
+  **action items** column.
+- **Likes & emoji reactions**: like a card (❤️) or react with an emoji from a unified
+  picker (6 categories, 250+ emojis). *(The legacy numeric 👍/👎 voting stepper is
+  deprecated and replaced by likes + reactions.)*
+- **Real-time editing**: edit and delete your own cards.
+- **Custom colors**: a pastel color palette for visual organization.
 
-### 🔗 Sistema de Agrupación Inteligente
-- **Agrupación Manual**: Arrastra y suelta tarjetas para crear grupos
-- **Tarjetas Principales**: Designa tarjetas como líderes de grupo
-- **Jerarquía Visual**: Indentación clara para mostrar relaciones
-- **Estadísticas de Grupo**: Conteo automático de votos, likes y participación
+### 🔗 Card Grouping & AI-Assisted Suggestions
+- **Manual grouping**: drag and drop a card onto another to form a group.
+- **Group suggestions**: assisted clustering proposes related cards to group together.
+- **Group heads & hierarchy**: designate a lead card; clear visual indentation.
+- **Group stats**: automatic counts of likes and participation per group.
 
-### 📄 Exportación Profesional
-- **Formato PDF**: Exportación optimizada para compartir y archivar
-- **Formato DOCX**: Documentos de Microsoft Word editables
-- **Configuración Avanzada**: Control granular sobre qué incluir
-- **Contenido Completo**: Tarjetas, agrupaciones, estadísticas, participantes y notas del facilitador
-- **Inclusión de Notas**: Opción para incluir notas del facilitador en las exportaciones
+### 🤖 Facilitator Mode
+- **Countdown timer**: fully configurable (minutes/seconds), with visual states
+  (running/paused/finished), a progress bar, a sound on completion, and real-time
+  sync to every participant. Facilitator-only controls (create, start, pause, reset,
+  delete).
+- **Facilitator notes**: private annotations created and edited live during the
+  retrospective, included in exports.
+- **AI sentiment & team mood** (see below).
 
-### 🎨 Experiencia de Usuario
-- **Interfaz Moderna**: Diseño limpio inspirado en Notion/Linear/Vercel
-- **Animaciones Fluidas**: Transiciones suaves con Framer Motion
-- **Responsive**: Funciona perfectamente en móviles y escritorio
-- **Dark/Light Mode**: Tema claro y oscuro automático
-- **Sistema de Emojis Unificado**: Selector de emojis consistente en toda la aplicación
-- **Posicionamiento Inteligente**: Los elementos emergentes se posicionan automáticamente
+### 🧠 On-Device AI Sentiment & Team Mood
+- **Per-card sentiment**: cards receive a positive / neutral / negative sentiment
+  badge (icon + label, not color alone).
+- **Team-mood dashboard**: the facilitator panel derives a single, self-consistent
+  mood score, per-column percentages, and alerts.
+- **100% on-device**: inference runs in a Web Worker via `@huggingface/transformers`
+  (ONNX Runtime Web). **Card text never leaves the browser.**
 
-### 💾 Persistencia y Seguridad
-- **Firebase Firestore**: Base de datos en tiempo real y segura
-- **Estados de Carga**: Indicadores visuales para todas las operaciones
-- **Manejo de Errores**: Gestión robusta de fallos y reconexión
-- **Backup Automático**: Todos los datos se sincronizan continuamente
+### 📄 Export
+- **PDF** (via `@react-pdf/renderer`) and **DOCX** (via `docx`) exports.
+- **Granular options**: choose whether to include participants, statistics, grouping
+  details, and facilitator notes.
 
-## 🛠️ Stack Tecnológico
+### 🎨 Experience
+- Clean, modern UI with smooth **Framer Motion** animations.
+- **Responsive** across mobile and desktop.
+- **Light & dark themes** that meet **WCAG 2.1 AA** (see Theming below).
+- **Internationalization**: Spanish and English.
+
+### 💾 Persistence & Resilience
+- **Firebase Firestore** for secure, real-time data.
+- Explicit **loading, error, and reconnection** states for every Firestore operation
+  (no silent failures).
+
+## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** con TypeScript para una base sólida y tipado
-- **Vite** como build tool para desarrollo rápido
-- **Tailwind CSS** para estilos utilitarios y responsive design
-- **Framer Motion** para animaciones fluidas y profesionales
-- **Lucide React** para iconos consistentes y modernos
+- **React 18** + **TypeScript** (strict mode)
+- **Vite 4** build tool
+- **Tailwind CSS 3** for styling
+- **Framer Motion** for animation
+- **lucide-react** for icons
 
-### Backend y Servicios
-- **Firebase Firestore v10** para base de datos en tiempo real
-- **Firebase Auth** para autenticación multi-proveedor
-- **Vercel** para deployment y edge functions
+### Backend & Services
+- **Firebase 10** (Firestore + Authentication)
+- **Vercel** for hosting and deployment
 
-### Funcionalidades Avanzadas
-- **@dnd-kit** para drag & drop nativo y accesible
-- **react-hot-toast** para notificaciones elegantes
-- **react-router-dom** para navegación SPA
-- **jsPDF** y **html2canvas** para exportación PDF
-- **docx** para generación de documentos Word
-- **react-i18next** para internacionalización completa
-- **framer-motion** para animaciones y transiciones
+### Notable Libraries
+- **@dnd-kit** — accessible drag & drop
+- **react-router-dom 6** — SPA routing
+- **react-i18next 15** — internationalization
+- **date-fns 4** — date utilities
+- **@react-pdf/renderer 4** + **docx 9** — PDF / Word export
+- **@huggingface/transformers 3** — on-device sentiment inference (ONNX Runtime Web)
+- **react-hot-toast** — notifications
 
-## 🏗️ Arquitectura del Proyecto
+### Testing & Tooling
+- **Vitest** + **Testing Library** (unit/hooks/services)
+- **Playwright** (end-to-end, against the Firebase Emulator Suite)
+- **ESLint** + **TypeScript** type-checking
 
-```
-src/
-├── components/
-│   ├── ui/              # Componentes base (Button, Input, Card, Loading, etc.)
-│   ├── retrospective/   # Componentes específicos de retrospectiva
-│   │   ├── RetrospectiveBoard.tsx
-│   │   ├── RetrospectiveColumn.tsx
-│   │   ├── RetrospectiveCard.tsx
-│   │   ├── EmojiReactions.tsx    # Reacciones emoji en tarjetas
-│   │   ├── PdfExporter.tsx
-│   │   └── DocxExporter.tsx
-│   ├── auth/            # Componentes de autenticación
-│   │   ├── AuthButtonGroup.tsx
-│   │   └── LinkedProvidersCard.tsx
-│   ├── create-board/    # Creación de tableros con plantillas
-│   │   ├── CreateBoardFlow.tsx
-│   │   └── BoardTemplateSelector.tsx
-│   ├── countdown/       # Sistema de countdown para facilitadores
-│   │   ├── CountdownTimer.tsx
-│   │   ├── FacilitatorMenu.tsx
-│   │   └── CountdownFeatureDemo.tsx
-│   ├── facilitator/     # Herramientas del facilitador
-│   │   └── FacilitatorNotes.tsx
-│   ├── participants/    # Sistema avanzado de participantes
-│   │   ├── UserAvatar.tsx
-│   │   ├── CompactAvatarGroup.tsx
-│   │   ├── ParticipantList.tsx
-│   │   ├── ParticipantPopover.tsx
-│   │   └── ResponsiveParticipantDisplay.tsx
-│   ├── layout/          # Layout y navegación
-│   └── forms/           # Formularios reutilizables
-├── hooks/               # Custom React hooks
-│   ├── useCards.ts      # Gestión de tarjetas en tiempo real
-│   ├── useAuth.ts       # Autenticación y estado del usuario
-│   ├── useCardGroups.ts # Agrupación de tarjetas
-│   ├── useCountdown.ts  # Hook del sistema countdown
-│   ├── useFacilitatorNotes.ts # Gestión de notas del facilitador
-│   ├── useExportPdf.ts  # Exportación PDF
-│   └── useExportDocx.ts # Exportación DOCX
-├── services/            # Servicios de Firebase y API
-│   ├── firebase.ts      # Configuración de Firebase
-│   ├── userService.ts   # Gestión de usuarios y perfiles
-│   ├── accountLinking.ts # Vinculación de cuentas
-│   ├── cardService.ts   # CRUD de tarjetas
-│   ├── countdownService.ts # Servicio del countdown timer
-│   ├── facilitatorNotesService.ts # Servicio de notas del facilitador
-│   ├── pdfExportService.ts # Generación de PDFs
-│   └── docxExportService.ts # Generación de DOCX
-├── contexts/            # Context providers
-│   ├── UserContext.tsx  # Estado global del usuario
-│   └── TypingProvider.tsx # Indicadores de escritura
-├── types/               # Definiciones de TypeScript
-│   ├── user.ts          # Tipos de usuario y autenticación
-│   ├── retrospective.ts # Tipos de retrospectiva
-│   ├── card.ts          # Tipos de tarjetas y grupos
-│   ├── countdown.ts     # Tipos del sistema countdown
-│   └── facilitatorNotes.ts # Tipos de notas del facilitador
-├── templates/           # Plantillas de tableros
-│   └── boardTemplates.ts # Definiciones de plantillas
-├── utils/               # Utilidades y constantes
-│   ├── emojiConstants.ts # Constantes de emojis unificadas
-│   └── dateUtils.ts     # Utilidades de fecha
-├── pages/               # Páginas principales
-│   ├── Landing.tsx      # Página de inicio
-│   ├── Dashboard.tsx    # Panel principal
-│   └── Profile.tsx      # Perfil de usuario
-└── styles/              # Estilos globales
+## 🏗️ Project Architecture
+
+The application lives in the `retro-rocket/` subfolder and follows a **feature-first**
+layout:
+
+```text
+retro-rocket/
+├── .env.example                 # Environment variable template (VITE_*)
+├── firestore.rules              # Firestore security rules
+├── package.json                 # Scripts & dependencies
+├── e2e/                         # Playwright E2E specs (+ fixtures)
+└── src/
+    ├── App.tsx  main.tsx
+    ├── features/                # Feature modules (feature-first)
+    │   ├── auth/                # Authentication & profile
+    │   ├── create-board/        # Board creation & templates (boardTemplates.ts)
+    │   ├── dashboard/           # Dashboard
+    │   ├── dev-tools/           # Development utilities
+    │   └── boards/
+    │       ├── retrospective/   # Board, columns, cards
+    │       ├── countdown/       # Facilitator countdown timer
+    │       ├── facilitator/     # Facilitator tabs (notes, sentiment, team mood)
+    │       ├── export/          # PDF / DOCX export
+    │       ├── participants/    # Real-time participants
+    │       ├── sentiment/       # On-device AI sentiment & team mood
+    │       ├── clustering/      # Card grouping & suggestions
+    │       └── types/           # Shared board types
+    ├── lib/                     # Cross-cutting: components, contexts, hooks,
+    │                            #   services (firebase), theme, utils
+    ├── pages/                   # Landing, Dashboard, Profile, RetrospectivePage, …
+    ├── i18n/                    # i18next config
+    ├── locales/                 # es.json, en.json
+    ├── styles/                  # Global styles / tokens
+    └── test/                    # Vitest unit/integration tests
 ```
 
-## 🎨 Theming & Accesibilidad (WCAG 2.1 AA)
+## 🎨 Theming & Accessibility (WCAG 2.1 AA)
 
-Los temas claro y oscuro cumplen **WCAG 2.1 nivel AA** (requisito de la
-constitución del proyecto). Todo el color se define **una sola vez por rol**
-mediante *tokens semánticos*:
+The light and dark themes both meet **WCAG 2.1 Level AA** (a project constitution
+requirement). Every color is defined **once per role** via **semantic tokens**:
 
-- **Fuente de verdad:** `src/lib/theme/tokens.ts` (canales RGB por tema),
-  reflejados como variables CSS en `src/styles/globals.css` (`:root` / `.dark`)
-  y expuestos en `tailwind.config.js`.
-- **Cómo usarlos:** en los componentes usa clases semánticas
-  (`bg-surface`, `text-text-primary`, `border-border-default`,
-  `focus-visible:ring-focus`, `bg-info-bg`/`text-info-fg`, etc.) en lugar de
-  utilidades de paleta cruda (`bg-slate-800`, pares `dark:*`).
-- **Contrato completo y reglas:** ver
+- **Source of truth:** `retro-rocket/src/lib/theme/tokens.ts` (per-theme RGB
+  channels), mirrored as CSS variables in `retro-rocket/src/styles/globals.css`
+  (`:root` / `.dark`) and exposed through `retro-rocket/tailwind.config.js`.
+- **How to use them:** in components, use semantic classes (`bg-surface`,
+  `text-text-primary`, `border-border-default`, `focus-visible:ring-focus`,
+  `bg-info-bg` / `text-info-fg`, …) instead of raw palette utilities
+  (`bg-slate-800`, ad-hoc `dark:*` pairs).
+- **Full contract & rules:** see
   `specs/009-wcag-theme-compliance/contracts/design-tokens.md`.
-- **Verificación:** los tests en `src/test/lib/theme/` comprueban el contraste
-  AA de cada token/combinación en ambos temas, y una auditoría axe
-  (`e2e/accessibility.spec.ts`) escanea las pantallas en claro y oscuro.
+- **Verification:** tests in `retro-rocket/src/test/lib/theme/` check the AA contrast
+  of every token/combination in both themes, and an axe audit
+  (`retro-rocket/e2e/accessibility.spec.ts`) scans the screens in light and dark.
 
-> Al añadir color nuevo, decide el *rol* y añade/usa un token — no introduzcas
-> pares `dark:` ad-hoc.
+> When adding a new color, decide its *role* and add/use a token — do not introduce
+> ad-hoc `dark:` pairs.
 
-## 🚀 Instalación y Configuración
+## 🚀 Getting Started
 
-### Prerequisitos
-- **Node.js 18+** 
-- **npm** o **yarn**
-- **Cuenta de Firebase** (gratuita)
+### Prerequisites
+- **Node.js 22** (the version used in CI)
+- **npm**
+- A **Firebase** project (free tier is fine)
 
-### 1. Clonar el repositorio
+### 1. Clone and enter the app folder
 ```bash
-git clone [repository-url]
-cd retro-rocket
+git clone <repository-url>
+cd retrorocket/retro-rocket
 ```
+> The application package lives in the `retro-rocket/` subfolder of the repository.
 
-### 2. Instalar dependencias
+### 2. Install dependencies
 ```bash
 npm install
 ```
 
-### 3. Configurar Firebase
-
-#### 3.1 Crear proyecto Firebase
-1. Ve a [Firebase Console](https://console.firebase.google.com/)
-2. Crea un nuevo proyecto
-3. Habilita **Firestore Database**
-4. Configura **Firebase Authentication** con Google y GitHub
-
-#### 3.2 Configurar variables de entorno
+### 3. Configure environment variables
 ```bash
 cp .env.example .env
 ```
-
-Completa el archivo `.env`:
+Fill in your Firebase config (all variables use the **`VITE_`** prefix):
 ```env
-REACT_APP_FIREBASE_API_KEY=tu_api_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
-REACT_APP_FIREBASE_PROJECT_ID=tu_project_id
-REACT_APP_FIREBASE_STORAGE_BUCKET=tu_proyecto.appspot.com
-REACT_APP_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
-REACT_APP_FIREBASE_APP_ID=tu_app_id
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+# Optional — point the app at the local Firebase Emulator Suite (used by E2E):
+# VITE_USE_FIREBASE_EMULATOR=true
 ```
 
-#### 3.3 Configurar reglas de Firestore
+### 4. Run in development
+```bash
+npm run dev
+```
+The app is available at `http://localhost:3000`.
+
+### 5. Build for production
+```bash
+npm run build
+npm run preview   # preview the production build locally
+```
+
+## 🔐 Firestore Security Rules
+
+The authoritative rules live in
+[`retro-rocket/firestore.rules`](retro-rocket/firestore.rules) — deploy that file to
+your Firebase project (Console → Firestore Database → Rules). In summary, access is
+restricted to **authenticated, non-anonymous** users across the RetroRocket
+collections (`retrospectives`, `participants`, `cards`, `groups`, `actionItems`,
+`sentimentResults`, `typingStatus`, `countdown_timers`); countdown timers are further
+restricted so only the retrospective creator can write them.
+
+> The snippet below is **illustrative** — always refer to `firestore.rules` as the
+> source of truth.
+
 ```javascript
-// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read/write their own profile
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Retrospectives are public but controlled
-    match /retrospectives/{retrospectiveId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    // Cards are public within retrospectives
-    match /retrospectives/{retrospectiveId}/cards/{cardId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    // Authenticated, non-anonymous users only
+    match /{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
   }
 }
 ```
 
-### 4. Ejecutar en desarrollo
+## 📖 Usage Guide
+
+### Authentication
+1. On the landing page, click **Sign in with Google** or **Sign in with GitHub**.
+2. From your **Profile**, review and manage your linked sign-in methods.
+
+### Create a retrospective
+1. On the **Dashboard**, start a new retrospective.
+2. **Pick a template**: Default (What helped / What hindered / What to improve),
+   Mad-Sad-Glad, or Start-Stop-Continue — each includes an automatic **action items**
+   column.
+3. Give it a title (and optional description), create it, and **share the link** with
+   your team.
+
+### Join a retrospective
+- Open the shared link, or enter the **retrospective ID** from the Dashboard.
+
+### Work on the board
+- **Add cards**: click **Add** in a column, type your note (emoji picker available),
+  optionally pick a color, and save.
+- **React**: **like** a card (❤️) or add an **emoji reaction**.
+- **Group**: drag a card onto another to group them, or accept a **group suggestion**;
+  designate a group head as needed.
+- **Edit / delete**: only on your own cards (✏️ / 🗑️).
+
+### Facilitator mode
+- **Countdown timer**: configure minutes/seconds, then start / pause / reset / delete;
+  all participants see it in real time.
+- **Facilitator notes**: create and edit private notes; they can be included in
+  exports.
+- **Team mood**: open the facilitator **Team** tab to see the AI sentiment analysis
+  and the team-mood dashboard.
+
+### Export results
+- Export to **PDF** or **DOCX** from the retrospective header; use the options to
+  include participants, statistics, grouping details, and facilitator notes.
+
+## 🧪 Testing, Quality & CI
+
+Run locally (from `retro-rocket/`):
+
 ```bash
-npm run dev
-```
-La aplicación estará disponible en `http://localhost:3000`
-
-### 5. Build para producción
-```bash
-npm run build
-```
-
-## 📖 Guía de Uso
-
-### Autenticación y Perfil
-
-#### Iniciar Sesión
-1. Ve a la página principal
-2. Haz clic en "Iniciar Sesión con Google" o "Iniciar Sesión con GitHub"
-3. Autoriza la aplicación en el proveedor seleccionado
-
-#### Vincular Proveedores Adicionales
-1. Ve a tu **Perfil** una vez autenticado
-2. En la sección "Métodos de Inicio de Sesión", haz clic en **"Vincular"** junto al proveedor deseado
-3. Autoriza la vinculación - ahora podrás iniciar sesión con cualquier método
-
-### Crear una Retrospectiva
-1. En el **Dashboard**, haz clic en "Nueva Retrospectiva"
-2. **Selecciona una plantilla**:
-   - **Default**: Qué me ayudó, Qué me retrasó, Qué podemos hacer mejor
-   - **Mad-Sad-Glad**: Mad, Sad, Glad
-   - **Start-Stop-Continue**: Start, Stop, Continue
-   - Todas incluyen automáticamente la columna "Elementos de acción"
-3. Completa el formulario:
-   - **Título**: Nombre descriptivo de la retrospectiva
-   - **Descripción**: Contexto adicional (opcional)
-4. Haz clic en "Crear Retrospectiva"
-5. **Comparte el enlace** con tu equipo
-
-### Unirse a una Retrospectiva
-1. Utiliza el enlace compartido por el creador, o
-2. Ve al Dashboard y ingresa el **ID de retrospectiva** en "Unirse a una Retrospectiva"
-
-### Trabajar en la Retrospectiva
-
-#### Agregar Tarjetas
-1. Haz clic en **"+ Agregar"** en cualquier columna
-2. Escribe tu comentario (puedes usar el selector de emojis 😊)
-3. Selecciona un color (opcional)
-4. Haz clic en "Guardar"
-
-#### Reaccionar a Tarjetas
-- **Votos**: Usa los botones 👍/👎 para votar tarjetas
-- **Likes**: Haz clic en ❤️ para dar like
-- **Reacciones Emoji**: Haz clic en 😊 y selecciona de 6 categorías (240+ emojis)
-  - Emociones, Gestos, Objetos, Actividades, Comida, Símbolos
-
-#### Agrupar Tarjetas
-1. **Arrastra una tarjeta** sobre otra para crear un grupo
-2. **Designa tarjetas principales** haciendo clic en el icono de estrella
-3. **Reorganiza grupos** arrastrando tarjetas dentro y fuera
-
-#### Editar y Eliminar
-- **Editar**: Haz clic en el ícono ✏️ (solo tus propias tarjetas)
-- **Eliminar**: Haz clic en el ícono 🗑️ (solo tus propias tarjetas)
-
-### Modo Facilitador
-
-#### Countdown Timer
-1. **Como facilitador**, verás los "Controles de Facilitador" debajo de la cabecera
-2. **Configurar tiempo**: Establece minutos y segundos deseados
-3. **Crear timer**: Haz clic en "Crear" para configurar el temporizador
-4. **Controlar sesión**: 
-   - **Iniciar**: Comienza la cuenta atrás
-   - **Pausar**: Detiene temporalmente el timer
-   - **Reiniciar**: Vuelve al tiempo configurado inicialmente
-   - **Eliminar**: Remueve completamente el temporizador
-5. **Visibilidad**: Todos los participantes ven el timer en la cabecera en tiempo real
-
-#### Notas del Facilitador
-1. **Accede al panel** de notas en los controles del facilitador
-2. **Crear notas**: Haz clic en "Agregar Nota" 
-3. **Editar**: Modifica cualquier nota existente
-4. **Eliminar**: Remueve notas que ya no necesites
-5. **Exportar**: Las notas se incluyen en las exportaciones PDF/DOCX
-
-### Exportar Resultados
-
-#### Exportación PDF
-1. Haz clic en **"PDF"** en la cabecera de la retrospectiva
-2. Para opciones avanzadas, haz clic en el ícono ⚙️
-3. Configura qué incluir:
-   - Lista de participantes
-   - Estadísticas detalladas
-   - Detalles de agrupaciones
-   - Notas del facilitador
-4. Haz clic en "Exportar PDF"
-
-#### Exportación DOCX (Word)
-1. Haz clic en **"Word"** en la cabecera de la retrospectiva
-2. Para configuración avanzada, haz clic en ⚙️
-3. Selecciona opciones:
-   - Participantes
-   - Estadísticas
-   - Detalles de grupos
-   - Notas del facilitador
-4. Haz clic en "Exportar DOCX"
-
-## 🔐 Sistema de Autenticación
-
-### Características Avanzadas
-
-#### Vinculación Automática de Cuentas
-RetroRocket implementa un sistema inteligente que:
-- **Detecta emails duplicados** entre diferentes proveedores
-- **Vincula automáticamente** las cuentas cuando intentas iniciar sesión
-- **Preserva todos los datos** de retrospectivas y configuraciones
-- **Permite múltiples métodos** de autenticación para un solo perfil
-
-#### Flujo de Vinculación
-1. **Usuario existente** (ej: registrado con Google)
-2. **Intenta iniciar sesión** con GitHub usando el mismo email
-3. **Sistema detecta** el conflicto de credenciales
-4. **Autentica automáticamente** con Google
-5. **Vincula la credencial** de GitHub al perfil existente
-6. **Resultado**: Usuario puede usar Google o GitHub indistintamente
-
-#### Gestión de Proveedores
-En el **Perfil** puedes:
-- **Ver todos los proveedores** vinculados a tu cuenta
-- **Agregar nuevos métodos** de autenticación
-- **Información de seguridad** sobre la vinculación
-- **Estado en tiempo real** de todos los métodos
-
-## 🎨 Sistema de Diseño
-
-### Principios de Diseño
-- **Claridad**: Jerarquía visual clara y comprensible
-- **Consistencia**: Componentes y patrones unificados
-- **Accesibilidad**: Cumple estándares WCAG 2.1
-- **Responsive**: Mobile-first design que escala perfectamente
-
-### Paleta de Colores
-```css
-/* Primarios */
---primary-50: #f0f9ff;
---primary-600: #2563eb;
---primary-900: #1e3a8a;
-
-/* Semánticos */
---success: #10b981;
---warning: #f59e0b;
---error: #ef4444;
---info: #3b82f6;
-
-/* Colores de Tarjetas */
---pastel-blue: #dbeafe;
---pastel-green: #d1fae5;
---pastel-yellow: #fef3c7;
---pastel-purple: #e9d5ff;
---pastel-pink: #fce7f3;
+npm run type-check     # TypeScript (no emit)
+npm run lint           # ESLint
+npm run test           # Vitest (watch)
+npm run test:coverage  # Vitest with coverage thresholds
+npm run emulators      # Firebase Auth + Firestore emulators
+npm run e2e            # Playwright E2E against the emulator suite
 ```
 
-### Tipografía
-- **Fuente Principal**: Inter (Google Fonts)
-- **Jerarquía**: H1 (2xl) → H6 (sm) con espaciado consistente
-- **Legibilidad**: Contraste optimizado para accesibilidad
+**Continuous Integration** (`.github/workflows/ci.yml`) runs on every pull request and
+push to `main`:
+- **Type-check, lint, and test with coverage** (Vitest coverage thresholds enforced)
+- **Playwright E2E** against the Firebase Emulator Suite
+- **CodeQL** static analysis
+- **Gated Vercel deploys** (preview per PR, production on `main`) and preview-domain
+  management
+- **Automated semantic version bumps**
 
-## 🚀 Deployment
+Branch protection on `main` requires the check, E2E, and CodeQL jobs to pass before
+merge.
 
-### Vercel (Recomendado)
-1. **Conecta tu repositorio** a Vercel
-2. **Configura las variables de entorno** en el dashboard de Vercel
-3. **Deploy automático** en cada push a la rama main
+## ☁️ Deployment
 
-### Configuración de Variables en Vercel
-```bash
-REACT_APP_FIREBASE_API_KEY=tu_api_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
-REACT_APP_FIREBASE_PROJECT_ID=tu_project_id
-REACT_APP_FIREBASE_STORAGE_BUCKET=tu_proyecto.appspot.com
-REACT_APP_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
-REACT_APP_FIREBASE_APP_ID=tu_app_id
-```
+Deployed on **Vercel**:
+1. Connect the repository to Vercel.
+2. Add the **same `VITE_FIREBASE_*` environment variables** (see Getting Started) in
+   the Vercel project settings.
+3. Deploys are **gated** on CI: a preview deploy per pull request and a production
+   deploy on push to `main`.
 
-### Build Local
-```bash
-npm run build
-npm run preview  # Para previsualizar el build
-```
+## 🤝 Contributing
 
-## 🤝 Contribución
+1. **Fork** the project and create a feature branch.
+2. Follow the project standards:
+   - **TypeScript strict** (no unjustified `any`)
+   - **ESLint** clean (mandatory gate)
+   - **TDD** — tests precede implementation; coverage thresholds must not drop
+   - **Conventional Commits**
+   - **WCAG 2.1 AA** for any user-facing change
+3. Open a Pull Request with a clear description.
 
-### Proceso de Contribución
-1. **Fork** el proyecto
-2. **Crea una rama** para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. **Commit** tus cambios (`git commit -m 'feat: agregar nueva funcionalidad'`)
-4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
-5. **Abre un Pull Request** con descripción detallada
-
-### Estándares de Código
-- **TypeScript strict** para tipado completo
-- **ESLint** para linting automático
-- **Prettier** para formateo consistente
-- **Conventional Commits** para mensajes descriptivos
-
-### Áreas de Contribución
-- 🐛 **Bug fixes** y mejoras de rendimiento
-- ✨ **Nuevas funcionalidades** y componentes
-- 🎨 **Mejoras de UX/UI** y accesibilidad
-- 📚 **Documentación** y guías
-- 🧪 **Tests** y casos de prueba
+Design and governance live under [`specs/`](specs/) and the project constitution
+(`.specify/memory/constitution.md`).
 
 ## 📊 Roadmap
 
-### Próximas Funcionalidades
-- [ ] **Templates de Retrospectiva Adicionales** (4Ls, DAKI, etc.)
-- [ ] **Alertas del Countdown Timer** (avisos personalizables)
-- [ ] **Historial de Sesiones** con métricas del facilitador
-- [ ] **Integraciones** (Slack, Teams, Jira)
-- [ ] **Analytics** de retrospectivas y métricas de equipo
-- [ ] **Retrospectivas Privadas** con control de acceso
-- [ ] **Modo Offline** con sincronización posterior
-- [ ] **API REST** para integraciones externas
-- [ ] **Móvil App** nativa (React Native)
+Ideas not yet implemented:
 
-### Mejoras Técnicas
-- [ ] **Progressive Web App** (PWA) completa
-- [ ] **Tests automatizados** (ampliación de cobertura actual)
-- [ ] **Storybook** para documentación de componentes
-- [ ] **CI/CD** mejorado con GitHub Actions
-- [ ] **Monitoring** y analytics de rendimiento
-- [ ] **Optimización de Bundle** y lazy loading
-- [ ] **Cache Strategy** avanzada para offline
+- [ ] Additional retrospective templates (4Ls, DAKI, …)
+- [ ] Countdown timer alerts (customizable warnings)
+- [ ] Session history with facilitator metrics
+- [ ] Integrations (Slack, Teams, Jira)
+- [ ] Team analytics across retrospectives
+- [ ] Private retrospectives with access control
+- [ ] Offline mode with later synchronization
+- [ ] Public REST API for external integrations
+- [ ] Native mobile app
 
-## 🆘 Soporte y Comunidad
+## 📝 License
 
-### Obtener Ayuda
-1. **Revisa la documentación** y este README
-2. **Busca en Issues** existentes para problemas similares
-3. **Crea un nuevo Issue** con detalles del problema:
-   - Descripción clara del error
-   - Pasos para reproducir
-   - Información del entorno (browser, OS)
-   - Screenshots si aplica
-
-### Reportar Bugs
-Utiliza la plantilla de bug report e incluye:
-- **Versión** de la aplicación
-- **Pasos exactos** para reproducir
-- **Comportamiento esperado** vs **comportamiento actual**
-- **Logs de consola** si hay errores JavaScript
-
-### Solicitar Funcionalidades
-- **Describe el problema** que la funcionalidad resolvería
-- **Explica la solución** propuesta
-- **Considera alternativas** y casos de uso
-- **Mockups o wireframes** si es aplicable
-
-## 📝 Licencia
-
-Este proyecto está bajo la **Licencia MIT**. Ver [`LICENSE`](LICENSE) para más detalles.
-
-```
-MIT License
-
-Copyright (c) 2024 RetroRocket
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
-
-## 🙏 Agradecimientos
-
-- **Equipo de Firebase** por la plataforma robusta y confiable
-- **Vercel** por el hosting y deployment seamless  
-- **Comunidad Open Source** por las librerías increíbles
-- **Equipos Scrum** que inspiraron las funcionalidades
+RetroRocket is released under the terms of the [`LICENSE`](LICENSE) file
+(**GNU General Public License v3**).
 
 ---
 
-**¿Listo para mejorar tus retrospectivas?** 🚀
+**Ready to improve your retrospectives?** 🚀
+[**Get started**](https://retro-rocket.vercel.app)
 
-[**Iniciar Ahora**](https://retro-rocket.vercel.app) • [**Ver Demo**](#) • [**Documentación**](#) • [**Comunidad**](#)
-
----
-
-*Hecho con ❤️ para equipos que quieren mejorar continuamente*
+*Made with ❤️ for teams that want to keep improving.*
