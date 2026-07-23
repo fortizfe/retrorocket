@@ -1,14 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
+import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
 
-export function hashContent(content: string): string {
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-        const char = content.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return hash.toString();
-}
+// Re-exported so existing importers keep working; the single implementation now
+// lives in the framework-free domain layer.
+export { hashContent };
 
 export interface SentimentCacheReturn {
     hasChanged: (cardId: string, content: string) => boolean;

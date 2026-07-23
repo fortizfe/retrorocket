@@ -12,7 +12,7 @@ import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetro
 import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useSentimentContext } from '@/features/boards/sentiment/contexts/SentimentContext';
+import { useSentimentContext } from '@/features/boards/sentiment';
 import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
 
 const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospectiveId }) => {

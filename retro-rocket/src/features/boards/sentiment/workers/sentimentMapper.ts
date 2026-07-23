@@ -25,8 +25,6 @@ export function mapSentiment(output: { label?: string; score?: number }[], model
     return { sentiment: 'neutral', confidence: result.score ?? 0 };
 }
 
-/** Returns cleaned content ready for inference, or null if content is too short. */
-export function prepareContent(content: string): string | null {
-    const cleaned = content.trim().replace(/\s+/g, ' ');
-    return cleaned.length >= 3 ? cleaned : null;
-}
+// Text normalization for inference now lives in the framework-free domain layer
+// (F2); re-exported here so the worker keeps a single import surface.
+export { normalizeForInference } from '@/features/boards/sentiment/domain/textNormalization';

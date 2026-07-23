@@ -7,8 +7,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/features/boards/types/card';
 import { SentimentResult } from '@/features/boards/types/sentiment';
-import { useTeamMood } from '@/features/boards/sentiment/hooks/useTeamMood';
-import TeamMoodDashboard from '@/features/boards/sentiment/components/TeamMoodDashboard';
+import { useTeamMood, TeamMoodDashboard } from '@/features/boards/sentiment';
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 interface TeamMoodTabProps {

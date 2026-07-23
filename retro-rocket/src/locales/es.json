@@ -1,863 +1,865 @@
 {
-    "header": {
-        "myBoards": "Mis Tableros",
-        "user": "Usuario",
-        "closeMenu": "Cerrar menú",
-        "closeLanguageSelector": "Cerrar selector de idioma",
-        "profile": "Perfil",
-        "signOut": "Cerrar sesión",
-        "language": "Idioma",
-        "themeMode": "Modo Claro/Oscuro",
-        "switchToLight": "Cambiar a modo claro",
-        "switchToDark": "Cambiar a modo oscuro"
+  "header": {
+    "myBoards": "Mis Tableros",
+    "user": "Usuario",
+    "closeMenu": "Cerrar menú",
+    "closeLanguageSelector": "Cerrar selector de idioma",
+    "profile": "Perfil",
+    "signOut": "Cerrar sesión",
+    "language": "Idioma",
+    "themeMode": "Modo Claro/Oscuro",
+    "switchToLight": "Cambiar a modo claro",
+    "switchToDark": "Cambiar a modo oscuro"
+  },
+  "dashboard": {
+    "title": "Mis Retrospectivas",
+    "subtitle": "Gestiona todas las retrospectivas que has creado o en las que participas",
+    "noBoards": "Aún no tienes retrospectivas",
+    "createFirst": "Crea tu primera retrospectiva o únete a una existente para comenzar a colaborar con tu equipo",
+    "joinRetro": "Unirse a Retrospectiva",
+    "createFirst_button": "Crear mi primer tablero",
+    "createBoard": "Crear Retrospectiva",
+    "newBoard": "Nuevo Tablero",
+    "newBoardTitle": "Título de la retrospectiva",
+    "placeholder_boardTitle": "Mi retrospectiva",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "creating": "Creando...",
+    "templateDefault": "Plantilla estándar",
+    "controls": {
+      "sortBy": "Ordenar por:",
+      "sortByName": "Nombre",
+      "sortByDate": "Fecha de creación",
+      "ascending": "Ascendente",
+      "descending": "Descendente",
+      "filterPlaceholder": "Buscar retrospectivas...",
+      "filterBy": "Filtrar:",
+      "showAll": "Todas",
+      "showCreated": "Creadas",
+      "showJoined": "Unidas",
+      "viewMode": "Vista:",
+      "gridView": "Galería",
+      "listView": "Lista",
+      "itemsPerPage": "elementos por página",
+      "showingResults": "Mostrando {{start}}-{{end}} de {{total}} retrospectivas",
+      "noResults": "No se encontraron retrospectivas que coincidan con tu búsqueda",
+      "clearFilter": "Limpiar filtro"
     },
-    "dashboard": {
-        "title": "Mis Retrospectivas",
-        "subtitle": "Gestiona todas las retrospectivas que has creado o en las que participas",
-        "noBoards": "Aún no tienes retrospectivas",
-        "createFirst": "Crea tu primera retrospectiva o únete a una existente para comenzar a colaborar con tu equipo",
-        "joinRetro": "Unirse a Retrospectiva",
-        "createFirst_button": "Crear mi primer tablero",
-        "createBoard": "Crear Retrospectiva",
-        "newBoard": "Nuevo Tablero",
-        "newBoardTitle": "Título de la retrospectiva",
-        "placeholder_boardTitle": "Mi retrospectiva",
-        "cancel": "Cancelar",
-        "create": "Crear",
-        "creating": "Creando...",
-        "templateDefault": "Plantilla estándar",
-        "controls": {
-            "sortBy": "Ordenar por:",
-            "sortByName": "Nombre",
-            "sortByDate": "Fecha de creación",
-            "ascending": "Ascendente",
-            "descending": "Descendente",
-            "filterPlaceholder": "Buscar retrospectivas...",
-            "filterBy": "Filtrar:",
-            "showAll": "Todas",
-            "showCreated": "Creadas",
-            "showJoined": "Unidas",
-            "viewMode": "Vista:",
-            "gridView": "Galería",
-            "listView": "Lista",
-            "itemsPerPage": "elementos por página",
-            "showingResults": "Mostrando {{start}}-{{end}} de {{total}} retrospectivas",
-            "noResults": "No se encontraron retrospectivas que coincidan con tu búsqueda",
-            "clearFilter": "Limpiar filtro"
-        },
-        "boardCard": {
-            "deleteBoard": "¿Eliminar tablero?",
-            "deleteConfirmation": "Esta acción no se puede deshacer. Se eliminarán todas las tarjetas y datos del tablero.",
-            "deleteButton": "Eliminar",
-            "deleteSuccess": "Tablero eliminado correctamente",
-            "deleteError": "Error al eliminar el tablero",
-            "openBoard": "Abrir tablero",
-            "participants": "participantes",
-            "joined": "Unido",
-            "creator": "Creador",
-            "deleteTitle": "Eliminar tablero",
-            "editTitle": "Editar tablero",
-            "editBoard": "Editar tablero",
-            "editBoardDescription": "Modifica el título",
-            "editSuccess": "Tablero actualizado correctamente",
-            "editError": "Error al actualizar el tablero",
-            "titleLabel": "Título",
-            "titlePlaceholder": "Título de la retrospectiva",
-            "saving": "Guardando...",
-            "titleRequired": "El título es obligatorio"
-        },
-        "joinModal": {
-            "title": "Unirse a Retrospectiva",
-            "description": "Introduce el ID del tablero de retrospectiva al que deseas unirte. El creador del tablero puede proporcionarte este ID.",
-            "boardIdLabel": "ID del Tablero",
-            "boardIdPlaceholder": "Ej: abc123def456...",
-            "boardIdHelp": "El ID es una cadena única que identifica el tablero",
-            "joining": "Uniéndose...",
-            "join": "Unirse",
-            "closeModal": "Cerrar modal",
-            "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
-        },
-        "loadingBoards": "Cargando tus tableros..."
+    "boardCard": {
+      "deleteBoard": "¿Eliminar tablero?",
+      "deleteConfirmation": "Esta acción no se puede deshacer. Se eliminarán todas las tarjetas y datos del tablero.",
+      "deleteButton": "Eliminar",
+      "deleteSuccess": "Tablero eliminado correctamente",
+      "deleteError": "Error al eliminar el tablero",
+      "openBoard": "Abrir tablero",
+      "participants": "participantes",
+      "joined": "Unido",
+      "creator": "Creador",
+      "deleteTitle": "Eliminar tablero",
+      "editTitle": "Editar tablero",
+      "editBoard": "Editar tablero",
+      "editBoardDescription": "Modifica el título",
+      "editSuccess": "Tablero actualizado correctamente",
+      "editError": "Error al actualizar el tablero",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Título de la retrospectiva",
+      "saving": "Guardando...",
+      "titleRequired": "El título es obligatorio"
     },
-    "boardTemplates": {
-        "default": {
-            "name": "Plantilla por defecto",
-            "description": "Retrospectiva tradicional con qué ayudó, qué retrasó y qué mejorar"
-        },
-        "madSadGlad": {
-            "name": "Mad, Sad, Glad",
-            "description": "Explora emociones del equipo: enfado, tristeza y alegría"
-        },
-        "startStopContinue": {
-            "name": "Start, Stop, Continue",
-            "description": "Enfócate en qué empezar, parar y continuar haciendo"
-        },
-        "actionItems": {
-            "name": "Elementos de Acción"
+    "joinModal": {
+      "title": "Unirse a Retrospectiva",
+      "description": "Introduce el ID del tablero de retrospectiva al que deseas unirte. El creador del tablero puede proporcionarte este ID.",
+      "boardIdLabel": "ID del Tablero",
+      "boardIdPlaceholder": "Ej: abc123def456...",
+      "boardIdHelp": "El ID es una cadena única que identifica el tablero",
+      "joining": "Uniéndose...",
+      "join": "Unirse",
+      "closeModal": "Cerrar modal",
+      "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
+    },
+    "loadingBoards": "Cargando tus tableros..."
+  },
+  "boardTemplates": {
+    "default": {
+      "name": "Plantilla por defecto",
+      "description": "Retrospectiva tradicional con qué ayudó, qué retrasó y qué mejorar"
+    },
+    "madSadGlad": {
+      "name": "Mad, Sad, Glad",
+      "description": "Explora emociones del equipo: enfado, tristeza y alegría"
+    },
+    "startStopContinue": {
+      "name": "Start, Stop, Continue",
+      "description": "Enfócate en qué empezar, parar y continuar haciendo"
+    },
+    "actionItems": {
+      "name": "Elementos de Acción"
+    }
+  },
+  "createBoard": {
+    "selectTemplate": {
+      "title": "Elegir Plantilla",
+      "description": "Selecciona una plantilla para tu retrospectiva",
+      "defaultSelected": "Plantilla por defecto seleccionada",
+      "choose": "Elegir",
+      "preview": "Vista previa",
+      "actionItemsNote": "Todas las plantillas incluyen una columna de 'Elementos de Acción' al final"
+    },
+    "next": "Siguiente",
+    "create": "Crear",
+    "back": "Atrás",
+    "step": "Paso {{current}} de {{total}}"
+  },
+  "retrospective": {
+    "columns": {
+      "placeholder": "¿Qué {{columnTitle}}?",
+      "placeholders": {
+        "mad": "¿Qué te frustró durante este sprint?",
+        "sad": "¿Qué te decepcionó o no salió como esperabas?",
+        "glad": "¿Qué te alegró o funcionó muy bien?",
+        "start": "¿Qué nueva práctica deberíamos empezar a hacer?",
+        "stop": "¿Qué deberíamos dejar de hacer?",
+        "continue": "¿Qué funciona bien y debemos seguir haciendo?",
+        "helped": "¿Qué nos ayudó?",
+        "hindered": "¿Qué nos retrasó?",
+        "improve": "¿Qué podemos hacer mejor?"
+      },
+      "createCard": "Crear tarjeta",
+      "cancel": "Cancelar",
+      "colorPreview": "Vista previa del color",
+      "cardsCount": "{{count}} tarjetas",
+      "add": "Agregar",
+      "noCards": "No hay tarjetas aún",
+      "addFirstCard": "Agregar primera tarjeta",
+      "element": "elemento",
+      "elements": "elementos",
+      "groupsCount": "{{count}} grupos",
+      "titles": {
+        "whatHelped": "Qué me ayudó",
+        "whatHindered": "Qué me retrasó",
+        "whatToImprove": "Qué podemos hacer mejor"
+      },
+      "descriptions": {
+        "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
+        "helped": "Cosas que funcionaron bien y nos ayudaron",
+        "whatHindered": "Obstáculos o problemas que encontramos",
+        "hindered": "Obstáculos o problemas que encontramos",
+        "whatToImprove": "Ideas y sugerencias que nos ayuden a mejorar",
+        "improve": "Ideas y sugerencias que nos ayuden a mejorar",
+        "mad": "Situaciones que nos frustraron o molestaron",
+        "sad": "Cosas que nos decepcionaron o entristecieron",
+        "glad": "Logros y momentos que nos alegraron",
+        "start": "Nuevas prácticas que deberíamos comenzar",
+        "stop": "Actividades que deberíamos dejar de hacer",
+        "continue": "Buenas prácticas que debemos mantener",
+        "actionItems": "Elementos de acción a dar seguimiento"
+      },
+      "helped": "Qué me ayudó",
+      "hindered": "Qué me retrasó",
+      "improve": "Qué podemos hacer mejor",
+      "mad": "Enfadado",
+      "sad": "Triste",
+      "glad": "Contento",
+      "start": "Empezar",
+      "stop": "Parar",
+      "continue": "Continuar",
+      "actionItems": "Elementos de Acción"
+    },
+    "cards": {
+      "likes": "Me gusta",
+      "reactions": "Reacciones",
+      "convertToAction": "Convertir en elemento de acción",
+      "convertToActionTitle": "Convertir en elemento de acción",
+      "assignResponsible": "Asignar responsable (opcional)",
+      "selectResponsible": "Seleccionar responsable",
+      "unassigned": "Sin asignar",
+      "convert": "Convertir",
+      "created": "Creado:",
+      "responsible": "Responsable:",
+      "dueDate": "Fecha de vencimiento (opcional)",
+      "dueDatePlaceholder": "Seleccionar fecha de vencimiento"
+    },
+    "actionItems": {
+      "title": "Elementos de Acción",
+      "description": "Acciones específicas para implementar",
+      "newAction": "Describe la acción a implementar...",
+      "responsible": "Responsable (opcional)",
+      "responsibleSelect": "Seleccionar responsable",
+      "add": "Agregar",
+      "edit": "Editar",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "cancel": "Cancelar",
+      "elementsCount": "{{count}} elementos",
+      "addActionItem": "Añadir elemento de acción",
+      "create": "Crear",
+      "dueDate": "Fecha de vencimiento (opcional)",
+      "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
+      "dueDateDisplay": "Vence: {{date}}",
+      "actionLabel": "ACCIÓN"
+    },
+    "export": {
+      "title": "Exportar Retrospectiva",
+      "options": "Opciones de exportación",
+      "improvedDescription": "Configuración simplificada con controles avanzados del facilitador",
+      "format": "Formato",
+      "documentConfig": "Configuración del documento",
+      "customTitle": "Título personalizado",
+      "includeLogo": "Incluir logo de RetroRocket",
+      "alwaysIncluded": {
+        "title": "Siempre incluido en la exportación",
+        "participants": "Lista de participantes",
+        "cardAuthors": "Autores de las tarjetas",
+        "reactions": "Likes y reacciones",
+        "groupDetails": "Detalles de agrupación",
+        "currentOrder": "Orden actual de las tarjetas"
+      },
+      "optionalContent": "Contenido opcional",
+      "statistics": "Estadísticas",
+      "actionItems": "Elementos de Acción",
+      "facilitatorZone": {
+        "title": "Zona Exclusiva del Facilitador",
+        "description": "Controles avanzados visibles solo para el facilitador de la retrospectiva",
+        "notes": "Notas del facilitador",
+        "sentimentBadges": "Badges de sentimiento de las tarjetas",
+        "teamMoodAnalysis": "Análisis del estado de ánimo del equipo"
+      },
+      "cancel": "Cancelar",
+      "exportButton": "Exportar retrospectiva",
+      "exportText": "Exportar",
+      "export": "Exportar {{format}}",
+      "exporting": "Exportando...",
+      "progress": "Progreso",
+      "success": "¡Exportación completada exitosamente!",
+      "contentToInclude": "Contenido a incluir",
+      "pdfExporter": {
+        "exportPdf": "Exportar PDF",
+        "exportDefaultTitle": "Exportar retrospectiva a PDF con configuración predeterminada",
+        "configureOptionsTitle": "Configurar opciones de exportación",
+        "exportSuccess": "PDF exportado exitosamente",
+        "statsCards": "Tarjetas",
+        "statsGroups": "Grupos",
+        "statsParticipants": "Participantes",
+        "exportFull": "Exportar PDF Completo",
+        "exportCustom": "Exportar con Opciones Personalizadas"
+      }
+    },
+    "groupCard": {
+      "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
+      "groupOfCards": "Grupo de {{totalCards}} tarjetas",
+      "cardsCount": "{{totalCards}} tarjetas",
+      "votesCount": "{{count}} votos",
+      "likesCount": "{{count}} likes",
+      "ungroupCards": "Desagrupar tarjetas",
+      "primaryCard": "Principal",
+      "moreCards": "+{{count}} más"
+    },
+    "likeButton": {
+      "likeCard": "Dar like a esta tarjeta",
+      "singleLike": "{{username}} le ha dado like",
+      "doubleLike": "{{username1}} y {{username2}} les ha dado like",
+      "multipleLikes": "{{usernames}} y {{lastUser}} les ha dado like",
+      "manyLikes": "{{usernames}} y {{remaining}} más les ha dado like"
+    },
+    "actionItemCard": {
+      "confirmDelete": "¿Estás seguro de que quieres eliminar este elemento de acción?",
+      "editAction": "Editar elemento de acción",
+      "deleteAction": "Eliminar elemento de acción",
+      "placeholder": "Describe la acción a implementar...",
+      "unassigned": "Sin asignar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "responsible": "Responsable",
+      "created": "Creado"
+    },
+    "emojiReactions": {
+      "categories": {
+        "Emociones": "Emociones",
+        "Gestos": "Gestos",
+        "Objetos": "Objetos",
+        "Celebración": "Celebración"
+      },
+      "picker": {
+        "ariaLabel": "Selector de reacciones emoji",
+        "addReaction": "Agregar reacción",
+        "addReactionButton": "Agregar reacción emoji",
+        "openPicker": " (abierto)",
+        "hint": "Haz clic en un emoji para reaccionar"
+      },
+      "reactions": {
+        "reactWith": "Reaccionar con {{emoji}}",
+        "removeReaction": "Quitar mi reacción",
+        "remove": "Quitar",
+        "yourReaction": "Tu reacción:",
+        "selected": " (seleccionado)",
+        "tooltips": {
+          "none": "Reaccionar con {{emoji}}",
+          "single": "{{user}} reaccionó con {{emoji}}",
+          "double": "{{user1}} y {{user2}} reaccionaron con {{emoji}}",
+          "multiple": "{{users}} y {{lastUser}} reaccionaron con {{emoji}}",
+          "many": "{{users}} y {{remaining}} más reaccionaron con {{emoji}}"
         }
+      }
     },
-    "createBoard": {
-        "selectTemplate": {
-            "title": "Elegir Plantilla",
-            "description": "Selecciona una plantilla para tu retrospectiva",
-            "defaultSelected": "Plantilla por defecto seleccionada",
-            "choose": "Elegir",
-            "preview": "Vista previa",
-            "actionItemsNote": "Todas las plantillas incluyen una columna de 'Elementos de Acción' al final"
-        },
-        "next": "Siguiente",
-        "create": "Crear",
-        "back": "Atrás",
-        "step": "Paso {{current}} de {{total}}"
+    "grouping": {
+      "noGrouping": "Sin agrupación",
+      "traditionalListView": "Vista de lista tradicional",
+      "groupByUser": "Agrupar por usuario",
+      "groupCardsByCreator": "Agrupar tarjetas por creador",
+      "suggestedGroupings": "Agrupaciones sugeridas",
+      "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
     },
-    "retrospective": {
-        "columns": {
-            "placeholder": "¿Qué {{columnTitle}}?",
-            "placeholders": {
-                "mad": "¿Qué te frustró durante este sprint?",
-                "sad": "¿Qué te decepcionó o no salió como esperabas?",
-                "glad": "¿Qué te alegró o funcionó muy bien?",
-                "start": "¿Qué nueva práctica deberíamos empezar a hacer?",
-                "stop": "¿Qué deberíamos dejar de hacer?",
-                "continue": "¿Qué funciona bien y debemos seguir haciendo?",
-                "helped": "¿Qué nos ayudó?",
-                "hindered": "¿Qué nos retrasó?",
-                "improve": "¿Qué podemos hacer mejor?"
-            },
-            "createCard": "Crear tarjeta",
-            "cancel": "Cancelar",
-            "colorPreview": "Vista previa del color",
-            "cardsCount": "{{count}} tarjetas",
-            "add": "Agregar",
-            "noCards": "No hay tarjetas aún",
-            "addFirstCard": "Agregar primera tarjeta",
-            "element": "elemento",
-            "elements": "elementos",
-            "groupsCount": "{{count}} grupos",
-            "titles": {
-                "whatHelped": "Qué me ayudó",
-                "whatHindered": "Qué me retrasó",
-                "whatToImprove": "Qué podemos hacer mejor"
-            },
-            "descriptions": {
-                "whatHelped": "Cosas que funcionaron bien y nos ayudaron",
-                "helped": "Cosas que funcionaron bien y nos ayudaron",
-                "whatHindered": "Obstáculos o problemas que encontramos",
-                "hindered": "Obstáculos o problemas que encontramos",
-                "whatToImprove": "Ideas y sugerencias que nos ayuden a mejorar",
-                "improve": "Ideas y sugerencias que nos ayuden a mejorar",
-                "mad": "Situaciones que nos frustraron o molestaron",
-                "sad": "Cosas que nos decepcionaron o entristecieron",
-                "glad": "Logros y momentos que nos alegraron",
-                "start": "Nuevas prácticas que deberíamos comenzar",
-                "stop": "Actividades que deberíamos dejar de hacer",
-                "continue": "Buenas prácticas que debemos mantener",
-                "actionItems": "Elementos de acción a dar seguimiento"
-            },
-            "helped": "Qué me ayudó",
-            "hindered": "Qué me retrasó",
-            "improve": "Qué podemos hacer mejor",
-            "mad": "Enfadado",
-            "sad": "Triste",
-            "glad": "Contento",
-            "start": "Empezar",
-            "stop": "Parar",
-            "continue": "Continuar",
-            "actionItems": "Elementos de Acción"
+    "facilitator": {
+      "menu": "Facilitador",
+      "controls": "Controles de Facilitador",
+      "controlsCardTitle": "Configuración",
+      "showActionItems": "Mostrar elementos de acción",
+      "showActionItemsDesc": "Controla si la columna de elementos de acción está visible para los participantes",
+      "configureTime": "Configurar tiempo",
+      "create": "Crear",
+      "quickTimers": "Temporizadores rápidos",
+      "onlyYouCanSee": "Visible solo para facilitadores",
+      "onlyFacilitatorCanCreateActions": "Solo el facilitador puede crear elementos de acción",
+      "facilitatorCanCreateActions": "El facilitador puede crear elementos de acción",
+      "createFirstActionOrConvert": "Crea el primer elemento de acción o convierte una tarjeta existente",
+      "noActionItems": "No hay elementos de acción",
+      "loadingActionItems": "Cargando elementos de acción...",
+      "tabs": {
+        "timer": "Timer",
+        "sentiment": "IA",
+        "teamMood": "Estado del Equipo",
+        "controls": "Controles",
+        "notes": "Notas"
+      },
+      "teamMood": {
+        "title": "Estado de Ánimo del Equipo",
+        "analyzing": "Analizando estado de ánimo del equipo...",
+        "insufficientData": {
+          "title": "Datos insuficientes",
+          "description": "Se necesitan al menos 3 tarjetas con análisis de sentimientos para generar un informe significativo del estado de ánimo del equipo.",
+          "tip": "Las tarjetas se analizan automáticamente cuando se crean o modifican"
         },
-        "cards": {
-            "likes": "Me gusta",
-            "reactions": "Reacciones",
-            "convertToAction": "Convertir en elemento de acción",
-            "convertToActionTitle": "Convertir en elemento de acción",
-            "assignResponsible": "Asignar responsable (opcional)",
-            "selectResponsible": "Seleccionar responsable",
-            "unassigned": "Sin asignar",
-            "convert": "Convertir",
-            "created": "Creado:",
-            "responsible": "Responsable:",
-            "dueDate": "Fecha de vencimiento (opcional)",
-            "dueDatePlaceholder": "Seleccionar fecha de vencimiento"
+        "disabled": {
+          "title": "Análisis de Sentimientos Desactivado",
+          "description": "Para generar el informe del estado de ánimo del equipo, primero activa el análisis de sentimientos en la pestaña \"IA\".",
+          "tip": "El análisis de sentimientos ayuda a identificar automáticamente el tono emocional de las tarjetas del equipo."
         },
-        "actionItems": {
-            "title": "Elementos de Acción",
-            "description": "Acciones específicas para implementar",
-            "newAction": "Describe la acción a implementar...",
-            "responsible": "Responsable (opcional)",
-            "responsibleSelect": "Seleccionar responsable",
-            "add": "Agregar",
-            "edit": "Editar",
-            "save": "Guardar",
-            "saving": "Guardando...",
-            "cancel": "Cancelar",
-            "elementsCount": "{{count}} elementos",
-            "addActionItem": "Añadir elemento de acción",
-            "create": "Crear",
-            "dueDate": "Fecha de vencimiento (opcional)",
-            "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
-            "dueDateDisplay": "Vence: {{date}}",
-            "actionLabel": "ACCIÓN"
+        "initializing": {
+          "title": "Inicializando Análisis",
+          "description": "Preparando el sistema de análisis de sentimientos..."
         },
-        "export": {
-            "title": "Exportar Retrospectiva",
-            "options": "Opciones de exportación",
-            "improvedDescription": "Configuración simplificada con controles avanzados del facilitador",
-            "format": "Formato",
-            "documentConfig": "Configuración del documento",
-            "customTitle": "Título personalizado",
-            "includeLogo": "Incluir logo de RetroRocket",
-            "alwaysIncluded": {
-                "title": "Siempre incluido en la exportación",
-                "participants": "Lista de participantes",
-                "cardAuthors": "Autores de las tarjetas",
-                "reactions": "Likes y reacciones",
-                "groupDetails": "Detalles de agrupación",
-                "currentOrder": "Orden actual de las tarjetas"
-            },
-            "optionalContent": "Contenido opcional",
-            "statistics": "Estadísticas",
-            "actionItems": "Elementos de Acción",
-            "facilitatorZone": {
-                "title": "Zona Exclusiva del Facilitador",
-                "description": "Controles avanzados visibles solo para el facilitador de la retrospectiva",
-                "notes": "Notas del facilitador",
-                "sentimentBadges": "Badges de sentimiento de las tarjetas",
-                "teamMoodAnalysis": "Análisis del estado de ánimo del equipo"
-            },
-            "cancel": "Cancelar",
-            "exportButton": "Exportar retrospectiva",
-            "exportText": "Exportar",
-            "export": "Exportar {{format}}",
-            "exporting": "Exportando...",
-            "progress": "Progreso",
-            "success": "¡Exportación completada exitosamente!",
-            "contentToInclude": "Contenido a incluir",
-            "pdfExporter": {
-                "exportPdf": "Exportar PDF",
-                "exportDefaultTitle": "Exportar retrospectiva a PDF con configuración predeterminada",
-                "configureOptionsTitle": "Configurar opciones de exportación",
-                "exportSuccess": "PDF exportado exitosamente",
-                "statsCards": "Tarjetas",
-                "statsGroups": "Grupos",
-                "statsParticipants": "Participantes",
-                "exportFull": "Exportar PDF Completo",
-                "exportCustom": "Exportar con Opciones Personalizadas"
-            }
+        "updated": "Actualizado:",
+        "basedOn": "Basado en el análisis de {{count}} tarjetas",
+        "sentiments": {
+          "positive": "Positivo",
+          "negative": "Negativo",
+          "neutral": "Neutral"
         },
-        "groupCard": {
-            "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
-            "groupOfCards": "Grupo de {{totalCards}} tarjetas",
-            "cardsCount": "{{totalCards}} tarjetas",
-            "votesCount": "{{count}} votos",
-            "likesCount": "{{count}} likes",
-            "ungroupCards": "Desagrupar tarjetas",
-            "primaryCard": "Principal",
-            "moreCards": "+{{count}} más"
-        },
-        "likeButton": {
-            "likeCard": "Dar like a esta tarjeta",
-            "singleLike": "{{username}} le ha dado like",
-            "doubleLike": "{{username1}} y {{username2}} les ha dado like",
-            "multipleLikes": "{{usernames}} y {{lastUser}} les ha dado like",
-            "manyLikes": "{{usernames}} y {{remaining}} más les ha dado like"
-        },
-        "actionItemCard": {
-            "confirmDelete": "¿Estás seguro de que quieres eliminar este elemento de acción?",
-            "editAction": "Editar elemento de acción",
-            "deleteAction": "Eliminar elemento de acción",
-            "placeholder": "Describe la acción a implementar...",
-            "unassigned": "Sin asignar",
-            "save": "Guardar",
-            "cancel": "Cancelar",
-            "responsible": "Responsable",
-            "created": "Creado"
-        },
-        "emojiReactions": {
-            "categories": {
-                "Emociones": "Emociones",
-                "Gestos": "Gestos",
-                "Objetos": "Objetos",
-                "Celebración": "Celebración"
-            },
-            "picker": {
-                "ariaLabel": "Selector de reacciones emoji",
-                "addReaction": "Agregar reacción",
-                "addReactionButton": "Agregar reacción emoji",
-                "openPicker": " (abierto)",
-                "hint": "Haz clic en un emoji para reaccionar"
-            },
-            "reactions": {
-                "reactWith": "Reaccionar con {{emoji}}",
-                "removeReaction": "Quitar mi reacción",
-                "remove": "Quitar",
-                "yourReaction": "Tu reacción:",
-                "selected": " (seleccionado)",
-                "tooltips": {
-                    "none": "Reaccionar con {{emoji}}",
-                    "single": "{{user}} reaccionó con {{emoji}}",
-                    "double": "{{user1}} y {{user2}} reaccionaron con {{emoji}}",
-                    "multiple": "{{users}} y {{lastUser}} reaccionaron con {{emoji}}",
-                    "many": "{{users}} y {{remaining}} más reaccionaron con {{emoji}}"
-                }
-            }
-        },
-        "grouping": {
-            "noGrouping": "Sin agrupación",
-            "traditionalListView": "Vista de lista tradicional",
-            "groupByUser": "Agrupar por usuario",
-            "groupCardsByCreator": "Agrupar tarjetas por creador",
-            "suggestedGroupings": "Agrupaciones sugeridas",
-            "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
-        },
-        "facilitator": {
-            "menu": "Facilitador",
-            "controls": "Controles de Facilitador",
-            "controlsCardTitle": "Configuración",
-            "showActionItems": "Mostrar elementos de acción",
-            "showActionItemsDesc": "Controla si la columna de elementos de acción está visible para los participantes",
-            "configureTime": "Configurar tiempo",
-            "create": "Crear",
-            "quickTimers": "Temporizadores rápidos",
-            "onlyYouCanSee": "Visible solo para facilitadores",
-            "onlyFacilitatorCanCreateActions": "Solo el facilitador puede crear elementos de acción",
-            "facilitatorCanCreateActions": "El facilitador puede crear elementos de acción",
-            "createFirstActionOrConvert": "Crea el primer elemento de acción o convierte una tarjeta existente",
-            "noActionItems": "No hay elementos de acción",
-            "loadingActionItems": "Cargando elementos de acción...",
-            "tabs": {
-                "timer": "Timer",
-                "sentiment": "IA",
-                "teamMood": "Estado del Equipo",
-                "controls": "Controles",
-                "notes": "Notas"
-            },
-            "teamMood": {
-                "title": "Estado de Ánimo del Equipo",
-                "analyzing": "Analizando estado de ánimo del equipo...",
-                "insufficientData": {
-                    "title": "Datos insuficientes",
-                    "description": "Se necesitan al menos 3 tarjetas con análisis de sentimientos para generar un informe significativo del estado de ánimo del equipo.",
-                    "tip": "Las tarjetas se analizan automáticamente cuando se crean o modifican"
-                },
-                "disabled": {
-                    "title": "Análisis de Sentimientos Desactivado",
-                    "description": "Para generar el informe del estado de ánimo del equipo, primero activa el análisis de sentimientos en la pestaña \"IA\".",
-                    "tip": "El análisis de sentimientos ayuda a identificar automáticamente el tono emocional de las tarjetas del equipo."
-                },
-                "initializing": {
-                    "title": "Inicializando Análisis",
-                    "description": "Preparando el sistema de análisis de sentimientos..."
-                },
-                "updated": "Actualizado:",
-                "basedOn": "Basado en el análisis de {{count}} tarjetas",
-                "sentiments": {
-                    "positive": "Positivo",
-                    "negative": "Negativo",
-                    "neutral": "Neutral"
-                },
-                "sections": {
-                    "columnAnalysis": "Análisis por Sección",
-                    "insights": "Insights y Recomendaciones",
-                    "detailedStats": "Estadísticas Detalladas"
-                },
-                "stats": {
-                    "totalCards": "Tarjetas totales:",
-                    "analyzed": "Analizadas:",
-                    "averageConfidence": "Confianza promedio:",
-                    "dominantSentiment": "Sentimiento dominante:",
-                    "cards_singular": "tarjeta",
-                    "cards_plural": "tarjetas"
-                },
-                "actionable": "Acción recomendada",
-                "moreInsights": "Y {{count}} insight más...",
-                "moreInsights_plural": "Y {{count}} insights más...",
-                "facilitatorNote": {
-                    "title": "Solo visible para facilitadores",
-                    "description": "Este informe se basa en el análisis automático de sentimientos de las tarjetas y se actualiza en tiempo real conforme el equipo participa."
-                },
-                "moodLabels": {
-                    "excellent": "Excelente",
-                    "good": "Bueno",
-                    "fair": "Regular",
-                    "poor": "Deficiente",
-                    "critical": "Crítico"
-                },
-                "insights": {
-                    "insufficientData": {
-                        "title": "Datos insuficientes",
-                        "description": "Se necesitan más tarjetas para generar un análisis significativo del estado de ánimo del equipo."
-                    },
-                    "incompleteAnalysis": {
-                        "title": "Análisis incompleto",
-                        "description": "Solo se ha analizado el {{percentage}}% de las tarjetas. Algunos sentimientos podrían estar subestimados."
-                    },
-                    "criticalNegative": {
-                        "title": "Alto nivel de sentimientos negativos",
-                        "description": "{{percentage}}% de las tarjetas expresan sentimientos negativos. El equipo puede estar atravesando dificultades significativas."
-                    },
-                    "warningNegative": {
-                        "title": "Sentimientos negativos elevados",
-                        "description": "{{percentage}}% de las tarjetas muestran sentimientos negativos. Considera dedicar tiempo a abordar las preocupaciones del equipo."
-                    },
-                    "lowPositive": {
-                        "title": "Pocos sentimientos positivos",
-                        "description": "Solo {{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo podría beneficiarse de reconocer más logros."
-                    },
-                    "criticalColumn": {
-                        "title": "Área crítica: {{column}}",
-                        "description": "{{percentage}}% de las tarjetas en \"{{column}}\" son negativas. Esta área requiere atención inmediata."
-                    },
-                    "excellentMood": {
-                        "title": "Excelente estado de ánimo",
-                        "description": "{{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo muestra una actitud muy constructiva."
-                    },
-                    "favorableMood": {
-                        "title": "Estado de ánimo favorable",
-                        "description": "{{percentage}}% de las tarjetas son positivas. El equipo mantiene una perspectiva mayormente constructiva."
-                    },
-                    "balancedPerspective": {
-                        "title": "Perspectiva equilibrada",
-                        "description": "El equipo muestra una mezcla equilibrada de perspectivas, con buena objetividad en sus comentarios."
-                    }
-                }
-            },
-            "countdown": {
-                "title": "Temporizador",
-                "totalTime": "Tiempo total",
-                "create": "Crear Temporizador",
-                "minutes": "min",
-                "seconds": "seg",
-                "creating": "Creando...",
-                "create_button": "Crear",
-                "control": "Controlar Temporizador",
-                "start": "Iniciar",
-                "pause": "Pausar",
-                "stop": "Detener",
-                "restart": "Reiniciar",
-                "delete": "Eliminar",
-                "status": {
-                    "finished": "Tiempo terminado",
-                    "paused": "Pausado",
-                    "running": "En curso",
-                    "stopped": "Detenido"
-                }
-            },
-            "notes": {
-                "title": "Notas del Facilitador",
-                "placeholder": "Escribe tu nota aquí...",
-                "editPlaceholder": "Editar nota...",
-                "save": "Guardar",
-                "cancel": "Cancelar",
-                "delete": "Borrar",
-                "edit": "Editar",
-                "add": "Añadir nota",
-                "close": "Cerrar",
-                "deleteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
-                "editTitle": "Editar nota",
-                "deleteTitle": "Eliminar nota",
-                "noNotes": "No hay notas aún",
-                "noNotesSubtitle": "Añade notas para hacer seguimiento de la retrospectiva",
-                "loading": "Cargando notas..."
-            },
-            "sentiment": {
-                "notAvailable": "Análisis de sentimientos no disponible"
-            },
-            "hideActionItems": "Ocultar elementos de acción"
-        },
-        "progress": "Progreso",
-        "errors": {
-            "loadCards": "Error al cargar las tarjetas"
-        },
-        "card": {
-            "save": "Guardar",
-            "cancel": "Cancelar",
-            "editPlaceholder": "Escribe tu comentario...",
-            "voteUp": "Votar a favor",
-            "voteDown": "Quitar voto",
-            "editCard": "Editar tarjeta",
-            "deleteCard": "Eliminar tarjeta",
-            "dragHandle": "Mover tarjeta (arrastrar)"
-        },
-        "board": {
-            "loading": "Cargando retrospectiva...",
-            "loadError": "No se pudieron cargar las tarjetas"
-        }
-    },
-    "groupSuggestion": {
-        "group": "Grupo",
-        "cardsInGroup": "{{count}} tarjetas",
-        "analyzing": "Analizando similitudes...",
-        "suggestedHeadCard": "Tarjeta principal sugerida",
-        "createGroup": "Crear Grupo"
-    },
-    "datePicker": {
-        "placeholder": "Seleccionar fecha",
-        "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
-        "clearDate": "Limpiar fecha"
-    },
-    "participants": {
-        "title": "Participantes",
-        "close": "Cerrar",
-        "closeList": "Cerrar lista de participantes",
-        "totalParticipants": "Total de participantes",
-        "emptyTitle": "No hay participantes",
-        "emptySubtitle": "La sesión está esperando participantes"
-    },
-    "typing": {
-        "single": "{{username}} está escribiendo",
-        "double": "{{username1}} y {{username2}} están escribiendo",
-        "multiple": "{{username}} y {{count}} más están escribiendo"
-    },
-    "colors": {
-        "blue": "Azul cielo",
-        "blue_tooltip": "Azul cielo suave - Perfecto para ideas",
-        "blue_aria": "Seleccionar color azul cielo",
-        "purple": "Lavanda",
-        "purple_tooltip": "Lavanda suave - Ideal para reflexiones",
-        "purple_aria": "Seleccionar color lavanda",
-        "orange": "Melocotón",
-        "orange_tooltip": "Melocotón suave - Excelente para alertas",
-        "orange_aria": "Seleccionar color melocotón",
-        "pink": "Rosa Suave",
-        "pink_tooltip": "Rosa suave - Perfecto para celebraciones",
-        "pink_aria": "Seleccionar color rosa suave",
-        "teal": "Verde Azulado",
-        "teal_tooltip": "Verde azulado suave - Ideal para innovación",
-        "teal_aria": "Seleccionar color verde azulado",
-        "gray": "Gris Perla",
-        "gray_tooltip": "Gris perla neutro - Versátil para cualquier tema",
-        "gray_aria": "Seleccionar color gris perla",
-        "green": "Verde Menta",
-        "green_tooltip": "Verde menta fresco - Perfecto para logros",
-        "green_aria": "Seleccionar color verde menta",
-        "yellow": "Amarillo Sol",
-        "yellow_tooltip": "Amarillo sol brillante - Ideal para ideas importantes",
-        "yellow_aria": "Seleccionar color amarillo sol",
-        "red": "Coral Suave",
-        "red_tooltip": "Coral suave - Apropiado para problemas",
-        "red_aria": "Seleccionar color coral suave"
-    },
-    "common": {
-        "loading": "Cargando...",
-        "save": "Guardar",
-        "cancel": "Cancelar",
-        "delete": "Eliminar",
-        "edit": "Editar",
-        "close": "Cerrar",
-        "add": "Agregar",
-        "create": "Crear",
-        "confirm": "Confirmar",
-        "back": "Atrás",
-        "next": "Siguiente",
-        "previous": "Anterior",
-        "search": "Buscar",
-        "filter": "Filtrar",
-        "sort": "Ordenar",
-        "export": "Exportar",
-        "import": "Importar",
-        "settings": "Configuración",
-        "help": "Ayuda",
-        "about": "Acerca de",
-        "more": "Más",
-        "less": "Menos",
-        "show": "Mostrar",
-        "hide": "Ocultar",
-        "expand": "Expandir",
-        "collapse": "Contraer",
-        "refresh": "Actualizar",
-        "retry": "Reintentar"
-    },
-    "errors": {
-        "generic": "Ha ocurrido un error",
-        "network": "Error de conexión",
-        "unauthorized": "No autorizado",
-        "notFound": "No encontrado",
-        "serverError": "Error del servidor",
-        "tryAgain": "Inténtalo de nuevo"
-    },
-    "success": {
-        "saved": "Guardado correctamente",
-        "created": "Creado correctamente",
-        "updated": "Actualizado correctamente",
-        "deleted": "Eliminado correctamente",
-        "exported": "Exportado correctamente"
-    },
-    "countdown": {
-        "demo": {
-            "title": "Temporizador para Retrospectivas",
-            "subtitle": "Control total del tiempo para facilitadores",
-            "facilitator": {
-                "title": "Para Facilitadores",
-                "features": [
-                    "⏰ Crear temporizadores personalizados",
-                    "▶️ Iniciar, pausar y detener",
-                    "🔄 Reiniciar fácilmente",
-                    "🗑️ Eliminar completamente",
-                    "🎛️ Panel de control exclusivo"
-                ]
-            },
-            "participants": {
-                "title": "Para Participantes",
-                "features": [
-                    "👀 Ver el temporizador en tiempo real",
-                    "🚨 Alertas visuales cuando el tiempo termina",
-                    "📱 Totalmente responsive",
-                    "🌙 Compatible con modo oscuro"
-                ]
-            },
-            "states": {
-                "running": "En ejecución",
-                "paused": "Pausado",
-                "finished": "Terminado",
-                "stopped": "Detenido"
-            },
-            "instructions": "Cómo usar el temporizador",
-            "step1": "Como facilitador, accede al panel de control",
-            "step2": "Configura el tiempo necesario para cada actividad",
-            "step3": "Inicia el temporizador cuando comience la actividad",
-            "step4": "Todos los participantes verán el tiempo restante"
-        }
-    },
-    "like": {
-        "single": "A {{username}} le ha dado like",
-        "double": "A {{username1}} y {{username2}} les ha dado like",
-        "multiple": "A {{usernames}} y {{remaining}} más les ha dado like"
-    },
-    "emoji": {
-        "reacted_single": "{{username}} reaccionó con {{emoji}}",
-        "reacted_double": "{{username1}} y {{username2}} reaccionaron con {{emoji}}",
-        "reacted_multiple": "{{usernames}} y {{remaining}} más reaccionaron con {{emoji}}"
-    },
-    "formats": {
-        "pdf": {
-            "name": "PDF",
-            "description": "Documento con formato profesional, ideal para compartir"
-        },
-        "docx": {
-            "name": "Word",
-            "description": "Documento editable de Microsoft Word"
-        },
-        "txt": {
-            "name": "Texto",
-            "description": "Formato de texto plano, simple y universal"
-        }
-    },
-    "landing": {
-        "hero": {
-            "description": "Transforma las retrospectivas de tu equipo en momentos de crecimiento real",
-            "tagline": "Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo",
-            "cta": {
-                "title": "Comienza ahora",
-                "subtitle": "Únete en segundos y crea tu primera retrospectiva",
-                "freeForever": "Gratis para siempre",
-                "noLimits": "Sin límites"
-            }
-        },
-        "features": {
-            "connectTeams": {
-                "title": "Conecta equipos",
-                "description": "Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos"
-            },
-            "immediateResults": {
-                "title": "Resultados inmediatos",
-                "description": "Obtén insights valiosos y planes de acción en tiempo récord"
-            },
-            "easyToAdopt": {
-                "title": "Fácil de adoptar",
-                "description": "Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje"
-            }
-        },
-        "mainFeatures": {
-            "title": "Todo lo que necesitas para retrospectivas exitosas",
-            "subtitle": "Una plataforma completa diseñada por y para equipos ágiles que buscan mejorar continuamente",
-            "advancedAuth": {
-                "title": "Autenticación Avanzada",
-                "description": "Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder."
-            },
-            "realTimeCollab": {
-                "title": "Colaboración en Tiempo Real",
-                "description": "Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones."
-            },
-            "cardSystem": {
-                "title": "Sistema Completo de Tarjetas",
-                "description": "Tres columnas estructuradas con votación, reacciones y colores personalizables."
-            },
-            "smartGrouping": {
-                "title": "Agrupación Inteligente",
-                "description": "Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas."
-            },
-            "professionalExport": {
-                "title": "Exportación Profesional",
-                "description": "PDF y DOCX optimizados para compartir con stakeholders y archivar resultados."
-            },
-            "modernUI": {
-                "title": "Experiencia Moderna",
-                "description": "Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo."
-            }
-        },
-        "howItWorks": {
-            "title": "Cómo funciona RetroRocket",
-            "subtitle": "De la idea a la acción en minutos. Simple para empezar, poderoso para crecer.",
-            "step1": {
-                "title": "Inicia sesión y crea",
-                "description": "Accede con Google o GitHub en segundos. Crea una nueva retrospectiva con título y descripción.",
-                "time": "Menos de 30 segundos para empezar",
-                "sharing": "Comparte el enlace con tu equipo y ¡listo!"
-            },
-            "step2": {
-                "title": "Colabora en tiempo real",
-                "description": "Añade tarjetas en las tres columnas, vota ideas favoritas y agrupa conceptos similares.",
-                "tip": "Edita solo tus propias tarjetas",
-                "actions": "Vota, reacciona y organiza ideas de forma visual"
-            },
-            "step3": {
-                "title": "Exporta y actúa",
-                "description": "Genera reportes profesionales en PDF o Word con estadísticas completas y plan de acción.",
-                "tip": "Configuración avanzada de exportación",
-                "sharing": "Comparte resultados con stakeholders"
-            }
-        },
-        "technology": {
-            "title": "Tecnología moderna y confiable",
-            "subtitle": "Construido con las mejores herramientas para garantizar rendimiento, seguridad y escalabilidad",
-            "reactTypeScript": "React + TypeScript",
-            "reactTypeScript_desc": "Frontend moderno y tipado",
-            "firebase": "Firebase",
-            "firebase_desc": "Base de datos en tiempo real",
-            "tailwind": "Tailwind CSS",
-            "tailwind_desc": "Diseño responsive y moderno",
-            "mobileFirst": "Mobile First",
-            "mobileFirst_desc": "Funciona en cualquier dispositivo",
-            "openSource": "100% Open Source"
-        },
-        "finalMessage": {
-            "title": "¿Ya tienes una cuenta?",
-            "subtitle": "Accede directamente arriba para continuar con tus retrospectivas",
-            "githubLink": "Open Source en GitHub"
-        },
-        "footer": {
-            "copyright": "© 2025 {{appName}}. Hecho con ❤️ para equipos que buscan mejorar."
-        }
-    },
-    "profile": {
-        "title": "Mi Perfil",
-        "subtitle": "Gestiona tu información personal y configuraciones de cuenta",
-        "signOut": "Cerrar Sesión",
-        "memberSince": "Miembro desde",
-        "primaryProvider": "Proveedor principal",
-        "accountActions": {
-            "title": "Acciones de Cuenta",
-            "exportData": {
-                "title": "Exportar Datos",
-                "description": "Descarga todos tus datos de retrospectivas",
-                "button": "Próximamente"
-            },
-            "deleteAccount": {
-                "title": "Eliminar Cuenta",
-                "description": "Elimina permanentemente tu cuenta y todos los datos",
-                "button": "Eliminar"
-            }
-        }
-    },
-    "notFound": {
-        "title": "404 - No Encontrado",
-        "message": "¡Oops! La página que buscas no existe.",
-        "goHome": "Volver al Inicio"
-    },
-    "auth": {
-        "userProfileForm": {
-            "welcome": "¡Bienvenido a RetroRocket! 🚀",
-            "welcomeSubtitle": "Completa tu perfil para comenzar a crear retrospectivas",
-            "editProfile": "Editar Perfil",
-            "editProfileSubtitle": "Actualiza tu información personal",
-            "email": "Email",
-            "emailNotEditable": "El email no puede ser modificado",
-            "displayName": "Nombre a mostrar *",
-            "displayNamePlaceholder": "Tu nombre completo",
-            "displayNameHelp": "Este nombre aparecerá en los tableros que crees",
-            "saving": "Guardando...",
-            "continue": "Continuar",
-            "saveChanges": "Guardar cambios",
-            "editLaterNote": "Podrás editar esta información desde tu perfil en cualquier momento"
-        },
-        "authButtonGroup": {
-            "continueWithGoogle": "Continuar con Google",
-            "continueWithGithub": "Continuar con GitHub",
-            "signingIn": "Iniciando sesión...",
-            "comingSoon": "Pronto",
-            "termsConditions": "Al continuar, aceptas nuestros términos y condiciones"
-        },
-        "wrapper": {
-            "verifying": "Verificando autenticación..."
-        }
-    },
-    "retrospectivePage": {
-        "copyId": "Copiar ID",
-        "share": "Compartir",
-        "options": "Opciones",
-        "back": "Volver",
-        "exit": "Salir",
-        "connectedAs": "Conectado como:",
-        "backToDashboard": "Volver al Dashboard"
-    },
-    "sentiment": {
-        "positive": "Positivo",
-        "negative": "Negativo",
-        "neutral": "Neutral",
-        "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza",
-        "overridden": "ajustado manualmente",
-        "analysis": "Análisis de Sentimientos",
-        "model": "Modelo de IA",
-        "confidenceThreshold": "Umbral de confianza",
-        "batchSize": "Tamaño de lote",
-        "advancedSettings": "Configuración avanzada",
-        "status": {
-            "initializing": "Inicializando...",
-            "connectionError": "Error de conexión",
-            "disabled": "Desactivado",
-            "ready": "Listo para análisis",
-            "configuring": "Configurando..."
-        },
-        "buttons": {
-            "enabled": "Activado",
-            "enable": "Activar",
-            "pauseAnalysis": "Pausar análisis",
-            "reanalyze": "Re-analizar"
+        "sections": {
+          "columnAnalysis": "Análisis por Sección",
+          "insights": "Insights y Recomendaciones",
+          "detailedStats": "Estadísticas Detalladas"
         },
         "stats": {
-            "cards": "tarjetas",
-            "realTimeAnalysis": "Análisis en tiempo real"
+          "totalCards": "Tarjetas totales:",
+          "analyzed": "Analizadas:",
+          "averageConfidence": "Confianza promedio:",
+          "dominantSentiment": "Sentimiento dominante:",
+          "cards_singular": "tarjeta",
+          "cards_plural": "tarjetas"
         },
-        "settings": {
-            "modelSelectedDescription": "Modelo seleccionado para el análisis de sentimientos",
-            "lowConfidence": "Baja confianza",
-            "highConfidence": "Alta confianza",
-            "batchSizeDescription": "Número de tarjetas a procesar simultáneamente",
-            "autoAnalysis": "Análisis automático",
-            "autoAnalysisDescription": "Actualizar automáticamente al cambiar tarjetas"
+        "actionable": "Acción recomendada",
+        "moreInsights": "Y {{count}} insight más...",
+        "moreInsights_plural": "Y {{count}} insights más...",
+        "facilitatorNote": {
+          "title": "Solo visible para facilitadores",
+          "description": "Este informe se basa en el análisis automático de sentimientos de las tarjetas y se actualiza en tiempo real conforme el equipo participa."
         },
-        "help": {
-            "tip": "Consejo:",
-            "description": "El análisis de sentimientos ayuda a identificar el tono emocional de las tarjetas.",
-            "autoUpdate": "Los resultados se actualizan automáticamente cuando se crean o modifican tarjetas."
+        "moodLabels": {
+          "excellent": "Excelente",
+          "veryGood": "Muy Bueno",
+          "good": "Bueno",
+          "fair": "Regular",
+          "concerning": "Preocupante",
+          "poor": "Deficiente",
+          "critical": "Crítico"
+        },
+        "insights": {
+          "insufficientData": {
+            "title": "Datos insuficientes",
+            "description": "Se necesitan más tarjetas para generar un análisis significativo del estado de ánimo del equipo."
+          },
+          "incompleteAnalysis": {
+            "title": "Análisis incompleto",
+            "description": "Solo se ha analizado el {{percentage}}% de las tarjetas. Algunos sentimientos podrían estar subestimados."
+          },
+          "criticalNegative": {
+            "title": "Alto nivel de sentimientos negativos",
+            "description": "{{percentage}}% de las tarjetas expresan sentimientos negativos. El equipo puede estar atravesando dificultades significativas."
+          },
+          "warningNegative": {
+            "title": "Sentimientos negativos elevados",
+            "description": "{{percentage}}% de las tarjetas muestran sentimientos negativos. Considera dedicar tiempo a abordar las preocupaciones del equipo."
+          },
+          "lowPositive": {
+            "title": "Pocos sentimientos positivos",
+            "description": "Solo {{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo podría beneficiarse de reconocer más logros."
+          },
+          "criticalColumn": {
+            "title": "Área crítica: {{column}}",
+            "description": "{{percentage}}% de las tarjetas en \"{{column}}\" son negativas. Esta área requiere atención inmediata."
+          },
+          "excellentMood": {
+            "title": "Excelente estado de ánimo",
+            "description": "{{percentage}}% de las tarjetas expresan sentimientos positivos. El equipo muestra una actitud muy constructiva."
+          },
+          "favorableMood": {
+            "title": "Estado de ánimo favorable",
+            "description": "{{percentage}}% de las tarjetas son positivas. El equipo mantiene una perspectiva mayormente constructiva."
+          },
+          "balancedPerspective": {
+            "title": "Perspectiva equilibrada",
+            "description": "El equipo muestra una mezcla equilibrada de perspectivas, con buena objetividad en sus comentarios."
+          }
         }
-    },
-    "timer": {
+      },
+      "countdown": {
+        "title": "Temporizador",
+        "totalTime": "Tiempo total",
+        "create": "Crear Temporizador",
+        "minutes": "min",
+        "seconds": "seg",
+        "creating": "Creando...",
+        "create_button": "Crear",
+        "control": "Controlar Temporizador",
+        "start": "Iniciar",
+        "pause": "Pausar",
+        "stop": "Detener",
+        "restart": "Reiniciar",
+        "delete": "Eliminar",
         "status": {
-            "finished": "Finalizado",
-            "running": "En curso",
-            "paused": "Pausado",
-            "ready": "Listo"
+          "finished": "Tiempo terminado",
+          "paused": "Pausado",
+          "running": "En curso",
+          "stopped": "Detenido"
         }
+      },
+      "notes": {
+        "title": "Notas del Facilitador",
+        "placeholder": "Escribe tu nota aquí...",
+        "editPlaceholder": "Editar nota...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "delete": "Borrar",
+        "edit": "Editar",
+        "add": "Añadir nota",
+        "close": "Cerrar",
+        "deleteConfirm": "¿Estás seguro de que quieres eliminar esta nota?",
+        "editTitle": "Editar nota",
+        "deleteTitle": "Eliminar nota",
+        "noNotes": "No hay notas aún",
+        "noNotesSubtitle": "Añade notas para hacer seguimiento de la retrospectiva",
+        "loading": "Cargando notas..."
+      },
+      "sentiment": {
+        "notAvailable": "Análisis de sentimientos no disponible"
+      },
+      "hideActionItems": "Ocultar elementos de acción"
     },
-    "notes": {
-        "new": "Nueva",
-        "creating": "Nueva nota",
-        "editing": "Editando nota",
-        "count": {
-            "singular": "nota",
-            "plural": "notas"
-        },
-        "createFirst": "Crear primera nota"
+    "progress": "Progreso",
+    "errors": {
+      "loadCards": "Error al cargar las tarjetas"
+    },
+    "card": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "editPlaceholder": "Escribe tu comentario...",
+      "voteUp": "Votar a favor",
+      "voteDown": "Quitar voto",
+      "editCard": "Editar tarjeta",
+      "deleteCard": "Eliminar tarjeta",
+      "dragHandle": "Mover tarjeta (arrastrar)"
+    },
+    "board": {
+      "loading": "Cargando retrospectiva...",
+      "loadError": "No se pudieron cargar las tarjetas"
     }
+  },
+  "groupSuggestion": {
+    "group": "Grupo",
+    "cardsInGroup": "{{count}} tarjetas",
+    "analyzing": "Analizando similitudes...",
+    "suggestedHeadCard": "Tarjeta principal sugerida",
+    "createGroup": "Crear Grupo"
+  },
+  "datePicker": {
+    "placeholder": "Seleccionar fecha",
+    "dueDatePlaceholder": "Seleccionar fecha de vencimiento",
+    "clearDate": "Limpiar fecha"
+  },
+  "participants": {
+    "title": "Participantes",
+    "close": "Cerrar",
+    "closeList": "Cerrar lista de participantes",
+    "totalParticipants": "Total de participantes",
+    "emptyTitle": "No hay participantes",
+    "emptySubtitle": "La sesión está esperando participantes"
+  },
+  "typing": {
+    "single": "{{username}} está escribiendo",
+    "double": "{{username1}} y {{username2}} están escribiendo",
+    "multiple": "{{username}} y {{count}} más están escribiendo"
+  },
+  "colors": {
+    "blue": "Azul cielo",
+    "blue_tooltip": "Azul cielo suave - Perfecto para ideas",
+    "blue_aria": "Seleccionar color azul cielo",
+    "purple": "Lavanda",
+    "purple_tooltip": "Lavanda suave - Ideal para reflexiones",
+    "purple_aria": "Seleccionar color lavanda",
+    "orange": "Melocotón",
+    "orange_tooltip": "Melocotón suave - Excelente para alertas",
+    "orange_aria": "Seleccionar color melocotón",
+    "pink": "Rosa Suave",
+    "pink_tooltip": "Rosa suave - Perfecto para celebraciones",
+    "pink_aria": "Seleccionar color rosa suave",
+    "teal": "Verde Azulado",
+    "teal_tooltip": "Verde azulado suave - Ideal para innovación",
+    "teal_aria": "Seleccionar color verde azulado",
+    "gray": "Gris Perla",
+    "gray_tooltip": "Gris perla neutro - Versátil para cualquier tema",
+    "gray_aria": "Seleccionar color gris perla",
+    "green": "Verde Menta",
+    "green_tooltip": "Verde menta fresco - Perfecto para logros",
+    "green_aria": "Seleccionar color verde menta",
+    "yellow": "Amarillo Sol",
+    "yellow_tooltip": "Amarillo sol brillante - Ideal para ideas importantes",
+    "yellow_aria": "Seleccionar color amarillo sol",
+    "red": "Coral Suave",
+    "red_tooltip": "Coral suave - Apropiado para problemas",
+    "red_aria": "Seleccionar color coral suave"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "add": "Agregar",
+    "create": "Crear",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "export": "Exportar",
+    "import": "Importar",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "about": "Acerca de",
+    "more": "Más",
+    "less": "Menos",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "expand": "Expandir",
+    "collapse": "Contraer",
+    "refresh": "Actualizar",
+    "retry": "Reintentar"
+  },
+  "errors": {
+    "generic": "Ha ocurrido un error",
+    "network": "Error de conexión",
+    "unauthorized": "No autorizado",
+    "notFound": "No encontrado",
+    "serverError": "Error del servidor",
+    "tryAgain": "Inténtalo de nuevo"
+  },
+  "success": {
+    "saved": "Guardado correctamente",
+    "created": "Creado correctamente",
+    "updated": "Actualizado correctamente",
+    "deleted": "Eliminado correctamente",
+    "exported": "Exportado correctamente"
+  },
+  "countdown": {
+    "demo": {
+      "title": "Temporizador para Retrospectivas",
+      "subtitle": "Control total del tiempo para facilitadores",
+      "facilitator": {
+        "title": "Para Facilitadores",
+        "features": [
+          "⏰ Crear temporizadores personalizados",
+          "▶️ Iniciar, pausar y detener",
+          "🔄 Reiniciar fácilmente",
+          "🗑️ Eliminar completamente",
+          "🎛️ Panel de control exclusivo"
+        ]
+      },
+      "participants": {
+        "title": "Para Participantes",
+        "features": [
+          "👀 Ver el temporizador en tiempo real",
+          "🚨 Alertas visuales cuando el tiempo termina",
+          "📱 Totalmente responsive",
+          "🌙 Compatible con modo oscuro"
+        ]
+      },
+      "states": {
+        "running": "En ejecución",
+        "paused": "Pausado",
+        "finished": "Terminado",
+        "stopped": "Detenido"
+      },
+      "instructions": "Cómo usar el temporizador",
+      "step1": "Como facilitador, accede al panel de control",
+      "step2": "Configura el tiempo necesario para cada actividad",
+      "step3": "Inicia el temporizador cuando comience la actividad",
+      "step4": "Todos los participantes verán el tiempo restante"
+    }
+  },
+  "like": {
+    "single": "A {{username}} le ha dado like",
+    "double": "A {{username1}} y {{username2}} les ha dado like",
+    "multiple": "A {{usernames}} y {{remaining}} más les ha dado like"
+  },
+  "emoji": {
+    "reacted_single": "{{username}} reaccionó con {{emoji}}",
+    "reacted_double": "{{username1}} y {{username2}} reaccionaron con {{emoji}}",
+    "reacted_multiple": "{{usernames}} y {{remaining}} más reaccionaron con {{emoji}}"
+  },
+  "formats": {
+    "pdf": {
+      "name": "PDF",
+      "description": "Documento con formato profesional, ideal para compartir"
+    },
+    "docx": {
+      "name": "Word",
+      "description": "Documento editable de Microsoft Word"
+    },
+    "txt": {
+      "name": "Texto",
+      "description": "Formato de texto plano, simple y universal"
+    }
+  },
+  "landing": {
+    "hero": {
+      "description": "Transforma las retrospectivas de tu equipo en momentos de crecimiento real",
+      "tagline": "Facilita retrospectivas que realmente impulsen el crecimiento de tu equipo",
+      "cta": {
+        "title": "Comienza ahora",
+        "subtitle": "Únete en segundos y crea tu primera retrospectiva",
+        "freeForever": "Gratis para siempre",
+        "noLimits": "Sin límites"
+      }
+    },
+    "features": {
+      "connectTeams": {
+        "title": "Conecta equipos",
+        "description": "Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos"
+      },
+      "immediateResults": {
+        "title": "Resultados inmediatos",
+        "description": "Obtén insights valiosos y planes de acción en tiempo récord"
+      },
+      "easyToAdopt": {
+        "title": "Fácil de adoptar",
+        "description": "Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje"
+      }
+    },
+    "mainFeatures": {
+      "title": "Todo lo que necesitas para retrospectivas exitosas",
+      "subtitle": "Una plataforma completa diseñada por y para equipos ágiles que buscan mejorar continuamente",
+      "advancedAuth": {
+        "title": "Autenticación Avanzada",
+        "description": "Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder."
+      },
+      "realTimeCollab": {
+        "title": "Colaboración en Tiempo Real",
+        "description": "Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones."
+      },
+      "cardSystem": {
+        "title": "Sistema Completo de Tarjetas",
+        "description": "Tres columnas estructuradas con votación, reacciones y colores personalizables."
+      },
+      "smartGrouping": {
+        "title": "Agrupación Inteligente",
+        "description": "Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas."
+      },
+      "professionalExport": {
+        "title": "Exportación Profesional",
+        "description": "PDF y DOCX optimizados para compartir con stakeholders y archivar resultados."
+      },
+      "modernUI": {
+        "title": "Experiencia Moderna",
+        "description": "Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo."
+      }
+    },
+    "howItWorks": {
+      "title": "Cómo funciona RetroRocket",
+      "subtitle": "De la idea a la acción en minutos. Simple para empezar, poderoso para crecer.",
+      "step1": {
+        "title": "Inicia sesión y crea",
+        "description": "Accede con Google o GitHub en segundos. Crea una nueva retrospectiva con título y descripción.",
+        "time": "Menos de 30 segundos para empezar",
+        "sharing": "Comparte el enlace con tu equipo y ¡listo!"
+      },
+      "step2": {
+        "title": "Colabora en tiempo real",
+        "description": "Añade tarjetas en las tres columnas, vota ideas favoritas y agrupa conceptos similares.",
+        "tip": "Edita solo tus propias tarjetas",
+        "actions": "Vota, reacciona y organiza ideas de forma visual"
+      },
+      "step3": {
+        "title": "Exporta y actúa",
+        "description": "Genera reportes profesionales en PDF o Word con estadísticas completas y plan de acción.",
+        "tip": "Configuración avanzada de exportación",
+        "sharing": "Comparte resultados con stakeholders"
+      }
+    },
+    "technology": {
+      "title": "Tecnología moderna y confiable",
+      "subtitle": "Construido con las mejores herramientas para garantizar rendimiento, seguridad y escalabilidad",
+      "reactTypeScript": "React + TypeScript",
+      "reactTypeScript_desc": "Frontend moderno y tipado",
+      "firebase": "Firebase",
+      "firebase_desc": "Base de datos en tiempo real",
+      "tailwind": "Tailwind CSS",
+      "tailwind_desc": "Diseño responsive y moderno",
+      "mobileFirst": "Mobile First",
+      "mobileFirst_desc": "Funciona en cualquier dispositivo",
+      "openSource": "100% Open Source"
+    },
+    "finalMessage": {
+      "title": "¿Ya tienes una cuenta?",
+      "subtitle": "Accede directamente arriba para continuar con tus retrospectivas",
+      "githubLink": "Open Source en GitHub"
+    },
+    "footer": {
+      "copyright": "© 2025 {{appName}}. Hecho con ❤️ para equipos que buscan mejorar."
+    }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Gestiona tu información personal y configuraciones de cuenta",
+    "signOut": "Cerrar Sesión",
+    "memberSince": "Miembro desde",
+    "primaryProvider": "Proveedor principal",
+    "accountActions": {
+      "title": "Acciones de Cuenta",
+      "exportData": {
+        "title": "Exportar Datos",
+        "description": "Descarga todos tus datos de retrospectivas",
+        "button": "Próximamente"
+      },
+      "deleteAccount": {
+        "title": "Eliminar Cuenta",
+        "description": "Elimina permanentemente tu cuenta y todos los datos",
+        "button": "Eliminar"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404 - No Encontrado",
+    "message": "¡Oops! La página que buscas no existe.",
+    "goHome": "Volver al Inicio"
+  },
+  "auth": {
+    "userProfileForm": {
+      "welcome": "¡Bienvenido a RetroRocket! 🚀",
+      "welcomeSubtitle": "Completa tu perfil para comenzar a crear retrospectivas",
+      "editProfile": "Editar Perfil",
+      "editProfileSubtitle": "Actualiza tu información personal",
+      "email": "Email",
+      "emailNotEditable": "El email no puede ser modificado",
+      "displayName": "Nombre a mostrar *",
+      "displayNamePlaceholder": "Tu nombre completo",
+      "displayNameHelp": "Este nombre aparecerá en los tableros que crees",
+      "saving": "Guardando...",
+      "continue": "Continuar",
+      "saveChanges": "Guardar cambios",
+      "editLaterNote": "Podrás editar esta información desde tu perfil en cualquier momento"
+    },
+    "authButtonGroup": {
+      "continueWithGoogle": "Continuar con Google",
+      "continueWithGithub": "Continuar con GitHub",
+      "signingIn": "Iniciando sesión...",
+      "comingSoon": "Pronto",
+      "termsConditions": "Al continuar, aceptas nuestros términos y condiciones"
+    },
+    "wrapper": {
+      "verifying": "Verificando autenticación..."
+    }
+  },
+  "retrospectivePage": {
+    "copyId": "Copiar ID",
+    "share": "Compartir",
+    "options": "Opciones",
+    "back": "Volver",
+    "exit": "Salir",
+    "connectedAs": "Conectado como:",
+    "backToDashboard": "Volver al Dashboard"
+  },
+  "sentiment": {
+    "positive": "Positivo",
+    "negative": "Negativo",
+    "neutral": "Neutral",
+    "tooltip": "Sentimiento {{sentiment}} con {{confidence}}% de confianza",
+    "overridden": "ajustado manualmente",
+    "analysis": "Análisis de Sentimientos",
+    "model": "Modelo de IA",
+    "confidenceThreshold": "Umbral de confianza",
+    "batchSize": "Tamaño de lote",
+    "advancedSettings": "Configuración avanzada",
+    "status": {
+      "initializing": "Inicializando...",
+      "connectionError": "Error de conexión",
+      "disabled": "Desactivado",
+      "ready": "Listo para análisis",
+      "configuring": "Configurando..."
+    },
+    "buttons": {
+      "enabled": "Activado",
+      "enable": "Activar",
+      "pauseAnalysis": "Pausar análisis",
+      "reanalyze": "Re-analizar"
+    },
+    "stats": {
+      "cards": "tarjetas",
+      "realTimeAnalysis": "Análisis en tiempo real"
+    },
+    "settings": {
+      "modelSelectedDescription": "Modelo seleccionado para el análisis de sentimientos",
+      "lowConfidence": "Baja confianza",
+      "highConfidence": "Alta confianza",
+      "batchSizeDescription": "Número de tarjetas a procesar simultáneamente",
+      "autoAnalysis": "Análisis automático",
+      "autoAnalysisDescription": "Actualizar automáticamente al cambiar tarjetas"
+    },
+    "help": {
+      "tip": "Consejo:",
+      "description": "El análisis de sentimientos ayuda a identificar el tono emocional de las tarjetas.",
+      "autoUpdate": "Los resultados se actualizan automáticamente cuando se crean o modifican tarjetas."
+    }
+  },
+  "timer": {
+    "status": {
+      "finished": "Finalizado",
+      "running": "En curso",
+      "paused": "Pausado",
+      "ready": "Listo"
+    }
+  },
+  "notes": {
+    "new": "Nueva",
+    "creating": "Nueva nota",
+    "editing": "Editando nota",
+    "count": {
+      "singular": "nota",
+      "plural": "notas"
+    },
+    "createFirst": "Crear primera nota"
+  }
 }

@@ -70,12 +70,14 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
 
     const { metrics, insights, moodScore } = report;
 
+    // Bands mirror the mood-score anchors (moodScore.ts): an all-neutral board scores
+    // ≈4.6 and must read as "Preocupante"/"Concerning", never as a positive/"Regular" label.
     const getMoodScoreLabel = (score: number): string => {
         if (score >= 8.5) return t('retrospective.facilitator.teamMood.moodLabels.excellent');
-        if (score >= 7.5) return t('retrospective.facilitator.teamMood.moodLabels.excellent');
+        if (score >= 7.5) return t('retrospective.facilitator.teamMood.moodLabels.veryGood');
         if (score >= 6.5) return t('retrospective.facilitator.teamMood.moodLabels.good');
         if (score >= 5.5) return t('retrospective.facilitator.teamMood.moodLabels.fair');
-        if (score >= 4.5) return t('retrospective.facilitator.teamMood.moodLabels.fair');
+        if (score >= 4.5) return t('retrospective.facilitator.teamMood.moodLabels.concerning');
         if (score >= 3.5) return t('retrospective.facilitator.teamMood.moodLabels.poor');
         return t('retrospective.facilitator.teamMood.moodLabels.critical');
     };

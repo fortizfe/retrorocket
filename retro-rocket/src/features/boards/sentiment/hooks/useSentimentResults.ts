@@ -3,20 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { SentimentResult, SentimentConfiguration, SentimentType, shouldShowSentimentBadge } from '@/features/boards/types/sentiment';
 import { Card } from '@/features/boards/types/card';
 import { SentimentResultsService } from '@/features/boards/sentiment/services/sentimentResultsService';
-import { hashContent } from '@/features/boards/sentiment/hooks/useSentimentCache';
+import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
 
 export interface SentimentCounts {
     positive: number;
     negative: number;
     neutral: number;
     total: number;
-}
-
-export interface AnalysisProgress {
-    queued: number;
-    processed: number;
-    total: number;
-    percentage: number;
 }
 
 export function isAnalyzableCard(card: Card): boolean {
@@ -29,27 +22,32 @@ function mergePersistedResults(
 ): Map<string, SentimentResult> {
     const merged = new Map(prev);
     persisted.forEach((result, cardId) => {
+        // In-memory results (fresh this session, or overrides) always win over a
+        // persisted record; staleness of loaded records is decided by the consumer
+        // via `isFresh` against the current card text + active model.
         if (!merged.has(cardId)) merged.set(cardId, result);
     });
     return merged;
 }
 
+/** Persist path for auto results; each result already carries its card-text hash. */
 function persistBatch(retroId: string, results: SentimentResult[]): void {
     results.forEach(r =>
-        SentimentResultsService.saveResultWithHash(retroId, r, hashContent(r.cardId)).catch(() => {})
+        SentimentResultsService
+            .saveResultWithHash(retroId, r, r.contentHash ?? hashContent(r.cardId))
+            .catch(() => {})
     );
 }
 
 export interface SentimentResultsReturn {
     results: ReadonlyMap<string, SentimentResult>;
     processingQueue: React.MutableRefObject<Set<string>>;
-    applyResult: (result: SentimentResult, contentHash?: string) => void;
+    applyResult: (result: SentimentResult) => void;
     applyBatch: (results: SentimentResult[]) => void;
     clearResults: () => void;
     getSentiment: (cardId: string) => SentimentResult | undefined;
     getSentimentCounts: (cards: Card[], config: SentimentConfiguration) => SentimentCounts;
     isProcessing: (cardId: string) => boolean;
-    getProgress: (cards: Card[]) => AnalysisProgress;
     overrideSentiment: (cardId: string, sentiment: SentimentType) => Promise<void>;
 }
 
@@ -69,10 +67,9 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
                 }
             })
             .catch(() => { /* non-critical — fall back to in-memory only */ });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [retrospectiveId]);
 
-    const applyResult = useCallback((result: SentimentResult, contentHash?: string) => {
+    const applyResult = useCallback((result: SentimentResult) => {
         setResults(prev => {
             const existing = prev.get(result.cardId);
             processingQueue.current.delete(result.cardId);
@@ -81,7 +78,9 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
             if (
                 existing &&
                 existing.sentiment === result.sentiment &&
-                Math.abs(existing.confidence - result.confidence) < 0.01
+                Math.abs(existing.confidence - result.confidence) < 0.01 &&
+                existing.contentHash === result.contentHash &&
+                existing.modelVersion === result.modelVersion
             ) {
                 return prev;
             }
@@ -90,8 +89,9 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
             // Fire-and-forget persistence
             const retroId = retroIdRef.current;
             if (retroId) {
-                const hash = contentHash ?? hashContent(result.cardId);
-                SentimentResultsService.saveResultWithHash(retroId, result, hash).catch(() => {});
+                SentimentResultsService
+                    .saveResultWithHash(retroId, result, result.contentHash ?? hashContent(result.cardId))
+                    .catch(() => {});
             }
             return updated;
         });
@@ -110,7 +110,9 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
                 if (
                     !existing ||
                     existing.sentiment !== result.sentiment ||
-                    Math.abs(existing.confidence - result.confidence) >= 0.01
+                    Math.abs(existing.confidence - result.confidence) >= 0.01 ||
+                    existing.contentHash !== result.contentHash ||
+                    existing.modelVersion !== result.modelVersion
                 ) {
                     updated.set(result.cardId, result);
                     toSave.push(result);
@@ -150,15 +152,6 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
     const isProcessing = useCallback((cardId: string) =>
         processingQueue.current.has(cardId), []);
 
-    const getProgress = useCallback((cards: Card[]): AnalysisProgress => {
-        const analyzable = cards.filter(isAnalyzableCard);
-        const total = analyzable.length;
-        const processed = analyzable.filter(c => results.has(c.id)).length;
-        const queued = processingQueue.current.size;
-        const percentage = total > 0 ? Math.round((processed / total) * 100) : 0;
-        return { queued, processed, total, percentage };
-    }, [results]);
-
     const overrideSentiment = useCallback(async (cardId: string, sentiment: SentimentType): Promise<void> => {
         const retroId = retroIdRef.current;
         const facilitatorId = getAuth().currentUser?.uid ?? '';
@@ -184,7 +177,6 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
         getSentiment,
         getSentimentCounts,
         isProcessing,
-        getProgress,
         overrideSentiment,
     };
 }
