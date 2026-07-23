@@ -4,7 +4,6 @@
  */
 
 import { SentimentType } from '@/features/boards/types/sentiment';
-import { ColumnRole } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 
 // Métricas básicas del equipo por columna
 export interface ColumnMoodMetrics {
@@ -59,76 +58,24 @@ export interface TeamMoodReport {
     moodTrend: 'improving' | 'declining' | 'stable'; // Tendencia (para futuras iteraciones)
 }
 
-// Configuración para el análisis del estado de ánimo
+// Configuración para el análisis del estado de ánimo.
+// La regla de confianza vive ahora en `isConfident` (domain/confidence) — este
+// config solo aporta los umbrales de alerta.
 export interface TeamMoodConfig {
-    minConfidenceThreshold: number; // Confianza mínima para incluir en el análisis
     alertThresholds: {
         criticalNegativePercentage: number; // % para alertas críticas
         warningNegativePercentage: number; // % para advertencias
         lowPositivePercentage: number; // % mínimo esperado de positivos
     };
-    columnWeights: Record<string, number>; // Peso relativo de cada columna en el análisis
 }
 
 // Configuración por defecto
 export const DEFAULT_TEAM_MOOD_CONFIG: TeamMoodConfig = {
-    minConfidenceThreshold: 0.4,
     alertThresholds: {
         criticalNegativePercentage: 40,
         warningNegativePercentage: 25,
         lowPositivePercentage: 20,
     },
-    columnWeights: {
-        'helped': 1.2,      // Aspectos positivos tienen más peso
-        'hindered': 1.5,    // Aspectos negativos tienen mucho más peso
-        'improve': 1.3,     // Mejoras tienen peso alto
-        'actions': 0.8,     // Acciones tienen menor peso (más neutras)
-    },
-};
-
-function moodFormula(posPercent: number, neuPercent: number, negPercent: number): number {
-    const weightedScore = (posPercent * 2 + neuPercent - negPercent * 1.5) / 100;
-    return Math.round(Math.max(1, Math.min(10, (weightedScore + 1.5) * 3.33)) * 10) / 10;
-}
-
-// Utilidades para determinar el estado de ánimo general
-export const calculateMoodScore = (
-    metrics: TeamMoodMetrics,
-    columnConfigs?: Record<string, { role?: ColumnRole }>
-): number => {
-    if (metrics.analyzedCards === 0) return 5;
-
-    if (!columnConfigs) {
-        return moodFormula(metrics.positivePercentage, metrics.neutralPercentage, metrics.negativePercentage);
-    }
-
-    // Column-aware scoring: negative sentiment in a "negative-role" column (e.g., "what hindered")
-    // is expected, so it doesn't count against the team mood.
-    let adjPositive = 0, adjNeutral = 0, adjNegative = 0, total = 0;
-    metrics.columnMetrics.forEach(col => {
-        const role = columnConfigs[col.column]?.role ?? 'neutral';
-        adjPositive += col.positive;
-        adjNeutral += col.neutral + (role === 'negative' ? col.negative : 0);
-        adjNegative += role === 'negative' ? 0 : col.negative;
-        total += col.total;
-    });
-
-    if (total === 0) return 5;
-    return moodFormula(
-        (adjPositive / total) * 100,
-        (adjNeutral / total) * 100,
-        (adjNegative / total) * 100
-    );
-};
-
-export const getMoodScoreLabel = (score: number): string => {
-    if (score >= 8.5) return 'Excelente';
-    if (score >= 7.5) return 'Muy Bueno';
-    if (score >= 6.5) return 'Bueno';
-    if (score >= 5.5) return 'Regular';
-    if (score >= 4.5) return 'Preocupante';
-    if (score >= 3.5) return 'Malo';
-    return 'Crítico';
 };
 
 export const getMoodScoreColor = (score: number): string => {

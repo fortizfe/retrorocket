@@ -1,6 +1,12 @@
-import { pipeline, env } from '@xenova/transformers';
+import {
+    pipeline,
+    env,
+    type TextClassificationPipelineType,
+    type TextClassificationPipelineOptions,
+    type TextClassificationOutput,
+} from '@huggingface/transformers';
 import { SENTIMENT_MODELS } from '@/features/boards/types/sentiment';
-import { mapSentiment, prepareContent } from '@/features/boards/sentiment/workers/sentimentMapper';
+import { mapSentiment, normalizeForInference } from '@/features/boards/sentiment/workers/sentimentMapper';
 
 env.allowLocalModels = false;
 env.allowRemoteModels = true;
@@ -45,10 +51,34 @@ type WorkerOutbound = ReadyResponse | LoadingResponse | ResultResponse | BatchRe
 
 function send(msg: WorkerOutbound): void { postMessage(msg); }
 
+// `pipeline<T>` resolves a union across every task type that TS reports as "too
+// complex to represent" when instantiated. We only ever create a text-classification
+// pipeline, so narrow the factory to exactly that signature.
+type CreateTextClassificationPipeline = (
+    task: 'text-classification',
+    model: string,
+    options?: { revision?: string }
+) => Promise<TextClassificationPipelineType>;
+const createTextClassificationPipeline = pipeline as unknown as CreateTextClassificationPipeline;
+
 // ── Pipeline state ───────────────────────────────────────────────────────────
 
-let sentimentPipeline: Awaited<ReturnType<typeof pipeline>> | null = null;
+let sentimentPipeline: TextClassificationPipelineType | null = null;
 let currentModelId: string | null = null;
+
+/**
+ * Runs the (already-normalized) text through the text-classification pipeline and
+ * returns the mapped sentiment. `{ truncation: true }` is a defensive backstop on
+ * top of `normalizeForInference`'s 512-char cap so text can never exceed the model's
+ * 512-token limit.
+ */
+async function classify(pipe: TextClassificationPipelineType, text: string, modelId: string) {
+    // The pipeline's typed options only surface `top_k`; the tokenizer's `truncation`
+    // flag is a valid runtime option the published types omit. One narrow cast, justified.
+    const options = { truncation: true } as unknown as TextClassificationPipelineOptions;
+    const output = (await pipe(text, options)) as TextClassificationOutput;
+    return mapSentiment(output, modelId);
+}
 
 // ── Core functions ────────────────────────────────────────────────────────────
 
@@ -62,7 +92,7 @@ async function initializePipeline(modelId: string): Promise<void> {
     send({ type: 'loading', data: { modelId, status: 'Descargando modelo...' } });
 
     try {
-        sentimentPipeline = await pipeline('text-classification', modelId, { revision: 'main' });
+        sentimentPipeline = await createTextClassificationPipeline('text-classification', modelId, { revision: 'main' });
         currentModelId = modelId;
         log(`Model ready: ${modelId}`);
         send({ type: 'ready', data: { modelId } });
@@ -86,21 +116,14 @@ async function analyzeText(cardId: string, content: string): Promise<void> {
         return;
     }
 
-    const clean = prepareContent(content);
+    const clean = normalizeForInference(content);
     if (!clean) {
         send({ type: 'result', data: { cardId, sentiment: 'neutral', confidence: 0, timestamp: new Date().toISOString() } });
         return;
     }
 
     try {
-        // @xenova/transformers' pipeline() return type is a broad union across every task
-        // type (text-classification, translation, image, etc.); once cached in a variable
-        // typed via Awaited<ReturnType<typeof pipeline>> for reuse across calls, TS loses the
-        // 'text-classification' narrowing it would have from an inline literal call. The task
-        // is fixed at initialization (line 65), so this call signature is safe at runtime.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above; library type erasure, not avoidable without a much larger refactor
-        const output = await (sentimentPipeline as any)(clean);
-        const { sentiment, confidence } = mapSentiment(output, currentModelId);
+        const { sentiment, confidence } = await classify(sentimentPipeline, clean, currentModelId);
         send({ type: 'result', data: { cardId, sentiment, confidence, timestamp: new Date().toISOString() } });
     } catch (error) {
         send({ type: 'error', data: { error: error instanceof Error ? error.message : String(error), cardId } });
@@ -117,22 +140,16 @@ async function analyzeBatch(requests: { cardId: string; content: string }[]): Pr
     const results: BatchResultResponse['data']['results'] = [];
 
     for (const req of requests) {
-        const clean = prepareContent(req.content);
+        const clean = normalizeForInference(req.content);
         if (!clean) {
             results.push({ cardId: req.cardId, sentiment: 'neutral', confidence: 0, timestamp: new Date().toISOString() });
             continue;
         }
         try {
-            // @xenova/transformers' pipeline() return type is a broad union across every task
-        // type (text-classification, translation, image, etc.); once cached in a variable
-        // typed via Awaited<ReturnType<typeof pipeline>> for reuse across calls, TS loses the
-        // 'text-classification' narrowing it would have from an inline literal call. The task
-        // is fixed at initialization (line 65), so this call signature is safe at runtime.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see comment above; library type erasure, not avoidable without a much larger refactor
-        const output = await (sentimentPipeline as any)(clean);
-            const { sentiment, confidence } = mapSentiment(output, modelId);
+            const { sentiment, confidence } = await classify(sentimentPipeline, clean, modelId);
             results.push({ cardId: req.cardId, sentiment, confidence, timestamp: new Date().toISOString() });
         } catch (error) {
+            // Per-item failure ⇒ neutral/0 fallback; never aborts the batch (FR-013).
             results.push({ cardId: req.cardId, sentiment: 'neutral', confidence: 0, timestamp: new Date().toISOString() });
         }
     }

@@ -21,6 +21,9 @@ vi.mock('react-i18next', () => ({
             changeLanguage: () => new Promise(() => { }),
         },
     }),
+    // Required now that DraggableCard imports the sentiment barrel, which transitively
+    // loads constants → i18n/config (which calls `.use(initReactI18next)`).
+    initReactI18next: { type: '3rdParty', init: () => { } },
 }));
 
 // Mock language hook

@@ -11,11 +11,11 @@ import CardFooter from '@/features/boards/retrospective/components/CardFooter';
 import LikeButton from '@/features/boards/retrospective/components/LikeButton';
 import EmojiReactions from '@/features/boards/retrospective/components/EmojiReactions';
 import CardMenu from '@/features/boards/retrospective/components/CardMenu';
-import SentimentBadge from '@/features/boards/sentiment/components/SentimentBadge';
+import { SentimentBadge, useSentimentContext } from '@/features/boards/sentiment';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
-import { useSentimentContext } from '@/features/boards/sentiment/contexts/SentimentContext';
+
 import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
 import { groupReactions, hasUserLiked } from '@/lib/utils/cardHelpers';
 import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
@@ -68,10 +68,9 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
     const [isDeleting, setIsDeleting] = useState(false);
-    const { enabled, ready, getSentiment, config, overrideSentiment } = useSentimentContext();
+    const { enabled, ready, getSentiment, shouldShowBadge, overrideSentiment } = useSentimentContext();
     const { isFacilitator } = useBoardData();
     const sentimentResult = (enabled && ready) ? getSentiment(card.id) : undefined;
-    const sentimentThreshold = config.threshold;
 
     // Calculate reactions directly from card data
     const likesCount = card.likes?.length ?? 0;
@@ -158,18 +157,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const isOwner = currentUser === card.createdBy;
     const canEditCard = canEdit && isOwner;
 
-    // Sentiment badge (shown only when analysis is confident enough and not an action card).
+    // Sentiment badge — shown via the SINGLE confidence rule (F3), so a badge on the
+    // board is counted identically by the sentiment counts and the team-mood report.
     const sentimentBadge = React.useMemo(() => {
-        if (!sentimentResult || card.column === 'actions') {
-            return null;
-        }
-        const thresholds = {
-            positive: sentimentThreshold || 0.4,
-            negative: sentimentThreshold || 0.4,
-            neutral: 0.25,
-        };
-        const requiredThreshold = thresholds[sentimentResult.sentiment] || sentimentThreshold;
-        if (sentimentResult.confidence < requiredThreshold) {
+        if (!sentimentResult || card.column === 'actions' || !shouldShowBadge(sentimentResult)) {
             return null;
         }
         return (
@@ -184,7 +175,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             />
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, sentimentThreshold, isFacilitator, overrideSentiment]);
+    }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, shouldShowBadge, isFacilitator, overrideSentiment]);
 
     return (
         <AnimatePresence>

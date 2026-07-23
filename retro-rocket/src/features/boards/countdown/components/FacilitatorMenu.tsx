@@ -8,7 +8,7 @@ import {
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
 import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useSentimentContext } from '@/features/boards/sentiment/contexts/SentimentContext';
+import { useSentimentContext } from '@/features/boards/sentiment';
 import FacilitatorMenuTabs from '@/features/boards/facilitator/components/FacilitatorMenuTabs';
 import SentimentTab from '@/features/boards/facilitator/components/SentimentTab';
 import NotesTab from '@/features/boards/facilitator/components/NotesTab';

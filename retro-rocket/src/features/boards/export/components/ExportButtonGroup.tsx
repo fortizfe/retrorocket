@@ -5,7 +5,7 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
+import { useSentiment } from '@/features/boards/sentiment';
 
 interface ExportButtonGroupProps {
     retrospective: Retrospective;

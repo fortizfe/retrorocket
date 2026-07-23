@@ -1,6 +1,15 @@
 // Sentiment analysis types for RetroRocket
 
+import { isConfident } from '@/features/boards/sentiment/domain/confidence';
+
 export type SentimentType = 'positive' | 'negative' | 'neutral';
+
+/**
+ * Invalidation token for the active inference stack. Bumped whenever a change
+ * (library migration, model swap) could alter outputs, so persisted results
+ * produced by an older stack are treated as stale and re-analysed (FR-004/FR-004a).
+ */
+export const MODEL_VERSION = 'hf-transformers-3';
 
 export interface SentimentResult {
     sentiment: SentimentType;
@@ -8,6 +17,10 @@ export interface SentimentResult {
     cardId: string;
     timestamp: Date;
     modelId?: string;
+    /** Inference-stack version that produced this result (empty for overrides). */
+    modelVersion?: string;
+    /** Hash of the card text this result was produced from (F1 staleness). */
+    contentHash?: string;
     isOverride?: boolean;
 }
 
@@ -122,26 +135,12 @@ export const SENTIMENT_COLORS = {
     }
 } as const;
 
-// Utility function to determine if a sentiment badge should be shown
+/**
+ * Utility function to determine if a sentiment badge should be shown.
+ * Delegates to the single confidence predicate (F3/F7) so that a card shown on
+ * the board is counted identically by filters and the team-mood report.
+ */
 export const shouldShowSentimentBadge = (
     result: SentimentResult,
     config: SentimentConfiguration
-): boolean => {
-    if (!result || !config.thresholds) {
-        // Fallback to general threshold
-        return result.confidence >= config.threshold;
-    }
-
-    const thresholds = config.thresholds;
-
-    switch (result.sentiment) {
-        case 'positive':
-            return result.confidence >= thresholds.positive;
-        case 'negative':
-            return result.confidence >= thresholds.negative;
-        case 'neutral':
-            return result.confidence >= thresholds.neutral;
-        default:
-            return false;
-    }
-};
+): boolean => isConfident(result, config);

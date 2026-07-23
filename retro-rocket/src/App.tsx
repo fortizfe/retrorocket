@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import Layout from '@/lib/components/layout/Layout';
-import { SentimentStoreProvider } from '@/features/boards/sentiment/contexts/SentimentContext';
+import { SentimentStoreProvider } from '@/features/boards/sentiment';
 import { BoardDataStoreProvider } from '@/features/boards/retrospective/contexts/BoardDataContext';
 import NotFound from '@/pages/NotFound';
 import Loading from '@/lib/components/ui/Loading';

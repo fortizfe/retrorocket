@@ -5,11 +5,15 @@ import {
     SentimentConfiguration,
     DEFAULT_SENTIMENT_CONFIG,
     SentimentType,
+    MODEL_VERSION,
     shouldShowSentimentBadge
 } from '@/features/boards/types/sentiment';
 import { useSentimentCache } from '@/features/boards/sentiment/hooks/useSentimentCache';
 import { useWorkerManager, WorkerState } from '@/features/boards/sentiment/hooks/useWorkerManager';
 import { useSentimentResults, isAnalyzableCard } from '@/features/boards/sentiment/hooks/useSentimentResults';
+import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
+import { isFresh } from '@/features/boards/sentiment/domain/staleness';
+import { isConfident } from '@/features/boards/sentiment/domain/confidence';
 
 function dispatchInChunks(
     cards: Card[],
@@ -30,7 +34,7 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
     const [workerState, setWorkerState] = useState<WorkerState>({ ready: false, loading: false, error: undefined });
     const [config, setConfig] = useState<SentimentConfiguration>(DEFAULT_SENTIMENT_CONFIG);
 
-    const { hasChanged, markAnalyzed, scheduleAnalysis, clearAll: clearCache } = useSentimentCache();
+    const { scheduleAnalysis, clearAll: clearCache } = useSentimentCache();
     const { setHandlers, initialize, terminate, postAnalyze, postBatch } = useWorkerManager();
     const {
         applyResult,
@@ -47,14 +51,32 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
     const cardsRef = useRef(cards);
     useEffect(() => { cardsRef.current = cards; }, [cards]);
 
+    const configRef = useRef(config);
+    useEffect(() => { configRef.current = config; }, [config]);
+
+    // Tag each worker result with the card-text hash + active model identity so
+    // staleness (F1) can be evaluated on the next load without re-inference.
+    const enrich = useCallback((r: SentimentResult): SentimentResult => {
+        const content = cardsRef.current.find(c => c.id === r.cardId)?.content ?? '';
+        return {
+            ...r,
+            contentHash: hashContent(content),
+            modelId: configRef.current.modelId,
+            modelVersion: MODEL_VERSION,
+        };
+    }, []);
+
+    const handleResult = useCallback((r: SentimentResult) => applyResult(enrich(r)), [applyResult, enrich]);
+    const handleBatch = useCallback((rs: SentimentResult[]) => applyBatch(rs.map(enrich)), [applyBatch, enrich]);
+
     // Wire worker callbacks via refs — no worker recreation when callbacks change identity
     useEffect(() => {
         setHandlers(
-            applyResult,
-            applyBatch,
+            handleResult,
+            handleBatch,
             (partial) => setWorkerState(prev => ({ ...prev, ...partial }))
         );
-    }, [setHandlers, applyResult, applyBatch]);
+    }, [setHandlers, handleResult, handleBatch]);
 
     // Manage worker lifecycle: initialize when enabled, terminate when disabled
     useEffect(() => {
@@ -67,52 +89,52 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
         }
     }, [isEnabled, config.modelId, initialize, terminate, clearResults, clearCache]);
 
-    // Batch-analyze cards that haven't been analyzed yet when worker is ready or cards change
+    // A card needs (re)analysis unless a fresh (text + model) result or an override
+    // already exists — this is what makes a warm reload perform zero re-inference (SC-002).
+    const needsAnalysis = useCallback((card: Card): boolean => {
+        if (!isAnalyzableCard(card)) return false;
+        const existing = results.get(card.id);
+        if (existing?.isOverride) return false;
+        if (existing && isFresh(existing, card.content, config.modelId, MODEL_VERSION)) return false;
+        return true;
+    }, [results, config.modelId]);
+
+    // Batch-analyze cards that need analysis when worker is ready or cards change
     useEffect(() => {
         if (!workerState.ready || !isEnabled) return;
         const unanalyzed = cards.filter(c =>
-            isAnalyzableCard(c) &&
-            !processingQueue.current.has(c.id) &&
-            !results.get(c.id)?.isOverride &&
-            (hasChanged(c.id, c.content) || !results.has(c.id))
+            !processingQueue.current.has(c.id) && needsAnalysis(c)
         );
         if (unanalyzed.length === 0) return;
         const id = setTimeout(() => {
-            unanalyzed.forEach(c => {
-                processingQueue.current.add(c.id);
-                markAnalyzed(c.id, c.content);
-            });
+            unanalyzed.forEach(c => processingQueue.current.add(c.id));
             dispatchInChunks(unanalyzed, config.batchSize, postBatch);
         }, 50);
         return () => clearTimeout(id);
-    // Intentionally omit config.batchSize, hasChanged, markAnalyzed, postBatch, processingQueue
-    // — they are stable refs/callbacks; including them would cause spurious re-analysis loops.
+    // Intentionally omit config.batchSize, postBatch, processingQueue — stable refs/callbacks;
+    // including them would cause spurious re-analysis loops.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cards, workerState.ready, isEnabled, results]);
+    }, [cards, workerState.ready, isEnabled, needsAnalysis]);
 
     const analyzeCard = useCallback((card: Card) => {
-        if (!workerState.ready || !isAnalyzableCard(card)) return;
+        if (!workerState.ready) return;
         if (processingQueue.current.has(card.id)) return;
-        if (results.get(card.id)?.isOverride) return;
-        if (!hasChanged(card.id, card.content) && results.has(card.id)) return;
+        if (!needsAnalysis(card)) return;
         scheduleAnalysis(card.id, () => {
             processingQueue.current.add(card.id);
-            markAnalyzed(card.id, card.content);
             postAnalyze(card.id, card.content);
         });
-    }, [workerState.ready, processingQueue, hasChanged, results, scheduleAnalysis, markAnalyzed, postAnalyze]);
+    }, [workerState.ready, processingQueue, needsAnalysis, scheduleAnalysis, postAnalyze]);
 
     const analyzeBatch = useCallback((cardsToAnalyze: Card[]) => {
         if (!workerState.ready) return;
-        const valid = cardsToAnalyze
-            .filter(isAnalyzableCard)
-            .filter(c => !processingQueue.current.has(c.id) &&
-                !results.get(c.id)?.isOverride &&
-                (hasChanged(c.id, c.content) || !results.has(c.id)));
+        const valid = cardsToAnalyze.filter(c =>
+            !processingQueue.current.has(c.id) && needsAnalysis(c)
+        );
         if (valid.length === 0) return;
-        valid.forEach(c => { processingQueue.current.add(c.id); markAnalyzed(c.id, c.content); });
+        valid.forEach(c => processingQueue.current.add(c.id));
         dispatchInChunks(valid, config.batchSize, postBatch);
-    }, [workerState.ready, config.batchSize, processingQueue, hasChanged, results, markAnalyzed, postBatch]);
+    }, [workerState.ready, config.batchSize, processingQueue, needsAnalysis, postBatch]);
 
     const setEnabled = useCallback((enable: boolean) => {
         setIsEnabled(enable);
@@ -128,11 +150,11 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
 
     const getSentimentCounts = useCallback(() =>
         computeSentimentCounts(cardsRef.current, config),
-        [computeSentimentCounts, config.threshold, config.thresholds]);
+        [computeSentimentCounts, config]);
 
     const shouldShowBadge = useCallback((result: SentimentResult) =>
         shouldShowSentimentBadge(result, config),
-        [config.threshold, config.thresholds]);
+        [config]);
 
     const filterCardsBySentiment = useCallback((
         cardsToFilter: Card[], sentimentFilter: SentimentType | 'all'
@@ -141,9 +163,9 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
         return cardsToFilter.filter(c => {
             if (!isAnalyzableCard(c)) return false;
             const r = results.get(c.id);
-            return r !== undefined && r.confidence >= config.threshold && r.sentiment === sentimentFilter;
+            return r !== undefined && isConfident(r, config) && r.sentiment === sentimentFilter;
         });
-    }, [results, config.threshold]);
+    }, [results, config]);
 
     const isProcessing = useCallback((cardId: string) =>
         isCardProcessing(cardId), [isCardProcessing]);

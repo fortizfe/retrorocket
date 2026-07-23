@@ -13,8 +13,7 @@ import {
     Info
 } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
-import { useTeamMood } from '@/features/boards/sentiment/hooks/useTeamMood';
+import { useSentiment, useTeamMood } from '@/features/boards/sentiment';
 import { DynamicColumnConfig, getColumnRole } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
