@@ -62,3 +62,8 @@ export {
     computeMoodDistribution,
     type AdjustedDistribution,
 } from '@/features/boards/sentiment/domain/moodDistribution';
+export {
+    detectLanguage,
+    type DetectedLanguage,
+} from '@/features/boards/sentiment/domain/languageDetection';
+export { routeModel, routingEnabled } from '@/features/boards/sentiment/domain/modelRouting';

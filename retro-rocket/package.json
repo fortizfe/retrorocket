@@ -20,7 +20,8 @@
     "test:threshold": "vitest run --coverage --reporter=verbose --config vitest.config.ts",
     "emulators": "firebase emulators:start --only auth,firestore",
     "e2e": "firebase emulators:exec --only auth,firestore \"playwright test\"",
-    "test:accuracy": "RUN_ACCURACY_BENCH=1 vitest run src/test/features/boards/sentiment/accuracy.bench.test.ts --config vitest.config.ts"
+    "test:accuracy": "RUN_ACCURACY_BENCH=1 vitest run src/test/features/boards/sentiment/accuracy.bench.test.ts --config vitest.config.ts",
+    "bench:sentiment": "RUN_MODEL_EVAL=1 vitest run src/test/features/boards/sentiment/evaluation/benchmark.test.ts --config vitest.config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

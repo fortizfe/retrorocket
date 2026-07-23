@@ -41,16 +41,28 @@ vi.mock('@/features/boards/sentiment/services/sentimentResultsService', () => ({
 }));
 
 import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
-import { DEFAULT_SENTIMENT_CONFIG, MODEL_VERSION, type SentimentResult } from '@/features/boards/types/sentiment';
+import { DEFAULT_SENTIMENT_CONFIG, MODEL_VERSION, SENTIMENT_MODELS, type SentimentResult } from '@/features/boards/types/sentiment';
 import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
+import { normalizeForInference } from '@/features/boards/sentiment/domain/textNormalization';
+import { detectLanguage } from '@/features/boards/sentiment/domain/languageDetection';
+import { routeModel, routingEnabled } from '@/features/boards/sentiment/domain/modelRouting';
 import { makeCard } from '@/test/features/boards/sentiment/fixtures/cards';
 
-const MODEL = DEFAULT_SENTIMENT_CONFIG.modelId;
+// A persisted result is only "fresh" if it carries the model the card ROUTES to now.
+// Mirror the hook's routing so seeded results match the adopted language-aware config.
+const ACTIVE_IDS = DEFAULT_SENTIMENT_CONFIG.modelIds ?? [DEFAULT_SENTIMENT_CONFIG.modelId];
+const ACTIVE_CONFIGS = ACTIVE_IDS.map(id => SENTIMENT_MODELS.find(m => m.id === id)!);
+function routedModelId(content: string): string {
+    if (!routingEnabled(ACTIVE_CONFIGS)) return ACTIVE_IDS[0];
+    const clean = normalizeForInference(content);
+    if (!clean) return ACTIVE_IDS[0];
+    return routeModel(detectLanguage(clean), ACTIVE_CONFIGS);
+}
 
 function freshPersisted(cardId: string, content: string, sentiment: SentimentResult['sentiment'] = 'positive'): SentimentResult {
     return {
         cardId, sentiment, confidence: 0.9, timestamp: new Date(),
-        contentHash: hashContent(content), modelId: MODEL, modelVersion: MODEL_VERSION,
+        contentHash: hashContent(content), modelId: routedModelId(content), modelVersion: MODEL_VERSION,
     };
 }
 
