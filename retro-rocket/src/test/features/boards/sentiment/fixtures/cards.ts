@@ -85,6 +85,17 @@ export const LABELLED_CARDS: LabelledCard[] = [
         label: 'negative',
     },
 
+    // Short / informal / fragmentary — the register the current models handle worst
+    // and the main motivation for feature 013 (better-fitting, tweet-trained models).
+    { content: 'faltó tiempo', lang: 'es', label: 'negative' },
+    { content: 'reuniones eternas', lang: 'es', label: 'negative' },
+    { content: 'buen trabajo en equipo', lang: 'es', label: 'positive' },
+    { content: 'demasiados bugs', lang: 'es', label: 'negative' },
+    { content: 'great teamwork', lang: 'en', label: 'positive' },
+    { content: 'meetings too long', lang: 'en', label: 'negative' },
+    { content: 'shipped on time', lang: 'en', label: 'positive' },
+    { content: 'too many blockers', lang: 'en', label: 'negative' },
+
     // Very short (< 3 non-whitespace chars) — normalization returns null → neutral/0
     { content: 'ok', lang: 'en', label: 'neutral' },
     { content: ':)', lang: 'en', label: 'neutral' },

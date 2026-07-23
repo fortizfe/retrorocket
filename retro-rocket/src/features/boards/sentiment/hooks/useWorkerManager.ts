@@ -15,7 +15,8 @@ export interface AnalysisRequest {
 export interface UseWorkerManagerReturn {
     postAnalyze: (cardId: string, content: string) => void;
     postBatch: (requests: AnalysisRequest[]) => void;
-    initialize: (modelId: string) => void;
+    /** Loads a single model (default) or a set of models for language-aware routing. */
+    initialize: (models: string | string[]) => void;
     terminate: () => void;
     setHandlers: (
         onResult: (result: SentimentResult) => void,
@@ -58,12 +59,14 @@ export function useWorkerManager(): UseWorkerManagerReturn {
         retryCountRef.current = 0;
     }, []);
 
-    const initialize = useCallback((modelId: string) => {
-        // Skip if same model already loaded
-        if (workerRef.current && currentModelIdRef.current === modelId) return;
+    const initialize = useCallback((models: string | string[]) => {
+        const modelIds = Array.isArray(models) ? models : [models];
+        const key = modelIds.join('|');
+        // Skip if the same model set is already loaded
+        if (workerRef.current && currentModelIdRef.current === key) return;
 
         terminate();
-        currentModelIdRef.current = modelId;
+        currentModelIdRef.current = key;
 
         try {
             const worker = new Worker(
@@ -103,7 +106,7 @@ export function useWorkerManager(): UseWorkerManagerReturn {
                             const delay = 1000 * Math.pow(2, retryCountRef.current);
                             retryCountRef.current++;
                             retryTimerRef.current = setTimeout(() => {
-                                initialize(modelId);
+                                initialize(modelIds);
                             }, delay);
                         }
                         break;
@@ -120,7 +123,7 @@ export function useWorkerManager(): UseWorkerManagerReturn {
 
             workerRef.current = worker;
             onStateChangeRef.current({ loading: true, ready: false, error: undefined });
-            worker.postMessage({ id: 'init', type: 'init', data: { modelId } });
+            worker.postMessage({ id: 'init', type: 'init', data: { modelIds } });
         } catch (err) {
             onStateChangeRef.current({
                 loading: false,

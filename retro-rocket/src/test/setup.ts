@@ -165,20 +165,24 @@ vi.mock('react-router-dom', async () => {
 // Mock card interaction service
 // Note: cardInteractionService is not mocked here to allow individual tests to test the actual implementation
 
-// Mock global objects that might be needed
-Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(), // deprecated
-        removeListener: vi.fn(), // deprecated
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-    })),
-});
+// Mock global objects that might be needed. Guarded so this shared setup also loads
+// under the `node` test environment (used by the gated model-eval harness, which has
+// no `window`); behaviour under the default jsdom environment is unchanged.
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener: vi.fn(), // deprecated
+            removeListener: vi.fn(), // deprecated
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        })),
+    });
+}
 
 // Mock IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
@@ -194,15 +198,17 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
     unobserve: vi.fn(),
 }));
 
-// Console methods
-Object.defineProperty(window, 'console', {
-    value: {
-        ...console,
-        error: vi.fn(),
-        warn: vi.fn(),
-        log: vi.fn(),
-    },
-});
+// Console methods (jsdom only — under the node harness we want real console output)
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'console', {
+        value: {
+            ...console,
+            error: vi.fn(),
+            warn: vi.fn(),
+            log: vi.fn(),
+        },
+    });
+}
 
 // Polyfill for Blob.text() method that jsdom doesn't provide
 if (typeof Blob !== 'undefined' && !Blob.prototype.text) {

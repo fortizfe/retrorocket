@@ -11,6 +11,9 @@ vi.mock('@huggingface/transformers', () => ({
 import { SENTIMENT_MODELS } from '@/features/boards/types/sentiment';
 
 const MODEL = SENTIMENT_MODELS[0].id;
+const MULTI_MODEL = SENTIMENT_MODELS.find(m => m.language === 'multilingual')!.id;
+const EN_MODEL = SENTIMENT_MODELS.find(m => m.language === 'en')!.id;
+const ES_MODEL = SENTIMENT_MODELS.find(m => m.language === 'es')!.id;
 
 interface Posted { type: string; data: Record<string, unknown> }
 let posted: Posted[];
@@ -25,6 +28,7 @@ beforeEach(async () => {
     // The worker calls the bare global postMessage with a single argument.
     (globalThis as unknown as { postMessage: (m: Posted) => void }).postMessage = (m: Posted) => { posted.push(m); };
     pipeline.mockClear();
+    pipeline.mockImplementation(async () => fakePipe);
     fakePipe.mockClear();
     fakePipe.mockImplementation(async () => [{ label: 'positive', score: 0.87 }]);
     vi.resetModules();
@@ -88,5 +92,46 @@ describe('sentiment worker message protocol (F8)', () => {
     it('analyze before init → error', async () => {
         await send({ type: 'analyze', data: { cardId: 'x', content: 'some content here' } });
         expect(posted.find(p => p.type === 'error')).toBeDefined();
+    });
+
+    it('result carries the model id that classified the card', async () => {
+        await send({ type: 'init', data: { modelId: MODEL } });
+        posted = [];
+        await send({ type: 'analyze', data: { cardId: 'c1', content: 'the team did great work' } });
+        expect(posted.find(p => p.type === 'result')!.data.modelId).toBe(MODEL);
+    });
+});
+
+describe('language-aware routing (FR-008/FR-009/FR-010, SC-004)', () => {
+    const SET = [MULTI_MODEL, EN_MODEL, ES_MODEL];
+
+    it('init with a model set → ready reports every loaded id', async () => {
+        await send({ type: 'init', data: { modelIds: SET } });
+        const ready = posted.find(p => p.type === 'ready')!;
+        expect(ready.data.modelIds).toEqual(SET);
+    });
+
+    it('routes ES→ES model, EN→EN model, undetectable→multilingual (no cross-contamination)', async () => {
+        await send({ type: 'init', data: { modelIds: SET } });
+        posted = [];
+        await send({ type: 'analyze', data: { cardId: 'es', content: 'faltó tiempo y hubo muchos bloqueos' } });
+        await send({ type: 'analyze', data: { cardId: 'en', content: 'the team did great work this sprint' } });
+        await send({ type: 'analyze', data: { cardId: 'x', content: 'kubernetes docker pipeline' } });
+        const byId = Object.fromEntries(
+            posted.filter(p => p.type === 'result').map(p => [p.data.cardId, p.data.modelId])
+        );
+        expect(byId['es']).toBe(ES_MODEL);
+        expect(byId['en']).toBe(EN_MODEL);
+        expect(byId['x']).toBe(MULTI_MODEL);
+    });
+
+    it('a single route failing to load does not abort the others (FR-015)', async () => {
+        pipeline.mockImplementation(async (...a: unknown[]) => {
+            if (a[1] === EN_MODEL) throw new Error('load failed');
+            return fakePipe;
+        });
+        await send({ type: 'init', data: { modelIds: SET } });
+        const ready = posted.find(p => p.type === 'ready')!;
+        expect(ready.data.modelIds).toEqual([MULTI_MODEL, ES_MODEL]);
     });
 });
