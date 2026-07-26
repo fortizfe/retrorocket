@@ -154,3 +154,6 @@ dist
 CLAUDE.local.md
 
 # Spec Kit (.specify/ and specs/ are tracked deliverables - no local artifacts to ignore yet)
+
+# Generated backend bundle for the Vercel serverless function (see scripts/bundle-backend.mjs)
+retro-rocket/api/_backend.mjs

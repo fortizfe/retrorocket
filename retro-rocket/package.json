@@ -6,7 +6,8 @@
   "main": "src/main.tsx",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build:backend": "node scripts/bundle-backend.mjs",
+    "build": "npm run build:backend && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "type-check:server": "tsc --noEmit -p server/tsconfig.json",
@@ -83,6 +84,7 @@
     "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.0",
     "concurrently": "^10.0.4",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.5",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",

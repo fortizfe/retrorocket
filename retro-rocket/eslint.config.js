@@ -12,6 +12,8 @@ export default tseslint.config(
             'coverage/**',
             'node_modules/**',
             'e2e/**',
+            // Generated backend bundle for the Vercel function (see scripts/bundle-backend.mjs)
+            'api/_backend.mjs',
             'public/**',
             '*.config.js',
             '*.config.cjs',
