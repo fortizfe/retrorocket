@@ -26,6 +26,11 @@ function fakeAuth(existing?: FirebaseUserRecordLike): FirebaseAuthLike & { recor
     const records: FirebaseUserRecordLike[] = existing ? [existing] : [];
     return {
         records,
+        getUser: vi.fn(async (uid: string) => {
+            const found = records.find((r) => r.uid === uid);
+            if (!found) throw new NotFound();
+            return found;
+        }),
         getUserByEmail: vi.fn(async (email: string) => {
             const found = records.find((r) => r.email === email);
             if (!found) throw new NotFound();
@@ -74,6 +79,36 @@ describe('FirebaseIdentityAdapter.resolveUser', () => {
             throw new Error('network');
         });
         await expect(new FirebaseIdentityAdapter(auth).resolveUser(profile(), 'a@b.com')).rejects.toThrow('network');
+    });
+});
+
+describe('FirebaseIdentityAdapter.linkProviderToUser', () => {
+    it('attaches a provider + linked account to an existing uid regardless of email', async () => {
+        const auth = fakeAuth({ uid: 'u-1', email: 'primary@x.com', customClaims: { providers: ['google'] } });
+        const identity = await new FirebaseIdentityAdapter(auth).linkProviderToUser(
+            'u-1',
+            profile({ provider: 'github', email: 'different@github.com', providerAccountId: 'gh-99' }),
+            'different@github.com',
+        );
+        expect(identity.uid).toBe('u-1');
+        expect(identity.providers).toEqual(['google', 'github']);
+        expect(auth.setCustomUserClaims).toHaveBeenCalledWith('u-1', {
+            providers: ['google', 'github'],
+            linkedAccounts: [{ provider: 'github', providerAccountId: 'gh-99', email: 'different@github.com' }],
+        });
+    });
+
+    it('is idempotent when the provider account is already linked', async () => {
+        const auth = fakeAuth({
+            uid: 'u-1',
+            email: 'primary@x.com',
+            customClaims: { providers: ['google', 'github'], linkedAccounts: [{ provider: 'github', providerAccountId: 'gh-99', email: 'x' }] },
+        });
+        await new FirebaseIdentityAdapter(auth).linkProviderToUser('u-1', profile({ provider: 'github', providerAccountId: 'gh-99' }), 'x');
+        expect(auth.setCustomUserClaims).toHaveBeenCalledWith(
+            'u-1',
+            expect.objectContaining({ linkedAccounts: [{ provider: 'github', providerAccountId: 'gh-99', email: 'x' }] }),
+        );
     });
 });
 

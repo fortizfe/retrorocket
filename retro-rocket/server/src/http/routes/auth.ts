@@ -9,7 +9,7 @@ import type {
 } from '../../application/ports';
 import { isOAuthProvider, type OAuthProvider } from '../../domain/auth/types';
 import { AppError, NotFoundError } from '../../domain/errors';
-import { startOAuthLogin } from '../../application/use-cases/StartOAuthLogin';
+import { startOAuthLogin, startLinkProvider } from '../../application/use-cases/StartOAuthLogin';
 import { completeOAuthLogin } from '../../application/use-cases/CompleteOAuthLogin';
 import { getCurrentSession, refreshSession } from '../../application/use-cases/session';
 import { logout } from '../../application/use-cases/Logout';
@@ -64,7 +64,23 @@ export function authRouter(deps: AuthRouterDeps): Router {
         res.redirect(302, authorizationUrl);
     });
 
-    // Provider callback → establish session, redirect to the SPA (FR-014).
+    // Begin proactive provider linking for a logged-in user → 302 to the provider (FR-013).
+    router.get('/api/auth/link/:provider', async (req: Request, res: Response) => {
+        const provider = resolveProvider(deps, req.params.provider);
+        const session = await deps.sessionService.verify(readCookie(req, SESSION_COOKIE) ?? '', deps.clock.nowSeconds());
+        if (!session) {
+            return res.redirect(302, `${errorRedirect}?auth_error=unauthenticated`);
+        }
+        const { authorizationUrl, stateCookieValue } = await startLinkProvider(
+            { provider, clock: deps.clock, random: deps.random, stateCodec: deps.stateCodec },
+            { uid: session.data.sub, returnTo: firstQuery(req.query.returnTo) },
+        );
+        setOAuthStateCookie(res, stateCookieValue, deps.secure);
+        res.redirect(302, authorizationUrl);
+    });
+
+    // Provider callback → establish session, redirect to the SPA (FR-014). Handles both
+    // login and link (the stored state's linkUid selects the behaviour).
     router.get('/api/auth/callback/:provider', async (req: Request, res: Response) => {
         const provider = resolveProvider(deps, req.params.provider);
 

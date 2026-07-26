@@ -21,6 +21,11 @@ export interface OAuthProviderPort {
 export interface IdentityStorePort {
     /** Get-or-create the user by verified email, unioning the provider (FR-013). */
     resolveUser(profile: ProviderProfile, normalizedEmail: string): Promise<UserIdentity>;
+    /**
+     * Attach a provider to an already-authenticated user (proactive linking from
+     * settings), regardless of the provider email. Records the provider + account id.
+     */
+    linkProviderToUser(uid: string, profile: ProviderProfile, normalizedEmail: string): Promise<UserIdentity>;
     /** Mint a short-lived Firebase custom token for signInWithCustomToken (FR-011). */
     mintCustomToken(uid: string): Promise<string>;
 }

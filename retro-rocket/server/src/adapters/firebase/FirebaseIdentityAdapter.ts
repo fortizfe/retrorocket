@@ -16,10 +16,17 @@ export interface FirebaseUserRecordLike {
 }
 
 export interface FirebaseAuthLike {
+    getUser(uid: string): Promise<FirebaseUserRecordLike>;
     getUserByEmail(email: string): Promise<FirebaseUserRecordLike>;
     createUser(props: { email: string; displayName?: string; photoURL?: string }): Promise<FirebaseUserRecordLike>;
     setCustomUserClaims(uid: string, claims: Record<string, unknown>): Promise<void>;
     createCustomToken(uid: string, developerClaims?: Record<string, unknown>): Promise<string>;
+}
+
+interface LinkedAccount {
+    provider: OAuthProvider;
+    providerAccountId: string;
+    email: string;
 }
 
 function isUserNotFound(error: unknown): boolean {
@@ -59,6 +66,34 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
         return new UserIdentity(
             record.uid,
             normalizedEmail,
+            record.displayName ?? profile.displayName ?? null,
+            record.photoURL ?? profile.photoURL ?? null,
+            providers,
+        );
+    }
+
+    async linkProviderToUser(uid: string, profile: ProviderProfile, normalizedEmail: string): Promise<UserIdentity> {
+        const record = await this.auth.getUser(uid);
+        const claims = record.customClaims ?? {};
+
+        const existingProviders = Array.isArray(claims.providers) ? (claims.providers as OAuthProvider[]) : [];
+        const providers = existingProviders.includes(profile.provider)
+            ? existingProviders
+            : [...existingProviders, profile.provider];
+
+        const existingLinks = Array.isArray(claims.linkedAccounts) ? (claims.linkedAccounts as LinkedAccount[]) : [];
+        const alreadyLinked = existingLinks.some(
+            (l) => l.provider === profile.provider && l.providerAccountId === profile.providerAccountId,
+        );
+        const linkedAccounts = alreadyLinked
+            ? existingLinks
+            : [...existingLinks, { provider: profile.provider, providerAccountId: profile.providerAccountId, email: normalizedEmail }];
+
+        await this.auth.setCustomUserClaims(uid, { ...claims, providers, linkedAccounts });
+
+        return new UserIdentity(
+            uid,
+            record.email ?? normalizedEmail,
             record.displayName ?? profile.displayName ?? null,
             record.photoURL ?? profile.photoURL ?? null,
             providers,

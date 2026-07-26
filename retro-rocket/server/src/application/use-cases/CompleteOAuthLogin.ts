@@ -18,6 +18,8 @@ export interface CompleteOAuthLoginResult {
     customToken: string;
     user: PublicUser;
     returnTo: string;
+    /** True when this callback linked a provider to an existing session rather than logging in. */
+    isLink: boolean;
 }
 
 /**
@@ -38,11 +40,16 @@ export async function completeOAuthLogin(
 
     const profile = await deps.provider.exchangeCode(params.code, stored.data.codeVerifier);
     const email = assertVerifiedEmail(profile);
-    const identity = await deps.identityStore.resolveUser(profile, email);
+
+    const isLink = stored.data.linkUid !== null;
+    const identity = isLink
+        ? await deps.identityStore.linkProviderToUser(stored.data.linkUid!, profile, email)
+        : await deps.identityStore.resolveUser(profile, email);
     const user = identity.toPublicUser();
 
+    // Re-issue the session either way so the cookie carries the current provider list.
     const { token, session } = await deps.sessionService.issue(user, now);
     const customToken = await deps.identityStore.mintCustomToken(identity.uid);
 
-    return { sessionToken: token, session, customToken, user, returnTo: stored.data.returnTo };
+    return { sessionToken: token, session, customToken, user, returnTo: stored.data.returnTo, isLink };
 }

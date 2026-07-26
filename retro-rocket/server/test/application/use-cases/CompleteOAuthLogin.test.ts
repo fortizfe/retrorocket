@@ -49,6 +49,19 @@ describe('completeOAuthLogin', () => {
         );
     });
 
+    it('links the provider to the existing user when the state carries linkUid', async () => {
+        const codec = fakeStateCodec();
+        const cookie = await codec.encode(
+            OAuthState.create({ state: 'state-xyz', codeVerifier: 'verifier-xyz', provider: 'google', nowSeconds: NOW, returnTo: '/settings', linkUid: 'existing-uid' }),
+        );
+        const d = deps();
+        const result = await completeOAuthLogin(d, { code: 'code', state: 'state-xyz', stateCookieValue: cookie });
+        expect(result.isLink).toBe(true);
+        expect(result.returnTo).toBe('/settings');
+        expect(d.identityStore.linkProviderToUser).toHaveBeenCalledWith('existing-uid', expect.objectContaining({ provider: 'google' }), 'user@example.com');
+        expect(d.identityStore.resolveUser).not.toHaveBeenCalled();
+    });
+
     it('rejects a missing state cookie', async () => {
         await expect(
             completeOAuthLogin(deps(), { code: 'code', state: 'state-xyz', stateCookieValue: undefined }),

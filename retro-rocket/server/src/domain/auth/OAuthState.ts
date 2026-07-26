@@ -16,6 +16,8 @@ export interface OAuthStateData {
     provider: OAuthProvider;
     createdAt: number;
     returnTo: string;
+    /** When set, this is a "link a provider to an existing user" flow, not a login. */
+    linkUid: string | null;
 }
 
 /**
@@ -32,6 +34,7 @@ export class OAuthState {
         provider: OAuthProvider;
         nowSeconds: number;
         returnTo?: string;
+        linkUid?: string | null;
     }): OAuthState {
         return new OAuthState({
             state: params.state,
@@ -39,7 +42,12 @@ export class OAuthState {
             provider: params.provider,
             createdAt: params.nowSeconds,
             returnTo: sanitizeReturnTo(params.returnTo),
+            linkUid: params.linkUid ?? null,
         });
+    }
+
+    get isLink(): boolean {
+        return this.data.linkUid !== null;
     }
 
     /**

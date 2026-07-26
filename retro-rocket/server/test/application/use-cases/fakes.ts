@@ -58,6 +58,9 @@ export function fakeIdentityStore(): IdentityStorePort {
         resolveUser: vi.fn(async (profile: ProviderProfile, email: string) =>
             new UserIdentity('uid-1', email, profile.displayName, profile.photoURL, [profile.provider]),
         ),
+        linkProviderToUser: vi.fn(async (uid: string, profile: ProviderProfile, email: string) =>
+            new UserIdentity(uid, email, profile.displayName, profile.photoURL, ['google', profile.provider]),
+        ),
         mintCustomToken: vi.fn(async (uid: string) => `ct-${uid}`),
     };
 }

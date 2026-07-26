@@ -40,3 +40,31 @@ export async function startOAuthLogin(
 
     return { authorizationUrl: url.toString(), stateCookieValue };
 }
+
+/**
+ * Begins a proactive "link this provider to my account" flow for an already-authenticated
+ * user. Identical to login except the state carries the current user's uid so the callback
+ * attaches the provider to that account rather than resolving a new one.
+ */
+export async function startLinkProvider(
+    deps: StartOAuthLoginDeps,
+    params: { uid: string; returnTo?: string },
+): Promise<StartOAuthLoginResult> {
+    const now = deps.clock.nowSeconds();
+    const state = deps.random.state();
+    const codeVerifier = deps.provider.usesPKCE ? deps.random.codeVerifier() : null;
+
+    const oauthState = OAuthState.create({
+        state,
+        codeVerifier,
+        provider: deps.provider.provider,
+        nowSeconds: now,
+        returnTo: params.returnTo,
+        linkUid: params.uid,
+    });
+
+    const url = deps.provider.createAuthorizationURL(state, codeVerifier);
+    const stateCookieValue = await deps.stateCodec.encode(oauthState);
+
+    return { authorizationUrl: url.toString(), stateCookieValue };
+}
