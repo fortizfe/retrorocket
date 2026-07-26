@@ -137,13 +137,13 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 ### Tests for User Story 3 ⚠️ (write first, must fail)
 
-- [ ] T062 [P] [US3] Test env-gated `test-login` route: mounted only when `AUTH_TEST_MODE=true`, 404 otherwise in `retro-rocket/server/test/http/routes/testLogin.test.ts` (FR-016)
+- [X] T062 [P] [US3] Test env-gated `test-login` route: mounted only when `AUTH_TEST_MODE=true`, 404 otherwise in `retro-rocket/server/test/http/routes/testLogin.test.ts` (FR-016)
 - [ ] T063 [P] [US3] E2E: backend sign-in + sign-out flow (redirect/test-login) in `retro-rocket/e2e/auth.spec.ts`
 - [ ] T064 [P] [US3] E2E regression: board create, card add/vote/group, countdown, export pass under new auth in `retro-rocket/e2e/` (FR-017 / SC-003)
 
 ### Implementation for User Story 3
 
-- [ ] T065 [US3] Implement guarded `test-login` route (emulator custom token, same identity+session path) in `retro-rocket/server/src/http/routes/testLogin.ts` (make T062 pass)
+- [X] T065 [US3] Implement guarded `test-login` route (emulator custom token, same identity+session path) in `retro-rocket/server/src/http/routes/testLogin.ts` (make T062 pass)
 - [ ] T066 [US3] Update Playwright global-setup/helpers to establish sessions via `/api/auth/test-login` (replacing `__e2eSignIn`) in `retro-rocket/e2e/`
 - [ ] T067 [US3] Verify Firestore continuity: authenticated custom-token session reads/writes pass existing `firestore.rules` (`sign_in_provider == 'custom'`) — assertion in `retro-rocket/e2e/auth.spec.ts` and/or a hydration integration test
 - [ ] T068 [US3] Validate quickstart V3–V6 (session hydration, persistence/silent refresh, logout, failure states — SC-007/SC-008)

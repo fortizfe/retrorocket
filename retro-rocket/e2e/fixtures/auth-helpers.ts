@@ -4,25 +4,24 @@ export const TEST_USER_EMAIL = 'e2e-google@example.com';
 export const TEST_USER_DISPLAY_NAME = 'E2E Google User';
 
 /**
- * Drives the app's real "Continuar con Google" button against the Auth Emulator's
- * fake-IDP consent popup (email/display-name form, no real Google network call),
- * then waits for the dashboard to render. Used by every spec — this is the one
- * mechanism verified end-to-end in this codebase (see research.md §3): a pre-minted
- * custom-token bypass was tried first but the Auth Emulator does not populate
- * `email` on the resulting user until a manual reload, which the app's profile-setup
- * code requires — the real popup flow has no such gap and is what production uses.
+ * Establishes an authenticated session via the backend's emulator-only test-login
+ * endpoint (POST /api/auth/test-login, mounted when AUTH_TEST_MODE=true), then loads the
+ * app so UserContext.bootstrapSession picks up the session cookie and signs into the Auth
+ * Emulator with the returned custom token. This replaces the old fake-IDP popup: after the
+ * feature-014 refactor the real "Continuar con Google" button performs a full-page redirect
+ * to the backend OAuth flow (real Google endpoints), which the emulator cannot serve. The
+ * custom-token path that previously failed (emulator didn't populate `email` until reload)
+ * is now fine because the app reads email/providers from the backend session, not the
+ * Firebase user. `page.request` shares the browser context cookie jar with `page`.
  */
-export async function signInWithGoogle(page: Page, context: BrowserContext): Promise<void> {
+export async function signInWithGoogle(page: Page, _context: BrowserContext): Promise<void> {
+    const res = await page.request.post('/api/auth/test-login', {
+        data: { email: TEST_USER_EMAIL, displayName: TEST_USER_DISPLAY_NAME },
+    });
+    if (!res.ok()) {
+        throw new Error(`test-login failed: ${res.status()} ${await res.text()}`);
+    }
     await page.goto('/');
-    const [popup] = await Promise.all([
-        context.waitForEvent('page', { timeout: 10_000 }),
-        page.getByText('Continuar con Google', { exact: true }).click(),
-    ]);
-    await popup.waitForLoadState();
-    await popup.getByText('Add new account', { exact: true }).click();
-    await popup.locator('#email-input').fill(TEST_USER_EMAIL);
-    await popup.locator('#display-name-input').fill(TEST_USER_DISPLAY_NAME);
-    await popup.getByRole('button', { name: /Sign in with Google/i }).click();
     await page.getByText(TEST_USER_DISPLAY_NAME).waitFor({ timeout: 10_000 });
 }
 

@@ -33,6 +33,8 @@ export interface AuthRouterDeps {
     secure: boolean;
     /** Where to send the browser when a login fails (SPA sign-in surface). */
     signInErrorRedirect?: string;
+    /** Mounts the emulator-only /api/auth/test-login route. MUST be false in production. */
+    testMode?: boolean;
 }
 
 function resolveProvider(deps: AuthRouterDeps, raw: string | string[]): OAuthProviderPort {
@@ -147,6 +149,36 @@ export function authRouter(deps: AuthRouterDeps): Router {
         clearSessionCookie(res, deps.secure);
         res.status(204).end();
     });
+
+    // Emulator/E2E-only: establish a session without the external provider UI (FR-016).
+    // Mounted only when testMode is true; never available in production.
+    if (deps.testMode) {
+        router.post('/api/auth/test-login', async (req: Request, res: Response) => {
+            const email = String((req.body as { email?: unknown })?.email ?? '').trim().toLowerCase();
+            if (!email) throw new AppError('invalid_request', 'email is required', 400);
+
+            const displayName = typeof (req.body as { displayName?: unknown })?.displayName === 'string'
+                ? (req.body as { displayName: string }).displayName
+                : email.split('@')[0];
+
+            const profile = {
+                provider: 'google' as const,
+                providerAccountId: `test-${email}`,
+                email,
+                emailVerified: true,
+                displayName,
+                photoURL: null,
+            };
+            const now = deps.clock.nowSeconds();
+            const identity = await deps.identityStore.resolveUser(profile, email);
+            const user = identity.toPublicUser();
+            const { token, session } = await deps.sessionService.issue(user, now);
+            const customToken = await deps.identityStore.mintCustomToken(identity.uid);
+
+            setSessionCookie(res, token, session.cookieMaxAgeSeconds(now), deps.secure);
+            res.status(200).json({ authenticated: true, user, firebaseCustomToken: customToken });
+        });
+    }
 
     return router;
 }

@@ -58,6 +58,7 @@ export function buildAuthDeps(source: NodeJS.ProcessEnv, config: ServerConfig, l
         clock: new SystemClock(),
         random: new SystemRandom(),
         secure: config.nodeEnv === 'production',
+        testMode: config.authTestMode,
     };
 }
 
