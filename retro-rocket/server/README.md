@@ -37,7 +37,7 @@ server/src/
 
 The **domain never imports Express or Firebase** (enforced by a test in
 `test/architecture/domain-isolation.test.ts`). The Vercel serverless shell lives at
-`../api/[...path].ts` and simply delegates every `/api/*` request to the single Express
+`../api/index.ts` and simply delegates every `/api/*` request to the single Express
 app; the same app runs locally via `server/src/dev-server.ts`.
 
 ## Authentication model
