@@ -138,13 +138,13 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 ### Tests for User Story 3 ⚠️ (write first, must fail)
 
 - [X] T062 [P] [US3] Test env-gated `test-login` route: mounted only when `AUTH_TEST_MODE=true`, 404 otherwise in `retro-rocket/server/test/http/routes/testLogin.test.ts` (FR-016)
-- [ ] T063 [P] [US3] E2E: backend sign-in + sign-out flow (redirect/test-login) in `retro-rocket/e2e/auth.spec.ts`
+- [X] T063 [P] [US3] E2E: backend sign-in + sign-out flow (redirect/test-login) in `retro-rocket/e2e/auth.spec.ts`
 - [ ] T064 [P] [US3] E2E regression: board create, card add/vote/group, countdown, export pass under new auth in `retro-rocket/e2e/` (FR-017 / SC-003)
 
 ### Implementation for User Story 3
 
 - [X] T065 [US3] Implement guarded `test-login` route (emulator custom token, same identity+session path) in `retro-rocket/server/src/http/routes/testLogin.ts` (make T062 pass)
-- [ ] T066 [US3] Update Playwright global-setup/helpers to establish sessions via `/api/auth/test-login` (replacing `__e2eSignIn`) in `retro-rocket/e2e/`
+- [X] T066 [US3] Update Playwright global-setup/helpers to establish sessions via `/api/auth/test-login` (replacing `__e2eSignIn`) in `retro-rocket/e2e/`
 - [ ] T067 [US3] Verify Firestore continuity: authenticated custom-token session reads/writes pass existing `firestore.rules` (`sign_in_provider == 'custom'`) — assertion in `retro-rocket/e2e/auth.spec.ts` and/or a hydration integration test
 - [ ] T068 [US3] Validate quickstart V3–V6 (session hydration, persistence/silent refresh, logout, failure states — SC-007/SC-008)
 
@@ -154,12 +154,12 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T069 [P] Verify no provider secret / signing key in the client bundle: `grep -R "OAUTH_CLIENT_SECRET\|SESSION_SIGNING_KEY" retro-rocket/dist/` returns nothing (SC-006 / FR-018)
-- [ ] T070 [P] Confirm backend suite ≥80% coverage and the CI required check is enforced (SC-004)
-- [ ] T071 [P] Write backend README (architecture, ports/adapters, env, run/deploy) in `retro-rocket/server/README.md`
-- [ ] T072 Accessibility pass on the sign-in surface (visible focus, contrast, use-of-color) in both themes per Principle VIII
-- [ ] T073 [P] Observability review: every request logs a correlation id and emits latency/error/auth metrics; no secrets/tokens/PII in logs/traces (SC-009)
-- [ ] T074 [P] Update root `README.md`/`docs/` to describe the new backend and same-origin `/api/*` topology
+- [X] T069 [P] Verify no provider secret / signing key in the client bundle: `grep -R "OAUTH_CLIENT_SECRET\|SESSION_SIGNING_KEY" retro-rocket/dist/` returns nothing (SC-006 / FR-018)
+- [X] T070 [P] Confirm backend suite ≥80% coverage and the CI required check is enforced (SC-004)
+- [X] T071 [P] Write backend README (architecture, ports/adapters, env, run/deploy) in `retro-rocket/server/README.md`
+- [X] T072 Accessibility pass on the sign-in surface (visible focus, contrast, use-of-color) in both themes per Principle VIII
+- [X] T073 [P] Observability review: every request logs a correlation id and emits latency/error/auth metrics; no secrets/tokens/PII in logs/traces (SC-009)
+- [X] T074 [P] Update root `README.md`/`docs/` to describe the new backend and same-origin `/api/*` topology
 - [ ] T075 Run full `quickstart.md` validation end-to-end and confirm all Success Criteria (SC-001…SC-009)
 - [ ] T076 [P] Measure time-to-authenticated and assert SC-005 thresholds (≤3 s p95 warm, ≤5 s p95 including a cold serverless start) — capture warm vs cold-start timings during `vercel dev`/preview and record in the quickstart validation notes
 

@@ -79,7 +79,11 @@ follow-ups.
 - **lucide-react** for icons
 
 ### Backend & Services
-- **Firebase 10** (Firestore + Authentication)
+- **Hexagonal backend** (TypeScript + **Express 5**) served same-origin under `/api/*` as
+  Vercel serverless functions — see [`retro-rocket/server/README.md`](retro-rocket/server/README.md).
+  Authentication is orchestrated by the backend (server-side Google/GitHub OAuth, an
+  `httpOnly` session cookie, and a Firebase custom token for client-side Firestore).
+- **Firebase 10** (Firestore, still client-side + Firebase Admin on the backend)
 - **Vercel** for hosting and deployment
 
 ### Notable Libraries
