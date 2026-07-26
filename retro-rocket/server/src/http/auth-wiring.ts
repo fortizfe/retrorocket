@@ -57,7 +57,6 @@ export function buildAuthDeps(source: NodeJS.ProcessEnv, config: ServerConfig, l
         stateCodec: new JoseOAuthStateCodec(signingKey),
         clock: new SystemClock(),
         random: new SystemRandom(),
-        secure: config.nodeEnv === 'production',
         testMode: config.authTestMode,
     };
 }

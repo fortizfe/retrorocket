@@ -22,7 +22,6 @@ export function buildAuthTestApp(overrides: Partial<AuthRouterDeps> = {}): Expre
         stateCodec: fakeStateCodec(),
         clock: fixedClock(),
         random: fakeRandom(),
-        secure: false,
         ...overrides,
     };
 

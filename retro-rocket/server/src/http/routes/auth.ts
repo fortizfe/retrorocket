@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import type {
     ClockPort,
     IdentityStorePort,
@@ -29,8 +30,6 @@ export interface AuthRouterDeps {
     stateCodec: OAuthStateCodecPort;
     clock: ClockPort;
     random: RandomPort;
-    /** Set the Secure cookie flag (true in production/https). */
-    secure: boolean;
     /** Where to send the browser when a login fails (SPA sign-in surface). */
     signInErrorRedirect?: string;
     /** Mounts the emulator-only /api/auth/test-login route. MUST be false in production. */
@@ -55,6 +54,20 @@ export function authRouter(deps: AuthRouterDeps): Router {
     const router = Router();
     const errorRedirect = deps.signInErrorRedirect ?? '/';
 
+    // Throttle auth endpoints to blunt brute-force / resource-exhaustion attempts. Applied
+    // to every /api/auth/* route below. Note: serverless instances each hold their own
+    // in-memory window, so this is per-instance; Vercel's platform DDoS protection sits in
+    // front, and a shared store (e.g. Redis) can be added later for global limits.
+    const authLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        limit: 100, // per IP per window
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        // Trust-proxy/IP validations are noisy and not applicable to the serverless model.
+        validate: false,
+    });
+    router.use(authLimiter);
+
     // Begin login → 302 to the provider (FR-008).
     router.get('/api/auth/login/:provider', async (req: Request, res: Response) => {
         const provider = resolveProvider(deps, req.params.provider);
@@ -62,7 +75,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
             { provider, clock: deps.clock, random: deps.random, stateCodec: deps.stateCodec },
             { returnTo: firstQuery(req.query.returnTo) },
         );
-        setOAuthStateCookie(res, stateCookieValue, deps.secure);
+        setOAuthStateCookie(res, stateCookieValue);
         res.redirect(302, authorizationUrl);
     });
 
@@ -77,7 +90,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
             { provider, clock: deps.clock, random: deps.random, stateCodec: deps.stateCodec },
             { uid: session.data.sub, returnTo: firstQuery(req.query.returnTo) },
         );
-        setOAuthStateCookie(res, stateCookieValue, deps.secure);
+        setOAuthStateCookie(res, stateCookieValue);
         res.redirect(302, authorizationUrl);
     });
 
@@ -89,7 +102,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
         // Provider-reported error / user cancellation.
         const providerError = firstQuery(req.query.error);
         if (providerError) {
-            clearOAuthStateCookie(res, deps.secure);
+            clearOAuthStateCookie(res);
             return res.redirect(302, `${errorRedirect}?auth_error=${encodeURIComponent(providerError)}`);
         }
 
@@ -108,14 +121,14 @@ export function authRouter(deps: AuthRouterDeps): Router {
                     stateCookieValue: readCookie(req, 'rr_oauth_state'),
                 },
             );
-            clearOAuthStateCookie(res, deps.secure);
+            clearOAuthStateCookie(res);
             const maxAge = result.session.cookieMaxAgeSeconds(deps.clock.nowSeconds());
-            setSessionCookie(res, result.sessionToken, maxAge, deps.secure);
+            setSessionCookie(res, result.sessionToken, maxAge);
             return res.redirect(302, result.returnTo);
         } catch (error) {
             // In a full-page redirect flow, surface auth failures as a localized SPA state
             // rather than a raw JSON 401 (FR-015).
-            clearOAuthStateCookie(res, deps.secure);
+            clearOAuthStateCookie(res);
             const code = error instanceof AppError ? error.code : 'auth_failed';
             return res.redirect(302, `${errorRedirect}?auth_error=${encodeURIComponent(code)}`);
         }
@@ -128,7 +141,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
             readCookie(req, SESSION_COOKIE),
         );
         if (out.refreshedCookie) {
-            setSessionCookie(res, out.refreshedCookie.token, out.refreshedCookie.maxAgeSeconds, deps.secure);
+            setSessionCookie(res, out.refreshedCookie.token, out.refreshedCookie.maxAgeSeconds);
         }
         res.status(200).json(out.result);
     });
@@ -139,14 +152,14 @@ export function authRouter(deps: AuthRouterDeps): Router {
             { sessionService: deps.sessionService, identityStore: deps.identityStore, clock: deps.clock },
             readCookie(req, SESSION_COOKIE),
         );
-        setSessionCookie(res, out.refreshedCookie!.token, out.refreshedCookie!.maxAgeSeconds, deps.secure);
+        setSessionCookie(res, out.refreshedCookie!.token, out.refreshedCookie!.maxAgeSeconds);
         res.status(200).json(out.result);
     });
 
     // Terminate the session (FR-012).
     router.post('/api/auth/logout', async (req: Request, res: Response) => {
         await logout({ sessionService: deps.sessionService, clock: deps.clock }, readCookie(req, SESSION_COOKIE));
-        clearSessionCookie(res, deps.secure);
+        clearSessionCookie(res);
         res.status(204).end();
     });
 
@@ -175,7 +188,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
             const { token, session } = await deps.sessionService.issue(user, now);
             const customToken = await deps.identityStore.mintCustomToken(identity.uid);
 
-            setSessionCookie(res, token, session.cookieMaxAgeSeconds(now), deps.secure);
+            setSessionCookie(res, token, session.cookieMaxAgeSeconds(now));
             res.status(200).json({ authenticated: true, user, firebaseCustomToken: customToken });
         });
     }
