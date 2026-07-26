@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { accountLinkingService } from '@/features/auth/services/accountLinking';
 import { useUser } from '@/lib/contexts/UserContext';
 import { AuthProviderType } from '@/features/auth/types/user';
 
@@ -23,14 +22,10 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
         setError(null);
 
         try {
-            // Use providers from user profile if available, otherwise fetch from Firebase
-            if (userProfile?.providers) {
-                const providerIds = userProfile.providers.map(provider => `${provider}.com`);
-                setLinkedProviders(providerIds);
-            } else {
-                const providers = await accountLinkingService.getLinkedProviders(user.email);
-                setLinkedProviders(providers);
-            }
+            // Providers come from the user profile, which is synced from the backend session
+            // (the authoritative provider list). Mapped to Firebase-style ids for the UI.
+            const providerIds = (userProfile?.providers ?? []).map(provider => `${provider}.com`);
+            setLinkedProviders(providerIds);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error al obtener proveedores vinculados';
             setError(errorMessage);

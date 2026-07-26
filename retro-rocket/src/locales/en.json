@@ -779,6 +779,14 @@
     },
     "wrapper": {
       "verifying": "Verifying authentication..."
+    },
+    "errors": {
+      "invalid_oauth_state": "We could not verify your sign-in. Please try again.",
+      "email_not_verified": "The email on that account is not verified by the provider.",
+      "access_denied": "You cancelled the sign-in.",
+      "unauthenticated": "You must be signed in to link another provider.",
+      "auth_failed": "Sign-in could not be completed. Please try again.",
+      "generic": "An authentication error occurred. Please try again."
     }
   },
   "retrospectivePage": {

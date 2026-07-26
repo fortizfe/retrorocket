@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: RetroRocket Backend — Foundation & Auth API
+  version: 0.1.0
+  description: >
+    Same-origin backend served under /api/* on the RetroRocket Vercel project.
+    Establishes backend-orchestrated OAuth (Google/GitHub) via full-page redirect,
+    an httpOnly session cookie as the app session authority, and issues a Firebase
+    custom token so the still-client-side Firestore access keeps working.
+servers:
+  - url: /api
+    description: Same-origin path prefix (FR-002a)
+
+tags:
+  - name: system
+  - name: auth
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Liveness/readiness probe (FR-002)
+      responses:
+        "200":
+          description: Service operational
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /auth/login/{provider}:
+    get:
+      tags: [auth]
+      summary: Start backend-orchestrated OAuth (full-page redirect, FR-008)
+      description: >
+        Generates state (+PKCE), stores it in a short-lived httpOnly oauth_state
+        cookie, and 302-redirects the browser to the provider's authorize URL.
+      parameters:
+        - { name: provider, in: path, required: true, schema: { $ref: "#/components/schemas/Provider" } }
+        - name: returnTo
+          in: query
+          required: false
+          description: Same-origin relative path to return to after login (open-redirect guarded).
+          schema: { type: string, example: "/dashboard" }
+      responses:
+        "302":
+          description: Redirect to the provider authorize URL
+          headers:
+            Location: { schema: { type: string } }
+            Set-Cookie: { schema: { type: string }, description: oauth_state cookie }
+        "404":
+          description: Unknown provider
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+  /auth/callback/{provider}:
+    get:
+      tags: [auth]
+      summary: OAuth provider callback (FR-014)
+      description: >
+        Validates state against the oauth_state cookie, exchanges the code, resolves
+        the Firebase uid (account-linking by verified email), sets the session cookie,
+        and 302-redirects to the SPA authenticated.
+      parameters:
+        - { name: provider, in: path, required: true, schema: { $ref: "#/components/schemas/Provider" } }
+        - { name: code, in: query, required: false, schema: { type: string } }
+        - { name: state, in: query, required: false, schema: { type: string } }
+        - { name: error, in: query, required: false, description: Provider-reported error / user cancellation, schema: { type: string } }
+      responses:
+        "302":
+          description: >
+            Always a redirect in this full-page flow (FR-015). On success: redirect to
+            returnTo with the session cookie set. On provider error/cancel, invalid/
+            expired/forged state, or unverified email: redirect to the SPA sign-in
+            surface with `?auth_error=<code>` and NO session cookie. The error code
+            mirrors the ApiError codes (invalid_oauth_state, email_not_verified,
+            access_denied, auth_failed).
+          headers:
+            Location: { schema: { type: string } }
+            Set-Cookie: { schema: { type: string }, description: session cookie (httpOnly, Secure, SameSite=Lax) — only on success }
+
+  /auth/session:
+    get:
+      tags: [auth]
+      summary: Get current session + fresh Firebase custom token (FR-010a, FR-011)
+      description: >
+        Called by the SPA on load. If the session cookie is valid, returns the public
+        user and a short-lived Firebase custom token for signInWithCustomToken. Silently
+        rotates the session cookie when past its soft expiry but within absolute lifetime.
+      security: [ { sessionCookie: [] } ]
+      responses:
+        "200":
+          description: Authenticated (or explicitly unauthenticated) state
+          headers:
+            Set-Cookie: { schema: { type: string }, description: Rotated session cookie when refreshed }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClientAuthResult" }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Explicitly refresh the session and re-issue a custom token (FR-010a)
+      security: [ { sessionCookie: [] } ]
+      responses:
+        "200":
+          description: Session rotated within absolute lifetime
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/ClientAuthResult" } } }
+        "401":
+          description: Session absent or past absolute max lifetime → re-authenticate
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Terminate the session (FR-012)
+      security: [ { sessionCookie: [] } ]
+      responses:
+        "204":
+          description: Session cookie cleared
+          headers:
+            Set-Cookie: { schema: { type: string }, description: Expired session cookie }
+
+  /auth/test-login:
+    post:
+      tags: [auth]
+      summary: "[TEST/EMULATOR ONLY] Establish a session without the real provider UI (FR-016)"
+      description: >
+        Mounted only when AUTH_TEST_MODE=true (emulator-backed E2E/dev). Never available
+        in production. Runs the same identity + session path as a real callback.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                displayName: { type: string }
+      responses:
+        "200":
+          description: Session established (test mode)
+          headers: { Set-Cookie: { schema: { type: string } } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/ClientAuthResult" } } }
+        "404":
+          description: Not mounted (test mode disabled)
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: rr_session
+
+  schemas:
+    Provider:
+      type: string
+      enum: [google, github]
+
+    HealthStatus:
+      type: object
+      required: [status, version, time]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        version: { type: string }
+        time: { type: string, format: date-time }
+
+    PublicUser:
+      type: object
+      required: [uid, email, providers]
+      properties:
+        uid: { type: string }
+        email: { type: string, format: email }
+        displayName: { type: string, nullable: true }
+        photoURL: { type: string, nullable: true }
+        providers:
+          type: array
+          items: { $ref: "#/components/schemas/Provider" }
+
+    ClientAuthResult:
+      type: object
+      required: [authenticated]
+      properties:
+        authenticated: { type: boolean }
+        user:
+          oneOf:
+            - { $ref: "#/components/schemas/PublicUser" }
+            - { type: "null" }
+        firebaseCustomToken:
+          type: string
+          nullable: true
+          description: Short-lived; exchanged immediately via signInWithCustomToken. Never logged.
+
+    ApiError:
+      type: object
+      required: [error, correlationId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [invalid_oauth_state, email_not_verified, session_expired, unauthorized, not_found, provider_error, internal]
+            message: { type: string }
+        correlationId: { type: string }

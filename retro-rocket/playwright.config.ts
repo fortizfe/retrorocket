@@ -33,13 +33,38 @@ export default defineConfig({
             use: { ...devices['Desktop Chrome'] },
         },
     ],
-    webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        env: {
-            VITE_USE_FIREBASE_EMULATOR: 'true',
+    // Two servers: the Vite SPA and the hexagonal backend. Vite proxies /api/* to the
+    // backend (:3001), which runs with AUTH_TEST_MODE + firebase-admin pointed at the Auth
+    // Emulator so the test-login endpoint can mint custom tokens. OAuth client creds are
+    // dummy values (test-login never performs the real OAuth handshake).
+    webServer: [
+        {
+            command: 'npm run dev',
+            url: 'http://localhost:3000',
+            reuseExistingServer: !process.env.CI,
+            env: {
+                VITE_USE_FIREBASE_EMULATOR: 'true',
+            },
+            timeout: 30_000,
         },
-        timeout: 30_000,
-    },
+        {
+            command: 'npm run dev:server',
+            url: 'http://localhost:3001/api/health',
+            reuseExistingServer: !process.env.CI,
+            env: {
+                SERVER_PORT: '3001',
+                AUTH_TEST_MODE: 'true',
+                NODE_ENV: 'development',
+                FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099',
+                FIREBASE_PROJECT_ID: 'demo-retrorocket',
+                SESSION_SIGNING_KEY: 'e2e-test-signing-key-not-a-secret',
+                OAUTH_REDIRECT_BASE_URL: 'http://localhost:3000',
+                GOOGLE_OAUTH_CLIENT_ID: 'e2e-dummy',
+                GOOGLE_OAUTH_CLIENT_SECRET: 'e2e-dummy',
+                GITHUB_OAUTH_CLIENT_ID: 'e2e-dummy',
+                GITHUB_OAUTH_CLIENT_SECRET: 'e2e-dummy',
+            },
+            timeout: 30_000,
+        },
+    ],
 });

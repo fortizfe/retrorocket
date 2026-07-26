@@ -5,7 +5,7 @@ import { TOKENS, TOKEN_NAMES } from '@/lib/theme/tokens';
 
 const root = resolve(__dirname, '../../../..');
 const globalsCss = readFileSync(resolve(root, 'src/styles/globals.css'), 'utf8');
-const tailwindConfig = readFileSync(resolve(root, 'tailwind.config.js'), 'utf8');
+const tailwindConfig = readFileSync(resolve(root, 'tailwind.config.cjs'), 'utf8');
 
 /**
  * Structural parity: every token defined in tokens.ts must exist in both theme

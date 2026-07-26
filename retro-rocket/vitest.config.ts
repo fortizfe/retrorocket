@@ -11,7 +11,7 @@ export default defineConfig({
         // Playwright specs live under e2e/ and use the same *.spec.ts naming Vitest's
         // default glob would otherwise pick up — exclude them so `npm run test` stays
         // scoped to unit/integration tests (FR-001: one test runner per file, not two).
-        exclude: ['node_modules/**', 'e2e/**'],
+        exclude: ['node_modules/**', 'e2e/**', 'server/**'],
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
@@ -32,6 +32,8 @@ export default defineConfig({
                 'eslint.config.js',
                 'playwright.config.ts',
                 'e2e/**',
+                'server/**',
+                'api/**',
             ],
             // NOTE (constitution compliance audit, 2026-07-21): these thresholds were
             // previously nested under a `global` key, which is a pre-Vitest-3 schema that

@@ -12,11 +12,16 @@ export default tseslint.config(
             'coverage/**',
             'node_modules/**',
             'e2e/**',
+            // Generated backend bundle for the Vercel function (see scripts/bundle-backend.mjs)
+            'api/_backend.mjs',
             'public/**',
             '*.config.js',
+            '*.config.cjs',
             '*.config.ts',
             '.babelrc.js',
+            '.babelrc.cjs',
             'babel.config.js',
+            'babel.config.cjs',
         ],
     },
     js.configs.recommended,
@@ -71,6 +76,28 @@ export default tseslint.config(
             // Dynamic require() after vi.resetModules() is a standard Vitest pattern for
             // re-acquiring a fresh module-level singleton mid-test; not achievable with static import.
             '@typescript-eslint/no-require-imports': 'off',
+        },
+    },
+    {
+        // Backend (Node) sources: hexagonal server + Vercel serverless shell.
+        files: ['server/**/*.ts', 'api/**/*.ts'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            globals: {
+                process: 'readonly',
+                console: 'readonly',
+                URL: 'readonly',
+                URLSearchParams: 'readonly',
+                fetch: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                crypto: 'readonly',
+                Buffer: 'readonly',
+            },
+        },
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
         },
     },
 );
