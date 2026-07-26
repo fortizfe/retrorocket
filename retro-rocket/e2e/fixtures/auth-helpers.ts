@@ -23,6 +23,11 @@ export async function signInWithGoogle(page: Page, _context: BrowserContext): Pr
     }
     await page.goto('/');
     await page.getByText(TEST_USER_DISPLAY_NAME).waitFor({ timeout: 10_000 });
+    // Wait for the post-login redirect ('/' → authenticated home) to fully settle before
+    // returning. bootstrapSession does an extra /api/auth/session round-trip on load, so the
+    // redirect fires asynchronously; if a caller proceeds while it is still pending, a later
+    // page.evaluate() can hit "Execution context was destroyed" mid-navigation.
+    await page.waitForURL(/\/(mis-tableros|dashboard)/, { timeout: 10_000 });
 }
 
 /** Creates a new retrospective board from the dashboard and waits for it to load. */

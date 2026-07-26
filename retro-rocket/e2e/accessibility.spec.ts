@@ -29,6 +29,10 @@ async function forceTheme(page: Page, theme: Theme): Promise<void> {
 
 /** Apply the theme class to the live document (covers runtime switches). */
 async function applyThemeClass(page: Page, theme: Theme): Promise<void> {
+    // Ensure no navigation is mid-flight before evaluating in the page context, otherwise
+    // page.evaluate can fail with "Execution context was destroyed" if a late redirect
+    // (e.g. an async post-login/board settle) fires at this instant.
+    await page.waitForLoadState('load');
     await page.evaluate((t) => {
         document.documentElement.classList.toggle('dark', t === 'dark');
         window.localStorage.setItem('theme', t);
