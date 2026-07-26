@@ -12,7 +12,7 @@ describe('JoseSessionAdapter', () => {
 
     it('issues a verifiable token carrying the session claims', async () => {
         const { token, session } = await svc.issue(user, NOW);
-        expect(token.split('.')).toHaveLength(3);
+        expect(token.split('.')).toHaveLength(5); // JWE compact serialization (encrypted)
         const verified = await svc.verify(token, NOW);
         expect(verified?.data.sub).toBe('u1');
         expect(verified?.data.user).toEqual(user);

@@ -1,41 +1,50 @@
-import { randomUUID } from 'node:crypto';
-import { SignJWT, jwtVerify } from 'jose';
+import { createHash, randomUUID } from 'node:crypto';
+import { EncryptJWT, jwtDecrypt } from 'jose';
 import type { OAuthStateCodecPort, SessionServicePort } from '../../application/ports';
 import { Session, type SessionData } from '../../domain/auth/Session';
 import { OAuthState, type OAuthStateData } from '../../domain/auth/OAuthState';
 import type { PublicUser } from '../../domain/auth/types';
 
-const ALG = 'HS256';
+// Cookies are ENCRYPTED (JWE, dir + A256GCM), not merely signed: their payloads carry
+// PII (email/uid) and the PKCE code_verifier, so the contents must be opaque at rest, not
+// base64-readable. A 256-bit content-encryption key is derived from the signing secret.
+const ALG = 'dir';
+const ENC = 'A256GCM';
+
+function deriveKey(signingKey: string): Uint8Array {
+    // SHA-256 → exactly 32 bytes, the key size A256GCM requires for `dir`.
+    return new Uint8Array(createHash('sha256').update(signingKey).digest());
+}
 
 /**
- * Signs/verifies the app session as a stateless HS256 JWT (the backend is the session
+ * Encrypts/decrypts the app session as a stateless JWE (the backend is the session
  * authority — R5). The full SessionData is nested under a `session` claim so its own
- * `exp`/`absExp` fields never collide with the JWT's reserved `exp`, which we set to the
+ * `exp`/`absExp` fields never collide with the JWT's reserved `exp`, which is set to the
  * absolute expiry for cryptographic enforcement of the absolute lifetime.
  */
 export class JoseSessionAdapter implements SessionServicePort {
-    private readonly secret: Uint8Array;
+    private readonly key: Uint8Array;
 
     constructor(signingKey: string) {
-        this.secret = new TextEncoder().encode(signingKey);
+        this.key = deriveKey(signingKey);
     }
 
-    private sign(session: Session): Promise<string> {
-        return new SignJWT({ session: session.data })
-            .setProtectedHeader({ alg: ALG })
+    private encrypt(session: Session): Promise<string> {
+        return new EncryptJWT({ session: session.data })
+            .setProtectedHeader({ alg: ALG, enc: ENC })
             .setIssuedAt(session.data.iat)
             .setExpirationTime(session.data.absExp)
-            .sign(this.secret);
+            .encrypt(this.key);
     }
 
     async issue(user: PublicUser, nowSeconds: number): Promise<{ token: string; session: Session }> {
         const session = Session.issue(user, nowSeconds, randomUUID());
-        return { token: await this.sign(session), session };
+        return { token: await this.encrypt(session), session };
     }
 
     async verify(token: string, nowSeconds: number): Promise<Session | null> {
         try {
-            const { payload } = await jwtVerify(token, this.secret, { currentDate: new Date(nowSeconds * 1000) });
+            const { payload } = await jwtDecrypt(token, this.key, { currentDate: new Date(nowSeconds * 1000) });
             const data = payload.session as SessionData | undefined;
             if (!data || typeof data.sub !== 'string' || typeof data.absExp !== 'number') return null;
             return new Session(data);
@@ -46,29 +55,30 @@ export class JoseSessionAdapter implements SessionServicePort {
 
     async refresh(session: Session, nowSeconds: number): Promise<{ token: string; session: Session }> {
         const refreshed = session.refreshed(nowSeconds);
-        return { token: await this.sign(refreshed), session: refreshed };
+        return { token: await this.encrypt(refreshed), session: refreshed };
     }
 }
 
 /**
- * Signs/verifies the short-lived OAuth state cookie. Only integrity/authenticity is
- * enforced here; the 10-minute TTL is checked in the domain (OAuthState.assertMatches)
- * against the injected clock, keeping this adapter clock-free and deterministic.
+ * Encrypts/decrypts the short-lived OAuth state cookie (which carries the PKCE
+ * code_verifier — a secret). Confidentiality + integrity via JWE; the 10-minute TTL is
+ * checked in the domain (OAuthState.assertMatches) against the injected clock, keeping this
+ * adapter clock-free and deterministic.
  */
 export class JoseOAuthStateCodec implements OAuthStateCodecPort {
-    private readonly secret: Uint8Array;
+    private readonly key: Uint8Array;
 
     constructor(signingKey: string) {
-        this.secret = new TextEncoder().encode(signingKey);
+        this.key = deriveKey(signingKey);
     }
 
     async encode(state: OAuthState): Promise<string> {
-        return new SignJWT({ st: state.data }).setProtectedHeader({ alg: ALG }).sign(this.secret);
+        return new EncryptJWT({ st: state.data }).setProtectedHeader({ alg: ALG, enc: ENC }).encrypt(this.key);
     }
 
     async decode(cookieValue: string): Promise<OAuthState | null> {
         try {
-            const { payload } = await jwtVerify(cookieValue, this.secret);
+            const { payload } = await jwtDecrypt(cookieValue, this.key);
             const data = payload.st as OAuthStateData | undefined;
             if (!data || typeof data.state !== 'string') return null;
             return new OAuthState(data);
