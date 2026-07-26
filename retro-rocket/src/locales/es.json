@@ -791,6 +791,14 @@
     },
     "wrapper": {
       "verifying": "Verificando autenticación..."
+    },
+    "errors": {
+      "invalid_oauth_state": "No pudimos verificar tu inicio de sesión. Vuelve a intentarlo.",
+      "email_not_verified": "El correo de esa cuenta no está verificado por el proveedor.",
+      "access_denied": "Cancelaste el inicio de sesión.",
+      "unauthenticated": "Debes iniciar sesión para vincular otro proveedor.",
+      "auth_failed": "No se pudo completar el inicio de sesión. Inténtalo de nuevo.",
+      "generic": "Ocurrió un error de autenticación. Inténtalo de nuevo."
     }
   },
   "retrospectivePage": {

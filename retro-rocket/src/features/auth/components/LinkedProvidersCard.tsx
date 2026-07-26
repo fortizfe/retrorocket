@@ -2,9 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link, Shield, Check, Plus, Github } from 'lucide-react';
 import { useLinkedProviders, getProviderDisplayName } from '@/features/auth/hooks/useLinkedProviders';
-import { accountLinkingService } from '@/features/auth/services/accountLinking';
+import { startLinkProvider, type BackendProvider } from '@/features/auth/services/backendAuthClient';
 import { AuthProviderType } from '@/features/auth/types/user';
-import { useUser } from '@/lib/contexts/UserContext';
 import Button from '@/lib/components/ui/Button';
 import Card from '@/lib/components/ui/Card';
 import Loading from '@/lib/components/ui/Loading';
@@ -16,7 +15,6 @@ interface LinkedProvidersCardProps {
 
 const LinkedProvidersCard: React.FC<LinkedProvidersCardProps> = ({ className = '' }) => {
     const { linkedProviders, isLoading, error, refreshLinkedProviders } = useLinkedProviders();
-    const { refreshUserProfile } = useUser();
 
     const availableProviders: { id: AuthProviderType; name: string; icon: React.ReactNode }[] = [
         {
@@ -38,33 +36,15 @@ const LinkedProvidersCard: React.FC<LinkedProvidersCardProps> = ({ className = '
         },
     ];
 
-    const handleLinkProvider = async (providerType: AuthProviderType) => {
-        try {
-            const result = await accountLinkingService.signInWithAccountLinking(providerType);
-
-            if (result.success) {
-                if (result.wasLinked) {
-                    toast.success(result.message, {
-                        duration: 6000,
-                        style: { maxWidth: '450px' },
-                    });
-                } else {
-                    toast.success(`Proveedor ${getProviderDisplayName(providerType + '.com')} vinculado exitosamente`);
-                }
-
-                // Refresh both linked providers and user profile to update the UI
-                await Promise.all([
-                    refreshLinkedProviders(),
-                    refreshUserProfile()
-                ]);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Error al vincular proveedor';
-            toast.error(errorMessage, {
-                duration: 6000,
-                style: { maxWidth: '400px' },
-            });
+    const handleLinkProvider = (providerType: AuthProviderType) => {
+        // Linking is orchestrated by the backend (FR-013): a full-page redirect to
+        // /api/auth/link/:provider. On return, the reloaded app re-establishes the session
+        // (now including the linked provider) so the card reflects it.
+        if (providerType === 'apple') {
+            toast.error('Apple no está disponible todavía');
+            return;
         }
+        startLinkProvider(providerType as BackendProvider, window.location.pathname);
     };
 
     const getProviderIcon = (providerId: string): React.ReactNode => {

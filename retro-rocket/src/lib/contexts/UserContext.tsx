@@ -1,8 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
-import { auth, onAuthStateChanged, signOutUser } from '@/lib/services/firebase';
+import { signOutUser } from '@/lib/services/firebase';
 import { userService } from '@/features/auth/services/userService';
-import { accountLinkingService } from '@/features/auth/services/accountLinking';
+import {
+    bootstrapSession,
+    logout as backendLogout,
+    startLogin,
+    type BackendUser,
+} from '@/features/auth/services/backendAuthClient';
 import { User, UserProfile, AuthProviderType } from '@/features/auth/types/user';
 import toast from 'react-hot-toast';
 
@@ -79,140 +83,77 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         userProfile: null,
     });
 
-    const createOrUpdateUserProfile = useCallback(async (firebaseUser: FirebaseUser): Promise<UserProfile> => {
-        if (!firebaseUser.email) {
+    // Provider identity now comes from the backend session (not firebaseUser.providerData,
+    // which is empty under custom-token sign-in). This creates/updates the Firestore user
+    // profile from the backend user's authoritative provider list.
+    const createOrUpdateUserProfile = useCallback(async (backendUser: BackendUser): Promise<UserProfile> => {
+        if (!backendUser.email) {
             throw new Error('Email is required');
         }
 
-        const firebaseProviders = firebaseUser.providerData.map(provider => {
-            switch (provider.providerId) {
-                case 'google.com': return 'google';
-                case 'github.com': return 'github';
-                case 'apple.com':  return 'apple';
-                default:           return 'google';
-            }
-        }) as AuthProviderType[];
+        const providers = backendUser.providers as AuthProviderType[];
+        const existing = await userService.getUserProfile(backendUser.uid);
 
-        console.log('Firebase Auth providers for user:', firebaseProviders);
-
-        let userProfile = await userService.getUserProfile(firebaseUser.uid);
-
-        if (userProfile) {
-            const missingProviders = firebaseProviders.filter(p => !userProfile!.providers.includes(p));
-
-            if (missingProviders.length > 0) {
-                console.log('Found missing providers in Firestore, adding:', missingProviders);
-                for (const provider of missingProviders) {
-                    try {
-                        await userService.addProviderToUser(firebaseUser.uid, provider);
-                    } catch (error) {
-                        console.warn(`Failed to add provider ${provider}:`, error);
-                    }
+        if (existing) {
+            const missingProviders = providers.filter(p => !existing.providers.includes(p));
+            for (const provider of missingProviders) {
+                try {
+                    await userService.addProviderToUser(backendUser.uid, provider);
+                } catch (error) {
+                    console.warn(`Failed to add provider ${provider}:`, error);
                 }
             }
 
-            await userService.updateUserProfile(firebaseUser.uid, { updatedAt: new Date() });
+            await userService.updateUserProfile(backendUser.uid, { updatedAt: new Date() });
 
-            const latestProfile = await userService.getUserProfile(firebaseUser.uid);
-            return latestProfile || userProfile;
+            const latestProfile = await userService.getUserProfile(backendUser.uid);
+            return latestProfile || existing;
         }
 
-        const providerData = firebaseUser.providerData[0];
-        let provider: AuthProviderType = 'google';
-        if (providerData?.providerId === 'github.com') provider = 'github';
-        else if (providerData?.providerId === 'apple.com') provider = 'apple';
-
-        userProfile = await userService.createUserProfile(firebaseUser.uid, {
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'Usuario',
-            photoURL: firebaseUser.photoURL,
-            provider,
+        const primaryProvider: AuthProviderType = providers[0] ?? 'google';
+        const created = await userService.createUserProfile(backendUser.uid, {
+            email: backendUser.email,
+            displayName: backendUser.displayName ?? backendUser.email.split('@')[0] ?? 'Usuario',
+            photoURL: backendUser.photoURL,
+            provider: primaryProvider,
         });
 
-        return userProfile;
+        // Attach any providers beyond the primary (e.g. an already-linked second provider).
+        const extraProviders = providers.slice(1);
+        for (const provider of extraProviders) {
+            try {
+                await userService.addProviderToUser(backendUser.uid, provider);
+            } catch (error) {
+                console.warn(`Failed to add provider ${provider}:`, error);
+            }
+        }
+        if (extraProviders.length > 0) {
+            const latestProfile = await userService.getUserProfile(backendUser.uid);
+            return latestProfile || created;
+        }
+
+        return created;
     }, []);
 
+    // Sign-in is now a full-page redirect to the backend (FR-008/FR-009); the browser no
+    // longer performs the OAuth handshake. State is (re)established on load via bootstrap.
     const handleSignInWithGoogle = useCallback(async (): Promise<void> => {
-        try {
-            setCoreState(prev => ({ ...prev, loading: true, error: null }));
-
-            const result = await accountLinkingService.signInWithAccountLinking('google');
-
-            if (result.success && result.user) {
-                const userProfile = await createOrUpdateUserProfile(result.user);
-
-                setUserData({
-                    user: {
-                        uid: result.user.uid,
-                        email: result.user.email,
-                        displayName: userProfile.displayName,
-                        photoURL: result.user.photoURL,
-                        providers: userProfile.providers,
-                        primaryProvider: userProfile.primaryProvider,
-                        createdAt: userProfile.createdAt,
-                        updatedAt: userProfile.updatedAt,
-                    },
-                    userProfile,
-                });
-                setCoreState({ loading: false, error: null, isAuthenticated: true });
-
-                if (result.wasLinked) {
-                    toast.success(result.message, { duration: 6000, style: { maxWidth: '450px' } });
-                } else {
-                    toast.success('Inicio de sesión exitoso');
-                }
-            } else {
-                throw new Error('Error en el proceso de autenticación');
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
-            setCoreState(prev => ({ ...prev, loading: false, error: errorMessage }));
-            toast.error(errorMessage, { duration: 6000, style: { maxWidth: '400px' } });
-        }
-    }, [createOrUpdateUserProfile]);
+        startLogin('google');
+    }, []);
 
     const handleSignInWithGithub = useCallback(async (): Promise<void> => {
-        try {
-            setCoreState(prev => ({ ...prev, loading: true, error: null }));
-
-            const result = await accountLinkingService.signInWithAccountLinking('github');
-
-            if (result.success && result.user) {
-                const userProfile = await createOrUpdateUserProfile(result.user);
-
-                setUserData({
-                    user: {
-                        uid: result.user.uid,
-                        email: result.user.email,
-                        displayName: userProfile.displayName,
-                        photoURL: result.user.photoURL,
-                        providers: userProfile.providers,
-                        primaryProvider: userProfile.primaryProvider,
-                        createdAt: userProfile.createdAt,
-                        updatedAt: userProfile.updatedAt,
-                    },
-                    userProfile,
-                });
-                setCoreState({ loading: false, error: null, isAuthenticated: true });
-
-                if (result.wasLinked) {
-                    toast.success(result.message, { duration: 6000, style: { maxWidth: '450px' } });
-                } else {
-                    toast.success('Inicio de sesión exitoso');
-                }
-            } else {
-                throw new Error('Error en el proceso de autenticación');
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión con GitHub';
-            setCoreState(prev => ({ ...prev, loading: false, error: errorMessage }));
-            toast.error(errorMessage, { duration: 6000, style: { maxWidth: '400px' } });
-        }
-    }, [createOrUpdateUserProfile]);
+        startLogin('github');
+    }, []);
 
     const handleSignOut = useCallback(async (): Promise<void> => {
         try {
-            await signOutUser();
+            await backendLogout();
+            try {
+                await signOutUser();
+            } catch {
+                // Firebase may already be signed out (or unconfigured); the backend session
+                // is the authority and has been cleared.
+            }
             setUserData({ user: null, userProfile: null });
             setCoreState({ loading: false, error: null, isAuthenticated: false });
             toast.success('Sesión cerrada exitosamente');
@@ -258,23 +199,27 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
     }, [userData.user]);
 
+    // On load, ask the backend for the current session. If authenticated, bootstrapSession
+    // has already signed the client into Firebase (custom token) so Firestore keeps working;
+    // we then hydrate the Firestore profile from the backend user.
     useEffect(() => {
-        if (!auth) {
-            setCoreState(prev => ({ ...prev, loading: false }));
-            return;
-        }
+        let active = true;
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                try {
-                    const userProfile = await createOrUpdateUserProfile(firebaseUser);
+        (async () => {
+            try {
+                const session = await bootstrapSession();
+                if (!active) return;
+
+                if (session.authenticated && session.user) {
+                    const userProfile = await createOrUpdateUserProfile(session.user);
+                    if (!active) return;
 
                     setUserData({
                         user: {
-                            uid: firebaseUser.uid,
-                            email: firebaseUser.email,
+                            uid: session.user.uid,
+                            email: session.user.email,
                             displayName: userProfile.displayName,
-                            photoURL: firebaseUser.photoURL,
+                            photoURL: session.user.photoURL,
                             providers: userProfile.providers,
                             primaryProvider: userProfile.primaryProvider,
                             createdAt: userProfile.createdAt,
@@ -283,22 +228,25 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                         userProfile,
                     });
                     setCoreState({ loading: false, error: null, isAuthenticated: true });
-                } catch (error) {
-                    console.error('Error setting up user profile:', error);
+                } else {
                     setUserData({ user: null, userProfile: null });
-                    setCoreState({
-                        loading: false,
-                        error: error instanceof Error ? error.message : 'Error de autenticación',
-                        isAuthenticated: false,
-                    });
+                    setCoreState({ loading: false, error: null, isAuthenticated: false });
                 }
-            } else {
+            } catch (error) {
+                if (!active) return;
+                console.error('Error establishing session:', error);
                 setUserData({ user: null, userProfile: null });
-                setCoreState({ loading: false, error: null, isAuthenticated: false });
+                setCoreState({
+                    loading: false,
+                    error: error instanceof Error ? error.message : 'Error de autenticación',
+                    isAuthenticated: false,
+                });
             }
-        });
+        })();
 
-        return unsubscribe;
+        return () => {
+            active = false;
+        };
     }, [createOrUpdateUserProfile]);
 
     // Auth context value — only re-creates when coreState or auth handlers change

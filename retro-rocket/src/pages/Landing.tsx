@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
     Rocket, Users, Zap, Heart, Shield,
     MessageSquare, Vote, Group, FileText,
@@ -20,6 +21,20 @@ const LandingPage: React.FC = () => {
     const { signInWithGoogle, signInWithGithub, loading, user, userProfile, updateDisplayName } = useUser();
     const { t } = useLanguage();
     const [showProfileForm, setShowProfileForm] = useState(false);
+
+    // Surface backend auth failures returned as ?auth_error=<code> on the redirect back
+    // (FR-015), then clean the URL so a refresh doesn't re-show the message.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('auth_error');
+        if (!code) return;
+        const known = ['invalid_oauth_state', 'email_not_verified', 'access_denied', 'unauthenticated', 'auth_failed'];
+        const key = known.includes(code) ? code : 'generic';
+        toast.error(t(`auth.errors.${key}`), { duration: 6000, style: { maxWidth: '420px' } });
+        params.delete('auth_error');
+        const query = params.toString();
+        window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+    }, [t]);
 
     const handleProviderSignIn = async (providerId: AuthProviderType) => {
         try {
