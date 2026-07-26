@@ -2,7 +2,7 @@ import { loadConfig } from './config/env';
 import { buildApp } from './http/composition-root';
 
 // Local development entrypoint. In production the app runs as a Vercel serverless
-// function (see api/[[...path]].ts); here it listens on a port that Vite proxies
+// function (see api/[...path].ts); here it listens on a port that Vite proxies
 // /api/* to, preserving same-origin cookie semantics.
 const config = loadConfig();
 const app = buildApp();
