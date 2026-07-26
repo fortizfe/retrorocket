@@ -101,7 +101,7 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 - [X] T039 [P] [US2] Test `Logout` use case (clears session) in `retro-rocket/server/test/application/use-cases/Logout.test.ts`
 - [X] T040 [P] [US2] Contract tests for `/api/auth/login/:provider` + `/callback/:provider` (302, Set-Cookie, 401 invalid state) in `retro-rocket/server/test/http/routes/authLogin.test.ts`
 - [X] T041 [P] [US2] Contract tests for `/api/auth/session`, `/refresh`, `/logout` in `retro-rocket/server/test/http/routes/authSession.test.ts`
-- [ ] T042 [P] [US2] Test `backendAuthClient` (calls `/api/auth/*`, exchanges custom token via `signInWithCustomToken`) in `retro-rocket/src/test/features/auth/backendAuthClient.test.ts`
+- [X] T042 [P] [US2] Test `backendAuthClient` (calls `/api/auth/*`, exchanges custom token via `signInWithCustomToken`) in `retro-rocket/src/test/features/auth/backendAuthClient.test.ts`
 
 ### Implementation for User Story 2
 
@@ -118,7 +118,7 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 - [X] T053 [US2] Implement `Logout` in `retro-rocket/server/src/application/use-cases/Logout.ts`
 - [X] T054 [US2] Implement auth routes (login, callback, session, refresh, logout) with cookie handling in `retro-rocket/server/src/http/routes/auth.ts` (make T040, T041 pass)
 - [X] T055 [US2] Register auth routes and wire OAuth/identity/session adapters in `retro-rocket/server/src/http/composition-root.ts` + `app.ts`
-- [ ] T056 [US2] Implement `backendAuthClient` in `retro-rocket/src/features/auth/services/backendAuthClient.ts` (make T042 pass)
+- [X] T056 [US2] Implement `backendAuthClient` in `retro-rocket/src/features/auth/services/backendAuthClient.ts` (make T042 pass)
 - [ ] T057 [US2] Refactor sign-in trigger to full-page navigate to `/api/auth/login/:provider` (remove popup) in `retro-rocket/src/features/auth/components/AuthButtonGroup.tsx`
 - [ ] T058 [US2] Refactor `UserContext` so the backend session is the source of truth (bootstrap session + custom-token exchange on load; logout via backend) in `retro-rocket/src/lib/contexts/UserContext.tsx`
 - [ ] T059 [US2] Retire client-side OAuth handshake in `retro-rocket/src/features/auth/services/accountLinking.ts` and `authProvider.ts` (linking now server-side; update dependents)
