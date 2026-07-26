@@ -8,6 +8,15 @@ export default defineConfig({
     port: 3000,
     open: true,
     host: true,
+    // Same-origin backend in local dev: proxy /api/* to the standalone Express
+    // dev server (npm run dev:server), so first-party cookies behave as in prod
+    // where /api/* is served by Vercel functions on the same domain (FR-002a).
+    proxy: {
+      '/api': {
+        target: `http://localhost:${process.env.SERVER_PORT ?? 3001}`,
+        changeOrigin: false,
+      },
+    },
   },
   preview: {
     port: 3000,

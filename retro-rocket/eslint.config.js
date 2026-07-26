@@ -73,4 +73,26 @@ export default tseslint.config(
             '@typescript-eslint/no-require-imports': 'off',
         },
     },
+    {
+        // Backend (Node) sources: hexagonal server + Vercel serverless shell.
+        files: ['server/**/*.ts', 'api/**/*.ts'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            globals: {
+                process: 'readonly',
+                console: 'readonly',
+                URL: 'readonly',
+                URLSearchParams: 'readonly',
+                fetch: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                crypto: 'readonly',
+                Buffer: 'readonly',
+            },
+        },
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+        },
+    },
 );

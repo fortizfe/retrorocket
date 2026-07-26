@@ -1,0 +1,27 @@
+// Pure domain errors — no framework or external-service imports.
+// The hexagonal core must remain free of Express/Firebase (see architecture test).
+
+export class AppError extends Error {
+    constructor(
+        public readonly code: string,
+        message: string,
+        public readonly httpStatus: number = 400,
+    ) {
+        super(message);
+        this.name = 'AppError';
+    }
+}
+
+export class NotFoundError extends AppError {
+    constructor(message = 'Resource not found') {
+        super('not_found', message, 404);
+        this.name = 'NotFoundError';
+    }
+}
+
+export class ConfigError extends AppError {
+    constructor(message: string) {
+        super('config_error', message, 500);
+        this.name = 'ConfigError';
+    }
+}

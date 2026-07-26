@@ -22,14 +22,14 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 **Purpose**: Backend project scaffolding within the existing Vercel project.
 
-- [ ] T001 Add backend runtime deps (`express`, `firebase-admin`, `jose`, `arctic`, `cookie`) and dev types (`@types/express`, `@types/cookie`) to `retro-rocket/package.json`
-- [ ] T002 [P] Create backend TS config `retro-rocket/server/tsconfig.json` (strict, `module`/`moduleResolution` for Node 20, `outDir` isolated from the Vite build)
-- [ ] T003 [P] Create backend test config `retro-rocket/server/vitest.config.ts` (Node environment, coverage thresholds branches/functions/lines/statements = 80 per Principle VI)
-- [ ] T004 [P] Add npm scripts (`dev:server`, `dev:all`, `test:server`, `test:server:coverage`) to `retro-rocket/package.json`
-- [ ] T005 [P] Create hexagonal directory skeleton under `retro-rocket/server/src/` (`domain/auth/`, `application/ports/`, `application/use-cases/`, `adapters/`, `http/routes/`, `http/middleware/`, `config/`) with placeholder barrels
-- [ ] T006 [P] Extend ESLint to lint `retro-rocket/server/**` and `retro-rocket/api/**` in `retro-rocket/eslint.config.js`
-- [ ] T007 Update `retro-rocket/vercel.json` SPA rewrite to exclude `/api/*` (e.g. `/((?!assets/|api/).*) → /index.html`) so auth requests are not swallowed by `index.html`
-- [ ] T008 [P] Document backend env vars in `retro-rocket/.env.example` (`SESSION_SIGNING_KEY`, `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`, `OAUTH_REDIRECT_BASE_URL`, `FIREBASE_SERVICE_ACCOUNT`, `AUTH_TEST_MODE`)
+- [X] T001 Add backend runtime deps and dev types to `retro-rocket/package.json` — installed for MVP: `express`, `cookie`, `supertest`, `concurrently`, `@types/express`, `@types/cookie`, `@types/supertest`. **Deferred to US2** (not yet needed): `firebase-admin`, `jose`, `arctic`.
+- [X] T002 [P] Create backend TS config `retro-rocket/server/tsconfig.json` (strict, `module`/`moduleResolution` for Node 20, `outDir` isolated from the Vite build)
+- [X] T003 [P] Create backend test config `retro-rocket/server/vitest.config.ts` (Node environment, coverage thresholds branches/functions/lines/statements = 80 per Principle VI)
+- [X] T004 [P] Add npm scripts (`dev:server`, `dev:all`, `test:server`, `test:server:coverage`) to `retro-rocket/package.json`
+- [X] T005 [P] Create hexagonal directory skeleton under `retro-rocket/server/src/` (`domain/auth/`, `application/ports/`, `application/use-cases/`, `adapters/`, `http/routes/`, `http/middleware/`, `config/`) with placeholder barrels
+- [X] T006 [P] Extend ESLint to lint `retro-rocket/server/**` and `retro-rocket/api/**` in `retro-rocket/eslint.config.js`
+- [X] T007 Update `retro-rocket/vercel.json` SPA rewrite to exclude `/api/*` (e.g. `/((?!assets/|api/).*) → /index.html`) so auth requests are not swallowed by `index.html`
+- [X] T008 [P] Document backend env vars in `retro-rocket/.env.example` (`SESSION_SIGNING_KEY`, `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GITHUB_OAUTH_CLIENT_ID/SECRET`, `OAUTH_REDIRECT_BASE_URL`, `FIREBASE_SERVICE_ACCOUNT`, `AUTH_TEST_MODE`)
 
 ---
 
@@ -39,20 +39,20 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T009 [P] Write failing test for validated env config (fail-fast on missing/invalid) in `retro-rocket/server/test/config/env.test.ts`
-- [ ] T010 Implement fail-fast env config in `retro-rocket/server/src/config/env.ts` (make T009 pass)
-- [ ] T011 [P] Define observability ports (`LoggerPort`, `MetricsPort`, `TracerPort`) in `retro-rocket/server/src/application/ports/observability/`
-- [ ] T012 [P] Write failing test for structured logger + secret/PII redaction + correlation id in `retro-rocket/server/test/adapters/observability/logger.test.ts`
-- [ ] T013 Implement stdout-JSON Logger/Metrics/Tracer adapters with redaction in `retro-rocket/server/src/adapters/observability/` (FR-007a; make T012 pass)
-- [ ] T014 [P] Write failing test for correlation-id middleware (generates id, echoes response header) in `retro-rocket/server/test/http/middleware/correlationId.test.ts`
-- [ ] T015 Implement correlation-id middleware in `retro-rocket/server/src/http/middleware/correlationId.ts`
-- [ ] T016 [P] Write failing test for error-handler + not-found middleware (uniform `ApiError` envelope, no stack/secret leak) in `retro-rocket/server/test/http/middleware/errorHandler.test.ts`
-- [ ] T017 Implement `ApiError` envelope + error-handler + not-found middleware in `retro-rocket/server/src/http/middleware/errorHandler.ts` (FR-004)
-- [ ] T018 Implement Express app factory (mounts middleware; accepts injected routes/deps) in `retro-rocket/server/src/http/app.ts`
-- [ ] T019 Implement composition root wiring ports→adapters in `retro-rocket/server/src/http/composition-root.ts`
-- [ ] T020 Implement Vercel catch-all serverless shell delegating to the Express app in `retro-rocket/api/[[...path]].ts` (memoize heavy init at module scope for cold-start safety, FR-006)
-- [ ] T021 Implement standalone local dev-server (`:3001`) in `retro-rocket/server/src/dev-server.ts`
-- [ ] T022 Add Vite dev proxy `'/api' → 'http://localhost:3001'` in `retro-rocket/vite.config.ts` (same-origin parity, FR-002a)
+- [X] T009 [P] Write failing test for validated env config (fail-fast on missing/invalid) in `retro-rocket/server/test/config/env.test.ts`
+- [X] T010 Implement fail-fast env config in `retro-rocket/server/src/config/env.ts` (make T009 pass)
+- [X] T011 [P] Define observability ports (`LoggerPort`, `MetricsPort`, `TracerPort`) in `retro-rocket/server/src/application/ports/observability/`
+- [X] T012 [P] Write failing test for structured logger + secret/PII redaction + correlation id in `retro-rocket/server/test/adapters/observability/logger.test.ts`
+- [X] T013 Implement stdout-JSON Logger/Metrics/Tracer adapters with redaction in `retro-rocket/server/src/adapters/observability/` (FR-007a; make T012 pass)
+- [X] T014 [P] Write failing test for correlation-id middleware (generates id, echoes response header) in `retro-rocket/server/test/http/middleware/correlationId.test.ts`
+- [X] T015 Implement correlation-id middleware in `retro-rocket/server/src/http/middleware/correlationId.ts`
+- [X] T016 [P] Write failing test for error-handler + not-found middleware (uniform `ApiError` envelope, no stack/secret leak) in `retro-rocket/server/test/http/middleware/errorHandler.test.ts`
+- [X] T017 Implement `ApiError` envelope + error-handler + not-found middleware in `retro-rocket/server/src/http/middleware/errorHandler.ts` (FR-004)
+- [X] T018 Implement Express app factory (mounts middleware; accepts injected routes/deps) in `retro-rocket/server/src/http/app.ts`
+- [X] T019 Implement composition root wiring ports→adapters in `retro-rocket/server/src/http/composition-root.ts`
+- [X] T020 Implement Vercel catch-all serverless shell delegating to the Express app in `retro-rocket/api/[[...path]].ts` (memoize heavy init at module scope for cold-start safety, FR-006)
+- [X] T021 Implement standalone local dev-server (`:3001`) in `retro-rocket/server/src/dev-server.ts`
+- [X] T022 Add Vite dev proxy `'/api' → 'http://localhost:3001'` in `retro-rocket/vite.config.ts` (same-origin parity, FR-002a)
 
 **Checkpoint**: Express app boots locally and via the serverless shell; middleware, config, and observability are in place.
 
@@ -66,16 +66,16 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 ### Tests for User Story 1 ⚠️ (write first, must fail)
 
-- [ ] T023 [P] [US1] Contract test for `GET /api/health` (200, `{status,version,time}`) in `retro-rocket/server/test/http/routes/health.test.ts`
-- [ ] T024 [P] [US1] Test unknown route returns structured 404 `ApiError` (not HTML/crash) in `retro-rocket/server/test/http/routes/notFound.test.ts`
-- [ ] T025 [P] [US1] Architecture test asserting `domain/` has no `express`/`firebase-admin` imports in `retro-rocket/server/test/architecture/domain-isolation.test.ts` (Principle IV / FR-003)
+- [X] T023 [P] [US1] Contract test for `GET /api/health` (200, `{status,version,time}`) in `retro-rocket/server/test/http/routes/health.test.ts`
+- [X] T024 [P] [US1] Test unknown route returns structured 404 `ApiError` (not HTML/crash) in `retro-rocket/server/test/http/routes/notFound.test.ts`
+- [X] T025 [P] [US1] Architecture test asserting `domain/` has no `express`/`firebase-admin` imports in `retro-rocket/server/test/architecture/domain-isolation.test.ts` (Principle IV / FR-003)
 
 ### Implementation for User Story 1
 
-- [ ] T026 [US1] Implement `HealthStatus` DTO + health route in `retro-rocket/server/src/http/routes/health.ts` (make T023 pass)
-- [ ] T027 [US1] Mount health route and not-found handler in `retro-rocket/server/src/http/app.ts` (make T024 pass)
-- [ ] T028 [US1] Add backend CI step (type-check + `test:server` with coverage gate) to `.github/workflows/` and mark it a required check (Principle VI / Workflow gates)
-- [ ] T029 [US1] Validate quickstart V1 (health + structured 404) locally and verify the serverless shell via `vercel dev`, noting cold-start latency to inform SC-005 (measured in T076)
+- [X] T026 [US1] Implement `HealthStatus` DTO + health route in `retro-rocket/server/src/http/routes/health.ts` (make T023 pass)
+- [X] T027 [US1] Mount health route and not-found handler in `retro-rocket/server/src/http/app.ts` (make T024 pass)
+- [X] T028 [US1] Add backend CI step (type-check + `test:server` with coverage gate) to `.github/workflows/` and mark it a required check (Principle VI / Workflow gates)
+- [X] T029 [US1] Validate quickstart V1 (health + structured 404) locally and verify the serverless shell via `vercel dev`, noting cold-start latency to inform SC-005 (measured in T076)
 
 **Checkpoint**: The backend foundation is live, tested, and deployable — demonstrable on its own (MVP).
 

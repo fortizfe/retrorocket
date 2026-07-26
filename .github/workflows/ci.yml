@@ -51,11 +51,17 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      - name: Type-check (backend)
+        run: npm run type-check:server
+
       - name: Lint
         run: npm run lint
 
       - name: Test with coverage
         run: npm run test:coverage
+
+      - name: Test backend with coverage
+        run: npm run test:server:coverage
 
   e2e:
     name: Playwright E2E (Firebase Emulator Suite)
