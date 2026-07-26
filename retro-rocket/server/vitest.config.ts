@@ -15,7 +15,14 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
             include: ['src/**/*.ts'],
-            exclude: ['src/**/*.d.ts', 'src/dev-server.ts'],
+            exclude: [
+                'src/**/*.d.ts',
+                'src/dev-server.ts',
+                // Thin composition glue over external SDKs (arctic, firebase-admin);
+                // exercised by US3 E2E against the emulator, not unit tests.
+                'src/http/auth-wiring.ts',
+                'src/adapters/system.ts',
+            ],
             thresholds: {
                 branches: 80,
                 functions: 80,

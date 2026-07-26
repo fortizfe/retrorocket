@@ -1,13 +1,16 @@
-import express, { type Express } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import type { ServerConfig } from '../config/env';
 import type { Observability } from '../application/ports/observability';
 import { correlationId } from './middleware/correlationId';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { healthRouter } from './routes/health';
+import { authRouter, type AuthRouterDeps } from './routes/auth';
 
 export interface AppDeps {
     config: ServerConfig;
     observability: Observability;
+    /** Auth wiring; when absent (e.g. missing secrets) auth routes report a config error. */
+    authDeps?: AuthRouterDeps;
 }
 
 /**
@@ -25,7 +28,18 @@ export function createApp(deps: AppDeps): Express {
 
     // Routes
     app.use(healthRouter(config));
-    // Auth routes are mounted here in User Story 2.
+
+    if (deps.authDeps) {
+        app.use(authRouter(deps.authDeps));
+    } else {
+        // Misconfigured: keep health alive but make auth failures explicit rather than 404.
+        app.use('/api/auth', (_req: Request, res: Response) => {
+            res.status(503).json({
+                error: { code: 'config_error', message: 'Authentication is not configured on this deployment' },
+                correlationId: String(res.locals.correlationId ?? 'unknown'),
+            });
+        });
+    }
 
     // Terminal handlers
     app.use(notFoundHandler());

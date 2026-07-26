@@ -67,14 +67,15 @@ paths:
       responses:
         "302":
           description: >
-            On success, redirect to returnTo with the session cookie set.
-            On provider error/cancel, redirect to the SPA sign-in surface with a safe error flag.
+            Always a redirect in this full-page flow (FR-015). On success: redirect to
+            returnTo with the session cookie set. On provider error/cancel, invalid/
+            expired/forged state, or unverified email: redirect to the SPA sign-in
+            surface with `?auth_error=<code>` and NO session cookie. The error code
+            mirrors the ApiError codes (invalid_oauth_state, email_not_verified,
+            access_denied, auth_failed).
           headers:
             Location: { schema: { type: string } }
-            Set-Cookie: { schema: { type: string }, description: session cookie (httpOnly, Secure, SameSite=Lax) }
-        "401":
-          description: Invalid/expired/forged state, or unverified email
-          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+            Set-Cookie: { schema: { type: string }, description: session cookie (httpOnly, Secure, SameSite=Lax) — only on success }
 
   /auth/session:
     get:

@@ -22,7 +22,7 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 **Purpose**: Backend project scaffolding within the existing Vercel project.
 
-- [X] T001 Add backend runtime deps and dev types to `retro-rocket/package.json` — installed for MVP: `express`, `cookie`, `supertest`, `concurrently`, `@types/express`, `@types/cookie`, `@types/supertest`. **Deferred to US2** (not yet needed): `firebase-admin`, `jose`, `arctic`.
+- [X] T001 Add backend runtime deps and dev types to `retro-rocket/package.json` — `express`, `firebase-admin`, `jose`, `arctic` (runtime); `supertest`, `concurrently`, `@types/express`, `@types/supertest` (dev). (The `cookie` package was dropped — its installed major had a non-standard API; Express's native `res.cookie`/`res.clearCookie` + a small request-cookie parser are used instead.)
 - [X] T002 [P] Create backend TS config `retro-rocket/server/tsconfig.json` (strict, `module`/`moduleResolution` for Node 20, `outDir` isolated from the Vite build)
 - [X] T003 [P] Create backend test config `retro-rocket/server/vitest.config.ts` (Node environment, coverage thresholds branches/functions/lines/statements = 80 per Principle VI)
 - [X] T004 [P] Add npm scripts (`dev:server`, `dev:all`, `test:server`, `test:server:coverage`) to `retro-rocket/package.json`
@@ -89,35 +89,35 @@ Vercel project root is `retro-rocket/`. Backend lives in `retro-rocket/server/` 
 
 ### Tests for User Story 2 ⚠️ (write first, must fail)
 
-- [ ] T030 [P] [US2] Test `UserIdentity` domain rules (verified-email requirement, provider set-union) in `retro-rocket/server/test/domain/auth/UserIdentity.test.ts`
-- [ ] T031 [P] [US2] Test `Session` value object + state transitions (`exp`/`absExp`, refresh keeps `absExp`) in `retro-rocket/server/test/domain/auth/Session.test.ts`
-- [ ] T032 [P] [US2] Test `OAuthState` (state match, PKCE, `returnTo` same-origin guard, TTL) in `retro-rocket/server/test/domain/auth/OAuthState.test.ts`
-- [ ] T033 [P] [US2] Test `JoseSessionAdapter` (sign/verify/refresh, reject tampered/expired) in `retro-rocket/server/test/adapters/session/JoseSessionAdapter.test.ts`
-- [ ] T034 [P] [US2] Test `FirebaseIdentityAdapter` against the Auth emulator (get-or-create by email, link second provider to same uid, mint custom token) in `retro-rocket/server/test/adapters/firebase/FirebaseIdentityAdapter.test.ts`
-- [ ] T035 [P] [US2] Test Google + GitHub OAuth adapters (authorize URL, code exchange, profile mapping) with mocked HTTP in `retro-rocket/server/test/adapters/oauth/`
-- [ ] T036 [P] [US2] Test `StartOAuthLogin` use case (issues state cookie + redirect URL) in `retro-rocket/server/test/application/use-cases/StartOAuthLogin.test.ts`
-- [ ] T037 [P] [US2] Test `CompleteOAuthLogin` use case (state validation, linking, session+token issuance, `EmailNotVerifiedError`) in `retro-rocket/server/test/application/use-cases/CompleteOAuthLogin.test.ts`
-- [ ] T038 [P] [US2] Test `GetCurrentSession` + `RefreshSession` (silent refresh, `absExp` boundary → 401) in `retro-rocket/server/test/application/use-cases/session.test.ts`
-- [ ] T039 [P] [US2] Test `Logout` use case (clears session) in `retro-rocket/server/test/application/use-cases/Logout.test.ts`
-- [ ] T040 [P] [US2] Contract tests for `/api/auth/login/:provider` + `/callback/:provider` (302, Set-Cookie, 401 invalid state) in `retro-rocket/server/test/http/routes/authLogin.test.ts`
-- [ ] T041 [P] [US2] Contract tests for `/api/auth/session`, `/refresh`, `/logout` in `retro-rocket/server/test/http/routes/authSession.test.ts`
+- [X] T030 [P] [US2] Test `UserIdentity` domain rules (verified-email requirement, provider set-union) in `retro-rocket/server/test/domain/auth/UserIdentity.test.ts`
+- [X] T031 [P] [US2] Test `Session` value object + state transitions (`exp`/`absExp`, refresh keeps `absExp`) in `retro-rocket/server/test/domain/auth/Session.test.ts`
+- [X] T032 [P] [US2] Test `OAuthState` (state match, PKCE, `returnTo` same-origin guard, TTL) in `retro-rocket/server/test/domain/auth/OAuthState.test.ts`
+- [X] T033 [P] [US2] Test `JoseSessionAdapter` (sign/verify/refresh, reject tampered/expired) in `retro-rocket/server/test/adapters/session/JoseSessionAdapter.test.ts`
+- [X] T034 [P] [US2] Test `FirebaseIdentityAdapter` against the Auth emulator (get-or-create by email, link second provider to same uid, mint custom token) in `retro-rocket/server/test/adapters/firebase/FirebaseIdentityAdapter.test.ts`
+- [X] T035 [P] [US2] Test Google + GitHub OAuth adapters (authorize URL, code exchange, profile mapping) with mocked HTTP in `retro-rocket/server/test/adapters/oauth/`
+- [X] T036 [P] [US2] Test `StartOAuthLogin` use case (issues state cookie + redirect URL) in `retro-rocket/server/test/application/use-cases/StartOAuthLogin.test.ts`
+- [X] T037 [P] [US2] Test `CompleteOAuthLogin` use case (state validation, linking, session+token issuance, `EmailNotVerifiedError`) in `retro-rocket/server/test/application/use-cases/CompleteOAuthLogin.test.ts`
+- [X] T038 [P] [US2] Test `GetCurrentSession` + `RefreshSession` (silent refresh, `absExp` boundary → 401) in `retro-rocket/server/test/application/use-cases/session.test.ts`
+- [X] T039 [P] [US2] Test `Logout` use case (clears session) in `retro-rocket/server/test/application/use-cases/Logout.test.ts`
+- [X] T040 [P] [US2] Contract tests for `/api/auth/login/:provider` + `/callback/:provider` (302, Set-Cookie, 401 invalid state) in `retro-rocket/server/test/http/routes/authLogin.test.ts`
+- [X] T041 [P] [US2] Contract tests for `/api/auth/session`, `/refresh`, `/logout` in `retro-rocket/server/test/http/routes/authSession.test.ts`
 - [ ] T042 [P] [US2] Test `backendAuthClient` (calls `/api/auth/*`, exchanges custom token via `signInWithCustomToken`) in `retro-rocket/src/test/features/auth/backendAuthClient.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T043 [P] [US2] Implement `UserIdentity` domain entity in `retro-rocket/server/src/domain/auth/UserIdentity.ts`
-- [ ] T044 [P] [US2] Implement `Session` value object in `retro-rocket/server/src/domain/auth/Session.ts`
-- [ ] T045 [P] [US2] Implement `OAuthState` value object in `retro-rocket/server/src/domain/auth/OAuthState.ts`
-- [ ] T046 [P] [US2] Define ports `OAuthProviderPort`, `IdentityStorePort`, `SessionServicePort`, `ClockPort` in `retro-rocket/server/src/application/ports/`
-- [ ] T047 [US2] Implement `JoseSessionAdapter` in `retro-rocket/server/src/adapters/session/JoseSessionAdapter.ts` (make T033 pass)
-- [ ] T048 [US2] Implement `FirebaseIdentityAdapter` in `retro-rocket/server/src/adapters/firebase/FirebaseIdentityAdapter.ts` (make T034 pass)
-- [ ] T049 [US2] Implement `GoogleOAuthAdapter` + `GithubOAuthAdapter` (via `arctic`) in `retro-rocket/server/src/adapters/oauth/` (make T035 pass)
-- [ ] T050 [US2] Implement `StartOAuthLogin` in `retro-rocket/server/src/application/use-cases/StartOAuthLogin.ts`
-- [ ] T051 [US2] Implement `CompleteOAuthLogin` (linking + session + custom token) in `retro-rocket/server/src/application/use-cases/CompleteOAuthLogin.ts`
-- [ ] T052 [US2] Implement `GetCurrentSession` + `RefreshSession` in `retro-rocket/server/src/application/use-cases/` (make T038 pass)
-- [ ] T053 [US2] Implement `Logout` in `retro-rocket/server/src/application/use-cases/Logout.ts`
-- [ ] T054 [US2] Implement auth routes (login, callback, session, refresh, logout) with cookie handling in `retro-rocket/server/src/http/routes/auth.ts` (make T040, T041 pass)
-- [ ] T055 [US2] Register auth routes and wire OAuth/identity/session adapters in `retro-rocket/server/src/http/composition-root.ts` + `app.ts`
+- [X] T043 [P] [US2] Implement `UserIdentity` domain entity in `retro-rocket/server/src/domain/auth/UserIdentity.ts`
+- [X] T044 [P] [US2] Implement `Session` value object in `retro-rocket/server/src/domain/auth/Session.ts`
+- [X] T045 [P] [US2] Implement `OAuthState` value object in `retro-rocket/server/src/domain/auth/OAuthState.ts`
+- [X] T046 [P] [US2] Define ports `OAuthProviderPort`, `IdentityStorePort`, `SessionServicePort`, `ClockPort` in `retro-rocket/server/src/application/ports/`
+- [X] T047 [US2] Implement `JoseSessionAdapter` in `retro-rocket/server/src/adapters/session/JoseSessionAdapter.ts` (make T033 pass)
+- [X] T048 [US2] Implement `FirebaseIdentityAdapter` in `retro-rocket/server/src/adapters/firebase/FirebaseIdentityAdapter.ts` (make T034 pass)
+- [X] T049 [US2] Implement `GoogleOAuthAdapter` + `GithubOAuthAdapter` (via `arctic`) in `retro-rocket/server/src/adapters/oauth/` (make T035 pass)
+- [X] T050 [US2] Implement `StartOAuthLogin` in `retro-rocket/server/src/application/use-cases/StartOAuthLogin.ts`
+- [X] T051 [US2] Implement `CompleteOAuthLogin` (linking + session + custom token) in `retro-rocket/server/src/application/use-cases/CompleteOAuthLogin.ts`
+- [X] T052 [US2] Implement `GetCurrentSession` + `RefreshSession` in `retro-rocket/server/src/application/use-cases/` (make T038 pass)
+- [X] T053 [US2] Implement `Logout` in `retro-rocket/server/src/application/use-cases/Logout.ts`
+- [X] T054 [US2] Implement auth routes (login, callback, session, refresh, logout) with cookie handling in `retro-rocket/server/src/http/routes/auth.ts` (make T040, T041 pass)
+- [X] T055 [US2] Register auth routes and wire OAuth/identity/session adapters in `retro-rocket/server/src/http/composition-root.ts` + `app.ts`
 - [ ] T056 [US2] Implement `backendAuthClient` in `retro-rocket/src/features/auth/services/backendAuthClient.ts` (make T042 pass)
 - [ ] T057 [US2] Refactor sign-in trigger to full-page navigate to `/api/auth/login/:provider` (remove popup) in `retro-rocket/src/features/auth/components/AuthButtonGroup.tsx`
 - [ ] T058 [US2] Refactor `UserContext` so the backend session is the source of truth (bootstrap session + custom-token exchange on load; logout via backend) in `retro-rocket/src/lib/contexts/UserContext.tsx`
