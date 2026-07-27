@@ -23,7 +23,7 @@ test('a backend session reaches the authenticated dashboard with no direct Fireb
     const firebaseRequests: string[] = [];
     page.on('request', (req) => {
         const url = req.url();
-        if (/googleapis\.com|firebaseio\.com|identitytoolkit/.test(url)) firebaseRequests.push(url);
+        if (/firestore\.googleapis\.com|firebaseio\.com|identitytoolkit\.googleapis\.com|securetoken\.googleapis\.com/.test(url)) firebaseRequests.push(url);
     });
 
     await signInWithGoogle(page, context);

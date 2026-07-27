@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { CardGroup, Card, GroupSuggestion, Reaction } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
@@ -73,13 +73,13 @@ export const useCardGroups = ({ retrospectiveId, cards, currentUser }: UseCardGr
         }
     }, [retrospectiveId, rawGroupsData]);
 
-    const groups = rawGroups.map((group) => {
+    const groups = useMemo(() => rawGroups.map((group) => {
         const groupCards = cards.filter((card) => card.id === group.headCardId || group.memberCardIds.includes(card.id));
         return withAggregations(group, groupCards);
-    });
+    }), [rawGroups, cards]);
 
-    const groupedCards = cards.filter((card) => card.groupId);
-    const ungroupedCards = cards.filter((card) => !card.groupId);
+    const groupedCards = useMemo(() => cards.filter((card) => card.groupId), [cards]);
+    const ungroupedCards = useMemo(() => cards.filter((card) => !card.groupId), [cards]);
 
     const createGroup = useCallback(async (
         headCardId: string,

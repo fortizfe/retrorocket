@@ -55,7 +55,10 @@ export const useOptimizedCards = (retrospectiveId?: string): UseOptimizedCardsRe
         try {
             setError(null);
             const created = await cardsApi.createCard(cardInput);
-            setCards((prev) => [...prev, created]);
+            // The board's SSE `cards` push can race this response and already have
+            // delivered the same card (Firestore's listener firing before this POST's
+            // response finishes its round trip) — dedupe by id to avoid double-adding it.
+            setCards((prev) => (prev.some((c) => c.id === created.id) ? prev : [...prev, created]));
             return created.id;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Error creating card';
