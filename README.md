@@ -71,6 +71,14 @@ follow-ups.
   retrospective's own facilitator — the same rule already applied to PDF/DOCX export.
 - **Strictly read-only**: nothing exposed through the connector can create, edit, or
   delete anything in Firestore. See [MCP Connector](#-mcp-connector-for-ai-assistants-1) below.
+- **Step-by-step user guide**: see [`docs/mcp-guia-usuario.md`](docs/mcp-guia-usuario.md)
+  for how to connect, what the assistant can do, and how to revoke access.
+
+### 🏗️ Backend Architecture
+- **Own hexagonal backend**: RetroRocket is no longer just a Firestore-backed SPA —
+  it now ships a dedicated **hexagonal backend** that orchestrates authentication,
+  session, and the MCP connector, served same-origin under `/api/*` (see
+  [Backend & Services](#backend--services) below for the technical detail).
 
 ### 🎨 Experience
 - Clean, modern UI with smooth **Framer Motion** animations.
@@ -262,6 +270,10 @@ from your retrospectives, without manually exporting and uploading files.
    - `get_retrospective_detail` — cards, groupings, likes/reactions, participants,
      sentiment results, and action items for one retrospective.
    - `get_retrospective_summary` — a structured, report-ready summary of the same data.
+
+For detailed, step-by-step instructions — including connecting from claude.ai and
+Claude Code, and revoking access — see the
+[**MCP user guide**](docs/mcp-guia-usuario.md).
 
 ### Managing and revoking access
 
