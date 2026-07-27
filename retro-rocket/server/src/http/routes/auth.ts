@@ -14,6 +14,7 @@ import { startOAuthLogin, startLinkProvider } from '../../application/use-cases/
 import { completeOAuthLogin } from '../../application/use-cases/CompleteOAuthLogin';
 import { getCurrentSession, refreshSession } from '../../application/use-cases/session';
 import { logout } from '../../application/use-cases/Logout';
+import { updateDisplayName } from '../../application/use-cases/UpdateDisplayName';
 import {
     SESSION_COOKIE,
     clearOAuthStateCookie,
@@ -142,10 +143,10 @@ export function authRouter(deps: AuthRouterDeps): Router {
         }
     });
 
-    // Current session + fresh custom token for the SPA (FR-010a, FR-011).
+    // Current session for the SPA (FR-010a). No Firebase custom token (feature 017).
     router.get('/api/auth/session', async (req: Request, res: Response) => {
         const out = await getCurrentSession(
-            { sessionService: deps.sessionService, identityStore: deps.identityStore, clock: deps.clock },
+            { sessionService: deps.sessionService, clock: deps.clock },
             readCookie(req, SESSION_COOKIE),
         );
         if (out.refreshedCookie) {
@@ -157,7 +158,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
     // Explicit refresh (FR-010a). Throws SessionExpiredError → 401 via the error handler.
     router.post('/api/auth/refresh', async (req: Request, res: Response) => {
         const out = await refreshSession(
-            { sessionService: deps.sessionService, identityStore: deps.identityStore, clock: deps.clock },
+            { sessionService: deps.sessionService, clock: deps.clock },
             readCookie(req, SESSION_COOKIE),
         );
         setSessionCookie(res, out.refreshedCookie!.token, out.refreshedCookie!.maxAgeSeconds);
@@ -169,6 +170,21 @@ export function authRouter(deps: AuthRouterDeps): Router {
         await logout({ sessionService: deps.sessionService, clock: deps.clock }, readCookie(req, SESSION_COOKIE));
         clearSessionCookie(res);
         res.status(204).end();
+    });
+
+    // Update the editable display name (feature 017 US1 — replaces the frontend's direct
+    // Firestore `userService.updateUserProfile` write).
+    router.patch('/api/auth/profile', async (req: Request, res: Response) => {
+        const session = await deps.sessionService.verify(readCookie(req, SESSION_COOKIE) ?? '', deps.clock.nowSeconds());
+        if (!session) throw new AppError('unauthenticated', 'Sign-in required', 401);
+
+        const body = req.body as { displayName?: unknown };
+        const out = await updateDisplayName(
+            { identityStore: deps.identityStore, sessionService: deps.sessionService, clock: deps.clock },
+            { uid: session.data.sub, displayName: String(body.displayName ?? '') },
+        );
+        setSessionCookie(res, out.refreshedCookie.token, out.refreshedCookie.maxAgeSeconds);
+        res.status(200).json({ authenticated: true, user: out.user });
     });
 
     // Emulator/E2E-only: establish a session without the external provider UI (FR-016).
@@ -194,10 +210,9 @@ export function authRouter(deps: AuthRouterDeps): Router {
             const identity = await deps.identityStore.resolveUser(profile, email);
             const user = identity.toPublicUser();
             const { token, session } = await deps.sessionService.issue(user, now);
-            const customToken = await deps.identityStore.mintCustomToken(identity.uid);
 
             setSessionCookie(res, token, session.cookieMaxAgeSeconds(now));
-            res.status(200).json({ authenticated: true, user, firebaseCustomToken: customToken });
+            res.status(200).json({ authenticated: true, user });
         });
     }
 

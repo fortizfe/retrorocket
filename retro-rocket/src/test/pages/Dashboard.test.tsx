@@ -46,25 +46,16 @@ vi.mock('@/lib/contexts/UserContext', () => ({
 }));
 
 // Mock services
-vi.mock('@/features/auth/services/userService', () => ({
-    userService: {
-        getUserBoards: vi.fn(() => Promise.resolve([])),
-    },
+vi.mock('@/features/boards/retrospective/services/boardsApiClient', () => ({
+    listBoards: vi.fn(() => Promise.resolve([])),
+    deleteBoard: vi.fn(),
+    createBoard: vi.fn(),
+    getBoard: vi.fn(),
+    renameBoard: vi.fn(),
 }));
 
-const mockCreateRetrospective = vi.fn(() => Promise.resolve({ id: 'new-board-id' }));
-vi.mock('@/features/boards/retrospective/hooks/useRetrospective', () => ({
-    useRetrospective: () => ({
-        createRetrospective: mockCreateRetrospective,
-    }),
-}));
-
-vi.mock('@/features/boards/participants/services/participantService', () => ({
-    addParticipant: vi.fn(),
-}));
-
-vi.mock('@/features/boards/retrospective/services/retrospectiveService', () => ({
-    incrementParticipantCount: vi.fn(),
+vi.mock('@/features/boards/participants/services/participantsApiClient', () => ({
+    joinBoard: vi.fn(),
 }));
 
 // Mock components
@@ -216,12 +207,12 @@ describe('DashboardPage', () => {
     });
 
     it('loads user boards on mount', async () => {
-        const { userService } = await import('@/features/auth/services/userService');
+        const { listBoards } = await import('@/features/boards/retrospective/services/boardsApiClient');
 
         renderWithProviders(<DashboardPage />);
 
         await waitFor(() => {
-            expect(userService.getUserBoards).toHaveBeenCalledWith(mockUser.uid);
+            expect(listBoards).toHaveBeenCalled();
         });
     });
 

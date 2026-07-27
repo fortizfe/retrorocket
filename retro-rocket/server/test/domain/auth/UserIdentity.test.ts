@@ -18,16 +18,31 @@ function profile(overrides: Partial<ProviderProfile> = {}): ProviderProfile {
     };
 }
 
+const CREATED_AT = '2026-01-01T00:00:00.000Z';
+
 describe('UserIdentity', () => {
     it('adds a provider as a set-union without duplicates', () => {
-        const id = new UserIdentity('u1', 'a@b.com', 'A', null, ['google']);
+        const id = new UserIdentity('u1', 'a@b.com', 'A', null, ['google'], 'google', CREATED_AT);
         expect(id.withProvider('github').providers).toEqual(['google', 'github']);
         expect(id.withProvider('google')).toBe(id); // unchanged, same instance
     });
 
+    it('preserves primaryProvider when a second provider is added', () => {
+        const id = new UserIdentity('u1', 'a@b.com', 'A', null, ['google'], 'google', CREATED_AT);
+        expect(id.withProvider('github').primaryProvider).toBe('google');
+    });
+
     it('projects to a PublicUser without extra fields', () => {
-        const pub = new UserIdentity('u1', 'a@b.com', 'A', 'p.png', ['google']).toPublicUser();
-        expect(pub).toEqual({ uid: 'u1', email: 'a@b.com', displayName: 'A', photoURL: 'p.png', providers: ['google'] });
+        const pub = new UserIdentity('u1', 'a@b.com', 'A', 'p.png', ['google'], 'google', CREATED_AT).toPublicUser();
+        expect(pub).toEqual({
+            uid: 'u1',
+            email: 'a@b.com',
+            displayName: 'A',
+            photoURL: 'p.png',
+            providers: ['google'],
+            primaryProvider: 'google',
+            createdAt: CREATED_AT,
+        });
     });
 });
 

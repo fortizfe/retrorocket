@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * E2E specs run against the real app (real Firebase SDK calls) wired to the local
- * Firebase Emulator Suite via VITE_USE_FIREBASE_EMULATOR — never a production or
- * cloud staging project (see spec.md Clarifications, 2026-07-21).
+ * E2E specs run against the real app. The frontend itself no longer talks to Firebase
+ * directly at all (feature 017) — every Firestore/Auth interaction happens through the
+ * backend's Admin SDK, which is wired to the local Firebase Emulator Suite (never a
+ * production or cloud staging project, see spec.md Clarifications, 2026-07-21).
  */
 export default defineConfig({
     testDir: './e2e',
@@ -35,16 +36,17 @@ export default defineConfig({
     ],
     // Two servers: the Vite SPA and the hexagonal backend. Vite proxies /api/* to the
     // backend (:3001), which runs with AUTH_TEST_MODE + firebase-admin pointed at the Auth
-    // Emulator so the test-login endpoint can mint custom tokens. OAuth client creds are
+    // Emulator so the test-login endpoint can resolve/create the test user's Firebase Auth
+    // record and custom claims (identityStore.resolveUser — see routes/auth.ts). The Auth
+    // Emulator is still required here even though the frontend no longer talks to Firebase
+    // Auth directly (research.md §7 anticipated dropping it, but the backend's own
+    // test-login flow depends on it independently of the frontend). OAuth client creds are
     // dummy values (test-login never performs the real OAuth handshake).
     webServer: [
         {
             command: 'npm run dev',
             url: 'http://localhost:3000',
             reuseExistingServer: !process.env.CI,
-            env: {
-                VITE_USE_FIREBASE_EMULATOR: 'true',
-            },
             timeout: 30_000,
         },
         {

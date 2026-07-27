@@ -43,13 +43,6 @@ vi.mock('@/features/boards/participants/components/index', () => ({
     ))
 }));
 
-vi.mock('@/features/boards/participants/hooks/useEnrichedParticipants', () => ({
-    useEnrichedParticipants: vi.fn((participants: Participant[]) => ({
-        enrichedParticipants: participants.map(p => ({ ...p, photoURL: `https://example.com/${p.id}.jpg` })),
-        loading: false
-    }))
-}));
-
 describe('ResponsiveParticipantDisplay', () => {
     const mockParticipants: Participant[] = [
         {

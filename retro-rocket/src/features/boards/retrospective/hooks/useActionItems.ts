@@ -1,120 +1,81 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ActionItem, ActionItemsState, CreateActionItemInput } from '@/features/boards/types/actionItem';
-import { ActionItemsService } from '@/features/boards/retrospective/services/actionItemsService';
+import { useState, useCallback, useMemo } from 'react';
+import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
+import { ActionItem, CreateActionItemInput } from '@/features/boards/types/actionItem';
+import * as actionItemsApi from '@/features/boards/retrospective/services/actionItemsApiClient';
 
+/**
+ * Backend-mediated replacement for actionItemsService.ts's direct Firestore access
+ * (feature 017 US3). Called from within RetrospectiveBoard's tree, so it consumes the
+ * single shared SSE connection via BoardEventsProvider rather than opening its own.
+ */
 export function useActionItems(retrospectiveId: string) {
-    const [state, setState] = useState<ActionItemsState>({
-        actionItems: [],
-        loading: false,
-        error: null
-    });
+    const [error, setError] = useState<string | null>(null);
+    const { snapshot } = useBoardEventsContext();
 
-    // Crear nuevo elemento de acción
+    const actionItems: ActionItem[] = useMemo(() => {
+        const raw = snapshot?.actionItems;
+        return raw ? actionItemsApi.parseActionItemsSnapshot(raw as never) : [];
+    }, [snapshot?.actionItems]);
+
+    const loading = !!retrospectiveId && snapshot === null;
+
     const createActionItem = useCallback(async (actionItemInput: CreateActionItemInput) => {
         if (!actionItemInput.content.trim()) return;
 
-        setState(prev => ({ ...prev, loading: true, error: null }));
-
+        setError(null);
         try {
-            await ActionItemsService.createActionItem(actionItemInput);
-            // Los elementos se actualizarán automáticamente por la suscripción
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                loading: false,
-                error: error instanceof Error ? error.message : 'Error al crear elemento de acción'
-            }));
+            await actionItemsApi.createActionItem(retrospectiveId, {
+                content: actionItemInput.content,
+                assignedTo: actionItemInput.assignedTo,
+                assignedToName: actionItemInput.assignedToName,
+                dueDate: actionItemInput.dueDate,
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al crear elemento de acción');
         }
-    }, []);
+    }, [retrospectiveId]);
 
-    // Actualizar elemento de acción existente
     const updateActionItem = useCallback(async (actionItemId: string, updates: Partial<ActionItem>) => {
-        setState(prev => ({ ...prev, loading: true, error: null }));
-
+        setError(null);
         try {
-            await ActionItemsService.updateActionItem(actionItemId, updates);
-            // Los elementos se actualizarán automáticamente por la suscripción
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                loading: false,
-                error: error instanceof Error ? error.message : 'Error al actualizar elemento de acción'
-            }));
+            await actionItemsApi.updateActionItem(retrospectiveId, actionItemId, updates);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al actualizar elemento de acción');
         }
-    }, []);
+    }, [retrospectiveId]);
 
-    // Eliminar elemento de acción
     const deleteActionItem = useCallback(async (actionItemId: string) => {
-        setState(prev => ({ ...prev, loading: true, error: null }));
-
+        setError(null);
         try {
-            await ActionItemsService.deleteActionItem(actionItemId);
-            // Los elementos se actualizarán automáticamente por la suscripción
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                loading: false,
-                error: error instanceof Error ? error.message : 'Error al eliminar elemento de acción'
-            }));
+            await actionItemsApi.deleteActionItem(retrospectiveId, actionItemId);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al eliminar elemento de acción');
         }
-    }, []);
+    }, [retrospectiveId]);
 
-    // Convertir tarjeta a elemento de acción
     const convertCardToActionItem = useCallback(async (
         cardContent: string,
-        facilitatorId: string,
+        _facilitatorId: string,
         assignedTo?: string,
         assignedToName?: string,
         dueDate?: Date | null
     ) => {
-        setState(prev => ({ ...prev, loading: true, error: null }));
-
+        setError(null);
         try {
-            await ActionItemsService.convertCardToActionItem(
-                cardContent,
-                retrospectiveId,
-                facilitatorId,
-                assignedTo,
-                assignedToName,
-                dueDate
-            );
-            // Los elementos se actualizarán automáticamente por la suscripción
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                loading: false,
-                error: error instanceof Error ? error.message : 'Error al convertir tarjeta en elemento de acción'
-            }));
+            await actionItemsApi.convertCardToActionItem(retrospectiveId, cardContent, assignedTo, assignedToName, dueDate);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error al convertir tarjeta en elemento de acción');
         }
     }, [retrospectiveId]);
 
-    // Limpiar error
     const clearError = useCallback(() => {
-        setState(prev => ({ ...prev, error: null }));
+        setError(null);
     }, []);
 
-    // Suscribirse a cambios en los elementos de acción
-    useEffect(() => {
-        if (!retrospectiveId) return;
-
-        setState(prev => ({ ...prev, loading: true, error: null }));
-
-        const unsubscribe = ActionItemsService.subscribeToActionItems(
-            retrospectiveId,
-            (actionItems: ActionItem[]) => {
-                setState({
-                    actionItems,
-                    loading: false,
-                    error: null
-                });
-            }
-        );
-
-        return unsubscribe;
-    }, [retrospectiveId]);
-
     return {
-        ...state,
+        actionItems,
+        loading,
+        error,
         createActionItem,
         updateActionItem,
         deleteActionItem,

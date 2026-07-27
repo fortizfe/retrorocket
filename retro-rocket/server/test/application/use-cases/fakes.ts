@@ -53,15 +53,19 @@ export function fakeStateCodec(): OAuthStateCodecPort {
     };
 }
 
+export const FAKE_CREATED_AT = '2026-01-01T00:00:00.000Z';
+
 export function fakeIdentityStore(): IdentityStorePort {
     return {
         resolveUser: vi.fn(async (profile: ProviderProfile, email: string) =>
-            new UserIdentity('uid-1', email, profile.displayName, profile.photoURL, [profile.provider]),
+            new UserIdentity('uid-1', email, profile.displayName, profile.photoURL, [profile.provider], profile.provider, FAKE_CREATED_AT),
         ),
         linkProviderToUser: vi.fn(async (uid: string, profile: ProviderProfile, email: string) =>
-            new UserIdentity(uid, email, profile.displayName, profile.photoURL, ['google', profile.provider]),
+            new UserIdentity(uid, email, profile.displayName, profile.photoURL, ['google', profile.provider], 'google', FAKE_CREATED_AT),
         ),
-        mintCustomToken: vi.fn(async (uid: string) => `ct-${uid}`),
+        updateDisplayName: vi.fn(async (uid: string, displayName: string) =>
+            new UserIdentity(uid, 'a@b.com', displayName, null, ['google'], 'google', FAKE_CREATED_AT),
+        ),
     };
 }
 

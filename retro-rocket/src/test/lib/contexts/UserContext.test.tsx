@@ -10,61 +10,40 @@ import {
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/services/firebase', () => ({
-    signOutUser: vi.fn().mockResolvedValue(undefined),
-}));
-
 const mockBootstrapSession = vi.fn();
+const mockFetchSession = vi.fn();
 const mockLogout = vi.fn().mockResolvedValue(undefined);
 const mockStartLogin = vi.fn();
+const mockUpdateDisplayName = vi.fn();
 
 vi.mock('@/features/auth/services/backendAuthClient', () => ({
     bootstrapSession: (...args: unknown[]) => mockBootstrapSession(...args),
+    fetchSession: (...args: unknown[]) => mockFetchSession(...args),
     logout: (...args: unknown[]) => mockLogout(...args),
     startLogin: (...args: unknown[]) => mockStartLogin(...args),
-}));
-
-const mockGetUserProfile = vi.fn();
-const mockCreateUserProfile = vi.fn();
-const mockUpdateUserProfile = vi.fn();
-const mockAddProviderToUser = vi.fn();
-
-vi.mock('@/features/auth/services/userService', () => ({
-    userService: {
-        getUserProfile: (...args: unknown[]) => mockGetUserProfile(...args),
-        createUserProfile: (...args: unknown[]) => mockCreateUserProfile(...args),
-        updateUserProfile: (...args: unknown[]) => mockUpdateUserProfile(...args),
-        addProviderToUser: (...args: unknown[]) => mockAddProviderToUser(...args),
-    },
+    updateDisplayName: (...args: unknown[]) => mockUpdateDisplayName(...args),
 }));
 
 vi.mock('react-hot-toast', () => ({
     default: { success: vi.fn(), error: vi.fn() },
 }));
 
-import { signOutUser } from '@/lib/services/firebase';
-
-const backendUser = { uid: 'uid-123', email: 'test@example.com', displayName: 'Test User', photoURL: null, providers: ['google'] as const };
-
-const mockUserProfile = {
+const backendUser = {
     uid: 'uid-123',
     email: 'test@example.com',
     displayName: 'Test User',
     photoURL: null,
-    providers: ['google' as const],
+    providers: ['google'] as const,
     primaryProvider: 'google' as const,
-    joinedBoards: [],
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    createdAt: '2024-01-01T00:00:00.000Z',
 };
 
 const wrapper = ({ children }: { children: React.ReactNode }) => <UserProvider>{children}</UserProvider>;
 
 beforeEach(() => {
     vi.clearAllMocks();
-    mockBootstrapSession.mockResolvedValue({ authenticated: false, user: null, firebaseCustomToken: null });
+    mockBootstrapSession.mockResolvedValue({ authenticated: false, user: null });
     mockLogout.mockResolvedValue(undefined);
-    vi.mocked(signOutUser).mockResolvedValue(undefined);
 });
 
 describe('UserProvider bootstrap', () => {
@@ -75,44 +54,25 @@ describe('UserProvider bootstrap', () => {
         expect(result.current.user).toBeNull();
     });
 
-    it('creates a profile and authenticates when the backend session is valid', async () => {
-        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null); // no existing profile
-        mockCreateUserProfile.mockResolvedValue(mockUserProfile);
+    it('authenticates directly from the backend session, with no separate profile fetch', async () => {
+        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser });
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-        expect(mockCreateUserProfile).toHaveBeenCalledWith('uid-123', expect.objectContaining({ email: 'test@example.com', provider: 'google' }));
         expect(result.current.user?.uid).toBe('uid-123');
         expect(result.current.user?.providers).toEqual(['google']);
+        expect(result.current.user?.primaryProvider).toBe('google');
+        expect(result.current.userProfile?.displayName).toBe('Test User');
     });
 
-    it('adds providers missing from an existing profile (backend is authoritative)', async () => {
-        mockBootstrapSession.mockResolvedValue({
-            authenticated: true,
-            user: { ...backendUser, providers: ['google', 'github'] },
-            firebaseCustomToken: 'ct',
-        });
-        mockGetUserProfile
-            .mockResolvedValueOnce(mockUserProfile) // existing has only google
-            .mockResolvedValueOnce({ ...mockUserProfile, providers: ['google', 'github'] }); // after add
-
-        const { result } = renderHook(() => useUser(), { wrapper });
-        await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
-
-        expect(mockAddProviderToUser).toHaveBeenCalledWith('uid-123', 'github');
-    });
-
-    it('surfaces an error state when profile setup fails', async () => {
-        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null);
-        mockCreateUserProfile.mockRejectedValue(new Error('firestore down'));
+    it('surfaces an error state when session bootstrap fails', async () => {
+        mockBootstrapSession.mockRejectedValue(new Error('backend down'));
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.error).toBe('firestore down');
+        expect(result.current.error).toBe('backend down');
     });
 });
 
@@ -128,10 +88,8 @@ describe('sign-in and sign-out', () => {
         expect(mockStartLogin).toHaveBeenCalledWith('github');
     });
 
-    it('signOut clears the backend session, signs out Firebase, and resets state', async () => {
-        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null);
-        mockCreateUserProfile.mockResolvedValue(mockUserProfile);
+    it('signOut clears the backend session and resets state', async () => {
+        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser });
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
@@ -139,9 +97,23 @@ describe('sign-in and sign-out', () => {
         await act(async () => { await result.current.signOut(); });
 
         expect(mockLogout).toHaveBeenCalled();
-        expect(signOutUser).toHaveBeenCalled();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.user).toBeNull();
+    });
+});
+
+describe('updateDisplayName', () => {
+    it('calls the backend and updates local state from the returned session', async () => {
+        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser });
+        mockUpdateDisplayName.mockResolvedValue({ authenticated: true, user: { ...backendUser, displayName: 'New Name' } });
+
+        const { result } = renderHook(() => useUser(), { wrapper });
+        await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+        await act(async () => { await result.current.updateDisplayName('New Name'); });
+
+        expect(mockUpdateDisplayName).toHaveBeenCalledWith('New Name');
+        expect(result.current.userProfile?.displayName).toBe('New Name');
     });
 });
 

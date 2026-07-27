@@ -52,22 +52,11 @@ vi.mock('@/lib/utils/constants', () => ({
     }
 }));
 
-// Mock hooks with default implementations
-vi.mock('@/features/boards/retrospective/hooks/useCards', () => ({
-    useCards: () => ({
-        cards: [],
-        cardsByColumn: { 'helped': [], 'hindered': [], 'improve': [] },
-        loading: false,
-        error: null,
-        createCard: vi.fn(),
-        updateCard: vi.fn(),
-        deleteCard: vi.fn(),
-        voteCard: vi.fn(),
-        toggleLike: vi.fn(),
-        addReaction: vi.fn(),
-        removeReaction: vi.fn(),
-        reorderCards: vi.fn()
-    })
+// Single shared SSE connection provider (feature 017) — mocked to a passthrough so tests
+// don't need a real EventSource/backend.
+vi.mock('@/features/boards/retrospective/contexts/BoardEventsProvider', () => ({
+    BoardEventsProvider: ({ children }: any) => <div data-testid="board-events-provider">{children}</div>,
+    useBoardEventsContext: () => ({ snapshot: null, connectionState: 'connected' }),
 }));
 
 // Mock the optimized cards hook that's actually being used

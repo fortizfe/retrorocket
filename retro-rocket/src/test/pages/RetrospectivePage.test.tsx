@@ -30,12 +30,6 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({ t: (key: string) => key, language: 'es' }),
 }));
 
-vi.mock('@/lib/services/OptimizedRetrospectiveService', () => ({
-    OptimizedRetrospectiveService: {
-        incrementParticipantCount: vi.fn().mockResolvedValue(undefined),
-    },
-}));
-
 vi.mock('@/features/boards/retrospective/components/RetrospectiveBoard', () => ({
     default: () => <div data-testid="retrospective-board" />,
 }));
@@ -84,7 +78,6 @@ vi.mock('react-hot-toast', () => ({
 import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
 import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
-import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 
 const mockUseRetrospective = vi.mocked(useRetrospective);
 const mockUseParticipants = vi.mocked(useParticipants);
@@ -187,11 +180,7 @@ describe('RetrospectivePage', () => {
         await renderPage();
 
         await waitFor(() => {
-            expect(mockAddParticipant).toHaveBeenCalledWith({
-                name: 'Alice',
-                userId: 'user-1',
-                retrospectiveId: 'retro-42',
-            });
+            expect(mockAddParticipant).toHaveBeenCalledWith();
         });
     });
 
@@ -205,26 +194,14 @@ describe('RetrospectivePage', () => {
         });
     });
 
-    it('increments participant count only for new participants', async () => {
+    it('calls addParticipant with no arguments for both new and returning participants (join is a single atomic backend call — no separate increment step exists to double-count)', async () => {
         mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
         setupMocks();
         await renderPage();
 
         await waitFor(() => {
-            expect(OptimizedRetrospectiveService.incrementParticipantCount).toHaveBeenCalledWith('retro-42');
+            expect(mockAddParticipant).toHaveBeenCalledWith();
         });
-    });
-
-    it('does not increment participant count for returning participants', async () => {
-        mockAddParticipant.mockResolvedValue({ id: 'p-old', isNew: false });
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(mockAddParticipant).toHaveBeenCalled();
-        });
-
-        expect(OptimizedRetrospectiveService.incrementParticipantCount).not.toHaveBeenCalled();
     });
 
     it('renders RetrospectiveBoard after joining', async () => {

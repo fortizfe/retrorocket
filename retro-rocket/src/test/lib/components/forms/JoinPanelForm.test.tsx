@@ -140,11 +140,7 @@ describe('JoinPanelForm', () => {
             await user.click(button);
 
             await waitFor(() => {
-                expect(mockAddParticipant).toHaveBeenCalledWith({
-                    name: 'John Doe',
-                    userId: 'test-user-id',
-                    retrospectiveId: 'test-retro-id'
-                });
+                expect(mockAddParticipant).toHaveBeenCalledWith();
             });
         });
 
@@ -184,11 +180,7 @@ describe('JoinPanelForm', () => {
             await user.click(screen.getByRole('button', { name: 'Unirse al panel' }));
 
             await waitFor(() => {
-                expect(mockAddParticipant).toHaveBeenCalledWith({
-                    name: 'John Doe',
-                    userId: 'test-user-id',
-                    retrospectiveId: 'test-retro-id'
-                });
+                expect(mockAddParticipant).toHaveBeenCalledWith();
             });
         });
 
@@ -413,11 +405,7 @@ describe('JoinPanelForm', () => {
             await user.click(screen.getByRole('button', { name: 'Unirse al panel' }));
 
             await waitFor(() => {
-                expect(mockAddParticipant).toHaveBeenCalledWith({
-                    name: 'John Doe',
-                    userId: 'test-user-id',
-                    retrospectiveId: 'custom-retro-id'
-                });
+                expect(mockAddParticipant).toHaveBeenCalledWith();
             });
         });
 
@@ -460,11 +448,7 @@ describe('JoinPanelForm', () => {
             await user.click(screen.getByRole('button', { name: 'Unirse al panel' }));
 
             await waitFor(() => {
-                expect(mockAddParticipant).toHaveBeenCalledWith({
-                    name: 'Jane Doe',
-                    userId: 'different-user-id',
-                    retrospectiveId: 'test-retro-id'
-                });
+                expect(mockAddParticipant).toHaveBeenCalledWith();
             });
         });
 

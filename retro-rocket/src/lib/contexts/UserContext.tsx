@@ -1,13 +1,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
-import { signOutUser } from '@/lib/services/firebase';
-import { userService } from '@/features/auth/services/userService';
 import {
     bootstrapSession,
+    fetchSession,
     logout as backendLogout,
     startLogin,
+    updateDisplayName as backendUpdateDisplayName,
     type BackendUser,
 } from '@/features/auth/services/backendAuthClient';
-import { User, UserProfile, AuthProviderType } from '@/features/auth/types/user';
+import { User, UserProfile } from '@/features/auth/types/user';
 import toast from 'react-hot-toast';
 
 // ─── Focused context types ────────────────────────────────────────────────────
@@ -69,6 +69,39 @@ interface UserProviderProps {
     children: ReactNode;
 }
 
+/**
+ * The backend session response is now the sole source of identity (feature 017): uid,
+ * email, displayName, photoURL, providers, primaryProvider, and createdAt all come from
+ * Firebase Auth via the backend (server/src/adapters/firebase/FirebaseIdentityAdapter.ts),
+ * not a client-side Firestore `users` document. `joinedBoards` is not sourced here — the
+ * dashboard's board list comes directly from the boards API (see feature 017 US4).
+ */
+function toUserData(backendUser: BackendUser): UserDataState {
+    const createdAt = new Date(backendUser.createdAt);
+    const user: User = {
+        uid: backendUser.uid,
+        email: backendUser.email,
+        displayName: backendUser.displayName,
+        photoURL: backendUser.photoURL,
+        providers: backendUser.providers,
+        primaryProvider: backendUser.primaryProvider,
+        createdAt,
+        updatedAt: createdAt,
+    };
+    const userProfile: UserProfile = {
+        uid: backendUser.uid,
+        email: backendUser.email ?? '',
+        displayName: backendUser.displayName ?? '',
+        photoURL: backendUser.photoURL,
+        providers: backendUser.providers,
+        primaryProvider: backendUser.primaryProvider,
+        joinedBoards: [],
+        createdAt,
+        updatedAt: createdAt,
+    };
+    return { user, userProfile };
+}
+
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     // Auth state: changes on sign-in/sign-out/loading — does NOT include profile data
     const [coreState, setCoreState] = useState<AuthCoreState>({
@@ -83,59 +116,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         userProfile: null,
     });
 
-    // Provider identity now comes from the backend session (not firebaseUser.providerData,
-    // which is empty under custom-token sign-in). This creates/updates the Firestore user
-    // profile from the backend user's authoritative provider list.
-    const createOrUpdateUserProfile = useCallback(async (backendUser: BackendUser): Promise<UserProfile> => {
-        if (!backendUser.email) {
-            throw new Error('Email is required');
-        }
-
-        const providers = backendUser.providers as AuthProviderType[];
-        const existing = await userService.getUserProfile(backendUser.uid);
-
-        if (existing) {
-            const missingProviders = providers.filter(p => !existing.providers.includes(p));
-            for (const provider of missingProviders) {
-                try {
-                    await userService.addProviderToUser(backendUser.uid, provider);
-                } catch (error) {
-                    console.warn(`Failed to add provider ${provider}:`, error);
-                }
-            }
-
-            await userService.updateUserProfile(backendUser.uid, { updatedAt: new Date() });
-
-            const latestProfile = await userService.getUserProfile(backendUser.uid);
-            return latestProfile || existing;
-        }
-
-        const primaryProvider: AuthProviderType = providers[0] ?? 'google';
-        const created = await userService.createUserProfile(backendUser.uid, {
-            email: backendUser.email,
-            displayName: backendUser.displayName ?? backendUser.email.split('@')[0] ?? 'Usuario',
-            photoURL: backendUser.photoURL,
-            provider: primaryProvider,
-        });
-
-        // Attach any providers beyond the primary (e.g. an already-linked second provider).
-        const extraProviders = providers.slice(1);
-        for (const provider of extraProviders) {
-            try {
-                await userService.addProviderToUser(backendUser.uid, provider);
-            } catch (error) {
-                console.warn(`Failed to add provider ${provider}:`, error);
-            }
-        }
-        if (extraProviders.length > 0) {
-            const latestProfile = await userService.getUserProfile(backendUser.uid);
-            return latestProfile || created;
-        }
-
-        return created;
-    }, []);
-
-    // Sign-in is now a full-page redirect to the backend (FR-008/FR-009); the browser no
+    // Sign-in is a full-page redirect to the backend (FR-008/FR-009); the browser no
     // longer performs the OAuth handshake. State is (re)established on load via bootstrap.
     const handleSignInWithGoogle = useCallback(async (): Promise<void> => {
         startLogin('google');
@@ -148,12 +129,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     const handleSignOut = useCallback(async (): Promise<void> => {
         try {
             await backendLogout();
-            try {
-                await signOutUser();
-            } catch {
-                // Firebase may already be signed out (or unconfigured); the backend session
-                // is the authority and has been cleared.
-            }
             setUserData({ user: null, userProfile: null });
             setCoreState({ loading: false, error: null, isAuthenticated: false });
             toast.success('Sesión cerrada exitosamente');
@@ -168,12 +143,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (!userData.user) throw new Error('Usuario no autenticado');
 
         try {
-            await userService.updateUserProfile(userData.user.uid, { displayName });
-            // Only profile data changes — auth consumers do NOT re-render
-            setUserData(prev => ({
-                user: prev.user ? { ...prev.user, displayName } : null,
-                userProfile: prev.userProfile ? { ...prev.userProfile, displayName } : null,
-            }));
+            const session = await backendUpdateDisplayName(displayName);
+            if (session.authenticated && session.user) {
+                const updated = toUserData(session.user);
+                setUserData(updated);
+            }
             toast.success('Nombre actualizado exitosamente');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el nombre';
@@ -186,22 +160,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (!userData.user) return;
 
         try {
-            const userProfile = await userService.getUserProfile(userData.user.uid);
-            if (userProfile) {
-                // Only profile data changes — auth consumers do NOT re-render
-                setUserData(prev => ({
-                    user: prev.user ? { ...prev.user, displayName: userProfile.displayName } : null,
-                    userProfile,
-                }));
+            const session = await fetchSession();
+            if (session.authenticated && session.user) {
+                setUserData(toUserData(session.user));
             }
         } catch (error) {
             console.error('Error refreshing user profile:', error);
         }
     }, [userData.user]);
 
-    // On load, ask the backend for the current session. If authenticated, bootstrapSession
-    // has already signed the client into Firebase (custom token) so Firestore keeps working;
-    // we then hydrate the Firestore profile from the backend user.
+    // On load, ask the backend for the current session — the sole source of identity.
     useEffect(() => {
         let active = true;
 
@@ -211,22 +179,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 if (!active) return;
 
                 if (session.authenticated && session.user) {
-                    const userProfile = await createOrUpdateUserProfile(session.user);
-                    if (!active) return;
-
-                    setUserData({
-                        user: {
-                            uid: session.user.uid,
-                            email: session.user.email,
-                            displayName: userProfile.displayName,
-                            photoURL: session.user.photoURL,
-                            providers: userProfile.providers,
-                            primaryProvider: userProfile.primaryProvider,
-                            createdAt: userProfile.createdAt,
-                            updatedAt: userProfile.updatedAt,
-                        },
-                        userProfile,
-                    });
+                    setUserData(toUserData(session.user));
                     setCoreState({ loading: false, error: null, isAuthenticated: true });
                 } else {
                     setUserData({ user: null, userProfile: null });
@@ -247,7 +200,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         return () => {
             active = false;
         };
-    }, [createOrUpdateUserProfile]);
+    }, []);
 
     // Auth context value — only re-creates when coreState or auth handlers change
     const authContextValue = useMemo<AuthContextType>(() => ({

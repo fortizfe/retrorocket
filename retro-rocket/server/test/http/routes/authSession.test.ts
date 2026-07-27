@@ -3,7 +3,15 @@ import request from 'supertest';
 import { buildAuthTestApp, cookieHeader, setCookies, fakeSessionService, NOW } from './authTestApp';
 import type { PublicUser } from '../../../src/domain/auth/types';
 
-const user: PublicUser = { uid: 'uid-1', email: 'a@b.com', displayName: 'A', photoURL: null, providers: ['google'] };
+const user: PublicUser = {
+    uid: 'uid-1',
+    email: 'a@b.com',
+    displayName: 'A',
+    photoURL: null,
+    providers: ['google'],
+    primaryProvider: 'google',
+    createdAt: '2026-01-01T00:00:00.000Z',
+};
 
 async function sessionCookie(now = NOW) {
     const { token } = await fakeSessionService().issue(user, now);
@@ -14,15 +22,15 @@ describe('GET /api/auth/session', () => {
     it('returns unauthenticated when no cookie is present', async () => {
         const res = await request(buildAuthTestApp()).get('/api/auth/session');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ authenticated: false, user: null, firebaseCustomToken: null });
+        expect(res.body).toEqual({ authenticated: false, user: null });
     });
 
-    it('returns the user and a fresh custom token when authenticated', async () => {
+    it('returns the authenticated user, with no Firebase custom token in the response', async () => {
         const res = await request(buildAuthTestApp()).get('/api/auth/session').set('Cookie', await sessionCookie());
         expect(res.status).toBe(200);
         expect(res.body.authenticated).toBe(true);
         expect(res.body.user).toEqual(user);
-        expect(res.body.firebaseCustomToken).toBe('ct-uid-1');
+        expect(res.body.firebaseCustomToken).toBeUndefined();
     });
 });
 

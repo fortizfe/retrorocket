@@ -14,7 +14,6 @@ import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetro
 import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 import { Card, CardGroup } from '@/features/boards/types/card';
 // ...existing code...
 
@@ -71,16 +70,11 @@ const RetrospectivePageContent: React.FC = () => {
                 joinAttemptRef.current = true;
                 setIsJoining(true);
 
-                const result = await addParticipant({
-                    name: fullName,
-                    userId: uid,
-                    retrospectiveId: id
-                });
-
-                // Only increment participant count if it's a new participant
-                if (result.isNew) {
-                    await OptimizedRetrospectiveService.incrementParticipantCount(id);
-                }
+                // The backend join endpoint (POST /api/boards/:id/join) atomically
+                // increments participantCount itself — do not call
+                // OptimizedRetrospectiveService.incrementParticipantCount here, that
+                // would double-count (feature 017 US2).
+                const result = await addParticipant();
 
                 setCurrentParticipantId(result.id);
                 setHasJoined(true);
