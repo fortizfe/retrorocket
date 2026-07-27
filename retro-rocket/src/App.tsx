@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import Layout from '@/lib/components/layout/Layout';
 import { SentimentStoreProvider } from '@/features/boards/sentiment';
 import { BoardDataStoreProvider } from '@/features/boards/retrospective/contexts/BoardDataContext';
@@ -12,6 +13,7 @@ const Landing = lazy(() => import('@/pages/Landing'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const RetrospectivePage = lazy(() => import('@/pages/RetrospectivePage'));
+const McpConsentScreen = lazy(() => import('@/features/auth/components/McpConsentScreen'));
 const ColorSystemTest = lazy(() => import('@/features/dev-tools/components/ColorSystemTest'));
 const MetricsDashboard = lazy(() => import('@/features/dev-tools/components/MetricsDashboard'));
 
@@ -28,6 +30,14 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/mis-tableros" element={<Dashboard />} />
               <Route path="/perfil" element={<Profile />} />
+              <Route
+                path="/mcp/consent"
+                element={
+                  <AuthWrapper requireAuth={true}>
+                    <McpConsentScreen />
+                  </AuthWrapper>
+                }
+              />
               <Route path="/retrospective/:id" element={<RetrospectivePage />} />
               <Route path="/retro/:id" element={<RetrospectivePage />} />
               <Route path="/color-test" element={<ColorSystemTest />} />

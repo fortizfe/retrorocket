@@ -38,6 +38,7 @@
     "@floating-ui/react": "^0.27.20",
     "@headlessui/react": "^2.2.7",
     "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@react-pdf/renderer": "^4.3.0",
     "@types/node": "^24.0.0",
     "@types/react": "^18.2.0",
@@ -63,7 +64,8 @@
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.1",
     "react-router-dom": "^6.8.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@actions/cache": "^6.2.0",

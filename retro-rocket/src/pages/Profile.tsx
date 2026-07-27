@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import UserProfileForm from '@/features/auth/components/UserProfileForm';
 import LinkedProvidersCard from '@/features/auth/components/LinkedProvidersCard';
+import ConnectedAppsCard from '@/features/auth/components/ConnectedAppsCard';
 import Button from '@/lib/components/ui/Button';
 import Card from '@/lib/components/ui/Card';
 
@@ -118,6 +119,9 @@ const ProfilePage: React.FC = () => {
 
                         {/* Linked Providers */}
                         <LinkedProvidersCard className="glass border border-border-default/50" />
+
+                        {/* Connected AI Assistants (MCP connector, feature 015) */}
+                        <ConnectedAppsCard className="glass border border-border-default/50" />
                     </motion.div>
 
                     {/* Edit Profile Form */}

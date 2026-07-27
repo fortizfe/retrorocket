@@ -5,12 +5,15 @@ import { correlationId } from './middleware/correlationId';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { healthRouter } from './routes/health';
 import { authRouter, type AuthRouterDeps } from './routes/auth';
+import { mcpRouter, type McpRouterDeps } from './routes/mcp';
 
 export interface AppDeps {
     config: ServerConfig;
     observability: Observability;
     /** Auth wiring; when absent (e.g. missing secrets) auth routes report a config error. */
     authDeps?: AuthRouterDeps;
+    /** MCP connector wiring (feature 015); when absent, /api/mcp/* and /.well-known/* 404. */
+    mcpDeps?: McpRouterDeps;
 }
 
 /**
@@ -36,6 +39,17 @@ export function createApp(deps: AppDeps): Express {
         app.use('/api/auth', (_req: Request, res: Response) => {
             res.status(503).json({
                 error: { code: 'config_error', message: 'Authentication is not configured on this deployment' },
+                correlationId: String(res.locals.correlationId ?? 'unknown'),
+            });
+        });
+    }
+
+    if (deps.mcpDeps) {
+        app.use(mcpRouter(deps.mcpDeps));
+    } else {
+        app.use('/api/mcp', (_req: Request, res: Response) => {
+            res.status(503).json({
+                error: { code: 'config_error', message: 'The MCP connector is not configured on this deployment' },
                 correlationId: String(res.locals.correlationId ?? 'unknown'),
             });
         });

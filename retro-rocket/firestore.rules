@@ -97,9 +97,27 @@ service cloud.firestore {
                    request.auth.uid == resource.data.facilitatorId;
                    
       // Solo el facilitador puede eliminar elementos de acción
-      allow delete: if request.auth != null && 
+      allow delete: if request.auth != null &&
                    request.auth.token.firebase.sign_in_provider != 'anonymous' &&
                    request.auth.uid == resource.data.facilitatorId;
+    }
+
+    // MCP connector state (feature 015): these three collections are read and written
+    // exclusively by the backend's Admin SDK, which bypasses these rules by design.
+    // The rules below are explicit denies, not grants — no client (authenticated or
+    // not) may read or write them directly, since they carry authorization state
+    // (connection status, authorization codes) that must only ever be mutated through
+    // the backend's own live-revocation-checked logic (Clarification 2026-07-27 Q1).
+    match /mcpClients/{clientId} {
+      allow read, write: if false;
+    }
+
+    match /mcpAuthorizationCodes/{code} {
+      allow read, write: if false;
+    }
+
+    match /mcpConnections/{connectionId} {
+      allow read, write: if false;
     }
   }
 }

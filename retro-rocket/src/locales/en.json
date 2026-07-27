@@ -749,6 +749,27 @@
       }
     }
   },
+  "mcpConnector": {
+    "connectedApps": {
+      "title": "Connected AI Assistants",
+      "description": "AI assistants (like Claude) you've authorized to read your retrospectives on your behalf. Revoke a connection at any time.",
+      "empty": "No AI assistants are connected yet.",
+      "connectedOn": "Connected on {{date}}",
+      "revoke": "Revoke",
+      "revoking": "Revoking...",
+      "revokeSuccess": "Connection revoked",
+      "revokeError": "Couldn't revoke this connection. Please try again.",
+      "loadError": "Couldn't load your connected AI assistants."
+    },
+    "consent": {
+      "title": "Connect {{clientName}} to RetroRocket",
+      "description": "{{clientName}} is requesting read-only access to your retrospectives (cards, groupings, reactions, participants, sentiment, and action items). Your private facilitator notes are only ever shared for retrospectives where you are the facilitator.",
+      "allow": "Allow",
+      "deny": "Deny",
+      "processing": "Connecting...",
+      "error": "Something went wrong completing this connection. Please try again from {{clientName}}."
+    }
+  },
   "notFound": {
     "title": "404 - Not Found",
     "message": "Oops! The page you are looking for does not exist.",
