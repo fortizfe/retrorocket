@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import request from 'supertest';
 import { mcpAuthMiddleware } from '../../../src/http/middleware/mcpAuth';
 import { JoseMcpTokenAdapter } from '../../../src/adapters/session/JoseMcpTokenAdapter';
@@ -11,6 +12,10 @@ const tokenService = new JoseMcpTokenAdapter('test-mcp-key');
 
 function buildApp(connectionStore: McpConnectionStorePort) {
     const app = express();
+    // Mirrors the rate limiter placed in front of mcpAuthMiddleware on the real
+    // /api/mcp route (server/src/http/routes/mcp.ts) so this isolated test harness
+    // has the same request shape as production, not just the middleware under test.
+    app.use(rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false, validate: false }));
     app.use(mcpAuthMiddleware({ tokenService, connectionStore, clock: { nowSeconds: () => NOW } }));
     app.get('/protected', (_req, res) => {
         res.status(200).json({ auth: res.locals.mcpAuth });
