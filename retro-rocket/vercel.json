@@ -13,7 +13,11 @@
             "destination": "/api"
         },
         {
-            "source": "/((?!assets/|api/).*)",
+            "source": "/.well-known/(.*)",
+            "destination": "/api"
+        },
+        {
+            "source": "/((?!assets/|api/|\\.well-known/).*)",
             "destination": "/index.html"
         }
     ],
