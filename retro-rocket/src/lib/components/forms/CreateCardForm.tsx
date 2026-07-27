@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Input from '@/lib/components/ui/Input';
 import Button from '@/lib/components/ui/Button';
-import { createCard } from '@/features/boards/retrospective/services/cardsApiClient';
+import { createCard } from '@/features/boards/retrospective/services/cardService';
 import { CreateCardInput } from '@/features/boards/types/card';
 
 interface CreateCardFormProps {

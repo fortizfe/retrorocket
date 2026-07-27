@@ -5,8 +5,6 @@ import ActionItemsColumn from '@/features/boards/retrospective/components/Action
 import uiPreferencesStore from '@/lib/uiPreferencesStore';
 import Loading from '@/lib/components/ui/Loading';
 import { TypingProvider } from '@/features/boards/retrospective/contexts/TypingProvider';
-import { BoardEventsProvider, useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
-import ConnectionStatusIndicator from '@/features/boards/retrospective/components/ConnectionStatusIndicator';
 import { useOptimizedCards } from '@/features/boards/retrospective/hooks/useOptimizedCards';
 import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups';
 import { useActionItems } from '@/features/boards/retrospective/hooks/useActionItems';
@@ -29,19 +27,7 @@ interface RetrospectiveBoardProps {
     participants?: Participant[];
 }
 
-/**
- * Wraps the board in a single shared SSE connection (feature 017) before any of the
- * inner hooks (useOptimizedCards, useCardGroups, useTypingStatus) try to consume it —
- * context providers only reach descendants, so this must be a separate outer component
- * rather than rendered from within RetrospectiveBoardInner itself.
- */
-const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = (props) => (
-    <BoardEventsProvider retrospectiveId={props.retrospective.id}>
-        <RetrospectiveBoardInner {...props} />
-    </BoardEventsProvider>
-);
-
-const RetrospectiveBoardInner: React.FC<RetrospectiveBoardProps> = ({
+const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     retrospective,
     currentUser,
     onDataChange,
@@ -49,9 +35,6 @@ const RetrospectiveBoardInner: React.FC<RetrospectiveBoardProps> = ({
 }) => {
     // Get language context to trigger re-render when language changes
     const { t } = useLanguage();
-
-    // Real-time channel connection state (FR-009/FR-011) — surfaced via ConnectionStatusIndicator below.
-    const { connectionState } = useBoardEventsContext();
 
     // Get dynamic columns from Firestore or fallback to default
     const {
@@ -84,6 +67,7 @@ const RetrospectiveBoardInner: React.FC<RetrospectiveBoardProps> = ({
         addReaction,
         removeReaction,
         reorderCards,
+        metrics // Nuevas métricas de optimización
     } = useOptimizedCards(retrospective.id);
 
     const {
@@ -238,7 +222,6 @@ const RetrospectiveBoardInner: React.FC<RetrospectiveBoardProps> = ({
             currentUsername={currentUsername}
         >
             <div className="h-full flex flex-col">
-                <ConnectionStatusIndicator connectionState={connectionState} />
                 {/* Controls row: facilitator-only controls moved to FacilitatorMenu */}
                 {/* Board Grid - 3 columnas regulares + 1 columna de acciones.
                     Column count → grid classes come from useBoardGridColumns as

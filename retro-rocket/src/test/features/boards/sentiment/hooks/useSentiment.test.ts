@@ -30,20 +30,13 @@ vi.mock('@/features/boards/sentiment/hooks/useWorkerManager', () => ({
     }),
 }));
 
-// ── Board SSE snapshot mock (persisted results now arrive via BoardEventsProvider) ────
-let mockSentimentSnapshot: Array<Record<string, unknown>> = [];
-
-vi.mock('@/features/boards/retrospective/contexts/BoardEventsProvider', () => ({
-    useBoardEventsContext: () => ({ snapshot: { sentiment: mockSentimentSnapshot }, connectionState: 'connected' }),
-}));
-
-vi.mock('@/features/boards/sentiment/services/sentimentResultsApiClient', () => ({
-    saveResultWithHash: vi.fn(() => Promise.resolve()),
-    saveOverride: vi.fn(() => Promise.resolve()),
-    parseSentimentSnapshot: (raw: Array<Record<string, unknown>>) => {
-        const map = new Map();
-        raw.forEach((r) => map.set(r.cardId, { ...r, timestamp: new Date(r.timestamp as string) }));
-        return map;
+// ── Service mock (load/save persisted results) ───────────────────────────────
+const loadResults = vi.fn(() => Promise.resolve(new Map()));
+vi.mock('@/features/boards/sentiment/services/sentimentResultsService', () => ({
+    SentimentResultsService: {
+        loadResults: (...a: unknown[]) => loadResults(...a),
+        saveResultWithHash: vi.fn(() => Promise.resolve()),
+        saveOverride: vi.fn(() => Promise.resolve()),
     },
 }));
 
@@ -73,17 +66,13 @@ function freshPersisted(cardId: string, content: string, sentiment: SentimentRes
     };
 }
 
-/** Raw (over-the-wire) shape of a persisted result, as delivered by the `sentiment` SSE snapshot key. */
-function toRaw(result: SentimentResult): Record<string, unknown> {
-    return { ...result, timestamp: result.timestamp.toISOString(), isOverride: result.isOverride ?? false };
-}
-
 beforeEach(() => {
     postBatch.mockClear();
     postAnalyze.mockClear();
     terminate.mockClear();
     initialize.mockClear();
-    mockSentimentSnapshot = [];
+    loadResults.mockReset();
+    loadResults.mockResolvedValue(new Map());
     vi.useFakeTimers();
 });
 afterEach(() => { vi.useRealTimers(); });
@@ -94,10 +83,10 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
             makeCard({ id: 'c1', content: 'went really well', column: 'went_well' }),
             makeCard({ id: 'c2', content: 'a real blocker', column: 'not_went_well' }),
         ];
-        mockSentimentSnapshot = [
-            toRaw(freshPersisted('c1', 'went really well')),
-            toRaw(freshPersisted('c2', 'a real blocker', 'negative')),
-        ];
+        loadResults.mockResolvedValue(new Map([
+            ['c1', freshPersisted('c1', 'went really well')],
+            ['c2', freshPersisted('c2', 'a real blocker', 'negative')],
+        ]));
 
         renderHook(() => useSentiment(cards, 'retro-1'));
         await act(async () => { await vi.advanceTimersByTimeAsync(0); }); // flush persisted-results load
@@ -124,10 +113,10 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
             makeCard({ id: 'c1', content: 'first text', column: 'went_well' }),
             makeCard({ id: 'c2', content: 'second text', column: 'went_well' }),
         ];
-        mockSentimentSnapshot = [
-            toRaw(freshPersisted('c1', 'first text')),
-            toRaw(freshPersisted('c2', 'second text')),
-        ];
+        loadResults.mockResolvedValue(new Map([
+            ['c1', freshPersisted('c1', 'first text')],
+            ['c2', freshPersisted('c2', 'second text')],
+        ]));
 
         const { rerender } = renderHook(({ cs }) => useSentiment(cs, 'retro-1'), { initialProps: { cs: cards } });
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
@@ -147,7 +136,7 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
 describe('useSentiment — resilience (FR-013)', () => {
     it('surfaces a non-silent error state on worker/model-load failure without losing results', async () => {
         const cards = [makeCard({ id: 'c1', content: 'went really well', column: 'went_well' })];
-        mockSentimentSnapshot = [toRaw(freshPersisted('c1', 'went really well'))];
+        loadResults.mockResolvedValue(new Map([['c1', freshPersisted('c1', 'went really well')]]));
         const { result } = renderHook(() => useSentiment(cards, 'retro-1'));
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
 
@@ -162,7 +151,7 @@ describe('useSentiment — resilience (FR-013)', () => {
 describe('useSentiment — disable clears everything (FR-014)', () => {
     it('setEnabled(false) clears results and terminates the worker', async () => {
         const cards = [makeCard({ id: 'c1', content: 'went really well', column: 'went_well' })];
-        mockSentimentSnapshot = [toRaw(freshPersisted('c1', 'went really well'))];
+        loadResults.mockResolvedValue(new Map([['c1', freshPersisted('c1', 'went really well')]]));
         const { result } = renderHook(() => useSentiment(cards, 'retro-1'));
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
         expect(result.current.getSentiment('c1')).toBeDefined();

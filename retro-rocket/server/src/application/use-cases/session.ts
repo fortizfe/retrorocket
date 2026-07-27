@@ -1,16 +1,18 @@
-import type { ClockPort, SessionServicePort } from '../ports';
+import type { ClockPort, IdentityStorePort, SessionServicePort } from '../ports';
 import { SessionExpiredError } from '../../domain/auth/Session';
 import type { PublicUser } from '../../domain/auth/types';
 
 export interface SessionQueryDeps {
     sessionService: SessionServicePort;
+    identityStore: IdentityStorePort;
     clock: ClockPort;
 }
 
-/** Shape returned to the SPA (see contracts/auth-session-change.md, feature 017). */
+/** Shape returned to the SPA (see contracts/auth-api.yaml). */
 export interface ClientAuthResult {
     authenticated: boolean;
     user: PublicUser | null;
+    firebaseCustomToken: string | null;
 }
 
 export interface RefreshedCookie {
@@ -25,14 +27,14 @@ export interface SessionQueryOutput {
 }
 
 const UNAUTHENTICATED: SessionQueryOutput = {
-    result: { authenticated: false, user: null },
+    result: { authenticated: false, user: null, firebaseCustomToken: null },
     refreshedCookie: null,
 };
 
 /**
- * Reads the current session for the SPA. Silently rotates the session cookie once its
- * soft window has lapsed but the absolute lifetime remains (FR-010a). No Firebase custom
- * token is minted here — the session cookie is the SPA's sole credential (feature 017).
+ * Reads the current session for the SPA and returns a fresh Firebase custom token so the
+ * client can (re)hydrate Firestore access. Silently rotates the session cookie once its
+ * soft window has lapsed but the absolute lifetime remains (FR-010a).
  */
 export async function getCurrentSession(
     deps: SessionQueryDeps,
@@ -53,8 +55,9 @@ export async function getCurrentSession(
         refreshedCookie = { token: rotated.token, maxAgeSeconds: rotated.session.cookieMaxAgeSeconds(now) };
     }
 
+    const firebaseCustomToken = await deps.identityStore.mintCustomToken(current.data.sub);
     return {
-        result: { authenticated: true, user: current.data.user },
+        result: { authenticated: true, user: current.data.user, firebaseCustomToken },
         refreshedCookie,
     };
 }
@@ -72,8 +75,9 @@ export async function refreshSession(
     if (!session || !session.canRefresh(now)) throw new SessionExpiredError();
 
     const rotated = await deps.sessionService.refresh(session, now);
+    const firebaseCustomToken = await deps.identityStore.mintCustomToken(rotated.session.data.sub);
     return {
-        result: { authenticated: true, user: rotated.session.data.user },
+        result: { authenticated: true, user: rotated.session.data.user, firebaseCustomToken },
         refreshedCookie: { token: rotated.token, maxAgeSeconds: rotated.session.cookieMaxAgeSeconds(now) },
     };
 }

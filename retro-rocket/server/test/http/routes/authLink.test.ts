@@ -3,15 +3,7 @@ import request from 'supertest';
 import { buildAuthTestApp, cookieHeader, setCookies, fakeSessionService, NOW } from './authTestApp';
 import type { PublicUser } from '../../../src/domain/auth/types';
 
-const user: PublicUser = {
-    uid: 'uid-1',
-    email: 'a@b.com',
-    displayName: 'A',
-    photoURL: null,
-    providers: ['google'],
-    primaryProvider: 'google',
-    createdAt: '2026-01-01T00:00:00.000Z',
-};
+const user: PublicUser = { uid: 'uid-1', email: 'a@b.com', displayName: 'A', photoURL: null, providers: ['google'] };
 
 async function sessionCookie() {
     const { token } = await fakeSessionService().issue(user, NOW);

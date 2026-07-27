@@ -16,8 +16,4 @@ export interface PublicUser {
     displayName: string | null;
     photoURL: string | null;
     providers: OAuthProvider[];
-    /** The provider first used to create this account — shown on the Profile page. */
-    primaryProvider: OAuthProvider;
-    /** ISO-ish timestamp string (Firebase Auth's UserRecord.metadata.creationTime) — "member since". */
-    createdAt: string;
 }

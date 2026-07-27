@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { CardGroup, Card, GroupSuggestion, Reaction } from '@/features/boards/types/card';
+import { useState, useEffect, useCallback } from 'react';
+import { CardGroup, Card, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
-import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
 import {
     createCardGroup,
     disbandCardGroup,
     addCardToGroup,
     removeCardFromGroup,
     updateGroupCollapseState,
-    parseGroupsSnapshot,
-} from '@/features/boards/clustering/services/cardGroupsApiClient';
+    subscribeToRetrospectiveGroups,
+    calculateGroupAggregations
+} from '@/features/boards/clustering/services/cardGroupService';
 import { findSimilarCardGroups, SimilarityConfig } from '@/features/boards/clustering/services/similarityService';
 
 interface UseCardGroupsProps {
@@ -42,120 +42,148 @@ interface UseCardGroupsReturn {
     getCardsByColumn: (column: ColumnType, includeGrouped?: boolean) => Card[];
 }
 
-/** Computes totalVotes/totalLikes/allReactions client-side, matching cardGroupService.ts's original calculateGroupAggregations. */
-function withAggregations(group: CardGroup, groupCards: Card[]): CardGroup {
-    const totalVotes = groupCards.reduce((sum, c) => sum + (c.votes ?? 0), 0);
-    const totalLikes = groupCards.reduce((sum, c) => sum + (c.likes?.length ?? 0), 0);
-    const allReactions: Reaction[] = groupCards.flatMap((c) => c.reactions ?? []);
-    return { ...group, totalVotes, totalLikes, allReactions };
-}
-
-/**
- * Backend-mediated replacement for the direct-Firestore version of this hook (feature 017
- * US2). Groups now arrive over the board's SSE channel instead of a raw Firestore listener.
- */
-export const useCardGroups = ({ retrospectiveId, cards, currentUser }: UseCardGroupsProps): UseCardGroupsReturn => {
-    const [rawGroups, setRawGroups] = useState<CardGroup[]>([]);
+export const useCardGroups = ({
+    retrospectiveId,
+    cards,
+    currentUser
+}: UseCardGroupsProps): UseCardGroupsReturn => {
+    const [groups, setGroups] = useState<CardGroup[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { snapshot } = useBoardEventsContext();
-    const rawGroupsData = snapshot?.groups;
 
+    // Subscribe to groups
     useEffect(() => {
         if (!retrospectiveId) {
             setLoading(false);
             return;
         }
-        if (rawGroupsData) {
-            setRawGroups(parseGroupsSnapshot(rawGroupsData as Parameters<typeof parseGroupsSnapshot>[0]));
+
+        const unsubscribe = subscribeToRetrospectiveGroups(retrospectiveId, (fetchedGroups) => {
+            // Calculate aggregations for each group
+            const groupsWithAggregations = fetchedGroups.map(group => {
+                const groupCards = cards.filter(card =>
+                    card.id === group.headCardId || group.memberCardIds.includes(card.id)
+                );
+                return calculateGroupAggregations(group, groupCards);
+            });
+
+            setGroups(groupsWithAggregations);
             setLoading(false);
             setError(null);
-        }
-    }, [retrospectiveId, rawGroupsData]);
+        });
 
-    const groups = useMemo(() => rawGroups.map((group) => {
-        const groupCards = cards.filter((card) => card.id === group.headCardId || group.memberCardIds.includes(card.id));
-        return withAggregations(group, groupCards);
-    }), [rawGroups, cards]);
+        return unsubscribe;
+    }, [retrospectiveId, cards]);
 
-    const groupedCards = useMemo(() => cards.filter((card) => card.groupId), [cards]);
-    const ungroupedCards = useMemo(() => cards.filter((card) => !card.groupId), [cards]);
+    // Separate grouped and ungrouped cards
+    const groupedCards = cards.filter(card => card.groupId);
+    const ungroupedCards = cards.filter(card => !card.groupId);
 
+    // Group management functions
     const createGroup = useCallback(async (
         headCardId: string,
         memberCardIds: string[],
-        customTitle?: string,
+        customTitle?: string
     ): Promise<string> => {
-        if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-        if (!headCardId) throw new Error('No headCardId provided');
-        if (!memberCardIds || memberCardIds.length === 0) throw new Error('At least one member card is required');
-        if (!currentUser) throw new Error('User not authenticated');
+        console.log('useCardGroups.createGroup called with:', {
+            headCardId,
+            memberCardIds,
+            customTitle,
+            currentUser,
+            retrospectiveId
+        });
+
+        // Check if we have required parameters
+        if (!retrospectiveId) {
+            console.error('No retrospectiveId provided');
+            throw new Error('No retrospectiveId provided');
+        }
+
+        if (!headCardId) {
+            console.error('No headCardId provided');
+            throw new Error('No headCardId provided');
+        }
+
+        if (!memberCardIds || memberCardIds.length === 0) {
+            console.error('No memberCardIds provided');
+            throw new Error('At least one member card is required');
+        }
+
+        if (!currentUser) {
+            console.error('User not authenticated, currentUser is:', currentUser);
+            throw new Error('User not authenticated');
+        }
 
         try {
             setError(null);
-            const group = await createCardGroup(retrospectiveId, headCardId, memberCardIds, currentUser, customTitle);
-            return group.id;
+            console.log('Calling createCardGroup service...');
+            const groupId = await createCardGroup(
+                retrospectiveId,
+                headCardId,
+                memberCardIds,
+                currentUser,
+                customTitle
+            );
+            console.log('Group created successfully with ID:', groupId);
+            return groupId;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create group';
+            console.error('Error in createGroup:', err);
             setError(errorMessage);
             throw new Error(errorMessage);
         }
     }, [retrospectiveId, currentUser]);
 
     const disbandGroup = useCallback(async (groupId: string): Promise<void> => {
-        if (!retrospectiveId) return;
         try {
             setError(null);
-            await disbandCardGroup(retrospectiveId, groupId);
+            await disbandCardGroup(groupId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to disband group';
             setError(errorMessage);
             throw new Error(errorMessage);
         }
-    }, [retrospectiveId]);
+    }, []);
 
     const addToGroup = useCallback(async (groupId: string, cardId: string): Promise<void> => {
-        if (!retrospectiveId) return;
         try {
             setError(null);
-            await addCardToGroup(retrospectiveId, groupId, cardId);
+            await addCardToGroup(groupId, cardId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to add card to group';
             setError(errorMessage);
             throw new Error(errorMessage);
         }
-    }, [retrospectiveId]);
+    }, []);
 
     const removeFromGroup = useCallback(async (cardId: string): Promise<void> => {
-        if (!retrospectiveId) return;
-        const group = rawGroups.find((g) => g.headCardId === cardId || g.memberCardIds.includes(cardId));
-        if (!group) return;
         try {
             setError(null);
-            await removeCardFromGroup(retrospectiveId, group.id, cardId);
+            await removeCardFromGroup(cardId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to remove card from group';
             setError(errorMessage);
             throw new Error(errorMessage);
         }
-    }, [retrospectiveId, rawGroups]);
+    }, []);
 
     const toggleGroupCollapse = useCallback(async (groupId: string): Promise<void> => {
-        if (!retrospectiveId) return;
-        const group = rawGroups.find((g) => g.id === groupId);
+        const group = groups.find(g => g.id === groupId);
         if (!group) return;
 
         try {
             setError(null);
-            await updateGroupCollapseState(retrospectiveId, groupId, !group.isCollapsed);
+            await updateGroupCollapseState(groupId, !group.isCollapsed);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to toggle group collapse';
             setError(errorMessage);
             throw new Error(errorMessage);
         }
-    }, [retrospectiveId, rawGroups]);
+    }, [groups]);
 
+    // Similarity detection
     const findSuggestions = useCallback((config?: Partial<SimilarityConfig>): GroupSuggestion[] => {
+        // Only suggest groups for ungrouped cards
         return findSimilarCardGroups(ungroupedCards, config);
     }, [ungroupedCards]);
 
@@ -163,23 +191,37 @@ export const useCardGroups = ({ retrospectiveId, cards, currentUser }: UseCardGr
         if (suggestion.cardIds.length < 2) {
             throw new Error('Suggestion must have at least 2 cards');
         }
+
         const [headCardId, ...memberCardIds] = suggestion.cardIds;
         return await createGroup(headCardId, memberCardIds);
     }, [createGroup]);
 
+    // Helper functions
     const getGroupByCardId = useCallback((cardId: string): CardGroup | null => {
-        return groups.find((group) => group.headCardId === cardId || group.memberCardIds.includes(cardId)) || null;
+        return groups.find(group =>
+            group.headCardId === cardId || group.memberCardIds.includes(cardId)
+        ) || null;
     }, [groups]);
 
     const getCardsInGroup = useCallback((groupId: string): Card[] => {
-        const group = groups.find((g) => g.id === groupId);
+        const group = groups.find(g => g.id === groupId);
         if (!group) return [];
-        return cards.filter((card) => card.id === group.headCardId || group.memberCardIds.includes(card.id));
+
+        return cards.filter(card =>
+            card.id === group.headCardId || group.memberCardIds.includes(card.id)
+        );
     }, [groups, cards]);
 
-    const getCardsByColumn = useCallback((column: ColumnType, includeGrouped: boolean = false): Card[] => {
-        let columnCards = cards.filter((card) => card.column === column);
-        if (!includeGrouped) columnCards = columnCards.filter((card) => !card.groupId);
+    const getCardsByColumn = useCallback((
+        column: ColumnType,
+        includeGrouped: boolean = false
+    ): Card[] => {
+        let columnCards = cards.filter(card => card.column === column);
+
+        if (!includeGrouped) {
+            columnCards = columnCards.filter(card => !card.groupId);
+        }
+
         return columnCards;
     }, [cards]);
 
@@ -189,15 +231,21 @@ export const useCardGroups = ({ retrospectiveId, cards, currentUser }: UseCardGr
         ungroupedCards,
         loading,
         error,
+
+        // Group management
         createGroup,
         disbandGroup,
         addToGroup,
         removeFromGroup,
         toggleGroupCollapse,
+
+        // Similarity detection
         findSuggestions,
         acceptSuggestion,
+
+        // Helper functions
         getGroupByCardId,
         getCardsInGroup,
-        getCardsByColumn,
+        getCardsByColumn
     };
 };

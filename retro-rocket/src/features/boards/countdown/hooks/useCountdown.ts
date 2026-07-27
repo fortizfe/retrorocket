@@ -1,17 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useBoardEvents } from '@/lib/hooks/useBoardEvents';
-import * as countdownApi from '@/features/boards/countdown/services/countdownApiClient';
+import { CountdownService } from '@/features/boards/countdown/services/countdownService';
 import { CountdownTimer, CountdownState } from '@/features/boards/types/countdown';
 
-/**
- * Backend-mediated replacement for countdownService.ts's direct Firestore access
- * (feature 017 US3). This hook is used from the facilitator menu, rendered outside
- * RetrospectiveBoard's tree (Header/RetrospectiveTopbar), so — like useParticipants — it
- * opens its own SSE connection rather than consuming the shared BoardEventsProvider.
- */
 export const useCountdown = (retrospectiveId: string) => {
     const [timer, setTimer] = useState<CountdownTimer | null>(null);
-    const [hasSnapshot, setHasSnapshot] = useState(false);
     const [countdownState, setCountdownState] = useState<CountdownState>({
         timeRemaining: 0,
         isRunning: false,
@@ -19,11 +11,13 @@ export const useCountdown = (retrospectiveId: string) => {
         isFinished: false,
         totalDuration: 0
     });
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const hasPlayedFinishSound = useRef(false);
 
+    // Clear interval helper
     const clearCountdownInterval = useCallback(() => {
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -31,6 +25,7 @@ export const useCountdown = (retrospectiveId: string) => {
         }
     }, []);
 
+    // Calculate time remaining
     const calculateTimeRemaining = useCallback((timerData: CountdownTimer): number => {
         if (!timerData.isRunning || !timerData.startTime) {
             return timerData.duration;
@@ -42,6 +37,7 @@ export const useCountdown = (retrospectiveId: string) => {
         return Math.max(0, timerData.duration - elapsed);
     }, []);
 
+    // Update countdown state
     const updateCountdownState = useCallback((timerData: CountdownTimer | null) => {
         if (!timerData) {
             setCountdownState({
@@ -63,42 +59,28 @@ export const useCountdown = (retrospectiveId: string) => {
             isRunning: timerData.isRunning,
             isPaused: timerData.isPaused,
             isFinished,
-            totalDuration: timerData.originalDuration || timerData.duration
+            totalDuration: timerData.originalDuration || timerData.duration // Use original duration for progress bar
         });
 
+        // Play sound when timer finishes
         if (isFinished && !hasPlayedFinishSound.current) {
             hasPlayedFinishSound.current = true;
+            // Optional: Play notification sound
             try {
                 const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmgfCDOAzvLZiTYIG2m+7t2QQAoUXrPo66tWFAg+ltryxnkpBSl+zPLaizsIGGS57OGYSw0PUKXi8LljHgg4kdXyznkpBSdnzPLZiz0IG2e57OGYSw0OUKXi8LljHgg4kdXyzngpBSlnzPPPa');
-                audio.play().catch(() => {});
+                audio.play().catch(() => {
+                    // Ignore audio errors (browser might block autoplay)
+                });
             } catch {
                 // Ignore audio errors
             }
         }
 
+        // Reset sound flag when timer is reset
         if (!timerData.isRunning && timeRemaining === (timerData.originalDuration || timerData.duration)) {
             hasPlayedFinishSound.current = false;
         }
     }, [calculateTimeRemaining, clearCountdownInterval]);
-
-    const { connectionState } = useBoardEvents(retrospectiveId || undefined, {
-        onSnapshot: (data) => {
-            setHasSnapshot(true);
-            const raw = (data as { countdown: Parameters<typeof countdownApi.parseCountdownSnapshot>[0] }).countdown;
-            const parsed = countdownApi.parseCountdownSnapshot(raw);
-            setTimer(parsed);
-            updateCountdownState(parsed);
-        },
-        on: {
-            countdown: (data) => {
-                const parsed = countdownApi.parseCountdownSnapshot(data as Parameters<typeof countdownApi.parseCountdownSnapshot>[0]);
-                setTimer(parsed);
-                updateCountdownState(parsed);
-            },
-        },
-    });
-
-    const loading = !!retrospectiveId && !hasSnapshot && connectionState !== 'reconnecting';
 
     // Start real-time countdown when timer is running
     useEffect(() => {
@@ -114,6 +96,7 @@ export const useCountdown = (retrospectiveId: string) => {
                     isFinished: timeRemaining === 0
                 }));
 
+                // Stop the interval when time reaches 0
                 if (timeRemaining === 0) {
                     clearCountdownInterval();
                 }
@@ -125,11 +108,45 @@ export const useCountdown = (retrospectiveId: string) => {
         return clearCountdownInterval;
     }, [timer, calculateTimeRemaining, clearCountdownInterval]);
 
-    const createTimer = useCallback(async (duration: number, _createdBy?: string) => {
+    // Subscribe to timer changes
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        if (!retrospectiveId) {
+            // No retrospective id provided: reset state and skip subscribing
+            setTimer(null);
+            setCountdownState({
+                timeRemaining: 0,
+                isRunning: false,
+                isPaused: false,
+                isFinished: false,
+                totalDuration: 0
+            });
+            setLoading(false);
+            return () => {
+                clearCountdownInterval();
+            };
+        }
+
+        const unsubscribe = CountdownService.subscribeToTimer(retrospectiveId, (timerData) => {
+            setTimer(timerData);
+            updateCountdownState(timerData);
+            setLoading(false);
+        });
+
+        return () => {
+            unsubscribe();
+            clearCountdownInterval();
+        };
+    }, [retrospectiveId, updateCountdownState, clearCountdownInterval]);
+
+    // Timer control methods
+    const createTimer = useCallback(async (duration: number, createdBy: string) => {
         try {
             setError(null);
             if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-            await countdownApi.createOrUpdateTimer(retrospectiveId, duration);
+            await CountdownService.createOrUpdateTimer(retrospectiveId, duration, createdBy);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error creating timer';
             setError(errorMessage);
@@ -141,7 +158,7 @@ export const useCountdown = (retrospectiveId: string) => {
         try {
             setError(null);
             if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-            await countdownApi.startTimer(retrospectiveId);
+            await CountdownService.startTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error starting timer';
             setError(errorMessage);
@@ -153,7 +170,7 @@ export const useCountdown = (retrospectiveId: string) => {
         try {
             setError(null);
             if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-            await countdownApi.pauseTimer(retrospectiveId);
+            await CountdownService.pauseTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error pausing timer';
             setError(errorMessage);
@@ -166,7 +183,7 @@ export const useCountdown = (retrospectiveId: string) => {
             setError(null);
             hasPlayedFinishSound.current = false;
             if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-            await countdownApi.resetTimer(retrospectiveId);
+            await CountdownService.resetTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error resetting timer';
             setError(errorMessage);
@@ -179,14 +196,13 @@ export const useCountdown = (retrospectiveId: string) => {
             setError(null);
             hasPlayedFinishSound.current = false;
             if (!retrospectiveId) throw new Error('No retrospectiveId provided');
-            await countdownApi.deleteTimer(retrospectiveId);
+            await CountdownService.deleteTimer(retrospectiveId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error deleting timer';
             setError(errorMessage);
             throw err;
         }
-    }, [retrospectiveId]);
-
+    }, [retrospectiveId]);    // Format time helper
     const formatTime = useCallback((seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;

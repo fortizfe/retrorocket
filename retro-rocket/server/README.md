@@ -21,8 +21,7 @@ server/src/
 │   └── use-cases/     # StartOAuthLogin, CompleteOAuthLogin, session (get/refresh), Logout, startLinkProvider
 ├── adapters/          # Driven adapters implementing the ports
 │   ├── oauth/         # Google (PKCE + id_token) & GitHub (REST) via arctic
-│   ├── firebase/      # firebase-admin identity store + all Firestore access (boards, cards,
-│   │                  #   participants, facilitator tools — feature 017)
+│   ├── firebase/      # firebase-admin identity store + custom-token minting
 │   ├── session/       # jose-signed session JWT + OAuth-state codec
 │   ├── observability/ # stdout structured logs/metrics/tracing (with redaction)
 │   └── system.ts      # SystemClock, SystemRandom
@@ -48,11 +47,9 @@ app; the same app runs locally via `server/src/dev-server.ts`.
 - The backend is the **session authority**: it issues a stateless signed JWT in an
   `httpOnly`, `Secure`, `SameSite=Lax` cookie (`rr_session`), with a 1-hour soft expiry
   (silent refresh) and a 30-day absolute lifetime.
-- Firestore access is exclusively backend-mediated (feature 017) — the SPA holds no
-  Firebase credentials and never talks to Firestore directly. There is no custom-token
-  minting or client-side Firestore sign-in anymore; `firestore.rules` denies all direct
-  client access, and every board/card/participant/facilitator-tool read and write goes
-  through this backend's own REST + Server-Sent Events API instead.
+- Firestore stays client-side, so the backend also mints a **Firebase custom token** the
+  SPA exchanges via `signInWithCustomToken` — this reports `sign_in_provider == 'custom'`,
+  which satisfies the existing `firestore.rules` (no rule changes).
 - Identity is keyed by verified email (get-or-create); a second provider for the same
   email links to the same uid. Logged-in users can proactively link another provider via
   `GET /api/auth/link/:provider`.

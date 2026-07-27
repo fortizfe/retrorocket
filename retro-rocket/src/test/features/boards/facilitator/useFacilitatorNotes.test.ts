@@ -1,38 +1,29 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useFacilitatorNotes } from '@/features/boards/facilitator/hooks/useFacilitatorNotes';
-import * as facilitatorNotesApi from '@/features/boards/facilitator/services/facilitatorNotesApiClient';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-type SnapshotHandler = (data: unknown) => void;
-let capturedOnSnapshot: SnapshotHandler | null = null;
-let capturedOnNotes: SnapshotHandler | null = null;
-let capturedBoardId: string | undefined;
+const mockCreateNote = vi.fn();
+const mockUpdateNote = vi.fn();
+const mockDeleteNote = vi.fn();
+const mockSubscribeToNotes = vi.fn();
 
-vi.mock('@/lib/hooks/useBoardEvents', () => ({
-    useBoardEvents: (boardId: string | undefined, options: { onSnapshot?: SnapshotHandler; on?: Record<string, SnapshotHandler> }) => {
-        capturedBoardId = boardId;
-        capturedOnSnapshot = options.onSnapshot ?? null;
-        capturedOnNotes = options.on?.notes ?? null;
-        return { connectionState: 'connected' };
+vi.mock('@/features/boards/facilitator/services/facilitatorNotesService', () => ({
+    FacilitatorNotesService: {
+        createNote: (...args: any[]) => mockCreateNote(...args),
+        updateNote: (...args: any[]) => mockUpdateNote(...args),
+        deleteNote: (...args: any[]) => mockDeleteNote(...args),
+        subscribeToNotes: (...args: any[]) => mockSubscribeToNotes(...args),
     },
 }));
 
-vi.mock('@/features/boards/facilitator/services/facilitatorNotesApiClient', () => ({
-    createNote: vi.fn(),
-    updateNote: vi.fn(),
-    deleteNote: vi.fn(),
-    parseNotesSnapshot: (raw: Array<Record<string, unknown>>) => raw.map((n) => ({ ...n, timestamp: new Date(n.createdAt as string) })),
-}));
-
-const mocked = vi.mocked(facilitatorNotesApi);
+import { useFacilitatorNotes } from '@/features/boards/facilitator/hooks/useFacilitatorNotes';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-const rawNotes = [
-    { id: 'n1', content: 'First note', retrospectiveId: 'retro-1', facilitatorId: 'fac-1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'n2', content: 'Second note', retrospectiveId: 'retro-1', facilitatorId: 'fac-1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+const mockNotes = [
+    { id: 'n1', content: 'First note', retrospectiveId: 'retro-1', facilitatorId: 'fac-1', createdAt: new Date() },
+    { id: 'n2', content: 'Second note', retrospectiveId: 'retro-1', facilitatorId: 'fac-1', createdAt: new Date() },
 ];
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -40,59 +31,69 @@ const rawNotes = [
 describe('useFacilitatorNotes', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        capturedOnSnapshot = null;
-        capturedOnNotes = null;
-        capturedBoardId = undefined;
+        mockSubscribeToNotes.mockImplementation(() => vi.fn());
     });
 
     describe('initial state', () => {
-        it('starts with notes=[], error=null', () => {
+        it('starts with notes=[], loading=false, error=null', () => {
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
+            // After mount the effect sets loading=true, then loading state is managed by subscription
             expect(result.current.notes).toEqual([]);
             expect(result.current.error).toBeNull();
         });
 
-        it('does not connect when retrospectiveId is empty', () => {
+        it('does not call subscribeToNotes when retrospectiveId is empty', () => {
             renderHook(() => useFacilitatorNotes('', 'fac-1'));
-            expect(capturedBoardId).toBeUndefined();
+            expect(mockSubscribeToNotes).not.toHaveBeenCalled();
+        });
+
+        it('does not call subscribeToNotes when facilitatorId is empty', () => {
+            renderHook(() => useFacilitatorNotes('retro-1', ''));
+            expect(mockSubscribeToNotes).not.toHaveBeenCalled();
         });
     });
 
-    describe('SSE snapshot consumption', () => {
-        it('populates notes from the initial snapshot ("notes" key, present only for the facilitator\'s own connection)', () => {
+    describe('subscription', () => {
+        it('calls subscribeToNotes with correct ids', () => {
+            renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
+            expect(mockSubscribeToNotes).toHaveBeenCalledWith('retro-1', 'fac-1', expect.any(Function));
+        });
+
+        it('updates notes when subscription emits', () => {
+            let capturedCallback: ((notes: any[]) => void) | null = null;
+            mockSubscribeToNotes.mockImplementation((_rid: string, _fid: string, cb: (n: any[]) => void) => {
+                capturedCallback = cb;
+                return vi.fn();
+            });
+
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
-            act(() => { capturedOnSnapshot!({ notes: rawNotes }); });
+            act(() => capturedCallback!(mockNotes));
 
-            expect(result.current.notes).toHaveLength(2);
+            expect(result.current.notes).toEqual(mockNotes);
             expect(result.current.loading).toBe(false);
+            expect(result.current.error).toBeNull();
         });
 
-        it('treats a missing "notes" key as empty (non-facilitator connection)', () => {
-            const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
+        it('calls unsubscribe on unmount', () => {
+            const mockUnsubscribe = vi.fn();
+            mockSubscribeToNotes.mockImplementation(() => mockUnsubscribe);
 
-            act(() => { capturedOnSnapshot!({}); });
+            const { unmount } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
+            unmount();
 
-            expect(result.current.notes).toEqual([]);
-        });
-
-        it('updates notes on a named "notes" event', () => {
-            const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
-            act(() => { capturedOnSnapshot!({ notes: [] }); });
-            act(() => { capturedOnNotes!(rawNotes); });
-
-            expect(result.current.notes).toHaveLength(2);
+            expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('createNote', () => {
-        it('calls the backend endpoint with trimmed content', async () => {
-            mocked.createNote.mockResolvedValue(rawNotes[0] as never);
+        it('calls FacilitatorNotesService.createNote with trimmed content', async () => {
+            mockCreateNote.mockResolvedValue(undefined);
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.createNote('  My note  '));
 
-            expect(mocked.createNote).toHaveBeenCalledWith('retro-1', 'My note');
+            expect(mockCreateNote).toHaveBeenCalledWith('retro-1', 'fac-1', 'My note');
         });
 
         it('does nothing when content is empty', async () => {
@@ -100,11 +101,11 @@ describe('useFacilitatorNotes', () => {
 
             await act(async () => result.current.createNote('   '));
 
-            expect(mocked.createNote).not.toHaveBeenCalled();
+            expect(mockCreateNote).not.toHaveBeenCalled();
         });
 
         it('sets error on failure', async () => {
-            mocked.createNote.mockRejectedValue(new Error('Create failed'));
+            mockCreateNote.mockRejectedValue(new Error('Create failed'));
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.createNote('Note content'));
@@ -114,13 +115,13 @@ describe('useFacilitatorNotes', () => {
     });
 
     describe('updateNote', () => {
-        it('calls the backend endpoint with noteId and trimmed content', async () => {
-            mocked.updateNote.mockResolvedValue(rawNotes[0] as never);
+        it('calls FacilitatorNotesService.updateNote with noteId and trimmed content', async () => {
+            mockUpdateNote.mockResolvedValue(undefined);
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.updateNote('n1', '  Updated  '));
 
-            expect(mocked.updateNote).toHaveBeenCalledWith('retro-1', 'n1', 'Updated');
+            expect(mockUpdateNote).toHaveBeenCalledWith('n1', 'Updated');
         });
 
         it('does nothing when content is empty', async () => {
@@ -128,11 +129,11 @@ describe('useFacilitatorNotes', () => {
 
             await act(async () => result.current.updateNote('n1', '  '));
 
-            expect(mocked.updateNote).not.toHaveBeenCalled();
+            expect(mockUpdateNote).not.toHaveBeenCalled();
         });
 
         it('sets error on failure', async () => {
-            mocked.updateNote.mockRejectedValue(new Error('Update failed'));
+            mockUpdateNote.mockRejectedValue(new Error('Update failed'));
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.updateNote('n1', 'content'));
@@ -142,17 +143,17 @@ describe('useFacilitatorNotes', () => {
     });
 
     describe('deleteNote', () => {
-        it('calls the backend endpoint with noteId', async () => {
-            mocked.deleteNote.mockResolvedValue(undefined);
+        it('calls FacilitatorNotesService.deleteNote with noteId', async () => {
+            mockDeleteNote.mockResolvedValue(undefined);
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.deleteNote('n1'));
 
-            expect(mocked.deleteNote).toHaveBeenCalledWith('retro-1', 'n1');
+            expect(mockDeleteNote).toHaveBeenCalledWith('n1');
         });
 
         it('sets error on failure', async () => {
-            mocked.deleteNote.mockRejectedValue(new Error('Delete failed'));
+            mockDeleteNote.mockRejectedValue(new Error('Delete failed'));
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.deleteNote('n1'));
@@ -163,7 +164,7 @@ describe('useFacilitatorNotes', () => {
 
     describe('clearError', () => {
         it('resets error to null', async () => {
-            mocked.createNote.mockRejectedValue(new Error('oops'));
+            mockCreateNote.mockRejectedValue(new Error('oops'));
             const { result } = renderHook(() => useFacilitatorNotes('retro-1', 'fac-1'));
 
             await act(async () => result.current.createNote('content'));

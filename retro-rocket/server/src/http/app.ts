@@ -6,7 +6,6 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { healthRouter } from './routes/health';
 import { authRouter, type AuthRouterDeps } from './routes/auth';
 import { mcpRouter, type McpRouterDeps } from './routes/mcp';
-import { boardsRouter, type BoardsRouterDeps } from './routes/boards';
 
 export interface AppDeps {
     config: ServerConfig;
@@ -15,8 +14,6 @@ export interface AppDeps {
     authDeps?: AuthRouterDeps;
     /** MCP connector wiring (feature 015); when absent, /api/mcp/* and /.well-known/* 404. */
     mcpDeps?: McpRouterDeps;
-    /** Boards bounded-context wiring (feature 017); when absent, /api/boards/* reports a config error. */
-    boardsDeps?: BoardsRouterDeps;
 }
 
 /**
@@ -53,17 +50,6 @@ export function createApp(deps: AppDeps): Express {
         app.use('/api/mcp', (_req: Request, res: Response) => {
             res.status(503).json({
                 error: { code: 'config_error', message: 'The MCP connector is not configured on this deployment' },
-                correlationId: String(res.locals.correlationId ?? 'unknown'),
-            });
-        });
-    }
-
-    if (deps.boardsDeps) {
-        app.use(boardsRouter(deps.boardsDeps));
-    } else {
-        app.use('/api/boards', (_req: Request, res: Response) => {
-            res.status(503).json({
-                error: { code: 'config_error', message: 'Boards are not configured on this deployment' },
                 correlationId: String(res.locals.correlationId ?? 'unknown'),
             });
         });

@@ -15,6 +15,7 @@ export interface CompleteOAuthLoginDeps {
 export interface CompleteOAuthLoginResult {
     sessionToken: string;
     session: Session;
+    customToken: string;
     user: PublicUser;
     returnTo: string;
     /** True when this callback linked a provider to an existing session rather than logging in. */
@@ -24,8 +25,7 @@ export interface CompleteOAuthLoginResult {
 /**
  * Completes a login callback: validates the anti-forgery state (FR-014), exchanges the
  * code for the verified provider profile, resolves/links the Firebase identity (FR-013),
- * and issues the app session. No Firebase custom token is minted — the session cookie is
- * the sole client credential (feature 017 FR-006/FR-013).
+ * issues the app session, and mints the client's Firebase custom token (FR-011).
  */
 export async function completeOAuthLogin(
     deps: CompleteOAuthLoginDeps,
@@ -49,6 +49,7 @@ export async function completeOAuthLogin(
 
     // Re-issue the session either way so the cookie carries the current provider list.
     const { token, session } = await deps.sessionService.issue(user, now);
+    const customToken = await deps.identityStore.mintCustomToken(identity.uid);
 
-    return { sessionToken: token, session, user, returnTo: stored.data.returnTo, isLink };
+    return { sessionToken: token, session, customToken, user, returnTo: stored.data.returnTo, isLink };
 }

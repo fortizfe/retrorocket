@@ -23,7 +23,11 @@ const JoinPanelForm: React.FC<JoinPanelFormProps> = ({
         if (name.trim() && uid) {
             setIsSubmitting(true);
             try {
-                const result = await addParticipant();
+                const result = await addParticipant({
+                    name: name.trim(),
+                    userId: uid,
+                    retrospectiveId
+                });
                 onParticipantJoined?.(result.id, name.trim());
                 setName('');
             } catch (error) {

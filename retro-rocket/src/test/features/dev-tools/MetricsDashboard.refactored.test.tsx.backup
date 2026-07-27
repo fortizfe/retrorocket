@@ -1,0 +1,326 @@
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import MetricsDashboard from '../../../components/optimization/MetricsDashboard';
+import { useKeyboardShortcut } from '../../../hooks/useKeyboardShortcut';
+import { useFirebaseMetrics } from '../../../hooks/useFirebaseMetrics';
+
+// Mock the hooks
+vi.mock('../../../hooks/useKeyboardShortcut', () => ({
+    useKeyboardShortcut: vi.fn(),
+}));
+
+vi.mock('../../../hooks/useFirebaseMetrics', () => ({
+    useFirebaseMetrics: vi.fn(),
+}));
+
+const mockMetrics = {
+    summary: {
+        reads: 100,
+        writes: 50,
+        listeners: 5,
+        errors: 2,
+        cacheHits: 80,
+        cacheMisses: 20,
+    },
+    uptime: 120.5, // 2 hours 30 seconds
+    averageReadsPerMinute: 25.5,
+    averageWritesPerMinute: 12.3,
+    errorRate: 0.02, // 2%
+    cacheHitRate: 0.8, // 80%
+};
+
+describe('MetricsDashboard (Refactored)', () => {
+    const mockUseKeyboardShortcut = vi.mocked(useKeyboardShortcut);
+    const mockUseFirebaseMetrics = vi.mocked(useFirebaseMetrics);
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+
+        // Setup default mocks
+        mockUseFirebaseMetrics.mockReturnValue({ metrics: mockMetrics });
+
+        // Mock environment
+        vi.stubEnv('PROD', false);
+        vi.stubEnv('DEV', true);
+
+        // Simple implementation for keyboard shortcuts
+        mockUseKeyboardShortcut.mockImplementation(() => {});
+
+        // Simple implementation for Firebase metrics
+        mockUseFirebaseMetrics.mockReturnValue({ metrics: mockMetrics });
+    });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+        vi.restoreAllMocks();
+    });
+
+    describe('Component Integration', () => {
+        it('should use useKeyboardShortcut hook with correct parameters', () => {
+            render(<MetricsDashboard />);
+
+            expect(mockUseKeyboardShortcut).toHaveBeenCalledWith(
+                expect.any(Function),
+                {
+                    key: 'm',
+                    ctrlKey: true,
+                    shiftKey: true,
+                    preventDefault: true,
+                }
+            );
+        });
+
+        it('should use useFirebaseMetrics hook with correct interval', () => {
+            render(<MetricsDashboard />);
+
+            expect(mockUseFirebaseMetrics).toHaveBeenCalledWith(5000);
+        });
+
+        it('should not render when metrics are null', () => {
+            mockUseFirebaseMetrics.mockReturnValue({ metrics: null });
+
+            render(<MetricsDashboard />);
+
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+        });
+
+        it('should render when metrics are available and panel is visible', async () => {
+            let toggleVisibility: () => void = () => { };
+
+            mockUseKeyboardShortcut.mockImplementation((callback: () => void) => {
+                toggleVisibility = callback;
+            });
+
+            render(<MetricsDashboard />);
+
+            // Initially not visible
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+
+            // Simulate keyboard shortcut
+            toggleVisibility();
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Keyboard Shortcut Integration', () => {
+        it('should toggle visibility with Ctrl+Shift+M', async () => {
+            let toggleCallback: (() => void) | null = null;
+
+            mockUseKeyboardShortcut.mockImplementation((callback: () => void) => {
+                toggleCallback = callback;
+            });
+
+            render(<MetricsDashboard />);
+
+            // Initially not visible
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+
+            // Simulate toggle to show
+            toggleCallback!();
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+
+            // Simulate toggle to hide
+            toggleCallback!();
+
+            await waitFor(() => {
+                expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+            });
+        });
+
+        it('should work with uppercase M', async () => {
+            let toggleCallback: (() => void) | null = null;
+
+            mockUseKeyboardShortcut.mockImplementation((callback: () => void) => {
+                toggleCallback = callback;
+            });
+
+            render(<MetricsDashboard />);
+
+            // Initially not visible
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+
+            // Simulate toggle to show
+            toggleCallback!();
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Metrics Display', () => {
+        let toggleCallback: (() => void) | null = null;
+
+        beforeEach(async () => {
+            mockUseKeyboardShortcut.mockImplementation((callback: () => void) => {
+                toggleCallback = callback;
+            });
+
+            render(<MetricsDashboard />);
+
+            // Show panel
+            toggleCallback!();
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+            });
+        });
+
+        it('should display all metrics correctly', () => {
+            // Check uptime formatting
+            expect(screen.getByText('2h 0m')).toBeInTheDocument();
+
+            // Check metrics with proper decimal places
+            expect(screen.getByText('25.5')).toBeInTheDocument(); // reads per minute
+            expect(screen.getByText('12.3')).toBeInTheDocument(); // writes per minute
+            expect(screen.getByText('5')).toBeInTheDocument(); // listeners
+            expect(screen.getByText('80.0%')).toBeInTheDocument(); // cache hit rate
+            expect(screen.getByText('2.00%')).toBeInTheDocument(); // error rate
+
+            // Check totals
+            expect(screen.getByText('100')).toBeInTheDocument(); // total reads
+            expect(screen.getByText('50')).toBeInTheDocument(); // total writes
+            expect(screen.getByText('2')).toBeInTheDocument(); // total errors
+        });
+
+        it('should show development help text', () => {
+            expect(screen.getByText('Press Ctrl+Shift+M to toggle')).toBeInTheDocument();
+        });
+
+        it('should not show help text in production', async () => {
+            vi.stubEnv('DEV', false);
+            vi.stubEnv('PROD', true);
+
+            // Re-render with production environment
+            const { unmount } = render(<MetricsDashboard />);
+            unmount();
+
+            render(<MetricsDashboard />);
+
+            // Show panel
+            fireEvent.keyDown(window, {
+                key: 'm',
+                ctrlKey: true,
+                shiftKey: true,
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+
+            expect(screen.queryByText('Press Ctrl+Shift+M to toggle')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Color Coding', () => {
+        const testColorCoding = async (mockMetricsOverride: any, expectedClass: string, testValue: string) => {
+            mockUseFirebaseMetrics.mockReturnValue({ metrics: { ...mockMetrics, ...mockMetricsOverride } });
+
+            render(<MetricsDashboard />);
+
+            fireEvent.keyDown(window, {
+                key: 'm',
+                ctrlKey: true,
+                shiftKey: true,
+            });
+
+            await waitFor(() => {
+                const element = screen.getByText(testValue);
+                expect(element).toHaveClass(expectedClass);
+            });
+        };
+
+        it('should show green for good reads per minute', async () => {
+            await testColorCoding({ averageReadsPerMinute: 20 }, 'text-green-600', '20.0');
+        });
+
+        it('should show red for high reads per minute', async () => {
+            await testColorCoding({ averageReadsPerMinute: 70 }, 'text-red-600', '70.0');
+        });
+
+        it('should show green for low error rate', async () => {
+            await testColorCoding({ errorRate: 0.01 }, 'text-green-600', '1.00%');
+        });
+
+        it('should show red for high error rate', async () => {
+            await testColorCoding({ errorRate: 0.06 }, 'text-red-600', '6.00%');
+        });
+    });
+
+    describe('Close Button', () => {
+        it('should close panel when close button is clicked', async () => {
+            render(<MetricsDashboard />);
+
+            // Show panel
+            fireEvent.keyDown(window, {
+                key: 'm',
+                ctrlKey: true,
+                shiftKey: true,
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText('🔥 Firebase Metrics')).toBeInTheDocument();
+            });
+
+            // Click close button
+            const closeButton = screen.getByRole('button', { name: '×' });
+            fireEvent.click(closeButton);
+
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Edge Cases', () => {
+        it('should handle undefined metrics', () => {
+            mockUseFirebaseMetrics.mockReturnValue({ metrics: null });
+
+            render(<MetricsDashboard />);
+
+            fireEvent.keyDown(window, {
+                key: 'm',
+                ctrlKey: true,
+                shiftKey: true,
+            });
+
+            expect(screen.queryByText('🔥 Firebase Metrics')).not.toBeInTheDocument();
+        });
+
+        it('should format uptime correctly for various values', async () => {
+            const testCases = [
+                { uptime: 0, expected: '0h 0m' },
+                { uptime: 30, expected: '0h 30m' },
+                { uptime: 60, expected: '1h 0m' },
+                { uptime: 90, expected: '1h 30m' },
+                { uptime: 125, expected: '2h 5m' },
+            ];
+
+            for (const testCase of testCases) {
+                mockUseFirebaseMetrics.mockReturnValue({
+                    metrics: { ...mockMetrics, uptime: testCase.uptime },
+                });
+
+                const { unmount } = render(<MetricsDashboard />);
+
+                fireEvent.keyDown(window, {
+                    key: 'm',
+                    ctrlKey: true,
+                    shiftKey: true,
+                });
+
+                await waitFor(() => {
+                    expect(screen.getByText(testCase.expected)).toBeInTheDocument();
+                });
+
+                unmount();
+            }
+        });
+    });
+});

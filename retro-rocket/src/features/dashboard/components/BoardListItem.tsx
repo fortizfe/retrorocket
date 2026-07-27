@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Button from '@/lib/components/ui/Button';
 import Card from '@/lib/components/ui/Card';
 import EditRetrospectiveModal from '@/features/dashboard/components/EditRetrospectiveModal';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 import toast from 'react-hot-toast';
 import { BOARD_TEMPLATES } from '@/features/create-board/boardTemplates';
 
@@ -26,7 +27,7 @@ interface BoardListItemProps {
     board: Board;
     currentUserId: string;
     onBoardDeleted?: (boardId: string) => void;
-    onDelete: (boardId: string) => Promise<void>;
+    onDelete?: (boardId: string, userId: string) => Promise<void>;
     onBoardUpdated?: (boardId: string, updates: { title: string }) => void;
 }
 
@@ -72,7 +73,11 @@ const BoardListItem: React.FC<BoardListItemProps> = ({ board, currentUserId, onB
                                 if (!currentUserId) return;
                                 setIsDeleting(true);
                                 try {
-                                    await onDelete(board.id);
+                                    if (onDelete) {
+                                        await onDelete(board.id, currentUserId);
+                                    } else {
+                                        await OptimizedRetrospectiveService.softDeleteRetrospective(board.id, currentUserId);
+                                    }
                                     setShowDeleteConfirm(false);
                                     toast.success(t('retrospective.deleteSuccess') || 'Retrospective moved to trash');
                                     onBoardDeleted?.(board.id);

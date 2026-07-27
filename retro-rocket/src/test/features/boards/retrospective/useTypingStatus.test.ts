@@ -1,148 +1,346 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTypingStatus } from '@/features/boards/retrospective/hooks/useTypingStatus';
-import { setTypingStatus } from '@/features/boards/retrospective/services/typingApiClient';
+import { OptimizedTypingStatusService } from '@/features/boards/retrospective/services/OptimizedTypingStatusService';
+import { FirebaseMetricsService } from '@/lib/services/FirebaseMetricsService';
 
-let mockSnapshot: { typing: unknown[] } | null = null;
+// Mock the services
+vi.mock('@/features/boards/retrospective/services/OptimizedTypingStatusService');
+vi.mock('@/lib/services/FirebaseMetricsService');
 
-vi.mock('@/features/boards/retrospective/contexts/BoardEventsProvider', () => ({
-    useBoardEventsContext: () => ({ snapshot: mockSnapshot, connectionState: 'connected' }),
-}));
+describe('useTypingStatus Hook', () => {
+    const mockRetrospectiveId = 'retro-123';
+    const mockUserId = 'user-123';
+    const mockUsername = 'testuser';
 
-vi.mock('@/features/boards/retrospective/services/typingApiClient', () => ({
-    setTypingStatus: vi.fn(),
-    parseTypingSnapshot: (raw: Array<Record<string, unknown>>, retrospectiveId: string) =>
-        raw.map((s) => ({ id: `${retrospectiveId}_${s.userId}_${s.column}`, retrospectiveId, ...s, timestamp: new Date(s.timestamp as string) })),
-}));
+    const mockTypingStatuses = [
+        {
+            userId: 'user-456',
+            username: 'otheruser',
+            retrospectiveId: mockRetrospectiveId,
+            column: 'good',
+            isActive: true,
+            timestamp: new Date()
+        },
+        {
+            userId: 'user-789',
+            username: 'thirduser',
+            retrospectiveId: mockRetrospectiveId,
+            column: 'bad',
+            isActive: true,
+            timestamp: new Date()
+        }
+    ];
 
-const mockedSetTypingStatus = vi.mocked(setTypingStatus);
+    let mockUnsubscribe: ReturnType<typeof vi.fn>;
+    let mockSubscribeToTypingStatus: ReturnType<typeof vi.fn>;
+    let mockCleanupUserTypingStatus: ReturnType<typeof vi.fn>;
+    let mockSetTypingStatusDebounced: ReturnType<typeof vi.fn>;
+    let mockRecordRead: ReturnType<typeof vi.fn>;
 
-const RETRO_ID = 'retro-123';
-const USER_ID = 'user-123';
-const USERNAME = 'testuser';
-
-const rawStatuses = [
-    { userId: 'user-456', username: 'otheruser', column: 'good', isActive: true, timestamp: new Date().toISOString() },
-    { userId: 'user-789', username: 'thirduser', column: 'bad', isActive: true, timestamp: new Date().toISOString() },
-];
-
-describe('useTypingStatus', () => {
     beforeEach(() => {
-        mockSnapshot = null;
-        mockedSetTypingStatus.mockClear();
+        mockUnsubscribe = vi.fn();
+        mockSubscribeToTypingStatus = vi.fn().mockReturnValue(mockUnsubscribe);
+        mockCleanupUserTypingStatus = vi.fn();
+        mockSetTypingStatusDebounced = vi.fn();
+        mockRecordRead = vi.fn();
+
+        vi.mocked(OptimizedTypingStatusService.subscribeToTypingStatus).mockImplementation(mockSubscribeToTypingStatus);
+        vi.mocked(OptimizedTypingStatusService.cleanupUserTypingStatus).mockImplementation(mockCleanupUserTypingStatus);
+        vi.mocked(OptimizedTypingStatusService.setTypingStatusDebounced).mockImplementation(mockSetTypingStatusDebounced);
+        vi.mocked(FirebaseMetricsService.recordRead).mockImplementation(mockRecordRead);
+
         vi.useFakeTimers();
     });
 
     afterEach(() => {
+        vi.clearAllMocks();
         vi.useRealTimers();
     });
 
-    describe('Snapshot consumption', () => {
-        it('filters out the current user from typing statuses', () => {
-            mockSnapshot = { typing: [...rawStatuses, { userId: USER_ID, username: USERNAME, column: 'good', isActive: true, timestamp: new Date().toISOString() }] };
+    describe('Initialization', () => {
+        it('should subscribe to typing status on mount', () => {
+            renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-
-            expect(result.current.typingIndicators).toHaveLength(2);
-            expect(result.current.typingIndicators.every((i) => i.userId !== USER_ID)).toBe(true);
+            expect(mockSubscribeToTypingStatus).toHaveBeenCalledWith(
+                mockRetrospectiveId,
+                expect.any(Function)
+            );
         });
 
-        it('returns no indicators before any snapshot arrives', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            expect(result.current.typingIndicators).toEqual([]);
+        it('should not subscribe without retrospectiveId', () => {
+            renderHook(() => useTypingStatus({
+                retrospectiveId: '',
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            expect(mockSubscribeToTypingStatus).not.toHaveBeenCalled();
+        });
+
+        it('should filter out current user from typing statuses', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            // Get the callback function passed to subscribe
+            const callback = mockSubscribeToTypingStatus.mock.calls[0][1];
+
+            // Call it with statuses including current user
+            const statusesIncludingCurrentUser = [
+                ...mockTypingStatuses,
+                {
+                    userId: mockUserId,
+                    username: mockUsername,
+                    retrospectiveId: mockRetrospectiveId,
+                    column: 'good',
+                    isActive: true,
+                    timestamp: new Date()
+                }
+            ];
+
+            act(() => {
+                callback(statusesIncludingCurrentUser);
+            });
+
+            expect(result.current.typingIndicators).toHaveLength(2);
+            expect(result.current.typingIndicators.every(indicator => indicator.userId !== mockUserId)).toBe(true);
         });
     });
 
     describe('Cleanup', () => {
-        it('sends isActive:false for every active column on unmount', () => {
-            const { result, unmount } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-
-            act(() => { result.current.startTyping('good'); });
-            mockedSetTypingStatus.mockClear();
+        it('should cleanup on unmount', () => {
+            const { unmount } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
             unmount();
 
-            expect(mockedSetTypingStatus).toHaveBeenCalledWith({ userId: USER_ID, username: USERNAME, retrospectiveId: RETRO_ID, column: 'good', isActive: false });
+            expect(mockCleanupUserTypingStatus).toHaveBeenCalledWith(mockUserId, mockRetrospectiveId);
+            expect(mockUnsubscribe).toHaveBeenCalled();
         });
 
-        it('registers a beforeunload listener and removes it on unmount', () => {
+        it('should setup beforeunload event listener', () => {
             const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
             const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-            const { unmount } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
+            const { unmount } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
             expect(addEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
 
             unmount();
+
             expect(removeEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
         });
     });
 
     describe('startTyping', () => {
-        it('sends an active typing status for a column', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            act(() => { result.current.startTyping('good'); });
+        it('should start typing for a column', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
-            expect(mockedSetTypingStatus).toHaveBeenCalledWith({ userId: USER_ID, username: USERNAME, retrospectiveId: RETRO_ID, column: 'good', isActive: true });
+            act(() => {
+                result.current.startTyping('good');
+            });
+
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'good',
+                isActive: true
+            });
         });
 
-        it('does nothing without user info', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID }));
-            act(() => { result.current.startTyping('good'); });
-            expect(mockedSetTypingStatus).not.toHaveBeenCalled();
+        it('should not start typing without user info', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId
+            }));
+
+            act(() => {
+                result.current.startTyping('good');
+            });
+
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalled();
         });
 
-        it('auto-stops after 4s of inactivity', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            act(() => { result.current.startTyping('good'); });
-            mockedSetTypingStatus.mockClear();
+        it('should auto-stop typing after timeout', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
-            act(() => { vi.advanceTimersByTime(4000); });
+            act(() => {
+                result.current.startTyping('good');
+            });
 
-            expect(mockedSetTypingStatus).toHaveBeenCalledWith({ userId: USER_ID, username: USERNAME, retrospectiveId: RETRO_ID, column: 'good', isActive: false });
+            // First call should be start typing
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'good',
+                isActive: true
+            });
+
+            // Clear the mock to check for stop call
+            mockSetTypingStatusDebounced.mockClear();
+
+            // Fast-forward time to trigger auto-stop
+            act(() => {
+                vi.advanceTimersByTime(4000);
+            });
+
+            // Should call stop typing
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'good',
+                isActive: false
+            });
         });
 
-        it('throttles rapid repeated calls', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
+        it('should throttle rapid typing updates', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            // Start typing multiple times rapidly
             act(() => {
                 result.current.startTyping('good');
                 result.current.startTyping('good');
                 result.current.startTyping('good');
             });
-            expect(mockedSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            // Should only call setTypingStatusDebounced once due to throttling
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('stopTyping', () => {
-        it('sends isActive:false for an active column', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            act(() => { result.current.startTyping('good'); });
-            mockedSetTypingStatus.mockClear();
+        it('should stop typing for a column', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
-            act(() => { result.current.stopTyping('good'); });
-            expect(mockedSetTypingStatus).toHaveBeenCalledWith({ userId: USER_ID, username: USERNAME, retrospectiveId: RETRO_ID, column: 'good', isActive: false });
+            // First start typing to mark column as active
+            act(() => {
+                result.current.startTyping('good');
+            });
+
+            mockSetTypingStatusDebounced.mockClear();
+
+            act(() => {
+                result.current.stopTyping('good');
+            });
+
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'good',
+                isActive: false
+            });
         });
 
-        it('does nothing for a column that was never active', () => {
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            act(() => { result.current.stopTyping('good'); });
-            expect(mockedSetTypingStatus).not.toHaveBeenCalled();
+        it('should not stop typing for inactive column', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            act(() => {
+                result.current.stopTyping('good');
+            });
+
+            // Should not call service since column was not active
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalled();
+        });
+
+        it('should not stop typing without user info', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId
+            }));
+
+            act(() => {
+                result.current.stopTyping('good');
+            });
+
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalled();
         });
     });
 
     describe('getTypingUsersForColumn', () => {
-        it('returns typing users scoped to a column', () => {
-            mockSnapshot = { typing: rawStatuses };
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
+        it('should return typing users for specific column', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
 
-            expect(result.current.getTypingUsersForColumn('good')).toHaveLength(1);
-            expect(result.current.getTypingUsersForColumn('good')[0].username).toBe('otheruser');
-            expect(result.current.getTypingUsersForColumn('bad')[0].username).toBe('thirduser');
+            // Simulate receiving typing statuses
+            const callback = mockSubscribeToTypingStatus.mock.calls[0][1];
+            act(() => {
+                callback(mockTypingStatuses);
+            });
+
+            const goodColumnUsers = result.current.getTypingUsersForColumn('good');
+            const badColumnUsers = result.current.getTypingUsersForColumn('bad');
+
+            expect(goodColumnUsers).toHaveLength(1);
+            expect(goodColumnUsers[0].username).toBe('otheruser');
+            expect(badColumnUsers).toHaveLength(1);
+            expect(badColumnUsers[0].username).toBe('thirduser');
         });
 
-        it('returns an empty array for a column with no typing users', () => {
-            mockSnapshot = { typing: rawStatuses };
-            const { result } = renderHook(() => useTypingStatus({ retrospectiveId: RETRO_ID, currentUserId: USER_ID, currentUsername: USERNAME }));
-            expect(result.current.getTypingUsersForColumn('action')).toHaveLength(0);
+        it('should return empty array for column with no typing users', () => {
+            const { result } = renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            const emptyColumnUsers = result.current.getTypingUsersForColumn('action');
+            expect(emptyColumnUsers).toHaveLength(0);
+        });
+    });
+
+    describe('Metrics Integration', () => {
+        it('should record read metrics when receiving typing statuses', () => {
+            renderHook(() => useTypingStatus({
+                retrospectiveId: mockRetrospectiveId,
+                currentUserId: mockUserId,
+                currentUsername: mockUsername
+            }));
+
+            const callback = mockSubscribeToTypingStatus.mock.calls[0][1];
+            act(() => {
+                callback(mockTypingStatuses);
+            });
+
+            expect(mockRecordRead).toHaveBeenCalledWith('typing-status-updates', 2);
         });
     });
 });

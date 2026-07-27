@@ -2,21 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { getCurrentSession, refreshSession } from '../../../src/application/use-cases/session';
 import { logout } from '../../../src/application/use-cases/Logout';
 import { SessionExpiredError, Session, SESSION_SOFT_TTL_SECONDS } from '../../../src/domain/auth/Session';
-import { fixedClock, fakeSessionService, NOW } from './fakes';
+import { fixedClock, fakeIdentityStore, fakeSessionService, NOW } from './fakes';
 import type { PublicUser } from '../../../src/domain/auth/types';
 
-const user: PublicUser = {
-    uid: 'uid-1',
-    email: 'a@b.com',
-    displayName: 'A',
-    photoURL: null,
-    providers: ['google'],
-    primaryProvider: 'google',
-    createdAt: '2026-01-01T00:00:00.000Z',
-};
+const user: PublicUser = { uid: 'uid-1', email: 'a@b.com', displayName: 'A', photoURL: null, providers: ['google'] };
 
 function deps(now = NOW) {
-    return { sessionService: fakeSessionService(), clock: fixedClock(now) };
+    return { sessionService: fakeSessionService(), identityStore: fakeIdentityStore(), clock: fixedClock(now) };
 }
 
 async function tokenIssuedAt(now: number): Promise<string> {
@@ -27,15 +19,16 @@ async function tokenIssuedAt(now: number): Promise<string> {
 describe('getCurrentSession', () => {
     it('returns unauthenticated when no cookie is present', async () => {
         const out = await getCurrentSession(deps(), undefined);
-        expect(out.result).toEqual({ authenticated: false, user: null });
+        expect(out.result).toEqual({ authenticated: false, user: null, firebaseCustomToken: null });
         expect(out.refreshedCookie).toBeNull();
     });
 
-    it('returns the user when active (no rotation)', async () => {
+    it('returns the user + a fresh custom token when active (no rotation)', async () => {
         const token = await tokenIssuedAt(NOW);
         const out = await getCurrentSession(deps(NOW + 10), token);
         expect(out.result.authenticated).toBe(true);
         expect(out.result.user).toEqual(user);
+        expect(out.result.firebaseCustomToken).toBe('ct-uid-1');
         expect(out.refreshedCookie).toBeNull();
     });
 
@@ -58,7 +51,7 @@ describe('refreshSession', () => {
         const token = await tokenIssuedAt(NOW);
         const out = await refreshSession(deps(NOW + 10), token);
         expect(out.refreshedCookie).toBeTruthy();
-        expect(out.result.user).toEqual(user);
+        expect(out.result.firebaseCustomToken).toBe('ct-uid-1');
     });
 
     it('throws 401 (SessionExpiredError) when absent or past absolute expiry', async () => {

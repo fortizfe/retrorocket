@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@/lib/contexts/UserContext';
-import { listBoards, deleteBoard } from '@/features/boards/retrospective/services/boardsApiClient';
+import { userService } from '@/features/auth/services/userService';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import BoardCard from '@/features/dashboard/components/BoardCard';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 import BoardListItem from '@/features/dashboard/components/BoardListItem';
 import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '@/features/dashboard/components/BoardControlsBar';
 import Pagination from '@/features/dashboard/components/Pagination';
@@ -128,7 +129,7 @@ const DashboardPage: React.FC = () => {
 
         try {
             setLoading(true);
-            const userBoards = await listBoards();
+            const userBoards = await userService.getUserBoards(user.uid);
             setBoards(userBoards);
         } catch (error) {
             console.error('Error loading user boards:', error);
@@ -157,9 +158,9 @@ const DashboardPage: React.FC = () => {
 
     // Hard delete handler used by the Dashboard view to permanently remove
     // retrospectives from Firestore when a user confirms deletion in "Mis tableros".
-    const handleHardDelete = async (boardId: string) => {
+    const handleHardDelete = async (boardId: string, userId: string) => {
         try {
-            await deleteBoard(boardId);
+            await OptimizedRetrospectiveService.deleteRetrospectiveCompletely(boardId, userId);
             // Update local state
             handleBoardDeleted(boardId);
             toast.success('Board deleted');

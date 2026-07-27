@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
+import { getAuth } from 'firebase/auth';
 import { SentimentResult, SentimentConfiguration, SentimentType, shouldShowSentimentBadge } from '@/features/boards/types/sentiment';
 import { Card } from '@/features/boards/types/card';
-import * as sentimentApi from '@/features/boards/sentiment/services/sentimentResultsApiClient';
+import { SentimentResultsService } from '@/features/boards/sentiment/services/sentimentResultsService';
 import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
 
 export interface SentimentCounts {
@@ -33,7 +33,7 @@ function mergePersistedResults(
 /** Persist path for auto results; each result already carries its card-text hash. */
 function persistBatch(retroId: string, results: SentimentResult[]): void {
     results.forEach(r =>
-        sentimentApi
+        SentimentResultsService
             .saveResultWithHash(retroId, r, r.contentHash ?? hashContent(r.cardId))
             .catch(() => {})
     );
@@ -51,28 +51,23 @@ export interface SentimentResultsReturn {
     overrideSentiment: (cardId: string, sentiment: SentimentType) => Promise<void>;
 }
 
-/**
- * Backend-mediated replacement for sentimentResultsService.ts's direct Firestore access
- * (feature 017 US3). Persisted results now arrive via the board's shared SSE snapshot
- * (BoardEventsProvider) instead of a one-time `loadResults()` fetch on mount.
- */
 export function useSentimentResults(retrospectiveId?: string): SentimentResultsReturn {
     const [results, setResults] = useState<Map<string, SentimentResult>>(new Map());
     const processingQueue = useRef<Set<string>>(new Set());
     const retroIdRef = useRef(retrospectiveId);
     useEffect(() => { retroIdRef.current = retrospectiveId; }, [retrospectiveId]);
 
-    const { snapshot } = useBoardEventsContext();
-    const rawSentiment = snapshot?.sentiment;
-
-    // Merge persisted results in whenever the board's sentiment snapshot changes.
+    // Load persisted results on mount (or when retrospectiveId changes).
     useEffect(() => {
-        if (!rawSentiment) return;
-        const persisted = sentimentApi.parseSentimentSnapshot(rawSentiment as never);
-        if (persisted.size > 0) {
-            setResults(prev => mergePersistedResults(prev, persisted));
-        }
-    }, [rawSentiment]);
+        if (!retrospectiveId) return;
+        SentimentResultsService.loadResults(retrospectiveId)
+            .then(persisted => {
+                if (persisted.size > 0) {
+                    setResults(prev => mergePersistedResults(prev, persisted));
+                }
+            })
+            .catch(() => { /* non-critical — fall back to in-memory only */ });
+    }, [retrospectiveId]);
 
     const applyResult = useCallback((result: SentimentResult) => {
         setResults(prev => {
@@ -94,7 +89,7 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
             // Fire-and-forget persistence
             const retroId = retroIdRef.current;
             if (retroId) {
-                sentimentApi
+                SentimentResultsService
                     .saveResultWithHash(retroId, result, result.contentHash ?? hashContent(result.cardId))
                     .catch(() => {});
             }
@@ -159,6 +154,7 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
 
     const overrideSentiment = useCallback(async (cardId: string, sentiment: SentimentType): Promise<void> => {
         const retroId = retroIdRef.current;
+        const facilitatorId = getAuth().currentUser?.uid ?? '';
         // Optimistic update — bypass applyResult to avoid triggering saveResultWithHash,
         // which would race against saveOverride and clobber isOverride: true.
         const overrideResult: SentimentResult = { cardId, sentiment, confidence: 1, timestamp: new Date(), isOverride: true };
@@ -168,7 +164,7 @@ export function useSentimentResults(retrospectiveId?: string): SentimentResultsR
             return updated;
         });
         if (retroId) {
-            await sentimentApi.saveOverride(retroId, cardId, sentiment);
+            await SentimentResultsService.saveOverride(retroId, cardId, sentiment, facilitatorId);
         }
     }, []);
 

@@ -13,15 +13,14 @@ export interface FirebaseUserRecordLike {
     displayName?: string;
     photoURL?: string;
     customClaims?: Record<string, unknown>;
-    metadata?: { creationTime: string };
 }
 
 export interface FirebaseAuthLike {
     getUser(uid: string): Promise<FirebaseUserRecordLike>;
     getUserByEmail(email: string): Promise<FirebaseUserRecordLike>;
     createUser(props: { email: string; displayName?: string; photoURL?: string }): Promise<FirebaseUserRecordLike>;
-    updateUser(uid: string, props: { displayName?: string }): Promise<FirebaseUserRecordLike>;
     setCustomUserClaims(uid: string, claims: Record<string, unknown>): Promise<void>;
+    createCustomToken(uid: string, developerClaims?: Record<string, unknown>): Promise<string>;
 }
 
 interface LinkedAccount {
@@ -44,7 +43,6 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
 
     async resolveUser(profile: ProviderProfile, normalizedEmail: string): Promise<UserIdentity> {
         let record: FirebaseUserRecordLike;
-        let isNewUser = false;
         try {
             record = await this.auth.getUserByEmail(normalizedEmail);
         } catch (error) {
@@ -54,19 +52,15 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
                 displayName: profile.displayName ?? undefined,
                 photoURL: profile.photoURL ?? undefined,
             });
-            isNewUser = true;
         }
 
         const existing = Array.isArray(record.customClaims?.providers)
             ? (record.customClaims!.providers as OAuthProvider[])
             : [];
         const providers = existing.includes(profile.provider) ? existing : [...existing, profile.provider];
-        // Set once, at account creation, and never changed afterward (Profile page's "primary
-        // provider" — linking additional providers later must not retroactively change it).
-        const primaryProvider = (record.customClaims?.primaryProvider as OAuthProvider | undefined) ?? providers[0];
 
-        if (providers.length !== existing.length || isNewUser) {
-            await this.auth.setCustomUserClaims(record.uid, { ...(record.customClaims ?? {}), providers, primaryProvider });
+        if (providers.length !== existing.length) {
+            await this.auth.setCustomUserClaims(record.uid, { ...(record.customClaims ?? {}), providers });
         }
 
         return new UserIdentity(
@@ -75,8 +69,6 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
             record.displayName ?? profile.displayName ?? null,
             record.photoURL ?? profile.photoURL ?? null,
             providers,
-            primaryProvider,
-            record.metadata?.creationTime ?? new Date().toISOString(),
         );
     }
 
@@ -97,9 +89,7 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
             ? existingLinks
             : [...existingLinks, { provider: profile.provider, providerAccountId: profile.providerAccountId, email: normalizedEmail }];
 
-        // Linking a second provider must never change which one was primary.
-        const primaryProvider = (claims.primaryProvider as OAuthProvider | undefined) ?? existingProviders[0] ?? profile.provider;
-        await this.auth.setCustomUserClaims(uid, { ...claims, providers, linkedAccounts, primaryProvider });
+        await this.auth.setCustomUserClaims(uid, { ...claims, providers, linkedAccounts });
 
         return new UserIdentity(
             uid,
@@ -107,24 +97,10 @@ export class FirebaseIdentityAdapter implements IdentityStorePort {
             record.displayName ?? profile.displayName ?? null,
             record.photoURL ?? profile.photoURL ?? null,
             providers,
-            primaryProvider,
-            record.metadata?.creationTime ?? new Date().toISOString(),
         );
     }
 
-    async updateDisplayName(uid: string, displayName: string): Promise<UserIdentity> {
-        const updated = await this.auth.updateUser(uid, { displayName });
-        const providers = Array.isArray(updated.customClaims?.providers) ? (updated.customClaims!.providers as OAuthProvider[]) : [];
-        const primaryProvider = (updated.customClaims?.primaryProvider as OAuthProvider | undefined) ?? providers[0];
-
-        return new UserIdentity(
-            updated.uid,
-            updated.email ?? '',
-            updated.displayName ?? displayName,
-            updated.photoURL ?? null,
-            providers,
-            primaryProvider,
-            updated.metadata?.creationTime ?? new Date().toISOString(),
-        );
+    async mintCustomToken(uid: string): Promise<string> {
+        return this.auth.createCustomToken(uid);
     }
 }

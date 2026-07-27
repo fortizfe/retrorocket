@@ -1,59 +1,94 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useBoardEvents } from '@/lib/hooks/useBoardEvents';
-import { joinBoard, parseParticipantsSnapshot } from '@/features/boards/participants/services/participantsApiClient';
+import {
+    getParticipantsByRetrospective,
+    subscribeToParticipants,
+    addParticipant as addParticipantService,
+    removeParticipant as removeParticipantService,
+    CreateParticipantInput
+} from '@/features/boards/participants/services/participantService';
 import { Participant } from '@/features/boards/types/participant';
 
 interface UseParticipantsReturn {
     participants: Participant[];
     loading: boolean;
     error: string | null;
-    addParticipant: () => Promise<{ id: string; isNew: boolean }>;
+    addParticipant: (participantInput: CreateParticipantInput) => Promise<{ id: string; isNew: boolean }>;
+    removeParticipant: (participantId: string) => Promise<void>;
     refetch: () => Promise<void>;
 }
 
-/**
- * Backend-mediated replacement for participantService.ts's read path (feature 017 US2):
- * participants now arrive over the board's SSE channel instead of a Firestore `onSnapshot`
- * listener. This hook is used both inside and outside RetrospectiveBoard's tree (topbar,
- * join panel), so it opens its own connection rather than consuming BoardEventsProvider's
- * shared one.
- */
 export const useParticipants = (retrospectiveId?: string): UseParticipantsReturn => {
-    const [rawParticipants, setRawParticipants] = useState<Array<Record<string, unknown>> | null>(null);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { connectionState } = useBoardEvents(retrospectiveId, {
-        onSnapshot: (data) => setRawParticipants((data as { participants: Array<Record<string, unknown>> }).participants),
-        on: {
-            participants: (data) => setRawParticipants(data as Array<Record<string, unknown>>),
-        },
-    });
+    const fetchParticipants = useCallback(async () => {
+        if (!retrospectiveId) {
+            setLoading(false);
+            return;
+        }
 
-    useEffect(() => {
-        if (!retrospectiveId) setRawParticipants(null);
+        try {
+            setLoading(true);
+            setError(null);
+            const fetchedParticipants = await getParticipantsByRetrospective(retrospectiveId);
+            setParticipants(fetchedParticipants);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Error fetching participants');
+            setParticipants([]);
+        } finally {
+            setLoading(false);
+        }
     }, [retrospectiveId]);
 
-    const participants = rawParticipants ? parseParticipantsSnapshot(rawParticipants as never) : [];
-    const loading = !!retrospectiveId && rawParticipants === null && connectionState !== 'reconnecting';
+    useEffect(() => {
+        if (!retrospectiveId) {
+            setLoading(false);
+            return;
+        }
 
-    const addParticipant = useCallback(async (): Promise<{ id: string; isNew: boolean }> => {
-        if (!retrospectiveId) throw new Error('Missing retrospectiveId');
+        // Set up real-time subscription
+        const unsubscribe = subscribeToParticipants(retrospectiveId, (fetchedParticipants) => {
+            setParticipants(fetchedParticipants);
+            setLoading(false);
+            setError(null);
+        });
+
+        return () => unsubscribe();
+    }, [retrospectiveId]);
+
+    const addParticipant = useCallback(async (participantInput: CreateParticipantInput): Promise<{ id: string; isNew: boolean }> => {
         try {
             setError(null);
-            return await joinBoard(retrospectiveId);
+            const result = await addParticipantService(participantInput);
+            // The subscription will handle updating the local state
+            return result;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error adding participant';
             setError(errorMessage);
             throw new Error(errorMessage);
         }
-    }, [retrospectiveId]);
+    }, []);
+
+    const removeParticipant = useCallback(async (participantId: string): Promise<void> => {
+        try {
+            setError(null);
+            await removeParticipantService(participantId);
+            // The subscription will handle updating the local state
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error removing participant';
+            setError(errorMessage);
+            throw new Error(errorMessage);
+        }
+    }, []);
 
     return {
         participants,
         loading,
         error,
         addParticipant,
-        refetch: async () => {}
+        removeParticipant,
+        refetch: fetchParticipants
     };
 };
 

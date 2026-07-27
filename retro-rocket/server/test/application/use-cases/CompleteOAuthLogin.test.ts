@@ -36,10 +36,11 @@ function deps(overrides = {}) {
 }
 
 describe('completeOAuthLogin', () => {
-    it('issues a session and returns the sanitized returnTo on success', async () => {
+    it('issues a session + custom token and returns the sanitized returnTo on success', async () => {
         const d = deps();
         const result = await completeOAuthLogin(d, { code: 'code', state: 'state-xyz', stateCookieValue: await storedStateCookie() });
         expect(result.user.uid).toBe('uid-1');
+        expect(result.customToken).toBe('ct-uid-1');
         expect(result.sessionToken).toBeTruthy();
         expect(result.returnTo).toBe('/board/1');
         expect(d.identityStore.resolveUser).toHaveBeenCalledWith(

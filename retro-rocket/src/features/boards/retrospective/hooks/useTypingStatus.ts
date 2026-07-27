@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
-import { setTypingStatus, parseTypingSnapshot } from '@/features/boards/retrospective/services/typingApiClient';
+import { OptimizedTypingStatusService } from '@/features/boards/retrospective/services/OptimizedTypingStatusService';
+import { FirebaseMetricsService } from '@/lib/services/FirebaseMetricsService';
 import { TypingStatus, TypingIndicator } from '@/features/boards/types/typing';
 import { ColumnType } from '@/features/boards/types/retrospective';
 
@@ -18,105 +18,165 @@ interface UseTypingStatusReturn {
 }
 
 /**
- * Backend-mediated replacement for both typingStatusService.ts (dead) and
- * OptimizedTypingStatusService.ts (feature 017 US2, research.md §4 — one canonical
- * implementation). Typing state now arrives over the board's shared SSE channel.
+ * Hook to manage typing status for real-time collaboration
  */
-export function useTypingStatus({ retrospectiveId, currentUserId, currentUsername }: UseTypingStatusOptions): UseTypingStatusReturn {
+export function useTypingStatus({
+    retrospectiveId,
+    currentUserId,
+    currentUsername
+}: UseTypingStatusOptions): UseTypingStatusReturn {
     const [typingStatuses, setTypingStatuses] = useState<TypingStatus[]>([]);
     const activeTypingColumns = useRef<Set<string>>(new Set());
-    const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
     const lastUpdateTimers = useRef<Map<string, number>>(new Map());
-    const { snapshot } = useBoardEventsContext();
-    const rawTyping = snapshot?.typing;
 
-    const UPDATE_THROTTLE = 2000; // 2 seconds between backend updates
+    const UPDATE_THROTTLE = 2000; // 2 seconds between Firebase updates
 
+    // Subscribe to typing status changes
     useEffect(() => {
-        if (!rawTyping) return;
-        const parsed = parseTypingSnapshot(rawTyping as Parameters<typeof parseTypingSnapshot>[0], retrospectiveId);
-        setTypingStatuses(parsed.filter((status) => status.userId !== currentUserId));
-    }, [rawTyping, retrospectiveId, currentUserId]);
+        if (!retrospectiveId) return;
+
+        const unsubscribe = OptimizedTypingStatusService.subscribeToTypingStatus(
+            retrospectiveId,
+            (statuses: TypingStatus[]) => {
+                FirebaseMetricsService.recordRead('typing-status-updates', statuses.length);
+                // Filter out current user's typing status
+                const otherUsersTyping = statuses.filter((status: TypingStatus) =>
+                    status.userId !== currentUserId
+                );
+                setTypingStatuses(otherUsersTyping);
+            }
+        );
+
+        return unsubscribe;
+    }, [retrospectiveId, currentUserId]);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             if (currentUserId && currentUsername) {
-                for (const column of activeTypingColumns.current) {
-                    void setTypingStatus({ userId: currentUserId, username: currentUsername, retrospectiveId, column: column as ColumnType, isActive: false });
-                }
+                OptimizedTypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
             }
-            debounceTimers.current.forEach((timer) => clearTimeout(timer));
+
+            // Clear all debounce timers
+            debounceTimers.current.forEach(timer => clearTimeout(timer));
             debounceTimers.current.clear();
+
+            // Clear all update timers
             lastUpdateTimers.current.clear();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentUserId, currentUsername, retrospectiveId]);
-
-    const stopTyping = useCallback((column: string) => {
-        if (!currentUserId || !currentUsername) return;
-
-        const timer = debounceTimers.current.get(column);
-        if (timer) {
-            clearTimeout(timer);
-            debounceTimers.current.delete(column);
-        }
-        lastUpdateTimers.current.delete(column);
-
-        if (activeTypingColumns.current.has(column)) {
-            void setTypingStatus({ userId: currentUserId, username: currentUsername, retrospectiveId, column: column as ColumnType, isActive: false });
-            activeTypingColumns.current.delete(column);
-        }
     }, [currentUserId, currentUsername, retrospectiveId]);
 
     // Cleanup on page unload
     useEffect(() => {
         const handleBeforeUnload = () => {
             if (currentUserId && currentUsername) {
-                for (const column of activeTypingColumns.current) {
-                    void setTypingStatus({ userId: currentUserId, username: currentUsername, retrospectiveId, column: column as ColumnType, isActive: false });
-                }
+                // Cleanup user typing status on page unload
+                OptimizedTypingStatusService.cleanupUserTypingStatus(currentUserId, retrospectiveId);
             }
         };
+
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [currentUserId, currentUsername, retrospectiveId]);
 
+    /**
+     * Start typing in a specific column
+     */
     const startTyping = useCallback((column: string) => {
         if (!currentUserId || !currentUsername) return;
 
+        // Clear existing debounce timer for this column
         const existingTimer = debounceTimers.current.get(column);
-        if (existingTimer) clearTimeout(existingTimer);
+        if (existingTimer) {
+            clearTimeout(existingTimer);
+        }
 
+        // Check if we need to update Firebase (throttle updates)
         const now = Date.now();
         const lastUpdate = lastUpdateTimers.current.get(column) ?? 0;
         const shouldUpdate = now - lastUpdate > UPDATE_THROTTLE || !activeTypingColumns.current.has(column);
 
         if (shouldUpdate) {
-            void setTypingStatus({ userId: currentUserId, username: currentUsername, retrospectiveId, column: column as ColumnType, isActive: true });
+            // Send/update typing status to refresh timestamp
+            OptimizedTypingStatusService.setTypingStatusDebounced({
+                userId: currentUserId,
+                username: currentUsername,
+                retrospectiveId,
+                column: column as ColumnType, // Cast to ColumnType for service compatibility
+                isActive: true
+            });
+
             lastUpdateTimers.current.set(column, now);
         }
 
+        // Mark as active
         activeTypingColumns.current.add(column);
 
+        // Set a debounced stop timer (longer delay for better UX)
         const timer = setTimeout(() => {
             stopTyping(column);
-        }, 4000);
-        debounceTimers.current.set(column, timer);
-    }, [currentUserId, currentUsername, retrospectiveId, stopTyping]);
+        }, 4000); // 4 seconds of inactivity (less than the 6s Firebase timeout)
 
+        debounceTimers.current.set(column, timer);
+    }, [currentUserId, currentUsername, retrospectiveId, UPDATE_THROTTLE]);
+
+    /**
+     * Stop typing in a specific column
+     */
+    const stopTyping = useCallback((column: string) => {
+        if (!currentUserId || !currentUsername) return;
+
+        // Clear debounce timer
+        const timer = debounceTimers.current.get(column);
+        if (timer) {
+            clearTimeout(timer);
+            debounceTimers.current.delete(column);
+        }
+
+        // Clear last update timer
+        lastUpdateTimers.current.delete(column);
+
+        // Only send stop status if currently active for this column
+        if (activeTypingColumns.current.has(column)) {
+            OptimizedTypingStatusService.setTypingStatusDebounced({
+                userId: currentUserId,
+                username: currentUsername,
+                retrospectiveId,
+                column: column as ColumnType, // Cast to ColumnType for service compatibility
+                isActive: false
+            });
+
+            activeTypingColumns.current.delete(column);
+        }
+    }, [currentUserId, currentUsername, retrospectiveId]);
+
+    /**
+     * Get typing users for a specific column
+     */
     const getTypingUsersForColumn = useCallback((column: string): TypingIndicator[] => {
         return typingStatuses
-            .filter((status) => status.column === column)
-            .map((status) => ({ userId: status.userId, username: status.username, column: status.column, lastActivity: status.timestamp }));
+            .filter(status => status.column === column)
+            .map(status => ({
+                userId: status.userId,
+                username: status.username,
+                column: status.column,
+                lastActivity: status.timestamp
+            }));
     }, [typingStatuses]);
 
-    const typingIndicators: TypingIndicator[] = typingStatuses.map((status) => ({
+    // Convert typing statuses to indicators
+    const typingIndicators: TypingIndicator[] = typingStatuses.map(status => ({
         userId: status.userId,
         username: status.username,
         column: status.column,
-        lastActivity: status.timestamp,
+        lastActivity: status.timestamp
     }));
 
-    return { typingIndicators, startTyping, stopTyping, getTypingUsersForColumn };
+    return {
+        typingIndicators,
+        startTyping,
+        stopTyping,
+        getTypingUsersForColumn
+    };
 }

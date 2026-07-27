@@ -1,5 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import * as boardsApi from '@/features/boards/retrospective/services/boardsApiClient';
+import {
+    getRetrospective,
+    updateRetrospective as updateRetrospectiveService,
+    subscribeToRetrospective,
+    CreateRetrospectiveInput,
+    createRetrospective as createRetrospectiveService
+} from '@/features/boards/retrospective/services/retrospectiveService';
 import { Retrospective } from '@/features/boards/types/retrospective';
 
 interface UseRetrospectiveReturn {
@@ -7,16 +13,10 @@ interface UseRetrospectiveReturn {
     loading: boolean;
     error: string | null;
     updateRetrospective: (updates: Partial<Retrospective>) => Promise<void>;
+    createRetrospective: (data: CreateRetrospectiveInput) => Promise<string>;
     refetch: () => Promise<void>;
 }
 
-/**
- * Backend-mediated replacement for retrospectiveService.ts's direct Firestore access
- * (feature 017 US4). `GET /api/boards/:id` is a one-time fetch by design
- * (contracts/boards-api.md) — live updates come from the board's SSE channel
- * (BoardEventsProvider's `board` event), consumed separately within RetrospectiveBoard's
- * tree; this hook is used at the page/topbar level, outside that tree.
- */
 export const useRetrospective = (retrospectiveId?: string): UseRetrospectiveReturn => {
     const [retrospective, setRetrospective] = useState<Retrospective | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -31,7 +31,7 @@ export const useRetrospective = (retrospectiveId?: string): UseRetrospectiveRetu
         try {
             setLoading(true);
             setError(null);
-            const data = await boardsApi.getBoard(retrospectiveId);
+            const data = await getRetrospective(retrospectiveId);
             setRetrospective(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error fetching retrospective data');
@@ -42,8 +42,24 @@ export const useRetrospective = (retrospectiveId?: string): UseRetrospectiveRetu
     }, [retrospectiveId]);
 
     useEffect(() => {
-        fetchRetrospective();
-    }, [fetchRetrospective]);
+        if (!retrospectiveId) {
+            setLoading(false);
+            return;
+        }
+
+        // Set up real-time subscription
+        const unsubscribe = subscribeToRetrospective(retrospectiveId, (data) => {
+            setRetrospective(data);
+            setLoading(false);
+            if (!data) {
+                setError('Retrospective not found');
+            } else {
+                setError(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [retrospectiveId]);
 
     const updateRetrospective = useCallback(async (updates: Partial<Retrospective>) => {
         if (!retrospectiveId) {
@@ -52,11 +68,8 @@ export const useRetrospective = (retrospectiveId?: string): UseRetrospectiveRetu
 
         try {
             setError(null);
-            const updated = await boardsApi.renameBoard(retrospectiveId, {
-                title: updates.title,
-                description: updates.description,
-            });
-            setRetrospective(updated);
+            await updateRetrospectiveService(retrospectiveId, updates);
+            // The subscription will handle updating the local state
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error updating retrospective';
             setError(errorMessage);
@@ -64,11 +77,27 @@ export const useRetrospective = (retrospectiveId?: string): UseRetrospectiveRetu
         }
     }, [retrospectiveId]);
 
+    const createRetrospective = useCallback(async (data: CreateRetrospectiveInput): Promise<string> => {
+        try {
+            setLoading(true);
+            setError(null);
+            const newId = await createRetrospectiveService(data);
+            return newId;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error creating retrospective';
+            setError(errorMessage);
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     return {
         retrospective,
         loading,
         error,
         updateRetrospective,
+        createRetrospective,
         refetch: fetchRetrospective
     };
 };

@@ -883,10 +883,5 @@
     "analyzing": "Analyzing similarities...",
     "suggestedHeadCard": "Suggested head card",
     "createGroup": "Create Group"
-  },
-  "app": {
-    "newVersionAvailable": "A new version is available. Reload the page to update.",
-    "reload": "Reload",
-    "reconnecting": "Reconnecting in real time…"
   }
 }

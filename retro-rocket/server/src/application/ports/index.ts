@@ -26,8 +26,8 @@ export interface IdentityStorePort {
      * settings), regardless of the provider email. Records the provider + account id.
      */
     linkProviderToUser(uid: string, profile: ProviderProfile, normalizedEmail: string): Promise<UserIdentity>;
-    /** Updates the user's editable display name (Profile page — replaces the old Firestore-backed edit). */
-    updateDisplayName(uid: string, displayName: string): Promise<UserIdentity>;
+    /** Mint a short-lived Firebase custom token for signInWithCustomToken (FR-011). */
+    mintCustomToken(uid: string): Promise<string>;
 }
 
 /** Issues/verifies/refreshes the signed session token carried by the httpOnly cookie. */

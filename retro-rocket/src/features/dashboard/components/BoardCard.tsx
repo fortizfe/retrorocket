@@ -6,6 +6,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import Button from '@/lib/components/ui/Button';
 import Card from '@/lib/components/ui/Card';
 import EditRetrospectiveModal from '@/features/dashboard/components/EditRetrospectiveModal';
+import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 import toast from 'react-hot-toast';
 
 interface Board {
@@ -24,7 +25,10 @@ interface BoardCardProps {
     board: Board;
     currentUserId: string;
     onBoardDeleted: (boardId: string) => void;
-    onDelete: (boardId: string) => Promise<void>;
+    /** Optional override for delete behavior. If provided, BoardCard will call this
+     * function to perform deletion. If omitted, it will use the service's soft delete.
+     */
+    onDelete?: (boardId: string, userId: string) => Promise<void>;
     onBoardUpdated?: (boardId: string, updates: { title: string }) => void;
 }
 
@@ -46,7 +50,13 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
 
         setIsDeleting(true);
         try {
-            await onDelete(board.id);
+            // If a custom delete strategy is provided, use it (allows callers to
+            // decide between soft vs hard delete). Otherwise fall back to soft delete.
+            if (onDelete) {
+                await onDelete(board.id, currentUserId);
+            } else {
+                await OptimizedRetrospectiveService.softDeleteRetrospective(board.id, currentUserId);
+            }
             setShowDeleteConfirm(false);
             toast.success(t('retrospective.deleteSuccess') || 'Retrospective moved to trash');
             onBoardDeleted(board.id);

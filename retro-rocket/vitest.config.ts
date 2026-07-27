@@ -57,9 +57,4 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
         },
     },
-    define: {
-        // Mirrors vite.config.ts's build-time app version define (feature 017 T119),
-        // so useBackendVersion has a value to compare against under Vitest too.
-        __APP_VERSION__: JSON.stringify('test'),
-    },
 });
