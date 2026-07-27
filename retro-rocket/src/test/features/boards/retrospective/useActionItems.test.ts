@@ -1,44 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useActionItems } from '@/features/boards/retrospective/hooks/useActionItems';
-import { ActionItemsService } from '@/features/boards/retrospective/services/actionItemsService';
+import * as actionItemsApi from '@/features/boards/retrospective/services/actionItemsApiClient';
 
-// Mock the service
-vi.mock('@/features/boards/retrospective/services/actionItemsService', () => ({
-    ActionItemsService: {
-        createActionItem: vi.fn(),
-        updateActionItem: vi.fn(),
-        deleteActionItem: vi.fn(),
-        subscribeToActionItems: vi.fn(),
-        convertCardToActionItem: vi.fn()
-    }
+let mockSnapshot: { actionItems: unknown[] } | null = null;
+
+vi.mock('@/features/boards/retrospective/contexts/BoardEventsProvider', () => ({
+    useBoardEventsContext: () => ({ snapshot: mockSnapshot, connectionState: 'connected' }),
 }));
 
-const mockedActionItemsService = vi.mocked(ActionItemsService);
+vi.mock('@/features/boards/retrospective/services/actionItemsApiClient', () => ({
+    createActionItem: vi.fn(),
+    convertCardToActionItem: vi.fn(),
+    updateActionItem: vi.fn(),
+    deleteActionItem: vi.fn(),
+    parseActionItemsSnapshot: (raw: Array<Record<string, unknown>>) =>
+        raw.map((i) => ({ ...i, createdAt: new Date(i.createdAt as string), updatedAt: new Date(i.updatedAt as string), dueDate: i.dueDate ? new Date(i.dueDate as string) : null })),
+}));
+
+const mocked = vi.mocked(actionItemsApi);
+
+const RAW_ITEM = {
+    id: 'item-1', retrospectiveId: 'retro-1', content: 'Test item', createdBy: 'user-1',
+    assignedTo: null, assignedToName: null, dueDate: null,
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), order: 1,
+};
 
 describe('useActionItems', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Default subscription setup
-        mockedActionItemsService.subscribeToActionItems.mockReturnValue(vi.fn());
+        mockSnapshot = null;
     });
 
-    describe('Basic functionality', () => {
-        it('should initialize with loading state and setup subscription', () => {
+    describe('Snapshot consumption', () => {
+        it('is loading until a snapshot arrives', () => {
             const { result } = renderHook(() => useActionItems('retro-1'));
-
             expect(result.current.actionItems).toEqual([]);
-            expect(result.current.loading).toBe(true); // Starts loading when subscription is set up
+            expect(result.current.loading).toBe(true);
             expect(result.current.error).toBeNull();
-            expect(mockedActionItemsService.subscribeToActionItems).toHaveBeenCalledWith(
-                'retro-1',
-                expect.any(Function)
-            );
         });
 
-        it('should create new action item', async () => {
-            mockedActionItemsService.createActionItem.mockResolvedValue('new-item-id');
+        it('populates actionItems from the snapshot', () => {
+            mockSnapshot = { actionItems: [RAW_ITEM] };
+            const { result } = renderHook(() => useActionItems('retro-1'));
 
+            expect(result.current.actionItems).toHaveLength(1);
+            expect(result.current.actionItems[0].content).toBe('Test item');
+            expect(result.current.loading).toBe(false);
+        });
+    });
+
+    describe('createActionItem', () => {
+        it('creates a new action item via the backend endpoint', async () => {
+            mocked.createActionItem.mockResolvedValue(RAW_ITEM as never);
             const { result } = renderHook(() => useActionItems('retro-1'));
 
             await act(async () => {
@@ -51,225 +65,88 @@ describe('useActionItems', () => {
                 });
             });
 
-            expect(mockedActionItemsService.createActionItem).toHaveBeenCalledWith({
+            expect(mocked.createActionItem).toHaveBeenCalledWith('retro-1', {
                 content: 'Test action item',
-                retrospectiveId: 'retro-1',
-                createdBy: 'user-1',
                 assignedTo: 'user-2',
-                assignedToName: 'John Doe'
+                assignedToName: 'John Doe',
+                dueDate: undefined,
             });
         });
 
-        it('should update action item', async () => {
-            mockedActionItemsService.updateActionItem.mockResolvedValue();
-
+        it('does not call the backend when content is empty', async () => {
             const { result } = renderHook(() => useActionItems('retro-1'));
 
             await act(async () => {
-                await result.current.updateActionItem('item-1', {
-                    content: 'Updated content',
-                    assignedTo: 'user-3'
-                });
+                await result.current.createActionItem({ content: '', retrospectiveId: 'retro-1', createdBy: 'user-1' });
             });
 
-            expect(mockedActionItemsService.updateActionItem).toHaveBeenCalledWith('item-1', {
-                content: 'Updated content',
-                assignedTo: 'user-3'
-            });
+            expect(mocked.createActionItem).not.toHaveBeenCalled();
         });
 
-        it('should delete action item', async () => {
-            mockedActionItemsService.deleteActionItem.mockResolvedValue();
-
+        it('sets error on failure', async () => {
+            mocked.createActionItem.mockRejectedValue(new Error('Failed to create action item'));
             const { result } = renderHook(() => useActionItems('retro-1'));
 
             await act(async () => {
-                await result.current.deleteActionItem('item-1');
-            });
-
-            expect(mockedActionItemsService.deleteActionItem).toHaveBeenCalledWith('item-1');
-        });
-
-        it('should handle create errors gracefully', async () => {
-            mockedActionItemsService.createActionItem.mockRejectedValue(new Error('Failed to create action item'));
-
-            const { result } = renderHook(() => useActionItems('retro-1'));
-
-            await act(async () => {
-                await result.current.createActionItem({
-                    content: 'Test action item',
-                    retrospectiveId: 'retro-1',
-                    createdBy: 'user-1',
-                    assignedTo: null,
-                    assignedToName: null
-                });
+                await result.current.createActionItem({ content: 'Test', retrospectiveId: 'retro-1', createdBy: 'user-1' });
             });
 
             expect(result.current.error).toBe('Failed to create action item');
-            expect(result.current.loading).toBe(false);
         });
 
-        it('should handle empty content gracefully', async () => {
+        it('clears a previous error on a subsequent successful call', async () => {
+            mocked.createActionItem.mockRejectedValueOnce(new Error('Failed')).mockResolvedValueOnce(RAW_ITEM as never);
             const { result } = renderHook(() => useActionItems('retro-1'));
+            const input = { content: 'Test action', retrospectiveId: 'retro-1', createdBy: 'user-1' };
 
-            const newItem = {
-                content: '',
-                retrospectiveId: 'retro-1',
-                createdBy: 'user-1'
-            };
-
-            await act(async () => {
-                await result.current.createActionItem(newItem);
-            });
-
-            // Should not call service when content is empty
-            const { ActionItemsService } = await import('@/features/boards/retrospective/services/actionItemsService');
-            expect(ActionItemsService.createActionItem).not.toHaveBeenCalled();
-        });
-
-        it('should handle subscription setup', () => {
-            const mockUnsubscribe = vi.fn();
-            mockedActionItemsService.subscribeToActionItems.mockReturnValue(mockUnsubscribe);
-
-            const { unmount } = renderHook(() => useActionItems('retro-1'));
-
-            expect(mockedActionItemsService.subscribeToActionItems).toHaveBeenCalledWith(
-                'retro-1',
-                expect.any(Function)
-            );
-
-            // Cleanup should call unsubscribe
-            unmount();
-            expect(mockUnsubscribe).toHaveBeenCalled();
-        });
-
-        it('should handle retrospective ID changes', () => {
-            const mockUnsubscribe1 = vi.fn();
-            const mockUnsubscribe2 = vi.fn();
-            mockedActionItemsService.subscribeToActionItems
-                .mockReturnValueOnce(mockUnsubscribe1)
-                .mockReturnValueOnce(mockUnsubscribe2);
-
-            const { rerender } = renderHook(
-                ({ retroId }) => useActionItems(retroId),
-                { initialProps: { retroId: 'retro-1' } }
-            );
-
-            expect(mockedActionItemsService.subscribeToActionItems).toHaveBeenCalledWith(
-                'retro-1',
-                expect.any(Function)
-            );
-
-            rerender({ retroId: 'retro-2' });
-
-            expect(mockUnsubscribe1).toHaveBeenCalled(); // Previous subscription cleaned up
-            expect(mockedActionItemsService.subscribeToActionItems).toHaveBeenCalledWith(
-                'retro-2',
-                expect.any(Function)
-            );
-        });
-
-        it('should clear error state on successful operations', async () => {
-            mockedActionItemsService.createActionItem
-                .mockRejectedValueOnce(new Error('Failed'))
-                .mockResolvedValueOnce('success-id');
-
-            const { result } = renderHook(() => useActionItems('retro-1'));
-
-            const newItem = {
-                content: 'Test action',
-                retrospectiveId: 'retro-1',
-                createdBy: 'user-1',
-                assignedTo: null,
-                assignedToName: null
-            };
-
-            // First call should set error
-            await act(async () => {
-                await result.current.createActionItem(newItem);
-            });
+            await act(async () => { await result.current.createActionItem(input); });
             expect(result.current.error).toBe('Failed');
 
-            // Second call should clear error
-            await act(async () => {
-                await result.current.createActionItem(newItem);
-            });
+            await act(async () => { await result.current.createActionItem(input); });
             expect(result.current.error).toBeNull();
         });
+    });
 
-        it('should convert card to action item', async () => {
-            mockedActionItemsService.convertCardToActionItem.mockResolvedValue('converted-id');
-
+    describe('updateActionItem / deleteActionItem', () => {
+        it('updates an action item', async () => {
+            mocked.updateActionItem.mockResolvedValue(RAW_ITEM as never);
             const { result } = renderHook(() => useActionItems('retro-1'));
 
             await act(async () => {
-                await result.current.convertCardToActionItem(
-                    'Card content',
-                    'facilitator-1',
-                    'user-1',
-                    'John Doe'
-                );
+                await result.current.updateActionItem('item-1', { content: 'Updated content', assignedTo: 'user-3' });
             });
 
-            expect(mockedActionItemsService.convertCardToActionItem).toHaveBeenCalledWith(
-                'Card content',
-                'retro-1',
-                'facilitator-1',
-                'user-1',
-                'John Doe',
-                undefined
-            );
+            expect(mocked.updateActionItem).toHaveBeenCalledWith('retro-1', 'item-1', { content: 'Updated content', assignedTo: 'user-3' });
         });
 
-        it('should clear error manually', () => {
+        it('deletes an action item', async () => {
+            mocked.deleteActionItem.mockResolvedValue(undefined);
             const { result } = renderHook(() => useActionItems('retro-1'));
 
-            // Simulate an error state
-            act(() => {
-                result.current.clearError();
-            });
+            await act(async () => { await result.current.deleteActionItem('item-1'); });
 
-            expect(result.current.error).toBeNull();
+            expect(mocked.deleteActionItem).toHaveBeenCalledWith('retro-1', 'item-1');
         });
+    });
 
-        it('should handle subscription callback', () => {
-            let subscriptionCallback: ((items: any[]) => void) | undefined;
-
-            mockedActionItemsService.subscribeToActionItems.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
+    describe('convertCardToActionItem', () => {
+        it('converts a card, ignoring the legacy facilitatorId arg (inferred server-side)', async () => {
+            mocked.convertCardToActionItem.mockResolvedValue(RAW_ITEM as never);
             const { result } = renderHook(() => useActionItems('retro-1'));
 
-            // Simulate subscription data update
-            const mockActionItems = [
-                {
-                    id: 'item-1',
-                    content: 'Test item',
-                    retrospectiveId: 'retro-1',
-                    createdBy: 'user-1',
-                    assignedTo: null,
-                    assignedToName: null,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    order: 1
-                }
-            ];
-
-            act(() => {
-                subscriptionCallback?.(mockActionItems);
+            await act(async () => {
+                await result.current.convertCardToActionItem('Card content', 'facilitator-1', 'user-1', 'John Doe');
             });
 
-            expect(result.current.actionItems).toEqual(mockActionItems);
-            expect(result.current.loading).toBe(false);
-            expect(result.current.error).toBeNull();
+            expect(mocked.convertCardToActionItem).toHaveBeenCalledWith('retro-1', 'Card content', 'user-1', 'John Doe', undefined);
         });
+    });
 
-        it('should not setup subscription without retrospective ID', () => {
-            renderHook(() => useActionItems(''));
-
-            expect(mockedActionItemsService.subscribeToActionItems).not.toHaveBeenCalled();
+    describe('clearError', () => {
+        it('resets error to null', () => {
+            const { result } = renderHook(() => useActionItems('retro-1'));
+            act(() => { result.current.clearError(); });
+            expect(result.current.error).toBeNull();
         });
     });
 });

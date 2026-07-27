@@ -29,12 +29,22 @@ export class UserIdentity {
         public readonly displayName: string | null,
         public readonly photoURL: string | null,
         public readonly providers: OAuthProvider[],
+        public readonly primaryProvider: OAuthProvider,
+        public readonly createdAt: string,
     ) {}
 
-    /** Returns a copy with the given provider added (set-union, order-preserving). */
+    /** Returns a copy with the given provider added (set-union, order-preserving). primaryProvider is unaffected. */
     withProvider(provider: OAuthProvider): UserIdentity {
         if (this.providers.includes(provider)) return this;
-        return new UserIdentity(this.uid, this.email, this.displayName, this.photoURL, [...this.providers, provider]);
+        return new UserIdentity(
+            this.uid,
+            this.email,
+            this.displayName,
+            this.photoURL,
+            [...this.providers, provider],
+            this.primaryProvider,
+            this.createdAt,
+        );
     }
 
     toPublicUser(): PublicUser {
@@ -44,6 +54,8 @@ export class UserIdentity {
             displayName: this.displayName,
             photoURL: this.photoURL,
             providers: this.providers,
+            primaryProvider: this.primaryProvider,
+            createdAt: this.createdAt,
         };
     }
 }

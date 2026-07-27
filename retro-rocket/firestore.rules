@@ -4,102 +4,74 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir acceso solo a usuarios autenticados NO anónimos
-    match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    
-    // Reglas más específicas para las colecciones de RetroRocket
+    // Feature 017 (backend-mediated Firebase access): every collection below is now
+    // read and written exclusively by the backend's Admin SDK, which bypasses these
+    // rules by design. The rules are explicit denies, not grants — no client
+    // (authenticated or not) may read or write any of them directly anymore. This
+    // replaces the previous global catch-all (`allow read, write: if
+    // request.auth != null && ... != 'anonymous'`), which — combined with the
+    // per-collection grants below it — let any authenticated non-anonymous user read
+    // or write every document in the database directly via the client SDK,
+    // including another facilitator's private notes (research.md §2's dead-rule
+    // finding: the facilitator-only checks on `facilitatorNotes` never actually
+    // mattered, because the top-level catch-all already granted blanket access
+    // first). Mirrors the existing `mcpClients`/`mcpAuthorizationCodes`/
+    // `mcpConnections` deny-all pattern (feature 015).
     match /retrospectives/{retrospectiveId} {
-      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-      
+      allow read, write: if false;
+
+      match /columns/{columnId} {
+        allow read, write: if false;
+      }
+
+      // Legacy path from before cards moved to a top-level collection — denied for
+      // the same reason as everything else here.
       match /cards/{cardId} {
-        allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+        allow read, write: if false;
       }
     }
-    
-    match /participants/{participantId} {
-      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    
+
     match /cards/{cardId} {
-      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    
-    // Reglas para typing status (previsualización de escritura en tiempo real)
-    match /typingStatus/{typingId} {
-      allow read, write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-      allow delete: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    
-    // Reglas para countdown timers - solo el creador del retrospective puede escribir
-    match /countdown_timers/{retrospectiveId} {
-      // Todos pueden leer el estado del temporizador
-      allow read: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-      
-      // Solo el creador del retrospective puede crear/modificar el temporizador
-      allow create: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.createdBy;
-                   
-      allow update: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.createdBy;
-                   
-      allow delete: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.createdBy;
-    }
-    
-    // Reglas para notas del facilitador - solo el facilitador puede ver y modificar sus notas
-    match /facilitatorNotes/{noteId} {
-      // Solo el facilitador que creó la nota puede leerla
-      allow read: if request.auth != null && 
-                 request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                 request.auth.uid == resource.data.facilitatorId;
-                 
-      // Solo el facilitador puede crear notas
-      allow create: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == request.resource.data.facilitatorId;
-                   
-      // Solo el facilitador que creó la nota puede modificarla
-      allow update: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.facilitatorId;
-                   
-      // Solo el facilitador que creó la nota puede eliminarla
-      allow delete: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.facilitatorId;
-    }
-    
-    // Resultados de análisis de sentimientos — cualquier participante autenticado puede leer/escribir
-    match /sentimentResults/{resultId} {
-      allow read: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
-      allow write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      allow read, write: if false;
     }
 
-    // Reglas para elementos de acción - todos pueden leer, solo el facilitador puede escribir
+    match /groups/{groupId} {
+      allow read, write: if false;
+    }
+
+    match /participants/{participantId} {
+      allow read, write: if false;
+    }
+
+    match /typingStatus/{typingId} {
+      allow read, write: if false;
+    }
+
+    match /countdown_timers/{retrospectiveId} {
+      allow read, write: if false;
+    }
+
+    match /facilitatorNotes/{noteId} {
+      allow read, write: if false;
+    }
+
+    match /sentimentResults/{resultId} {
+      allow read, write: if false;
+    }
+
     match /actionItems/{actionItemId} {
-      // Todos pueden leer elementos de acción
-      allow read: if request.auth != null && 
-                 request.auth.token.firebase.sign_in_provider != 'anonymous';
-                 
-      // Solo el facilitador puede crear elementos de acción
-      allow create: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == request.resource.data.facilitatorId;
-                   
-      // Solo el facilitador puede modificar elementos de acción
-      allow update: if request.auth != null && 
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.facilitatorId;
-                   
-      // Solo el facilitador puede eliminar elementos de acción
-      allow delete: if request.auth != null &&
-                   request.auth.token.firebase.sign_in_provider != 'anonymous' &&
-                   request.auth.uid == resource.data.facilitatorId;
+      allow read, write: if false;
+    }
+
+    // No longer written by the frontend at all (superseded by Firebase Auth custom
+    // claims, US1) — denied for defense-in-depth even though nothing currently
+    // populates these collections.
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
+    match /userBoardHistory/{historyId} {
+      allow read, write: if false;
     }
 
     // MCP connector state (feature 015): these three collections are read and written
@@ -117,6 +89,12 @@ service cloud.firestore {
     }
 
     match /mcpConnections/{connectionId} {
+      allow read, write: if false;
+    }
+
+    // Default deny for anything not explicitly listed above (replaces the previous
+    // global catch-all grant).
+    match /{document=**} {
       allow read, write: if false;
     }
   }

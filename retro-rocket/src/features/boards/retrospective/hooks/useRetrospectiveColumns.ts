@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
-import { db, FIRESTORE_COLLECTIONS } from '@/lib/services/firebase';
+import { useBoardEventsContext } from '@/features/boards/retrospective/contexts/BoardEventsProvider';
 
 export interface RetrospectiveColumn {
     id: string;
@@ -34,13 +33,31 @@ export function getColumnRole(columnId: string): ColumnRole {
     return 'neutral';
 }
 
+/**
+ * Backend-mediated replacement for the direct-Firestore version of this hook (feature 017
+ * US2). Columns are static once a board is created, so no real-time subscription is
+ * needed — this reads the `columns` field already delivered by the board's shared SSE
+ * snapshot (BoardEventsProvider) instead of a separate Firestore subcollection listener.
+ */
 export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
-    const [columns, setColumns] = useState<RetrospectiveColumn[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error] = useState<string | null>(null);
     const { t } = useTranslation();
+    const { snapshot } = useBoardEventsContext();
 
-    // Convert RetrospectiveColumn to DynamicColumnConfig for compatibility with existing components
+    const columns: RetrospectiveColumn[] = useMemo(() => {
+        const board = snapshot?.board as { columns?: RetrospectiveColumn[] } | null | undefined;
+        return board?.columns ?? [];
+    }, [snapshot]);
+
+    useEffect(() => {
+        if (!retrospectiveId) {
+            setLoading(false);
+            return;
+        }
+        if (snapshot) setLoading(false);
+    }, [retrospectiveId, snapshot]);
+
     const columnConfigs = useMemo((): Record<string, DynamicColumnConfig> => {
         const configs: Record<string, DynamicColumnConfig> = {};
 
@@ -78,52 +95,6 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
     const actionColumn = useMemo((): RetrospectiveColumn | null => {
         return columns.find(col => col.type === 'action') || null;
     }, [columns]);
-
-    useEffect(() => {
-        if (!retrospectiveId || !db) {
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        const columnsRef = collection(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId, 'columns');
-        const columnsQuery = query(columnsRef, orderBy('order', 'asc'));
-
-        const unsubscribe = onSnapshot(
-            columnsQuery,
-            (snapshot) => {
-                const columnsData: RetrospectiveColumn[] = [];
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-
-                    columnsData.push({
-                        id: doc.id,
-                        i18nKey: data.i18nKey,
-                        type: data.type || 'regular',
-                        order: data.order || 0,
-                        defaultColor: data.defaultColor || 'bg-slate-50 dark:bg-slate-900/40'
-                    });
-                });
-
-                setColumns(columnsData);
-                setLoading(false);
-            },
-            (error) => {
-                console.error('Error fetching retrospective columns:', error);
-                setError('Failed to load columns');
-                setLoading(false);
-            }
-        );
-
-        return () => {
-            if (typeof unsubscribe === 'function') {
-                unsubscribe();
-            }
-        };
-    }, [retrospectiveId]);
 
     return {
         columns,

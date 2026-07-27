@@ -1,12 +1,9 @@
-import { signInWithCustomToken } from 'firebase/auth';
-import { auth } from '@/lib/services/firebase';
-
 /**
- * Client for the backend-orchestrated authentication API (feature 014). The browser no
- * longer performs the OAuth handshake itself (FR-009): sign-in and provider-linking are
- * full-page redirects to the backend, and the backend session (httpOnly cookie) is the
- * source of truth. The backend returns a short-lived Firebase custom token so the client
- * can keep its existing Firestore access working (FR-011).
+ * Client for the backend-orchestrated authentication API. The browser never performs the
+ * OAuth handshake itself: sign-in and provider-linking are full-page redirects to the
+ * backend, and the backend session (httpOnly cookie) is the SPA's sole credential — no
+ * Firebase custom token, no client-side Firebase Auth involvement at all (feature 017
+ * FR-006/FR-013, superseding the temporary custom-token bridge from feature 014).
  */
 
 export type BackendProvider = 'google' | 'github';
@@ -17,16 +14,18 @@ export interface BackendUser {
     displayName: string | null;
     photoURL: string | null;
     providers: BackendProvider[];
+    primaryProvider: BackendProvider;
+    /** ISO-ish timestamp string from the backend (Firebase Auth's user creation time). */
+    createdAt: string;
 }
 
 export interface SessionResult {
     authenticated: boolean;
     user: BackendUser | null;
-    firebaseCustomToken: string | null;
 }
 
 const API = '/api/auth';
-const UNAUTHENTICATED: SessionResult = { authenticated: false, user: null, firebaseCustomToken: null };
+const UNAUTHENTICATED: SessionResult = { authenticated: false, user: null };
 
 function withReturnTo(path: string, returnTo?: string): string {
     return returnTo ? `${path}?returnTo=${encodeURIComponent(returnTo)}` : path;
@@ -42,7 +41,7 @@ export function startLinkProvider(provider: BackendProvider, returnTo?: string):
     window.location.assign(withReturnTo(`${API}/link/${provider}`, returnTo));
 }
 
-/** Read the current backend session (does not touch Firebase). */
+/** Read the current backend session. */
 export async function fetchSession(): Promise<SessionResult> {
     try {
         const res = await fetch(`${API}/session`, { credentials: 'include' });
@@ -53,19 +52,24 @@ export async function fetchSession(): Promise<SessionResult> {
     }
 }
 
-/**
- * Fetch the backend session and, when authenticated, hydrate the Firebase client session
- * via the returned custom token so client-side Firestore access continues to work.
- */
+/** Establish the app session for the SPA. Purely a session read — no Firebase involved. */
 export async function bootstrapSession(): Promise<SessionResult> {
-    const result = await fetchSession();
-    if (result.authenticated && result.firebaseCustomToken && auth) {
-        await signInWithCustomToken(auth, result.firebaseCustomToken);
-    }
-    return result;
+    return fetchSession();
 }
 
-/** Terminate the backend session. Callers should also sign out of Firebase. */
+/** Update the user's editable display name (Profile page). */
+export async function updateDisplayName(displayName: string): Promise<SessionResult> {
+    const res = await fetch(`${API}/profile`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ displayName }),
+    });
+    if (!res.ok) throw new Error(`Failed to update display name (status ${res.status})`);
+    return (await res.json()) as SessionResult;
+}
+
+/** Terminate the backend session. */
 export async function logout(): Promise<void> {
     await fetch(`${API}/logout`, { method: 'POST', credentials: 'include' });
 }

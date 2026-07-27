@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CreateCardForm from '@/lib/components/forms/CreateCardForm';
 
 // Mock the card service
-vi.mock('@/features/boards/retrospective/services/cardService', () => ({
+vi.mock('@/features/boards/retrospective/services/cardsApiClient', () => ({
     createCard: vi.fn(),
 }));
 
@@ -40,7 +40,7 @@ vi.mock('@/lib/components/ui/Button', () => ({
     ),
 }));
 
-const { createCard } = await import('@/features/boards/retrospective/services/cardService');
+const { createCard } = await import('@/features/boards/retrospective/services/cardsApiClient');
 
 describe('CreateCardForm', () => {
     const defaultProps = {
@@ -527,11 +527,13 @@ describe('CreateCardForm', () => {
 
             const longContent = 'A'.repeat(1000);
 
-            const user = userEvent.setup();
             render(<CreateCardForm {...defaultProps} />);
 
             const input = screen.getByTestId('card-input');
-            await user.type(input, longContent);
+            // fireEvent.change instead of user.type: typing 1000 chars one keystroke at a
+            // time is needlessly slow (and flaky under coverage instrumentation's added
+            // overhead) — same rationale as the "special characters" test below.
+            fireEvent.change(input, { target: { value: longContent } });
 
             const form = input.closest('form')!;
             fireEvent.submit(form);

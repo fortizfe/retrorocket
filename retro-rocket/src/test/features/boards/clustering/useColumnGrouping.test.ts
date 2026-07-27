@@ -4,12 +4,12 @@ import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnG
 import {
     saveColumnGroupingState,
     loadColumnGroupingState
-} from '@/features/boards/clustering/services/columnGroupingService';
+} from '@/features/boards/clustering/services/cardGroupsApiClient';
 import { Card } from '@/features/boards/types/card';
 import { GroupingCriteria, DEFAULT_GROUPING_STATE } from '@/features/boards/types/columnGrouping';
 
 // Mock the column grouping service
-vi.mock('@/features/boards/clustering/services/columnGroupingService', () => ({
+vi.mock('@/features/boards/clustering/services/cardGroupsApiClient', () => ({
     saveColumnGroupingState: vi.fn(),
     loadColumnGroupingState: vi.fn()
 }));

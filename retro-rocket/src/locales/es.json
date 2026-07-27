@@ -890,5 +890,10 @@
       "plural": "notas"
     },
     "createFirst": "Crear primera nota"
+  },
+  "app": {
+    "newVersionAvailable": "Hay una nueva versión disponible. Recarga la página para actualizar.",
+    "reload": "Recargar",
+    "reconnecting": "Reconectando en tiempo real…"
   }
 }

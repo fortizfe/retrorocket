@@ -1,10 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import toast from 'react-hot-toast';
 import BoardCard from '@/features/dashboard/components/BoardCard';
-import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 
 // Mock dependencies
 const mockNavigate = vi.fn();
@@ -18,12 +17,6 @@ vi.mock('react-hot-toast', () => ({
     default: {
         success: vi.fn(),
         error: vi.fn(),
-    },
-}));
-
-vi.mock('@/lib/services/OptimizedRetrospectiveService', () => ({
-    OptimizedRetrospectiveService: {
-        softDeleteRetrospective: vi.fn(),
     },
 }));
 
@@ -81,6 +74,7 @@ vi.mock('@/lib/components/ui/Card', () => ({
 
 describe('BoardCard', () => {
     const mockOnBoardDeleted = vi.fn();
+    const mockOnDelete = vi.fn();
 
     const defaultBoard = {
         id: 'board-1',
@@ -109,6 +103,7 @@ describe('BoardCard', () => {
                     board={board}
                     currentUserId={userId}
                     onBoardDeleted={mockOnBoardDeleted}
+                    onDelete={mockOnDelete}
                 />
             </BrowserRouter>
         );
@@ -212,8 +207,8 @@ describe('BoardCard', () => {
     });
 
     describe('Delete Functionality', () => {
-        it('should call delete service when delete is confirmed', async () => {
-            (OptimizedRetrospectiveService.softDeleteRetrospective as Mock).mockResolvedValue(undefined);
+        it('should call onDelete when delete is confirmed', async () => {
+            mockOnDelete.mockResolvedValue(undefined);
             renderBoardCard();
 
             const deleteButton = screen.getByTitle('Delete board');
@@ -223,12 +218,12 @@ describe('BoardCard', () => {
             fireEvent.click(confirmDeleteButton);
 
             await waitFor(() => {
-                expect(OptimizedRetrospectiveService.softDeleteRetrospective).toHaveBeenCalledWith('board-1', 'user-1');
+                expect(mockOnDelete).toHaveBeenCalledWith('board-1');
             });
         });
 
         it('should show success toast and call onBoardDeleted when delete succeeds', async () => {
-            (OptimizedRetrospectiveService.softDeleteRetrospective as Mock).mockResolvedValue(undefined);
+            mockOnDelete.mockResolvedValue(undefined);
             renderBoardCard();
 
             const deleteButton = screen.getByTitle('Delete board');
@@ -244,7 +239,7 @@ describe('BoardCard', () => {
         });
 
         it('should show error toast when delete fails', async () => {
-            (OptimizedRetrospectiveService.softDeleteRetrospective as Mock).mockRejectedValue(new Error('Delete failed'));
+            mockOnDelete.mockRejectedValue(new Error('Delete failed'));
             renderBoardCard();
 
             const deleteButton = screen.getByTitle('Delete board');
@@ -259,7 +254,7 @@ describe('BoardCard', () => {
         });
 
         it('should disable buttons during deletion', async () => {
-            (OptimizedRetrospectiveService.softDeleteRetrospective as Mock).mockImplementation(createDelayedPromise);
+            mockOnDelete.mockImplementation(createDelayedPromise);
             renderBoardCard();
 
             const deleteButton = screen.getByTitle('Delete board');

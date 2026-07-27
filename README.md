@@ -75,10 +75,13 @@ follow-ups.
   for how to connect, what the assistant can do, and how to revoke access.
 
 ### 🏗️ Backend Architecture
-- **Own hexagonal backend**: RetroRocket is no longer just a Firestore-backed SPA —
-  it now ships a dedicated **hexagonal backend** that orchestrates authentication,
-  session, and the MCP connector, served same-origin under `/api/*` (see
-  [Backend & Services](#backend--services) below for the technical detail).
+- **Own hexagonal backend**: RetroRocket is no longer a Firestore-backed SPA at all —
+  it ships a dedicated **hexagonal backend** that orchestrates authentication,
+  session, the MCP connector, and **every board/card/participant/facilitator-tool
+  read and write**, served same-origin under `/api/*` (see
+  [Backend & Services](#backend--services) below for the technical detail). The
+  frontend never talks to Firebase directly; real-time updates arrive over a
+  per-board Server-Sent Events channel backed by the server's own Firestore listeners.
 
 ### 🎨 Experience
 - Clean, modern UI with smooth **Framer Motion** animations.
@@ -87,9 +90,12 @@ follow-ups.
 - **Internationalization**: Spanish and English.
 
 ### 💾 Persistence & Resilience
-- **Firebase Firestore** for secure, real-time data.
-- Explicit **loading, error, and reconnection** states for every Firestore operation
-  (no silent failures).
+- **Firebase Firestore** for secure, real-time data — accessed exclusively by the
+  backend's Admin SDK; the browser never holds Firestore credentials or opens a
+  Firestore connection of its own.
+- Explicit **loading, error, and reconnection** states for every board operation (no
+  silent failures), including a visible disconnected/reconnecting indicator for the
+  SSE real-time channel.
 
 ## 🛠️ Tech Stack
 
@@ -103,9 +109,11 @@ follow-ups.
 ### Backend & Services
 - **Hexagonal backend** (TypeScript + **Express 5**) served same-origin under `/api/*` as
   Vercel serverless functions — see [`retro-rocket/server/README.md`](retro-rocket/server/README.md).
-  Authentication is orchestrated by the backend (server-side Google/GitHub OAuth, an
-  `httpOnly` session cookie, and a Firebase custom token for client-side Firestore).
-- **Firebase 10** (Firestore, still client-side + Firebase Admin on the backend)
+  Authentication is orchestrated entirely by the backend (server-side Google/GitHub
+  OAuth and an `httpOnly` session cookie); every board/card/participant/facilitator-tool
+  read and write goes through the backend's own REST + Server-Sent Events API.
+- **Firebase Admin SDK** (Firestore) — backend-only. The frontend has no Firebase
+  client SDK dependency at all.
 - **Vercel** for hosting and deployment
 
 ### Notable Libraries
@@ -129,9 +137,10 @@ layout:
 
 ```text
 retro-rocket/
-├── .env.example                 # Environment variable template (VITE_*)
-├── firestore.rules              # Firestore security rules
+├── .env.example                 # Environment variable template (backend-only now)
+├── firestore.rules              # Firestore security rules (deny-all; backend-only access)
 ├── package.json                 # Scripts & dependencies
+├── server/                      # Hexagonal backend (Express, /api/*) — see server/README.md
 ├── e2e/                         # Playwright E2E specs (+ fixtures)
 └── src/
     ├── App.tsx  main.tsx
@@ -150,7 +159,7 @@ retro-rocket/
     │       ├── clustering/      # Card grouping & suggestions
     │       └── types/           # Shared board types
     ├── lib/                     # Cross-cutting: components, contexts, hooks,
-    │                            #   services (firebase), theme, utils
+    │                            #   services (backendApiClient), theme, utils
     ├── pages/                   # Landing, Dashboard, Profile, RetrospectivePage, …
     ├── i18n/                    # i18next config
     ├── locales/                 # es.json, en.json
@@ -184,7 +193,8 @@ requirement). Every color is defined **once per role** via **semantic tokens**:
 ### Prerequisites
 - **Node.js 22** (the version used in CI)
 - **npm**
-- A **Firebase** project (free tier is fine)
+- A **Firebase** project (free tier is fine) — used by the *backend* only, via the
+  Firebase Admin SDK
 
 ### 1. Clone and enter the app folder
 ```bash
@@ -202,17 +212,10 @@ npm install
 ```bash
 cp .env.example .env
 ```
-Fill in your Firebase config (all variables use the **`VITE_`** prefix):
-```env
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-# Optional — point the app at the local Firebase Emulator Suite (used by E2E):
-# VITE_USE_FIREBASE_EMULATOR=true
-```
+All Firebase configuration is now **backend-only** — see
+[`.env.example`](retro-rocket/.env.example) for the full list (session signing key,
+OAuth provider credentials, `FIREBASE_SERVICE_ACCOUNT`, etc.). There are no `VITE_*`
+Firebase variables to set; the frontend has no Firebase configuration of its own.
 
 ### 4. Run in development
 ```bash
@@ -230,11 +233,13 @@ npm run preview   # preview the production build locally
 
 The authoritative rules live in
 [`retro-rocket/firestore.rules`](retro-rocket/firestore.rules) — deploy that file to
-your Firebase project (Console → Firestore Database → Rules). In summary, access is
-restricted to **authenticated, non-anonymous** users across the RetroRocket
-collections (`retrospectives`, `participants`, `cards`, `groups`, `actionItems`,
-`sentimentResults`, `typingStatus`, `countdown_timers`); countdown timers are further
-restricted so only the retrospective creator can write them.
+your Firebase project (Console → Firestore Database → Rules). Every RetroRocket
+collection (`retrospectives`, `participants`, `cards`, `groups`, `actionItems`,
+`sentimentResults`, `typingStatus`, `countdown_timers`, `facilitatorNotes`, `users`,
+`userBoardHistory`) is now **deny-all** for direct client access — the backend's
+Admin SDK bypasses these rules by design and is the only reader/writer. This mirrors
+the MCP connector's own state collections (`mcpClients`, `mcpAuthorizationCodes`,
+`mcpConnections`), which were already deny-all.
 
 > The snippet below is **illustrative** — always refer to `firestore.rules` as the
 > source of truth.
@@ -243,10 +248,12 @@ restricted so only the retrospective creator can write them.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Authenticated, non-anonymous users only
+    match /retrospectives/{retrospectiveId} {
+      allow read, write: if false;
+    }
+    // ...one explicit deny per collection — see firestore.rules for the full list.
     match /{document=**} {
-      allow read, write: if request.auth != null
-        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      allow read, write: if false;
     }
   }
 }
@@ -361,8 +368,9 @@ merge.
 
 Deployed on **Vercel**:
 1. Connect the repository to Vercel.
-2. Add the **same `VITE_FIREBASE_*` environment variables** (see Getting Started) in
-   the Vercel project settings.
+2. Add the **backend environment variables** (see [`.env.example`](retro-rocket/.env.example) —
+   session signing key, OAuth credentials, `FIREBASE_SERVICE_ACCOUNT`, etc.) in the
+   Vercel project settings. There are no frontend `VITE_FIREBASE_*` variables to set.
 3. Deploys are **gated** on CI: a preview deploy per pull request and a production
    deploy on push to `main`.
 

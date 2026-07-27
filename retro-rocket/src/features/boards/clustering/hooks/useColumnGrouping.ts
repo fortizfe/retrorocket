@@ -9,7 +9,7 @@ import {
 import {
     saveColumnGroupingState,
     loadColumnGroupingState
-} from '@/features/boards/clustering/services/columnGroupingService';
+} from '@/features/boards/clustering/services/cardGroupsApiClient';
 
 // Hook to manage column grouping state
 export const useColumnGrouping = (retrospectiveId?: string) => {

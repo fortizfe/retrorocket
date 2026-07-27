@@ -25,3 +25,17 @@ export class ConfigError extends AppError {
         this.name = 'ConfigError';
     }
 }
+
+export class ForbiddenError extends AppError {
+    constructor(message = 'Not authorized to perform this action') {
+        super('forbidden', message, 403);
+        this.name = 'ForbiddenError';
+    }
+}
+
+export class ConflictError extends AppError {
+    constructor(message = 'The resource was modified concurrently') {
+        super('conflict', message, 409);
+        this.name = 'ConflictError';
+    }
+}

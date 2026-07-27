@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
+
+const { version: appVersion } = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 
 export default defineConfig({
   plugins: [react()],
@@ -31,7 +34,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor:         ['react', 'react-dom', 'react-router-dom'],
-          firebase:       ['firebase/app', 'firebase/firestore', 'firebase/auth'],
           ui:             ['framer-motion', 'lucide-react', 'clsx'],
           dndkit:         ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
           datepicker:     ['react-datepicker', 'date-fns'],
@@ -49,10 +51,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  optimizeDeps: {
-    include: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
-  },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    // Build-time app version, compared against the backend's /api/health version to
+    // surface a "new version available" banner for stale clients (feature 017 T119).
+    __APP_VERSION__: JSON.stringify(appVersion),
   },
 });

@@ -8,6 +8,7 @@ import { SentimentStoreProvider } from '@/features/boards/sentiment';
 import { BoardDataStoreProvider } from '@/features/boards/retrospective/contexts/BoardDataContext';
 import NotFound from '@/pages/NotFound';
 import Loading from '@/lib/components/ui/Loading';
+import VersionBanner from '@/lib/components/ui/VersionBanner';
 
 const Landing = lazy(() => import('@/pages/Landing'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -15,7 +16,6 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const RetrospectivePage = lazy(() => import('@/pages/RetrospectivePage'));
 const McpConsentScreen = lazy(() => import('@/features/auth/components/McpConsentScreen'));
 const ColorSystemTest = lazy(() => import('@/features/dev-tools/components/ColorSystemTest'));
-const MetricsDashboard = lazy(() => import('@/features/dev-tools/components/MetricsDashboard'));
 
 const App: React.FC = () => {
   return (
@@ -44,14 +44,10 @@ const App: React.FC = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
-          {import.meta.env.DEV && (
-            <Suspense fallback={null}>
-              <MetricsDashboard />
-            </Suspense>
-          )}
         </Layout>
         </SentimentStoreProvider>
         </BoardDataStoreProvider>
+        <VersionBanner />
         <Toaster
           position="top-right"
           toastOptions={{

@@ -3,6 +3,7 @@ import { createStdoutObservability } from '../adapters/observability/stdout';
 import { createApp } from './app';
 import { buildAuthDeps } from './auth-wiring';
 import { buildMcpDeps } from './mcp-wiring';
+import { buildBoardsDeps } from './board-wiring';
 import type { Express } from 'express';
 
 /**
@@ -15,5 +16,6 @@ export function buildApp(source: NodeJS.ProcessEnv = process.env): Express {
     const observability = createStdoutObservability({ service: 'retrorocket-backend', env: config.nodeEnv });
     const authDeps = buildAuthDeps(source, config, observability.logger) ?? undefined;
     const mcpDeps = buildMcpDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
-    return createApp({ config, observability, authDeps, mcpDeps });
+    const boardsDeps = buildBoardsDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
+    return createApp({ config, observability, authDeps, mcpDeps, boardsDeps });
 }
