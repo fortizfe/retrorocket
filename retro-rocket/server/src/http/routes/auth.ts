@@ -58,15 +58,23 @@ export function authRouter(deps: AuthRouterDeps): Router {
     // to every /api/auth/* route below. Note: serverless instances each hold their own
     // in-memory window, so this is per-instance; Vercel's platform DDoS protection sits in
     // front, and a shared store (e.g. Redis) can be added later for global limits.
-    const authLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        limit: 100, // per IP per window
-        standardHeaders: 'draft-7',
-        legacyHeaders: false,
-        // Trust-proxy/IP validations are noisy and not applicable to the serverless model.
-        validate: false,
-    });
-    router.use(authLimiter);
+    //
+    // Skipped entirely when testMode is on: that flag is exclusively for the emulator-backed
+    // local/CI E2E run (never production — see auth-wiring.ts), where every spec's
+    // /api/auth/test-login call plus every page load's /api/auth/session check share one
+    // long-lived dev-server process and the same window, so the full suite's cumulative
+    // request volume can legitimately exceed 100/15min without any real abuse occurring.
+    if (!deps.testMode) {
+        const authLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            limit: 100, // per IP per window
+            standardHeaders: 'draft-7',
+            legacyHeaders: false,
+            // Trust-proxy/IP validations are noisy and not applicable to the serverless model.
+            validate: false,
+        });
+        router.use(authLimiter);
+    }
 
     // Begin login → 302 to the provider (FR-008).
     router.get('/api/auth/login/:provider', async (req: Request, res: Response) => {
