@@ -157,3 +157,5 @@ CLAUDE.local.md
 
 # Generated backend bundle for the Vercel serverless function (see scripts/bundle-backend.mjs)
 retro-rocket/api/_backend.mjs
+.vercel
+.env*

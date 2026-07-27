@@ -58,6 +58,20 @@ follow-ups.
 - **Granular options**: choose whether to include participants, statistics, grouping
   details, and facilitator notes.
 
+### 🔌 MCP Connector for AI Assistants
+- **Connect your own AI assistant** (e.g. Claude) to your RetroRocket account using a
+  remote, read-only [Model Context Protocol](https://modelcontextprotocol.io) server —
+  list your retrospectives, pull full detail or a report-ready summary, and let the
+  assistant draft a report for you.
+- **Your existing sign-in, no new password**: authorization reuses your Google/GitHub
+  RetroRocket account via a standard OAuth 2.1 consent screen.
+- **Revoke anytime**: manage every connected AI client from your **Profile** page;
+  revoking takes effect immediately, checked live on every request.
+- **Facilitator notes stay private**: only included when the connected user is that
+  retrospective's own facilitator — the same rule already applied to PDF/DOCX export.
+- **Strictly read-only**: nothing exposed through the connector can create, edit, or
+  delete anything in Firestore. See [MCP Connector](#-mcp-connector-for-ai-assistants-1) below.
+
 ### 🎨 Experience
 - Clean, modern UI with smooth **Framer Motion** animations.
 - **Responsive** across mobile and desktop.
@@ -229,6 +243,45 @@ service cloud.firestore {
   }
 }
 ```
+
+## 🔌 MCP Connector for AI Assistants
+
+RetroRocket exposes a remote, **read-only** [Model Context Protocol](https://modelcontextprotocol.io)
+server so you can connect your own AI assistant (e.g. Claude) and have it draft reports
+from your retrospectives, without manually exporting and uploading files.
+
+### How to connect
+
+1. From your MCP-compatible AI client, add RetroRocket as a remote MCP server
+   (the client discovers the connection details automatically via standard OAuth
+   metadata discovery and Dynamic Client Registration — no manual client setup).
+2. You'll be taken through a normal Google/GitHub sign-in (if not already signed in),
+   followed by a consent screen showing which AI client is requesting access.
+3. Click **Allow**. The assistant can now call three read-only tools:
+   - `list_retrospectives` — every retrospective you created or participated in.
+   - `get_retrospective_detail` — cards, groupings, likes/reactions, participants,
+     sentiment results, and action items for one retrospective.
+   - `get_retrospective_summary` — a structured, report-ready summary of the same data.
+
+### Managing and revoking access
+
+Every AI client you've authorized is listed under **Connected AI Assistants** on your
+**Profile** page, alongside your linked sign-in providers. Click **Revoke** on any entry
+to disconnect it — revocation is checked live on the very next request, not just once a
+token happens to expire.
+
+### Privacy: facilitator notes
+
+Your private facilitator notes are only ever included in a connector response when you
+are the facilitator of that specific retrospective — exactly the same rule already
+applied to the PDF/DOCX export. A connected AI client acting on behalf of a participant
+never sees another user's facilitator notes.
+
+### Read-only, by design
+
+This connector cannot create, edit, or delete anything in Firestore. The only data it
+writes is its own connection bookkeeping (which AI clients are authorized, and their
+status) — never your retrospective data.
 
 ## 📖 Usage Guide
 

@@ -761,6 +761,27 @@
       }
     }
   },
+  "mcpConnector": {
+    "connectedApps": {
+      "title": "Asistentes de IA conectados",
+      "description": "Asistentes de IA (como Claude) que has autorizado a leer tus retrospectivas en tu nombre. Puedes revocar una conexión en cualquier momento.",
+      "empty": "Todavía no hay ningún asistente de IA conectado.",
+      "connectedOn": "Conectado el {{date}}",
+      "revoke": "Revocar",
+      "revoking": "Revocando...",
+      "revokeSuccess": "Conexión revocada",
+      "revokeError": "No se pudo revocar esta conexión. Inténtalo de nuevo.",
+      "loadError": "No se pudieron cargar tus asistentes de IA conectados."
+    },
+    "consent": {
+      "title": "Conectar {{clientName}} con RetroRocket",
+      "description": "{{clientName}} solicita acceso de solo lectura a tus retrospectivas (tarjetas, agrupaciones, reacciones, participantes, sentimiento y elementos de acción). Tus notas privadas de facilitador solo se comparten en las retrospectivas en las que tú eres el facilitador.",
+      "allow": "Permitir",
+      "deny": "Denegar",
+      "processing": "Conectando...",
+      "error": "Algo salió mal al completar esta conexión. Inténtalo de nuevo desde {{clientName}}."
+    }
+  },
   "notFound": {
     "title": "404 - No Encontrado",
     "message": "¡Oops! La página que buscas no existe.",
