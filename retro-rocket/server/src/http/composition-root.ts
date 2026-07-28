@@ -4,6 +4,7 @@ import { createApp } from './app';
 import { buildAuthDeps } from './auth-wiring';
 import { buildMcpDeps } from './mcp-wiring';
 import { buildBoardsDeps } from './boards-wiring';
+import { buildProfileDeps } from './profile-wiring';
 import type { Express } from 'express';
 
 /**
@@ -17,5 +18,6 @@ export function buildApp(source: NodeJS.ProcessEnv = process.env): Express {
     const authDeps = buildAuthDeps(source, config, observability.logger) ?? undefined;
     const mcpDeps = buildMcpDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
     const boardsDeps = buildBoardsDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
-    return createApp({ config, observability, authDeps, mcpDeps, boardsDeps });
+    const profileDeps = buildProfileDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
+    return createApp({ config, observability, authDeps, mcpDeps, boardsDeps, profileDeps });
 }

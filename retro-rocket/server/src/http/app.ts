@@ -7,6 +7,7 @@ import { healthRouter } from './routes/health';
 import { authRouter, type AuthRouterDeps } from './routes/auth';
 import { mcpRouter, type McpRouterDeps } from './routes/mcp';
 import { boardsRouter, type BoardsRouterDeps } from './routes/boards';
+import { profileRouter, type ProfileRouterDeps } from './routes/profile';
 
 export interface AppDeps {
     config: ServerConfig;
@@ -17,6 +18,8 @@ export interface AppDeps {
     mcpDeps?: McpRouterDeps;
     /** Dashboard boards wiring (feature 017); when absent, /api/boards/* report a config error. */
     boardsDeps?: BoardsRouterDeps;
+    /** Mi Perfil profile wiring (feature 018); when absent, /api/profile reports a config error. */
+    profileDeps?: ProfileRouterDeps;
 }
 
 /**
@@ -64,6 +67,17 @@ export function createApp(deps: AppDeps): Express {
         app.use('/api/boards', (_req: Request, res: Response) => {
             res.status(503).json({
                 error: { code: 'config_error', message: 'Dashboard boards are not configured on this deployment' },
+                correlationId: String(res.locals.correlationId ?? 'unknown'),
+            });
+        });
+    }
+
+    if (deps.profileDeps) {
+        app.use(profileRouter(deps.profileDeps));
+    } else {
+        app.use('/api/profile', (_req: Request, res: Response) => {
+            res.status(503).json({
+                error: { code: 'config_error', message: 'Mi Perfil is not configured on this deployment' },
                 correlationId: String(res.locals.correlationId ?? 'unknown'),
             });
         });

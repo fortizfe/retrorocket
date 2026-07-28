@@ -19,12 +19,14 @@ server/src/
 │   ├── ports/         # Interfaces the domain/use-cases depend on
 │   │   ├── index.ts   # OAuthProvider, IdentityStore, SessionService, OAuthStateCodec, Clock, Random
 │   │   ├── boards.ts  # BoardsPort — list/create/join/rename/delete boards
+│   │   ├── profile.ts # ProfilePort — get-or-create profile + update display name
 │   │   └── observability/  # Logger, Metrics, Tracer
 │   └── use-cases/     # StartOAuthLogin, CompleteOAuthLogin, session (get/refresh), Logout, startLinkProvider
-│       └── boards/    # ListBoardsForUser, CreateBoard, JoinBoard, RenameBoard, DeleteBoard
+│       ├── boards/    # ListBoardsForUser, CreateBoard, JoinBoard, RenameBoard, DeleteBoard
+│       └── profile/   # EnsureUserProfile, UpdateDisplayName
 ├── adapters/          # Driven adapters implementing the ports
 │   ├── oauth/         # Google (PKCE + id_token) & GitHub (REST) via arctic
-│   ├── firebase/      # firebase-admin identity store, custom-token minting, and FirestoreBoardsAdapter
+│   ├── firebase/      # firebase-admin identity store, custom-token minting, FirestoreBoardsAdapter, FirestoreProfileAdapter
 │   ├── session/       # jose-signed session JWT + OAuth-state codec
 │   ├── observability/ # stdout structured logs/metrics/tracing (with redaction)
 │   └── system.ts      # SystemClock, SystemRandom
@@ -33,7 +35,8 @@ server/src/
 │   ├── composition-root.ts  # Wires ports → adapters (only place adapters are chosen)
 │   ├── auth-wiring.ts # Env-guarded construction of the auth subsystem
 │   ├── boards-wiring.ts # Env-guarded construction of the Dashboard boards subsystem
-│   ├── routes/        # health, auth, boards
+│   ├── profile-wiring.ts # Env-guarded construction of the Mi Perfil profile subsystem
+│   ├── routes/        # health, auth, boards, profile
 │   ├── middleware/    # correlationId, errorHandler
 │   └── cookies.ts     # httpOnly/Secure/SameSite=Lax cookie helpers
 └── config/env.ts      # Fail-fast environment configuration
@@ -109,6 +112,33 @@ has no dedicated Vitest-level Firestore mock — its query/write composition is 
 the Playwright E2E suite against the emulator (`e2e/dashboard-list.spec.ts`,
 `board-creation.spec.ts`, `board-join.spec.ts`, `dashboard-manage.spec.ts`); only its pure
 mapping helpers are unit-tested directly.
+
+## Mi Perfil (profile)
+
+> Feature: [`specs/018-profile-backend-access`](../../specs/018-profile-backend-access/)
+
+Backs the "Mi Perfil" screen: loading the profile (creating it with OAuth-derived defaults
+on first sign-in, and reconciling linked providers on every call) and updating the display
+name no longer touch Firestore directly from the browser — the SPA calls these endpoints
+instead, authenticated by the same `rr_session` cookie as everything else. This is the
+backend's first server-side owner of the `users/{uid}` document (previously only Firebase
+Auth custom claims existed server-side). Sign-out reuses the existing
+`POST /api/auth/logout`; linked-provider viewing/linking and connected-AI-assistant (MCP)
+viewing/revocation were already fully backend-mediated from earlier features and needed no
+change.
+
+### Endpoints (`../specs/018-profile-backend-access/contracts/profile-api.yaml`)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET   | `/api/profile` | Get-or-create the signed-in user's profile |
+| PATCH | `/api/profile` | Update the signed-in user's display name |
+
+`FirestoreProfileAdapter` follows the same testing split as `FirestoreBoardsAdapter`: no
+dedicated Vitest-level Firestore mock — its get-or-create/provider-union/update write path
+(including the "other fields, incl. legacy `joinedBoards`, are left untouched" guarantee) is
+exercised by the Playwright E2E suite against the emulator (`e2e/profile.spec.ts`); only its
+pure mapping/union helpers are unit-tested directly.
 
 ## Configuration
 

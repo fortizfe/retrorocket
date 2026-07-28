@@ -1,13 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { signOutUser } from '@/lib/services/firebase';
-import { userService } from '@/features/auth/services/userService';
+import { fetchProfile, updateDisplayName as backendUpdateDisplayName } from '@/features/auth/services/backendProfileClient';
 import {
     bootstrapSession,
     logout as backendLogout,
     startLogin,
-    type BackendUser,
 } from '@/features/auth/services/backendAuthClient';
-import { User, UserProfile, AuthProviderType } from '@/features/auth/types/user';
+import { User, UserProfile } from '@/features/auth/types/user';
 import toast from 'react-hot-toast';
 
 // ─── Focused context types ────────────────────────────────────────────────────
@@ -83,58 +82,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         userProfile: null,
     });
 
-    // Provider identity now comes from the backend session (not firebaseUser.providerData,
-    // which is empty under custom-token sign-in). This creates/updates the Firestore user
-    // profile from the backend user's authoritative provider list.
-    const createOrUpdateUserProfile = useCallback(async (backendUser: BackendUser): Promise<UserProfile> => {
-        if (!backendUser.email) {
-            throw new Error('Email is required');
-        }
-
-        const providers = backendUser.providers as AuthProviderType[];
-        const existing = await userService.getUserProfile(backendUser.uid);
-
-        if (existing) {
-            const missingProviders = providers.filter(p => !existing.providers.includes(p));
-            for (const provider of missingProviders) {
-                try {
-                    await userService.addProviderToUser(backendUser.uid, provider);
-                } catch (error) {
-                    console.warn(`Failed to add provider ${provider}:`, error);
-                }
-            }
-
-            await userService.updateUserProfile(backendUser.uid, { updatedAt: new Date() });
-
-            const latestProfile = await userService.getUserProfile(backendUser.uid);
-            return latestProfile || existing;
-        }
-
-        const primaryProvider: AuthProviderType = providers[0] ?? 'google';
-        const created = await userService.createUserProfile(backendUser.uid, {
-            email: backendUser.email,
-            displayName: backendUser.displayName ?? backendUser.email.split('@')[0] ?? 'Usuario',
-            photoURL: backendUser.photoURL,
-            provider: primaryProvider,
-        });
-
-        // Attach any providers beyond the primary (e.g. an already-linked second provider).
-        const extraProviders = providers.slice(1);
-        for (const provider of extraProviders) {
-            try {
-                await userService.addProviderToUser(backendUser.uid, provider);
-            } catch (error) {
-                console.warn(`Failed to add provider ${provider}:`, error);
-            }
-        }
-        if (extraProviders.length > 0) {
-            const latestProfile = await userService.getUserProfile(backendUser.uid);
-            return latestProfile || created;
-        }
-
-        return created;
-    }, []);
-
     // Sign-in is now a full-page redirect to the backend (FR-008/FR-009); the browser no
     // longer performs the OAuth handshake. State is (re)established on load via bootstrap.
     const handleSignInWithGoogle = useCallback(async (): Promise<void> => {
@@ -168,16 +115,18 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (!userData.user) throw new Error('Usuario no autenticado');
 
         try {
-            await userService.updateUserProfile(userData.user.uid, { displayName });
+            const userProfile = await backendUpdateDisplayName(displayName);
             // Only profile data changes — auth consumers do NOT re-render
             setUserData(prev => ({
-                user: prev.user ? { ...prev.user, displayName } : null,
-                userProfile: prev.userProfile ? { ...prev.userProfile, displayName } : null,
+                user: prev.user ? { ...prev.user, displayName: userProfile.displayName } : null,
+                userProfile,
             }));
             toast.success('Nombre actualizado exitosamente');
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el nombre';
-            toast.error(errorMessage);
+            // A generic, translated message (matching Dashboard's toast.error convention),
+            // not the raw error, since a network-level fetch() failure's message ("Failed
+            // to fetch") is not user-facing-friendly (FR-008, US2 Acceptance Scenario 3).
+            toast.error('Error al actualizar el nombre');
             throw error;
         }
     }, [userData.user]);
@@ -186,22 +135,21 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (!userData.user) return;
 
         try {
-            const userProfile = await userService.getUserProfile(userData.user.uid);
-            if (userProfile) {
-                // Only profile data changes — auth consumers do NOT re-render
-                setUserData(prev => ({
-                    user: prev.user ? { ...prev.user, displayName: userProfile.displayName } : null,
-                    userProfile,
-                }));
-            }
+            const userProfile = await fetchProfile();
+            // Only profile data changes — auth consumers do NOT re-render
+            setUserData(prev => ({
+                user: prev.user ? { ...prev.user, displayName: userProfile.displayName } : null,
+                userProfile,
+            }));
         } catch (error) {
             console.error('Error refreshing user profile:', error);
         }
     }, [userData.user]);
 
     // On load, ask the backend for the current session. If authenticated, bootstrapSession
-    // has already signed the client into Firebase (custom token) so Firestore keeps working;
-    // we then hydrate the Firestore profile from the backend user.
+    // has already signed the client into Firebase (custom token) so Firestore keeps working
+    // for screens outside this feature's scope; the profile itself is fetched (and, on first
+    // sign-in, created) entirely server-side via backendProfileClient (FR-001, FR-004).
     useEffect(() => {
         let active = true;
 
@@ -211,7 +159,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
                 if (!active) return;
 
                 if (session.authenticated && session.user) {
-                    const userProfile = await createOrUpdateUserProfile(session.user);
+                    const userProfile = await fetchProfile();
                     if (!active) return;
 
                     setUserData({
@@ -235,19 +183,22 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             } catch (error) {
                 if (!active) return;
                 console.error('Error establishing session:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Error de autenticación';
                 setUserData({ user: null, userProfile: null });
-                setCoreState({
-                    loading: false,
-                    error: error instanceof Error ? error.message : 'Error de autenticación',
-                    isAuthenticated: false,
-                });
+                setCoreState({ loading: false, error: errorMessage, isAuthenticated: false });
+                // No-silent-failure requirement (FR-008): a profile-load failure must be
+                // visibly surfaced, not just redirect back to the landing page unexplained.
+                // A generic, translated message (matching Dashboard's toast.error convention
+                // for the same class of failure) rather than the raw error, since a raw
+                // fetch()-level message ("Failed to fetch") is not user-facing-friendly.
+                toast.error('Error al cargar tu perfil');
             }
         })();
 
         return () => {
             active = false;
         };
-    }, [createOrUpdateUserProfile]);
+    }, []);
 
     // Auth context value — only re-creates when coreState or auth handlers change
     const authContextValue = useMemo<AuthContextType>(() => ({

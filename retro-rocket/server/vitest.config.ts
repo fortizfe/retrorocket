@@ -23,6 +23,7 @@ export default defineConfig({
                 'src/http/auth-wiring.ts',
                 'src/http/mcp-wiring.ts',
                 'src/http/boards-wiring.ts',
+                'src/http/profile-wiring.ts',
                 'src/adapters/system.ts',
             ],
             thresholds: {

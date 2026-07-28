@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: RetroRocket Backend — Mi Perfil Profile API
+  version: 0.1.0
+  description: >
+    Same-origin backend endpoints under /api/profile, session-cookie authenticated
+    (reuses 014-backend-auth-foundation's rr_session cookie). Backs the "Mi Perfil"
+    screen: load profile (with implicit first-sign-in creation and provider
+    reconciliation) and update display name, with zero direct browser-to-Firestore
+    access for these operations (FR-001). Sign-out reuses the existing
+    POST /api/auth/logout endpoint (unchanged by this feature).
+servers:
+  - url: /api
+    description: Same-origin path prefix
+
+tags:
+  - name: profile
+
+paths:
+  /profile:
+    get:
+      tags: [profile]
+      summary: Get the requesting user's profile, creating it on first sign-in (FR-002, FR-004)
+      description: >
+        Idempotent get-or-create. If no users/{uid} document exists yet, one is created
+        using OAuth-derived defaults from the current session identity. If it exists,
+        any provider present in the session's authoritative provider list but missing
+        from the stored profile is unioned in before returning.
+      responses:
+        "200":
+          description: The user's profile (created if this was their first request)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+    patch:
+      tags: [profile]
+      summary: Update the requesting user's display name (FR-003)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [displayName]
+              properties:
+                displayName: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "400":
+          description: Empty or blank display name
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+components:
+  schemas:
+    AuthProviderType:
+      type: string
+      enum: [google, github, apple]
+
+    Profile:
+      type: object
+      required: [uid, email, displayName, photoURL, providers, primaryProvider, createdAt, updatedAt]
+      properties:
+        uid: { type: string }
+        email: { type: string }
+        displayName: { type: string }
+        photoURL: { type: [string, "null"] }
+        providers:
+          type: array
+          items: { $ref: "#/components/schemas/AuthProviderType" }
+        primaryProvider: { $ref: "#/components/schemas/AuthProviderType" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ApiError:
+      type: object
+      required: [error, correlationId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [unauthenticated, invalid_request, rate_limited, internal]
+            message: { type: string }
+        correlationId: { type: string }

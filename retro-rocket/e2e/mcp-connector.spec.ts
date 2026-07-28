@@ -22,8 +22,20 @@ function pkcePair(): { verifier: string; challenge: string } {
     return { verifier, challenge };
 }
 
+// This E2E suite runs against the local Firebase Emulator Suite (playwright.config.ts):
+// the frontend's Firestore client SDK is wired to localhost:8080
+// (connectFirestoreEmulator, src/lib/services/firebase.ts), so a browser-side Firestore
+// call shows up as a request to that port. 018 / SC-002: now that Mi Perfil's
+// userProfile is backend-sourced, this list/revoke flow (driven from the Profile page)
+// must still introduce no new direct Firestore calls.
+const FIRESTORE_HOST_PATTERN = /firestore\.googleapis\.com|localhost:8080/;
+
 test('connect an AI client, see it in Connected Apps, revoke it, and confirm immediate rejection', async ({ page, context }) => {
     await signInWithGoogle(page, context);
+    const firestoreHits: string[] = [];
+    page.on('request', (req) => {
+        if (FIRESTORE_HOST_PATTERN.test(req.url())) firestoreHits.push(req.url());
+    });
 
     // 1. Dynamic Client Registration.
     const registerRes = await page.request.post('/api/mcp/register', {
@@ -78,4 +90,8 @@ test('connect an AI client, see it in Connected Apps, revoke it, and confirm imm
     expect(refreshAfterRevoke.ok()).toBe(false);
     const body = await refreshAfterRevoke.json();
     expect(body.error.code).toBe('invalid_grant');
+
+    // 018 / SC-002 regression: listing and revoking from Mi Perfil introduced no new
+    // direct browser-to-Firestore calls now that userProfile is backend-sourced.
+    expect(firestoreHits).toEqual([]);
 });

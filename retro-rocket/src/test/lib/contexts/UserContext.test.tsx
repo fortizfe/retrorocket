@@ -24,18 +24,12 @@ vi.mock('@/features/auth/services/backendAuthClient', () => ({
     startLogin: (...args: unknown[]) => mockStartLogin(...args),
 }));
 
-const mockGetUserProfile = vi.fn();
-const mockCreateUserProfile = vi.fn();
-const mockUpdateUserProfile = vi.fn();
-const mockAddProviderToUser = vi.fn();
+const mockFetchProfile = vi.fn();
+const mockUpdateDisplayName = vi.fn();
 
-vi.mock('@/features/auth/services/userService', () => ({
-    userService: {
-        getUserProfile: (...args: unknown[]) => mockGetUserProfile(...args),
-        createUserProfile: (...args: unknown[]) => mockCreateUserProfile(...args),
-        updateUserProfile: (...args: unknown[]) => mockUpdateUserProfile(...args),
-        addProviderToUser: (...args: unknown[]) => mockAddProviderToUser(...args),
-    },
+vi.mock('@/features/auth/services/backendProfileClient', () => ({
+    fetchProfile: (...args: unknown[]) => mockFetchProfile(...args),
+    updateDisplayName: (...args: unknown[]) => mockUpdateDisplayName(...args),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -75,44 +69,44 @@ describe('UserProvider bootstrap', () => {
         expect(result.current.user).toBeNull();
     });
 
-    it('creates a profile and authenticates when the backend session is valid', async () => {
+    it('fetches the profile via the backend and authenticates when the backend session is valid', async () => {
         mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null); // no existing profile
-        mockCreateUserProfile.mockResolvedValue(mockUserProfile);
+        mockFetchProfile.mockResolvedValue(mockUserProfile);
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-        expect(mockCreateUserProfile).toHaveBeenCalledWith('uid-123', expect.objectContaining({ email: 'test@example.com', provider: 'google' }));
+        expect(mockFetchProfile).toHaveBeenCalled();
         expect(result.current.user?.uid).toBe('uid-123');
         expect(result.current.user?.providers).toEqual(['google']);
+        expect(result.current.userProfile).toEqual(mockUserProfile);
     });
 
-    it('adds providers missing from an existing profile (backend is authoritative)', async () => {
+    it('reflects providers the backend has already unioned into the profile', async () => {
         mockBootstrapSession.mockResolvedValue({
             authenticated: true,
             user: { ...backendUser, providers: ['google', 'github'] },
             firebaseCustomToken: 'ct',
         });
-        mockGetUserProfile
-            .mockResolvedValueOnce(mockUserProfile) // existing has only google
-            .mockResolvedValueOnce({ ...mockUserProfile, providers: ['google', 'github'] }); // after add
+        mockFetchProfile.mockResolvedValue({ ...mockUserProfile, providers: ['google', 'github'] });
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
 
-        expect(mockAddProviderToUser).toHaveBeenCalledWith('uid-123', 'github');
+        expect(result.current.user?.providers).toEqual(['google', 'github']);
     });
 
-    it('surfaces an error state when profile setup fails', async () => {
+    it('surfaces a visible error (toast) when profile setup fails, not a silent redirect', async () => {
         mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null);
-        mockCreateUserProfile.mockRejectedValue(new Error('firestore down'));
+        mockFetchProfile.mockRejectedValue(new Error('backend down'));
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isAuthenticated).toBe(false);
-        expect(result.current.error).toBe('firestore down');
+        expect(result.current.error).toBe('backend down');
+
+        const toast = (await import('react-hot-toast')).default;
+        expect(toast.error).toHaveBeenCalledWith('Error al cargar tu perfil');
     });
 });
 
@@ -130,8 +124,7 @@ describe('sign-in and sign-out', () => {
 
     it('signOut clears the backend session, signs out Firebase, and resets state', async () => {
         mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
-        mockGetUserProfile.mockResolvedValueOnce(null);
-        mockCreateUserProfile.mockResolvedValue(mockUserProfile);
+        mockFetchProfile.mockResolvedValue(mockUserProfile);
 
         const { result } = renderHook(() => useUser(), { wrapper });
         await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
@@ -142,6 +135,35 @@ describe('sign-in and sign-out', () => {
         expect(signOutUser).toHaveBeenCalled();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.user).toBeNull();
+    });
+});
+
+describe('updateDisplayName', () => {
+    it('saves through the backend and updates local state', async () => {
+        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
+        mockFetchProfile.mockResolvedValue(mockUserProfile);
+        mockUpdateDisplayName.mockResolvedValue({ ...mockUserProfile, displayName: 'New Name' });
+
+        const { result } = renderHook(() => useUser(), { wrapper });
+        await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+        await act(async () => { await result.current.updateDisplayName('New Name'); });
+
+        expect(mockUpdateDisplayName).toHaveBeenCalledWith('New Name');
+        expect(result.current.userProfile?.displayName).toBe('New Name');
+        expect(result.current.user?.displayName).toBe('New Name');
+    });
+
+    it('leaves the previous name in place and rethrows on backend failure', async () => {
+        mockBootstrapSession.mockResolvedValue({ authenticated: true, user: backendUser, firebaseCustomToken: 'ct' });
+        mockFetchProfile.mockResolvedValue(mockUserProfile);
+        mockUpdateDisplayName.mockRejectedValue(new Error('save failed'));
+
+        const { result } = renderHook(() => useUser(), { wrapper });
+        await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+        await expect(act(async () => { await result.current.updateDisplayName('New Name'); })).rejects.toThrow('save failed');
+        expect(result.current.userProfile?.displayName).toBe('Test User');
     });
 });
 
