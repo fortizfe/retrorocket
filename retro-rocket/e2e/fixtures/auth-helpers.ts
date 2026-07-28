@@ -30,6 +30,22 @@ export async function signInWithGoogle(page: Page, _context: BrowserContext): Pr
     await page.waitForURL(/\/(mis-tableros|dashboard)/, { timeout: 10_000 });
 }
 
+/**
+ * Like signInWithGoogle, but for a second, genuinely distinct identity — e.g. testing
+ * "board owner" vs. "joining participant" across two browser contexts. signInWithGoogle
+ * always authenticates the fixed TEST_USER_EMAIL account, so scenarios needing two real
+ * users must use this instead for at least one of them.
+ */
+export async function signInAs(page: Page, email: string, displayName: string): Promise<void> {
+    const res = await page.request.post('/api/auth/test-login', { data: { email, displayName } });
+    if (!res.ok()) {
+        throw new Error(`test-login failed: ${res.status()} ${await res.text()}`);
+    }
+    await page.goto('/');
+    await page.getByText(displayName).waitFor({ timeout: 10_000 });
+    await page.waitForURL(/\/(mis-tableros|dashboard)/, { timeout: 10_000 });
+}
+
 /** Creates a new retrospective board from the dashboard and waits for it to load. */
 export async function createBoard(page: Page, title: string): Promise<void> {
     await page.getByText('Nuevo Tablero', { exact: true }).click();

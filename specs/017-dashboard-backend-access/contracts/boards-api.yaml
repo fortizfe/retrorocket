@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: RetroRocket Backend — Dashboard Boards API
+  version: 0.1.0
+  description: >
+    Same-origin backend endpoints under /api/boards, session-cookie authenticated
+    (reuses 014-backend-auth-foundation's rr_session cookie). Backs the "My Boards"
+    Dashboard screen: list, create, join, rename, and delete retrospective boards,
+    with zero direct browser-to-Firestore access for these operations (FR-001).
+servers:
+  - url: /api
+    description: Same-origin path prefix
+
+tags:
+  - name: boards
+
+paths:
+  /boards:
+    get:
+      tags: [boards]
+      summary: List boards created or joined by the requesting user (FR-002)
+      responses:
+        "200":
+          description: The user's boards, categorized as created or joined
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [boards]
+                properties:
+                  boards:
+                    type: array
+                    items: { $ref: "#/components/schemas/BoardSummary" }
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+    post:
+      tags: [boards]
+      summary: Create a new board from a template (FR-003)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [templateId, title, locale]
+              properties:
+                templateId: { $ref: "#/components/schemas/TemplateId" }
+                title: { type: string, minLength: 1 }
+                locale: { type: string, enum: [es, en] }
+      responses:
+        "201":
+          description: Board created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [boardId]
+                properties:
+                  boardId: { type: string }
+        "400":
+          description: Invalid template ID or empty title
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+  /boards/{id}/join:
+    post:
+      tags: [boards]
+      summary: Join an existing board by ID (FR-004)
+      description: >
+        Idempotent: if the requesting user is already a participant (or the owner),
+        no duplicate membership is created and the current board is returned.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Joined (or already a member of) the board
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BoardSummary" }
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "404":
+          description: Board does not exist or is not active
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+  /boards/{id}:
+    patch:
+      tags: [boards]
+      summary: Rename a board (owner only) (FR-005)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string, minLength: 1 }
+      responses:
+        "204":
+          description: Renamed
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "403":
+          description: Requesting user is not the board's owner
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "404":
+          description: Board does not exist
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+    delete:
+      tags: [boards]
+      summary: Permanently delete a board (owner only) (FR-006)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: No valid session
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "403":
+          description: Requesting user is not the board's owner
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+        "404":
+          description: Board does not exist
+          content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } }
+
+components:
+  schemas:
+    TemplateId:
+      type: string
+      enum: [default, madSadGlad, startStopContinue]
+
+    BoardSummary:
+      type: object
+      required: [id, title, description, createdAt, updatedAt, participantCount, isActive, createdBy, isCreator]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        templateId: { type: string, description: Absent for boards created before templateId was introduced. }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        participantCount: { type: integer, minimum: 0 }
+        isActive: { type: boolean }
+        createdBy: { type: string, description: uid of the board's owner }
+        isCreator: { type: boolean, description: true when createdBy equals the requesting user's uid }
+
+    ApiError:
+      type: object
+      required: [error, correlationId]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [unauthenticated, invalid_request, forbidden, not_found, rate_limited, internal]
+            message: { type: string }
+        correlationId: { type: string }
