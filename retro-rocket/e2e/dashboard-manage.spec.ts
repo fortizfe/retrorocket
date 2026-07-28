@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { signInWithGoogle, signInAs, createBoard } from './fixtures/auth-helpers';
+import { signInWithGoogle, createBoardViaApi } from './fixtures/auth-helpers';
 
 // FR-001/SC-002 (zero direct Firestore access) is verified statically and
 // deterministically for the whole Dashboard, including rename/delete, by
@@ -12,7 +12,12 @@ test('owner renames and deletes a board', async ({ page, context }) => {
     await signInWithGoogle(page, context);
     const originalTitle = `E2E Manage Rename Target ${Date.now()}`;
     const renamedTitle = `E2E Manage Renamed ${Date.now()}`;
-    await createBoard(page, originalTitle);
+    // Set up via a direct API call, not the create-board UI (already covered by
+    // board-creation.spec.ts) — this test's own focus is rename/delete.
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: originalTitle, locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
     await page.goto('/dashboard');
 
     // The edit/delete buttons only reveal on hover (opacity-0 group-hover:opacity-100,
@@ -30,7 +35,7 @@ test('owner renames and deletes a board', async ({ page, context }) => {
     await page.keyboard.press('Enter');
     await page.getByPlaceholder('Título de la retrospectiva').fill(renamedTitle);
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(page.getByText('Tablero actualizado correctamente')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Tablero actualizado correctamente')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(renamedTitle)).toBeVisible();
 
     // Delete.
@@ -39,7 +44,7 @@ test('owner renames and deletes a board', async ({ page, context }) => {
     await renamedCard.getByLabel('Eliminar tablero').focus();
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
-    await expect(page.getByText(renamedTitle)).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(renamedTitle)).not.toBeVisible({ timeout: 30_000 });
 
     // Persists after reload.
     await page.reload();
@@ -47,24 +52,16 @@ test('owner renames and deletes a board', async ({ page, context }) => {
 });
 
 /** 017 / US4 AS-3: a non-owner has no rename/delete affordance on a board they only joined. */
-test('a non-owner participant has no rename or delete affordance', async ({ page, context, browser }) => {
-    // A genuinely distinct owner identity (not the shared default test account this
-    // spec file's other test — and every other spec in this run — signs in as, since
-    // the emulator/account persists across the whole E2E run).
-    const ownerContext = await browser.newContext();
-    const ownerPage = await ownerContext.newPage();
-    await signInAs(ownerPage, 'e2e-manage-owner@example.com', 'E2E Manage Owner');
+test('a non-owner participant has no rename or delete affordance', async ({ page, context, request }) => {
+    // A genuinely distinct owner identity, and the join itself, are both set up via
+    // direct API calls — this test's own focus is the absence of rename/delete
+    // affordances, not the create/join flows (covered elsewhere).
     const boardTitle = `E2E Manage Not My Board ${Date.now()}`;
-    await createBoard(ownerPage, boardTitle);
-    const boardId = ownerPage.url().split('/retro/')[1];
-    await ownerContext.close();
+    const boardId = await createBoardViaApi(request, 'e2e-manage-owner@example.com', 'E2E Manage Owner', boardTitle);
 
     await signInWithGoogle(page, context);
-    await page.goto('/dashboard');
-    await page.getByText('Unirse a Retrospectiva', { exact: true }).first().click();
-    await page.getByLabel('ID del Tablero').fill(boardId);
-    await page.getByRole('button', { name: 'Unirse', exact: true }).click();
-    await page.waitForURL(new RegExp(`/retro/${boardId}`), { timeout: 10_000 });
+    const joinRes = await page.request.post(`/api/boards/${boardId}/join`);
+    expect(joinRes.ok()).toBeTruthy();
 
     await page.goto('/dashboard');
     // Scope to this specific board's card — the shared test account may own many other

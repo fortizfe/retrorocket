@@ -14,7 +14,7 @@ import { SystemClock } from '../adapters/system';
  */
 export function buildBoardsDeps(
     _source: NodeJS.ProcessEnv,
-    _config: ServerConfig,
+    config: ServerConfig,
     logger: LoggerPort,
     sessionService: SessionServicePort | undefined,
 ): BoardsRouterDeps | null {
@@ -29,5 +29,6 @@ export function buildBoardsDeps(
         boardsPort: new FirestoreBoardsAdapter(db),
         sessionService,
         clock: new SystemClock(),
+        testMode: config.authTestMode,
     };
 }

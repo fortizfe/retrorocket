@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { signInWithGoogle, signInAs, createBoard } from './fixtures/auth-helpers';
+import { signInWithGoogle, createBoardViaApi } from './fixtures/auth-helpers';
 
 // FR-001/SC-002 (zero direct Firestore access) is verified statically and
 // deterministically for the whole Dashboard, including this list screen, by
@@ -8,23 +8,24 @@ import { signInWithGoogle, signInAs, createBoard } from './fixtures/auth-helpers
 // screen's functional correctness, which E2E is better suited to verify.
 
 /** 017 / US1: the Dashboard lists boards the user created and boards they joined. */
-test('dashboard lists a user’s created and joined boards, correctly categorized', async ({ page, context, browser }) => {
+test('dashboard lists a user’s created and joined boards, correctly categorized', async ({ page, context, request }) => {
     await signInWithGoogle(page, context);
 
+    // Both boards are set up via direct API calls, with no UI or extra browser context:
+    // this test verifies the list screen's rendering, not the create/join flows
+    // themselves (covered by board-creation.spec.ts and board-join.spec.ts), so keeping
+    // its own footprint small avoids adding to this suite's shared, cumulative load
+    // (playwright.config.ts: one dev server/emulator/browser worker for the whole run).
     const createdTitle = `E2E List Created Board ${Date.now()}`;
-    await createBoard(page, createdTitle);
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: createdTitle, locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
 
     // A genuinely distinct second identity creates a board and the default test user
-    // joins it (via a direct API call — this test verifies the list screen, not the
-    // join flow itself, covered by board-join.spec.ts), so the list also exercises the
-    // "joined" category, not just "created".
-    const secondContext = await browser.newContext();
-    const secondPage = await secondContext.newPage();
-    await signInAs(secondPage, 'e2e-list-owner@example.com', 'E2E List Owner');
+    // joins it, so the list also exercises the "joined" category, not just "created".
     const joinedTitle = `E2E List Joined Board ${Date.now()}`;
-    await createBoard(secondPage, joinedTitle);
-    const joinedBoardId = secondPage.url().split('/retro/')[1];
-    await secondContext.close();
+    const joinedBoardId = await createBoardViaApi(request, 'e2e-list-owner@example.com', 'E2E List Owner', joinedTitle);
 
     const joinRes = await page.request.post(`/api/boards/${joinedBoardId}/join`);
     expect(joinRes.ok()).toBeTruthy();
@@ -48,5 +49,5 @@ test('a failed board list request shows an error state, not a silently empty das
 
     await page.goto('/dashboard');
 
-    await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 30_000 });
 });

@@ -79,7 +79,7 @@ for (const [templateLabel, title] of [
         expect(createResponse.ok()).toBeTruthy();
         await unblock();
 
-        await page.waitForURL(/\/retro\//, { timeout: 10_000 });
+        await page.waitForURL(/\/retro\//, { timeout: 30_000 });
         await expect(page.getByText(title)).toBeVisible();
     });
 }

@@ -15,6 +15,9 @@ export interface BoardsRouterDeps {
     boardsPort: BoardsPort;
     sessionService: SessionServicePort;
     clock: ClockPort;
+    /** Skips boardsLimiter, mirroring auth.ts's authLimiter. MUST be false in production —
+     * see auth.ts's testMode doc comment for why (shared emulator-backed E2E run/session). */
+    testMode?: boolean;
 }
 
 interface AuthedSession {
@@ -57,14 +60,22 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
 
     // Same rationale as auth.ts's authLimiter / mcp.ts's tokenLimiter: blunt
     // brute-force/resource-exhaustion within Vercel's free-tier request budget.
-    const boardsLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000,
-        limit: 100,
-        standardHeaders: 'draft-7',
-        legacyHeaders: false,
-        validate: false,
-    });
-    router.use(boardsLimiter);
+    //
+    // Skipped entirely when testMode is on (never production — see auth-wiring.ts):
+    // the emulator-backed E2E suite shares one dev-server process/session across every
+    // spec file (playwright.config.ts), so its cumulative request volume across a full
+    // run can legitimately exceed 100/15min for /api/boards without any real abuse
+    // occurring — mirrors auth.ts's authLimiter skip for the exact same reason.
+    if (!deps.testMode) {
+        const boardsLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000,
+            limit: 100,
+            standardHeaders: 'draft-7',
+            legacyHeaders: false,
+            validate: false,
+        });
+        router.use(boardsLimiter);
+    }
 
     router.get('/api/boards', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
