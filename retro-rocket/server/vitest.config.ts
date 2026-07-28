@@ -22,6 +22,7 @@ export default defineConfig({
                 // exercised by US3 E2E against the emulator, not unit tests.
                 'src/http/auth-wiring.ts',
                 'src/http/mcp-wiring.ts',
+                'src/http/boards-wiring.ts',
                 'src/adapters/system.ts',
             ],
             thresholds: {

@@ -3,29 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-const mockJoinRetrospectiveById = vi.fn();
-const mockIncrementParticipantCount = vi.fn();
-const mockAddParticipant = vi.fn();
-const mockAddBoardToUserHistory = vi.fn();
-const mockAddJoinedBoard = vi.fn();
+const mockJoinBoard = vi.fn();
 const mockNavigate = vi.fn();
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 
-vi.mock('@/features/boards/retrospective/services/retrospectiveService', () => ({
-    joinRetrospectiveById: (...args: any[]) => mockJoinRetrospectiveById(...args),
-    incrementParticipantCount: (...args: any[]) => mockIncrementParticipantCount(...args),
-}));
-
-vi.mock('@/features/boards/participants/services/participantService', () => ({
-    addParticipant: (...args: any[]) => mockAddParticipant(...args),
-}));
-
-vi.mock('@/features/auth/services/userService', () => ({
-    userService: {
-        addBoardToUserHistory: (...args: any[]) => mockAddBoardToUserHistory(...args),
-        addJoinedBoard: (...args: any[]) => mockAddJoinedBoard(...args),
-    },
+vi.mock('@/features/dashboard/services/backendBoardsClient', () => ({
+    joinBoard: (...args: any[]) => mockJoinBoard(...args),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -54,11 +38,7 @@ describe('useJoinRetrospective', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.clear();
-        mockJoinRetrospectiveById.mockResolvedValue({ id: 'retro-1', title: 'Sprint 10' });
-        mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-        mockIncrementParticipantCount.mockResolvedValue(undefined);
-        mockAddBoardToUserHistory.mockResolvedValue(undefined);
-        mockAddJoinedBoard.mockResolvedValue(undefined);
+        mockJoinBoard.mockResolvedValue({ id: 'retro-1', title: 'Sprint 10' });
     });
 
     it('starts with isJoining=false and error=null', () => {
@@ -68,60 +48,12 @@ describe('useJoinRetrospective', () => {
     });
 
     describe('joinByIdAndNavigate — success', () => {
-        it('calls joinRetrospectiveById with trimmed boardId', async () => {
+        it('calls backendBoardsClient.joinBoard with the trimmed boardId', async () => {
             const { result } = renderHook(() => useJoinRetrospective());
 
             await act(async () => result.current.joinByIdAndNavigate('  retro-1  '));
 
-            expect(mockJoinRetrospectiveById).toHaveBeenCalledWith('retro-1', 'uid-1', 'Test User');
-        });
-
-        it('calls addParticipant with correct data', async () => {
-            const { result } = renderHook(() => useJoinRetrospective());
-
-            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
-
-            expect(mockAddParticipant).toHaveBeenCalledWith({
-                name: 'Test User',
-                userId: 'uid-1',
-                retrospectiveId: 'retro-1',
-            });
-        });
-
-        it('increments participant count when isNew=true', async () => {
-            mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-            const { result } = renderHook(() => useJoinRetrospective());
-
-            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
-
-            expect(mockIncrementParticipantCount).toHaveBeenCalledWith('retro-1');
-        });
-
-        it('does NOT increment participant count when isNew=false', async () => {
-            mockAddParticipant.mockResolvedValue({ id: 'p-existing', isNew: false });
-            const { result } = renderHook(() => useJoinRetrospective());
-
-            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
-
-            expect(mockIncrementParticipantCount).not.toHaveBeenCalled();
-        });
-
-        it('saves participantId to localStorage', async () => {
-            mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-            const { result } = renderHook(() => useJoinRetrospective());
-
-            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
-
-            expect(localStorage.getItem('participant_retro-1_uid-1')).toBe('p-new');
-        });
-
-        it('calls addBoardToUserHistory and addJoinedBoard', async () => {
-            const { result } = renderHook(() => useJoinRetrospective());
-
-            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
-
-            expect(mockAddBoardToUserHistory).toHaveBeenCalledWith('uid-1', 'retro-1', 'Sprint 10');
-            expect(mockAddJoinedBoard).toHaveBeenCalledWith('uid-1', 'retro-1');
+            expect(mockJoinBoard).toHaveBeenCalledWith('retro-1');
         });
 
         it('navigates to /retro/:id after success', async () => {
@@ -130,6 +62,14 @@ describe('useJoinRetrospective', () => {
             await act(async () => result.current.joinByIdAndNavigate('retro-1'));
 
             expect(mockNavigate).toHaveBeenCalledWith('/retro/retro-1');
+        });
+
+        it('shows a success toast with the board title', async () => {
+            const { result } = renderHook(() => useJoinRetrospective());
+
+            await act(async () => result.current.joinByIdAndNavigate('retro-1'));
+
+            expect(mockToastSuccess).toHaveBeenCalledWith('Te has unido a "Sprint 10" exitosamente');
         });
 
         it('sets isJoining=false after completion', async () => {
@@ -150,8 +90,8 @@ describe('useJoinRetrospective', () => {
             ).rejects.toThrow('ID del tablero requerido');
         });
 
-        it('sets error and calls toast.error on service failure', async () => {
-            mockJoinRetrospectiveById.mockRejectedValue(new Error('Board not found'));
+        it('sets error and calls toast.error on backend failure', async () => {
+            mockJoinBoard.mockRejectedValue(new Error('Board not found'));
             const { result } = renderHook(() => useJoinRetrospective());
 
             let caughtMessage = '';
@@ -169,7 +109,7 @@ describe('useJoinRetrospective', () => {
         });
 
         it('always resets isJoining=false after error (finally block)', async () => {
-            mockJoinRetrospectiveById.mockRejectedValue(new Error('oops'));
+            mockJoinBoard.mockRejectedValue(new Error('oops'));
             const { result } = renderHook(() => useJoinRetrospective());
 
             await act(async () => result.current.joinByIdAndNavigate('retro-1').catch(() => {}));
@@ -180,7 +120,7 @@ describe('useJoinRetrospective', () => {
 
     describe('clearError', () => {
         it('resets error to null', async () => {
-            mockJoinRetrospectiveById.mockRejectedValue(new Error('some error'));
+            mockJoinBoard.mockRejectedValue(new Error('some error'));
             const { result } = renderHook(() => useJoinRetrospective());
 
             await act(async () => result.current.joinByIdAndNavigate('retro-1').catch(() => {}));

@@ -13,15 +13,18 @@ capabilities can be added without re-architecture.
 server/src/
 ├── domain/            # Pure business types & rules — no framework/SDK imports
 │   ├── errors.ts      # AppError hierarchy (code + httpStatus)
-│   └── auth/          # UserIdentity, Session, OAuthState, types
+│   ├── auth/          # UserIdentity, Session, OAuthState, types
+│   └── boards/        # templates.ts — ported BOARD_TEMPLATES/ACTION_COLUMN constants
 ├── application/
 │   ├── ports/         # Interfaces the domain/use-cases depend on
 │   │   ├── index.ts   # OAuthProvider, IdentityStore, SessionService, OAuthStateCodec, Clock, Random
+│   │   ├── boards.ts  # BoardsPort — list/create/join/rename/delete boards
 │   │   └── observability/  # Logger, Metrics, Tracer
 │   └── use-cases/     # StartOAuthLogin, CompleteOAuthLogin, session (get/refresh), Logout, startLinkProvider
+│       └── boards/    # ListBoardsForUser, CreateBoard, JoinBoard, RenameBoard, DeleteBoard
 ├── adapters/          # Driven adapters implementing the ports
 │   ├── oauth/         # Google (PKCE + id_token) & GitHub (REST) via arctic
-│   ├── firebase/      # firebase-admin identity store + custom-token minting
+│   ├── firebase/      # firebase-admin identity store, custom-token minting, and FirestoreBoardsAdapter
 │   ├── session/       # jose-signed session JWT + OAuth-state codec
 │   ├── observability/ # stdout structured logs/metrics/tracing (with redaction)
 │   └── system.ts      # SystemClock, SystemRandom
@@ -29,7 +32,8 @@ server/src/
 │   ├── app.ts         # Builds the Express app (middleware + routes)
 │   ├── composition-root.ts  # Wires ports → adapters (only place adapters are chosen)
 │   ├── auth-wiring.ts # Env-guarded construction of the auth subsystem
-│   ├── routes/        # health, auth
+│   ├── boards-wiring.ts # Env-guarded construction of the Dashboard boards subsystem
+│   ├── routes/        # health, auth, boards
 │   ├── middleware/    # correlationId, errorHandler
 │   └── cookies.ts     # httpOnly/Secure/SameSite=Lax cookie helpers
 └── config/env.ts      # Fail-fast environment configuration
@@ -77,6 +81,34 @@ npm run test:server         # Vitest (node env)
 npm run test:server:coverage # enforces the 80% coverage floor (Constitution VI)
 npm run type-check:server   # tsc --noEmit for the server
 ```
+
+## Dashboard boards ("My Boards")
+
+> Feature: [`specs/017-dashboard-backend-access`](../../specs/017-dashboard-backend-access/)
+
+Backs the Dashboard screen: listing, creating, joining, renaming, and deleting boards no
+longer touch Firestore directly from the browser — the SPA calls these endpoints instead,
+authenticated by the same `rr_session` cookie as everything else. "Joined" boards are
+derived from the `participants` collection (not the frontend's legacy `users.joinedBoards`
+array/`userBoardHistory` collection, which this feature does not read or write). Screens
+outside the Dashboard (individual board real-time collaboration, facilitator tools, export)
+remain unmigrated and keep working exactly as before.
+
+### Endpoints (`../specs/017-dashboard-backend-access/contracts/boards-api.yaml`)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET    | `/api/boards` | List the signed-in user's created + joined boards |
+| POST   | `/api/boards` | Create a board from a template |
+| POST   | `/api/boards/:id/join` | Join a board by ID (idempotent) |
+| PATCH  | `/api/boards/:id` | Rename a board (owner only) |
+| DELETE | `/api/boards/:id` | Permanently delete a board (owner only) |
+
+`FirestoreBoardsAdapter` (like `FirestoreRetrospectiveReadAdapter`/`FirestoreMcpConnectionAdapter`)
+has no dedicated Vitest-level Firestore mock — its query/write composition is exercised by
+the Playwright E2E suite against the emulator (`e2e/dashboard-list.spec.ts`,
+`board-creation.spec.ts`, `board-join.spec.ts`, `dashboard-manage.spec.ts`); only its pure
+mapping helpers are unit-tested directly.
 
 ## Configuration
 

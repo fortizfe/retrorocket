@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
 import { expectNoHorizontalOverflow } from './fixtures/board';
+import { blockFirestoreRequests } from './fixtures/network';
 
 /** Critical flow: an authenticated user creates a new retrospective board. */
 test('authenticated user creates a new retrospective board', async ({ page, context }) => {
@@ -46,3 +47,39 @@ test('board columns fit the viewport with no horizontal scroll (3 and 4 columns)
     await page.setViewportSize({ width: 800, height: 900 });
     await expectNoHorizontalOverflow(page.locator('body'));
 });
+
+/** 017 / SC-002: creating a board (for every template) reaches only /api/boards, never Firestore directly. */
+for (const [templateLabel, title] of [
+    ['Plantilla por defecto', 'E2E Create Default Template'],
+    ['Mad, Sad, Glad', 'E2E Create Mad Sad Glad Template'],
+    ['Start, Stop, Continue', 'E2E Create Start Stop Continue Template'],
+] as const) {
+    test(`creating a "${templateLabel}" board goes only through the backend`, async ({ page, context }) => {
+        await signInWithGoogle(page, context);
+
+        await page.getByText('Nuevo Tablero', { exact: true }).click();
+        // Click the visible template label text (not the sr-only radio itself — the
+        // motion.label wrapper animates and can intercept pointer events on the input).
+        await page.getByText(templateLabel, { exact: true }).click();
+        await page.getByText('Siguiente', { exact: true }).click();
+        await page.locator('#boardTitle').fill(title);
+
+        // FR-001: creating a board must not require any direct Firestore access.
+        // Block the emulator and confirm the create request still succeeds through the
+        // backend alone — more robust than recording requests and asserting none
+        // occurred, since client-side navigation into the (out-of-scope) board detail
+        // page can fire its own legitimate Firestore listeners essentially
+        // simultaneously with the create response, racing unpredictably against any
+        // attempt to stop recording at the network-event level.
+        const unblock = await blockFirestoreRequests(page);
+        const [createResponse] = await Promise.all([
+            page.waitForResponse((res) => res.url().includes('/api/boards') && res.request().method() === 'POST'),
+            page.getByRole('button', { name: 'Crear', exact: true }).click(),
+        ]);
+        expect(createResponse.ok()).toBeTruthy();
+        await unblock();
+
+        await page.waitForURL(/\/retro\//, { timeout: 30_000 });
+        await expect(page.getByText(title)).toBeVisible();
+    });
+}

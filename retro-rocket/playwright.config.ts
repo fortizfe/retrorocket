@@ -44,6 +44,11 @@ export default defineConfig({
             reuseExistingServer: !process.env.CI,
             env: {
                 VITE_USE_FIREBASE_EMULATOR: 'true',
+                // Belt-and-suspenders alongside src/lib/services/firebase.ts's own
+                // useEmulator-gated "demo-retrorocket" default: force the same project id
+                // the backend uses (FIREBASE_PROJECT_ID below) so the emulator's
+                // singleProjectMode has nothing to reconcile between the two SDKs (017 E2E fix).
+                VITE_FIREBASE_PROJECT_ID: 'demo-retrorocket',
             },
             timeout: 30_000,
         },
@@ -56,7 +61,21 @@ export default defineConfig({
                 AUTH_TEST_MODE: 'true',
                 NODE_ENV: 'development',
                 FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099',
+                // firebase-admin's Firestore client (FirestoreBoardsAdapter, and
+                // FirestoreRetrospectiveReadAdapter for MCP) auto-detects this var the
+                // same way Auth auto-detects FIREBASE_AUTH_EMULATOR_HOST — without it,
+                // Admin SDK Firestore calls target real/default Firestore instead of the
+                // local emulator the frontend's client SDK is connected to (017 E2E fix).
+                FIRESTORE_EMULATOR_HOST: 'localhost:8080',
                 FIREBASE_PROJECT_ID: 'demo-retrorocket',
+                // `vite-node` auto-loads the developer's .env, which may contain a real
+                // FIREBASE_SERVICE_ACCOUNT for local Firestore-backed development.
+                // auth-wiring.ts's getFirebaseAuth() prefers a present service account
+                // over FIREBASE_PROJECT_ID, so without this override E2E runs would
+                // silently authenticate the Admin SDK against the real project instead of
+                // the emulator — while the frontend's client SDK stays on "demo-retrorocket"
+                // — leaving admin-written data invisible to the browser (017 E2E fix).
+                FIREBASE_SERVICE_ACCOUNT: '',
                 SESSION_SIGNING_KEY: 'e2e-test-signing-key-not-a-secret',
                 OAUTH_REDIRECT_BASE_URL: 'http://localhost:3000',
                 GOOGLE_OAUTH_CLIENT_ID: 'e2e-dummy',

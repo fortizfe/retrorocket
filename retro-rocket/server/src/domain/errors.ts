@@ -25,3 +25,10 @@ export class ConfigError extends AppError {
         this.name = 'ConfigError';
     }
 }
+
+export class ForbiddenError extends AppError {
+    constructor(message = 'Not allowed to perform this action') {
+        super('forbidden', message, 403);
+        this.name = 'ForbiddenError';
+    }
+}

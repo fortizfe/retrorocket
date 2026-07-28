@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { joinRetrospectiveById, incrementParticipantCount } from '@/features/boards/retrospective/services/retrospectiveService';
-import { addParticipant } from '@/features/boards/participants/services/participantService';
-import { userService } from '@/features/auth/services/userService';
+import { joinBoard } from '@/features/dashboard/services/backendBoardsClient';
 import { useUser } from '@/lib/contexts/UserContext';
 import toast from 'react-hot-toast';
 
@@ -36,42 +34,14 @@ export const useJoinRetrospective = (): UseJoinRetrospectiveReturn => {
         setError(null);
 
         try {
-            // First, verify the retrospective exists and user can join
-            const retrospective = await joinRetrospectiveById(
-                boardId.trim(),
-                user.uid,
-                userProfile.displayName
-            );
+            // Joining (existence/active check, participant record, idempotency) is fully
+            // handled by the backend now (FR-004). The board detail page's own auto-join
+            // fallback (RetrospectivePage.tsx, out of scope for this feature) idempotently
+            // resolves the participant id on first visit if the localStorage cache isn't
+            // pre-populated here.
+            const board = await joinBoard(boardId.trim());
 
-            // Add user as participant
-            const participantResult = await addParticipant({
-                name: userProfile.displayName,
-                userId: user.uid,
-                retrospectiveId: boardId.trim()
-            });
-
-            // Only increment count if it's a new participant
-            if (participantResult.isNew) {
-                await incrementParticipantCount(boardId.trim());
-            }
-
-            // Add to user's board history
-            await userService.addBoardToUserHistory(
-                user.uid,
-                boardId.trim(),
-                retrospective.title
-            );
-
-            // Add to user's joined boards list
-            await userService.addJoinedBoard(user.uid, boardId.trim());
-
-            // Store participant info to prevent auto-join on navigation
-            localStorage.setItem(
-                `participant_${boardId.trim()}_${user.uid}`,
-                participantResult.id
-            );
-
-            toast.success(`Te has unido a "${retrospective.title}" exitosamente`);
+            toast.success(`Te has unido a "${board.title}" exitosamente`);
 
             // Navigate to the retrospective
             navigate(`/retro/${boardId.trim()}`);

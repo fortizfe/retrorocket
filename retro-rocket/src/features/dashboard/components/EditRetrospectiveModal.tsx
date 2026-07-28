@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Modal from '@/lib/components/ui/Modal';
 import Input from '@/lib/components/ui/Input';
 import Button from '@/lib/components/ui/Button';
-import { updateRetrospective } from '@/features/boards/retrospective/services/retrospectiveService';
+import { renameBoard } from '@/features/dashboard/services/backendBoardsClient';
 import toast from 'react-hot-toast';
 
 interface Board {
@@ -46,9 +46,8 @@ const EditRetrospectiveModal: React.FC<EditRetrospectiveModalProps> = ({
 
         setIsSaving(true);
         try {
-            const updates = { title: trimmedTitle };
-            await updateRetrospective(board.id, updates);
-            onBoardUpdated(board.id, updates);
+            await renameBoard(board.id, trimmedTitle);
+            onBoardUpdated(board.id, { title: trimmedTitle });
             toast.success(t('dashboard.boardCard.editSuccess'));
             onClose();
         } catch (error: unknown) {

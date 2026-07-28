@@ -12,16 +12,16 @@ test('facilitator starts, pauses, and stops the countdown timer', async ({ page,
     // Quick timer preset, then create
     await page.getByText('5min', { exact: true }).click();
     await page.getByText('Crear Temporizador', { exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Iniciar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Iniciar', exact: true })).toBeVisible();
 
     // Start
-    await page.getByRole('button', { name: 'Iniciar' }).click();
+    await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Pausar' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Reiniciar' })).toBeVisible();
 
     // Pause
     await page.getByRole('button', { name: 'Pausar' }).click();
-    await expect(page.getByRole('button', { name: 'Iniciar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Iniciar', exact: true })).toBeVisible();
 
     // Stop (delete the timer)
     await page.getByRole('button', { name: 'Eliminar' }).click();

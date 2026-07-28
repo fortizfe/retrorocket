@@ -5,9 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/lib/contexts/UserContext';
 import BoardTemplateSelector from '@/features/create-board/components/BoardTemplateSelector';
-import { createBoardFromTemplate } from '@/features/create-board/createBoardFromTemplate';
-import { addParticipant } from '@/features/boards/participants/services/participantService';
-import { incrementParticipantCount } from '@/features/boards/retrospective/services/retrospectiveService';
+import { createBoard } from '@/features/dashboard/services/backendBoardsClient';
 import { TemplateId } from '@/features/create-board/boardTemplates';
 import Button from '@/lib/components/ui/Button';
 import Input from '@/lib/components/ui/Input';
@@ -57,33 +55,17 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
         try {
             setIsCreating(true);
 
-            const { boardId } = await createBoardFromTemplate({
+            // The backend creates the board, its columns, and the creator's participant
+            // record atomically (research.md §5a) — no separate addParticipant/
+            // incrementParticipantCount round-trip is needed anymore. The board detail
+            // page's own auto-join fallback (RetrospectivePage.tsx, out of scope for this
+            // feature) idempotently resolves the participant id on first visit if the
+            // localStorage cache isn't pre-populated here.
+            const { boardId } = await createBoard({
                 templateId: selectedTemplate,
                 title: boardTitle.trim(),
-                createdBy: user.uid,
-                createdByName: userProfile.displayName,
                 locale: i18n.language as 'es' | 'en'
             });
-
-            // Add the creator as a participant automatically
-            try {
-                const result = await addParticipant({
-                    name: userProfile.displayName,
-                    userId: userProfile.uid,
-                    retrospectiveId: boardId
-                });
-
-                // Only increment if it's a new participant (should always be true for new boards)
-                if (result.isNew) {
-                    await incrementParticipantCount(boardId);
-                }
-
-                // Mark as already joined in localStorage to prevent auto-join on navigation
-                localStorage.setItem(`participant_${boardId}_${userProfile.uid}`, result.id);
-            } catch (participantError) {
-                console.warn('Error adding creator as participant:', participantError);
-                // Don't fail the creation for this, just log it
-            }
 
             toast.success(t('success.created'));
 
