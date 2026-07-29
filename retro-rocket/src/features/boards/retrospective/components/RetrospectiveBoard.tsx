@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
 import ActionItemsColumn from '@/features/boards/retrospective/components/ActionItemsColumn';
 import uiPreferencesStore from '@/lib/uiPreferencesStore';
@@ -19,12 +20,38 @@ import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '@/f
 import { ActionItem, CreateActionItemInput } from '@/features/boards/types/actionItem';
 import { Participant } from '@/features/boards/types/participant';
 import { getColumns, COLUMN_ORDER } from '@/lib/utils/constants';
+import type { TypingStatusEntry } from '@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync';
+import type { ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
+import type { CountdownTimer, FacilitatorNote, SentimentResult } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
     onDataChange?: (cards: CardType[], groups: CardGroup[], actionItems: ActionItem[]) => void;
     participants?: Participant[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US2) —
+     * replaces this component's own Firestore onSnapshot subscription for cards. */
+    cards?: CardType[];
+    /** Sourced from useRetrospectiveRealtimeSync's live typingStatuses slice (feature
+     * 019, US3). */
+    typingStatuses?: TypingStatusEntry[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4) —
+     * replaces this component's own Firestore onSnapshot subscription for groups. */
+    groups?: CardGroup[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4). */
+    columnGroupingStates?: ColumnGroupingStatesStore;
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US5) —
+     * threaded into BoardDataContext for RetrospectiveTopbar's CountdownTimer/
+     * FacilitatorMenu (rendered outside this component's own tree). */
+    timer?: CountdownTimer | null;
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US5). */
+    myFacilitatorNotes?: FacilitatorNote[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US6) —
+     * replaces this component's own Firestore onSnapshot subscription for action items. */
+    actionItems?: ActionItem[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US7) —
+     * loaded once, not live-synced (spec Assumptions). */
+    sentimentResults?: SentimentResult[];
 }
 
 const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
@@ -32,6 +59,14 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     currentUser,
     onDataChange,
     participants = [],
+    cards: boardCards = [],
+    typingStatuses = [],
+    groups: boardGroups = [],
+    columnGroupingStates,
+    timer = null,
+    myFacilitatorNotes = [],
+    actionItems: boardActionItems = [],
+    sentimentResults = [],
 }) => {
     // Get language context to trigger re-render when language changes
     const { t } = useLanguage();
@@ -57,7 +92,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     const {
         cards,
         cardsByColumn,
-        loading: cardsLoading,
         error: cardsError,
         createCard,
         updateCard,
@@ -67,8 +101,15 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         addReaction,
         removeReaction,
         reorderCards,
-        metrics // Nuevas métricas de optimización
-    } = useOptimizedCards(retrospective.id);
+    } = useOptimizedCards(retrospective.id, boardCards);
+
+    // Card action failures (vote/like/edit/delete, incl. a session expiring mid-action)
+    // surface as a toast (FR-006) rather than blocking the whole board — loading/
+    // not-found/load-failure states for the board itself are already handled upstream
+    // by RetrospectivePage's useRetrospectiveRealtimeSync before this component mounts.
+    React.useEffect(() => {
+        if (cardsError) toast.error(cardsError);
+    }, [cardsError]);
 
     const {
         groups,
@@ -80,7 +121,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     } = useCardGroups({
         retrospectiveId: retrospective.id,
         cards,
-        currentUser
+        currentUser,
+        groups: boardGroups
     });
 
     // Hook para elementos de acción
@@ -92,12 +134,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         updateActionItem,
         deleteActionItem,
         convertCardToActionItem
-    } = useActionItems(retrospective.id);
+    } = useActionItems(retrospective.id, boardActionItems);
 
     const { fullName, displayName, email, uid } = useCurrentUser();
     const isFacilitatorFlag = uid === retrospective.createdBy;
 
-    const sentimentAnalysis = useSentiment(cards, retrospective.id);
+    const sentimentAnalysis = useSentiment(cards, retrospective.id, sentimentResults);
     const setSentiment = useSentimentSetter();
     const setBoardData = useBoardDataSetter();
 
@@ -108,9 +150,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     }, [sentimentAnalysis, setSentiment]);
 
     React.useEffect(() => {
-        setBoardData({ cards, groups, actionItems, columnConfigs, isFacilitator: isFacilitatorFlag });
+        setBoardData({ cards, groups, actionItems, columnConfigs, isFacilitator: isFacilitatorFlag, retrospective, participants, timer, myFacilitatorNotes });
         return () => setBoardData(null);
-    }, [cards, groups, actionItems, columnConfigs, isFacilitatorFlag, setBoardData]);
+    }, [cards, groups, actionItems, columnConfigs, isFacilitatorFlag, retrospective, participants, timer, myFacilitatorNotes, setBoardData]);
 
     // Notify parent component about data changes for export functionality
     React.useEffect(() => {
@@ -175,10 +217,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     };
 
     // Handler para convertir tarjeta a elemento de acción
-    const handleConvertToActionItem = (cardContent: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => {
-        if (uid) {
-            convertCardToActionItem(cardContent, uid, assignedTo, assignedToName, dueDate);
-        }
+    const handleConvertToActionItem = (cardId: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => {
+        convertCardToActionItem(cardId, assignedTo, assignedToName, dueDate);
     };
 
     // Handler para crear elemento de acción
@@ -196,30 +236,12 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         deleteActionItem(id);
     };
 
-    if (cardsLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Loading size="lg" text={t('retrospective.board.loading')} />
-            </div>
-        );
-    }
-
-    if (cardsError) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <p className="text-error-fg mb-2">{t('retrospective.errors.loadCards')}</p>
-                    <p className="text-text-muted text-sm">{cardsError}</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <TypingProvider
             retrospectiveId={retrospective.id}
             currentUserId={currentUser}
             currentUsername={currentUsername}
+            typingStatuses={typingStatuses}
         >
             <div className="h-full flex flex-col">
                 {/* Controls row: facilitator-only controls moved to FacilitatorMenu */}
@@ -272,6 +294,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     })}
                                     currentUser={currentUser}
                                     retrospectiveId={retrospective.id}
+                                    columnGroupingStates={columnGroupingStates}
                                     // Props para elementos de acción
                                     participants={participants}
                                     canConvertToAction={isFacilitator}

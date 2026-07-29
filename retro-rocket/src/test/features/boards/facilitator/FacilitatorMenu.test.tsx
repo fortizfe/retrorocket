@@ -45,14 +45,6 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: vi.fn(),
 }));
 
-vi.mock('@/features/boards/facilitator/components/FacilitatorNotes', () => ({
-    FacilitatorNotes: ({ retrospectiveId, facilitatorId }: any) => (
-        <div data-testid="facilitator-notes">
-            Notes for {retrospectiveId} by {facilitatorId}
-        </div>
-    ),
-}));
-
 vi.mock('@/features/boards/facilitator/components/FacilitatorMenuTabs', () => ({
     default: ({ children, onClose, activeTab, onTabChange }: any) => (
         <div data-testid="facilitator-menu-tabs">
@@ -92,6 +84,8 @@ describe('FacilitatorMenu', () => {
         retrospectiveId: 'retro-123',
         facilitatorId: 'facilitator-456',
         isOwner: true,
+        timer: null,
+        myFacilitatorNotes: [],
     };
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import * as http from 'node:http';
 // Single Vercel serverless entry for the whole backend. vercel.json rewrites every
 // `/api/*` request to this function (`/api/(.*)` -> `/api`); the original request path is
 // preserved in `req.url`, so the Express app routes on `/api/health`, `/api/auth/*`, etc.
@@ -10,21 +10,20 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 // bundle inlines the entire server/src graph, so there is no cross-directory runtime
 // module resolution for Vercel to get wrong. The `.mjs` specifier is explicit (required
 // by Node's ESM resolver).
+//
+// The default export is an http.Server (not a bare req/res handler) — feature 019's
+// retrospective board WebSocket channel (GET /api/retrospectives/:id/live) requires
+// access to the server's 'upgrade' event, which only an http.Server exposes. This is
+// Vercel's own documented pattern for Node.js Function WebSockets (research.md §1).
 import { buildApp } from './_backend.mjs';
 
-type NodeHandler = (req: IncomingMessage, res: ServerResponse) => void;
-
-let app: NodeHandler | undefined;
-let bootError: Error | undefined;
+let server: http.Server;
 
 try {
-    app = buildApp();
+    server = buildApp();
 } catch (error) {
-    bootError = error instanceof Error ? error : new Error(String(error));
-}
-
-export default function handler(req: IncomingMessage, res: ServerResponse): void {
-    if (bootError) {
+    const bootError = error instanceof Error ? error : new Error(String(error));
+    server = http.createServer((_req, res) => {
         res.statusCode = 500;
         res.setHeader('content-type', 'application/json');
         res.end(
@@ -33,7 +32,7 @@ export default function handler(req: IncomingMessage, res: ServerResponse): void
                 stack: process.env.VERCEL_ENV === 'production' ? undefined : bootError.stack,
             }),
         );
-        return;
-    }
-    app!(req, res);
+    });
 }
+
+export default server;

@@ -19,7 +19,7 @@ import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup,
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { getCardStyling, getSuggestedColorForColumn } from '@/lib/utils/cardColors';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
-import { GroupingCriteria } from '@/features/boards/types/columnGrouping';
+import { GroupingCriteria, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 import { Participant } from '@/features/boards/types/participant';
 
 interface GroupableColumnProps {
@@ -41,10 +41,12 @@ interface GroupableColumnProps {
     onSuggestionGenerate: () => GroupSuggestion[];
     currentUser?: string;
     retrospectiveId: string;
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4). */
+    columnGroupingStates?: ColumnGroupingStatesStore;
     // Props para elementos de acción
     participants?: Participant[];
     canConvertToAction?: boolean;
-    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
+    onConvertToAction?: (cardId: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const GroupableColumn: React.FC<GroupableColumnProps> = ({
@@ -66,6 +68,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     onSuggestionGenerate,
     currentUser,
     retrospectiveId,
+    columnGroupingStates,
     participants = [],
     canConvertToAction = false,
     onConvertToAction,
@@ -88,7 +91,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const typingUsers = getTypingUsersForColumn(column.id);
 
     // Initialize grouping hook
-    const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping(retrospectiveId);
+    const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping(retrospectiveId, columnGroupingStates);
 
     // Filter cards and groups for this column
     const columnCards = cards.filter(card => card.column === column.id);

@@ -19,6 +19,9 @@ import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 interface NotesTabProps {
     retrospectiveId: string;
     facilitatorId: string;
+    /** Sourced from useRetrospectiveRealtimeSync's board state via BoardDataContext
+     * (feature 019, US5) — never another facilitator's notes (FR-013). */
+    notes: FacilitatorNote[];
 }
 
 interface EditingNote {
@@ -26,11 +29,12 @@ interface EditingNote {
     content: string;
 }
 
-const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId }) => {
+const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, notes: liveNotes }) => {
     const { t } = useLanguage();
     const { notes, loading, error, createNote, updateNote, deleteNote, clearError } = useFacilitatorNotes(
         retrospectiveId,
-        facilitatorId
+        facilitatorId,
+        liveNotes
     );
 
     const [newNoteContent, setNewNoteContent] = useState('');

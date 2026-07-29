@@ -8,6 +8,7 @@ import { authRouter, type AuthRouterDeps } from './routes/auth';
 import { mcpRouter, type McpRouterDeps } from './routes/mcp';
 import { boardsRouter, type BoardsRouterDeps } from './routes/boards';
 import { profileRouter, type ProfileRouterDeps } from './routes/profile';
+import { retrospectiveRouter, type RetrospectiveRouterDeps } from './routes/retrospectives';
 
 export interface AppDeps {
     config: ServerConfig;
@@ -20,6 +21,8 @@ export interface AppDeps {
     boardsDeps?: BoardsRouterDeps;
     /** Mi Perfil profile wiring (feature 018); when absent, /api/profile reports a config error. */
     profileDeps?: ProfileRouterDeps;
+    /** Retrospective board wiring (feature 019); when absent, its routes report a config error. */
+    retrospectiveDeps?: RetrospectiveRouterDeps;
 }
 
 /**
@@ -78,6 +81,17 @@ export function createApp(deps: AppDeps): Express {
         app.use('/api/profile', (_req: Request, res: Response) => {
             res.status(503).json({
                 error: { code: 'config_error', message: 'Mi Perfil is not configured on this deployment' },
+                correlationId: String(res.locals.correlationId ?? 'unknown'),
+            });
+        });
+    }
+
+    if (deps.retrospectiveDeps) {
+        app.use(retrospectiveRouter(deps.retrospectiveDeps));
+    } else {
+        app.use(['/api/retrospectives', '/api/cards', '/api/groups', '/api/action-items', '/api/notes'], (_req: Request, res: Response) => {
+            res.status(503).json({
+                error: { code: 'config_error', message: 'The retrospective board is not configured on this deployment' },
                 correlationId: String(res.locals.correlationId ?? 'unknown'),
             });
         });

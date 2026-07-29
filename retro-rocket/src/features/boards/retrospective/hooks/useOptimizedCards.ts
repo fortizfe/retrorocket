@@ -1,21 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Card, CreateCardInput, EmojiReaction, GroupedReaction } from '@/features/boards/types/card';
-import {
-    createCard,
-    updateCard as updateCardService,
-    deleteCard as deleteCardService,
-    subscribeToCards,
-    voteCard as voteCardService
-} from '@/features/boards/retrospective/services/cardService';
-import {
-    toggleLike as toggleLikeService,
-    addOrUpdateReaction,
-    removeReaction,
-    batchUpdateCardOrder
-} from '@/features/boards/retrospective/services/cardInteractionService';
-import { FirestoreListenerManager } from '@/features/boards/retrospective/services/FirestoreListenerManager';
-import { OptimisticUpdatesManager } from '@/features/boards/retrospective/services/OptimisticUpdatesManager';
-import { FirebaseMetricsService } from '@/lib/services/FirebaseMetricsService';
+import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '@/lib/utils/cardHelpers';
 
 interface UseOptimizedCardsReturn {
@@ -34,312 +19,175 @@ interface UseOptimizedCardsReturn {
     getGroupedReactions: (cardId: string) => GroupedReaction[];
     getUserLiked: (cardId: string, userId: string) => boolean;
     getUserReaction: (cardId: string, userId: string) => EmojiReaction | null;
-    refetch: () => Promise<void>;
-    metrics: {
-        operations: number;
-        cacheHits: number;
-        errors: number;
-    };
+}
+
+function messageOf(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
 }
 
 /**
- * Hook optimizado para gestionar tarjetas con:
- * - Listeners centralizados
- * - Updates optimistas
- * - Métricas de rendimiento
- * - Caché inteligente
- * - Compatibilidad total con useCards
+ * Card lifecycle/interactions for the retrospective board (feature 019, US2). `cards`
+ * is now an INPUT — sourced from useRetrospectiveRealtimeSync's board state via
+ * RetrospectivePage -> RetrospectiveBoard, not a self-managed Firestore onSnapshot
+ * subscription — every card write goes through backendRetrospectiveClient, and the
+ * resulting change is picked up via the live WebSocket relay (including for the
+ * caller's own actions), so no client-side optimistic mutation is needed anymore.
+ * reorderCards uses the backend's atomic WriteBatch endpoint (FR-010, US4).
  */
-export const useOptimizedCards = (retrospectiveId?: string): UseOptimizedCardsReturn => {
-    const [cards, setCards] = useState<Card[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+export const useOptimizedCards = (retrospectiveId: string | undefined, cards: Card[]): UseOptimizedCardsReturn => {
     const [error, setError] = useState<string | null>(null);
-    const [metrics, setMetrics] = useState({ operations: 0, cacheHits: 0, errors: 0 });
 
-    const unsubscribeRef = useRef<(() => void) | null>(null);
-    const localOperationsCount = useRef(0);
-
-    // Actualizar métricas locales
-    const updateLocalMetrics = useCallback(() => {
-        const globalMetrics = FirebaseMetricsService.getMetrics();
-        setMetrics({
-            operations: localOperationsCount.current,
-            cacheHits: globalMetrics.summary.cacheHits,
-            errors: globalMetrics.summary.errors
-        });
+    const createCardFn = useCallback(async (cardInput: CreateCardInput): Promise<string> => {
+        try {
+            setError(null);
+            const created = await backendRetrospectiveClient.createCard(cardInput.retrospectiveId, {
+                content: cardInput.content,
+                column: cardInput.column,
+                color: cardInput.color,
+            });
+            return created.id;
+        } catch (err) {
+            const message = messageOf(err, 'Error creating card');
+            setError(message);
+            throw new Error(message);
+        }
     }, []);
 
-    // Configurar listener centralizado
-    useEffect(() => {
-        if (!retrospectiveId) {
-            setLoading(false);
-            return;
+    const updateCardFn = useCallback(async (id: string, updates: Partial<Card>): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.editCard(id, { content: updates.content, color: updates.color });
+        } catch (err) {
+            const message = messageOf(err, 'Error updating card');
+            setError(message);
+            throw new Error(message);
         }
+    }, []);
 
-        const listenerKey = `cards_${retrospectiveId}`;
+    const deleteCardFn = useCallback(async (id: string): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.deleteCard(id);
+        } catch (err) {
+            const message = messageOf(err, 'Error deleting card');
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
 
-        // Usar el gestor centralizado de listeners
-        unsubscribeRef.current = FirestoreListenerManager.subscribe(
-            listenerKey,
-            () => {
-                FirebaseMetricsService.recordListener(`cards-subscription-${retrospectiveId}`);
+    const voteCardFn = useCallback(async (cardId: string, increment = true): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.voteCard(cardId, increment);
+        } catch (err) {
+            const message = messageOf(err, 'Error voting card');
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
 
-                return subscribeToCards(retrospectiveId, (fetchedCards: Card[]) => {
-                    FirebaseMetricsService.recordRead('cards-real-time-update', fetchedCards.length);
-                    setCards(fetchedCards);
-                    setLoading(false);
-                    setError(null);
-                    updateLocalMetrics();
-                });
-            }
-        );
+    const toggleLikeFn = useCallback(async (cardId: string): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.toggleLike(cardId);
+        } catch (err) {
+            const message = messageOf(err, 'Error toggling like');
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
 
-        return () => {
-            if (unsubscribeRef.current) {
-                unsubscribeRef.current();
-            }
-        };
-    }, [retrospectiveId, updateLocalMetrics]);
+    const addReactionFn = useCallback(async (cardId: string, _userId: string, _username: string, emoji: EmojiReaction): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.setReaction(cardId, emoji);
+        } catch (err) {
+            const message = messageOf(err, 'Error adding reaction');
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
 
-    // Crear tarjeta con actualización optimista
-    const createCardOptimized = useCallback(async (cardInput: CreateCardInput): Promise<string> => {
-        if (!OptimisticUpdatesManager.canUseOptimisticUpdates()) {
-            // Fallback a creación normal si no es seguro usar optimismo
+    const removeReactionFn = useCallback(async (cardId: string): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.removeReaction(cardId);
+        } catch (err) {
+            const message = messageOf(err, 'Error removing reaction');
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
+
+    const reorderCardsFn = useCallback(
+        async (updates: Array<{ cardId: string; order: number; column?: string }>): Promise<void> => {
+            if (!retrospectiveId) return;
             try {
                 setError(null);
-                const newCardId = await createCard(cardInput);
-                FirebaseMetricsService.recordWrite('card-create', 1);
-                localOperationsCount.current++;
-                updateLocalMetrics();
-                return newCardId;
+                await backendRetrospectiveClient.reorderCards(retrospectiveId, updates);
             } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Error creating card';
-                setError(errorMessage);
-                FirebaseMetricsService.recordError('card-create', err as Error);
-                updateLocalMetrics();
-                throw new Error(errorMessage);
+                const message = messageOf(err, 'Error reordering cards');
+                setError(message);
+                throw new Error(message);
             }
-        }
+        },
+        [retrospectiveId],
+    );
 
-        // Usar actualización optimista
-        return OptimisticUpdatesManager.createWithOptimism(
-            cards,
-            setCards,
-            async () => {
-                const newCardId = await createCard(cardInput);
-                FirebaseMetricsService.recordWrite('card-create-optimistic', 1);
-                localOperationsCount.current++;
-                return newCardId;
-            },
-            {
-                ...cardInput,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                votes: 0,
-                likes: [],
-                reactions: [],
-                order: Date.now()
-            } as Omit<Card, 'id'>
-        ).catch((err: Error) => {
-            const errorMessage = err instanceof Error ? err.message : 'Error creating card';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-create-optimistic', err);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }).finally(() => {
-            updateLocalMetrics();
-        });
-    }, [cards, updateLocalMetrics]);
+    const getGroupedReactions = useCallback(
+        (cardId: string): GroupedReaction[] => {
+            const card = cards.find((c) => c.id === cardId);
+            if (!card?.reactions) return [];
+            return groupReactions(card.reactions);
+        },
+        [cards],
+    );
 
-    // Actualizar tarjeta con optimismo
-    const updateCardOptimized = useCallback(async (id: string, updates: Partial<Card>): Promise<void> => {
-        return OptimisticUpdatesManager.updateItemWithOptimism(
-            cards,
-            setCards,
-            async () => {
-                await updateCardService(id, updates);
-                FirebaseMetricsService.recordWrite('card-update-optimistic', 1);
-                localOperationsCount.current++;
-            },
-            id,
-            { ...updates, updatedAt: new Date() }
-        ).catch((err: Error) => {
-            const errorMessage = err instanceof Error ? err.message : 'Error updating card';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-update-optimistic', err);
-            throw new Error(errorMessage);
-        }).finally(() => {
-            updateLocalMetrics();
-        });
-    }, [cards, updateLocalMetrics]);
+    const getUserLiked = useCallback(
+        (cardId: string, userId: string): boolean => {
+            const card = cards.find((c) => c.id === cardId);
+            return hasUserLiked(card?.likes ?? [], userId);
+        },
+        [cards],
+    );
 
-    // Eliminar tarjeta con optimismo
-    const deleteCardOptimized = useCallback(async (id: string): Promise<void> => {
-        return OptimisticUpdatesManager.deleteWithOptimism(
-            cards,
-            setCards,
-            async () => {
-                await deleteCardService(id);
-                FirebaseMetricsService.recordWrite('card-delete-optimistic', 1);
-                localOperationsCount.current++;
-            },
-            id
-        ).catch((err: Error) => {
-            const errorMessage = err instanceof Error ? err.message : 'Error deleting card';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-delete-optimistic', err);
-            throw new Error(errorMessage);
-        }).finally(() => {
-            updateLocalMetrics();
-        });
-    }, [cards, updateLocalMetrics]);
+    const getUserReaction = useCallback(
+        (cardId: string, userId: string): EmojiReaction | null => {
+            const card = cards.find((c) => c.id === cardId);
+            return getUserReactionHelper(card?.reactions ?? [], userId);
+        },
+        [cards],
+    );
 
-    // Votar tarjeta con optimismo
-    const voteCardOptimized = useCallback(async (cardId: string, increment: boolean = true): Promise<void> => {
-        try {
-            setError(null);
-
-            // Actualización optimista local
-            setCards(prevCards =>
-                prevCards.map(card =>
-                    card.id === cardId
-                        ? { ...card, votes: Math.max(0, (card.votes ?? 0) + (increment ? 1 : -1)) }
-                        : card
-                )
-            );
-
-            await voteCardService(cardId, increment);
-            FirebaseMetricsService.recordWrite('card-vote-optimistic', 1);
-            localOperationsCount.current++;
-            updateLocalMetrics();
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error voting card';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-vote-optimistic', err as Error);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }
-    }, [updateLocalMetrics]);
-
-    // Toggle like con optimismo
-    const toggleLikeOptimized = useCallback(async (cardId: string, userId: string, username: string): Promise<void> => {
-        try {
-            setError(null);
-            await toggleLikeService(cardId, userId, username);
-            FirebaseMetricsService.recordWrite('card-like-optimistic', 1);
-            localOperationsCount.current++;
-            updateLocalMetrics();
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error toggling like';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-like-optimistic', err as Error);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }
-    }, [updateLocalMetrics]);
-
-    // Añadir reacción con optimismo
-    const addReactionOptimized = useCallback(async (cardId: string, userId: string, username: string, emoji: EmojiReaction): Promise<void> => {
-        try {
-            setError(null);
-            await addOrUpdateReaction(cardId, userId, username, emoji);
-            FirebaseMetricsService.recordWrite('card-reaction-optimistic', 1);
-            localOperationsCount.current++;
-            updateLocalMetrics();
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error adding reaction';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-reaction-optimistic', err as Error);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }
-    }, [updateLocalMetrics]);
-
-    // Remover reacción con optimismo
-    const removeReactionOptimized = useCallback(async (cardId: string, userId: string): Promise<void> => {
-        try {
-            setError(null);
-            await removeReaction(cardId, userId);
-            FirebaseMetricsService.recordWrite('card-reaction-remove-optimistic', 1);
-            localOperationsCount.current++;
-            updateLocalMetrics();
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error removing reaction';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-reaction-remove-optimistic', err as Error);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }
-    }, [updateLocalMetrics]);
-
-    // Reordenar tarjetas con optimismo
-    const reorderCardsOptimized = useCallback(async (updates: Array<{ cardId: string; order: number; column?: string }>): Promise<void> => {
-        try {
-            setError(null);
-            await batchUpdateCardOrder(updates);
-            FirebaseMetricsService.recordWrite('card-reorder-optimistic', updates.length);
-            localOperationsCount.current++;
-            updateLocalMetrics();
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Error reordering cards';
-            setError(errorMessage);
-            FirebaseMetricsService.recordError('card-reorder-optimistic', err as Error);
-            updateLocalMetrics();
-            throw new Error(errorMessage);
-        }
-    }, [updateLocalMetrics]);
-
-    // Funciones de utilidad (compatible con useCards original)
-    const getGroupedReactions = useCallback((cardId: string): GroupedReaction[] => {
-        const card = cards.find(c => c.id === cardId);
-        if (!card?.reactions) return [];
-        return groupReactions(card.reactions);
-    }, [cards]);
-
-    const getUserLiked = useCallback((cardId: string, userId: string): boolean => {
-        const card = cards.find(c => c.id === cardId);
-        return hasUserLiked(card?.likes ?? [], userId);
-    }, [cards]);
-
-    const getUserReaction = useCallback((cardId: string, userId: string): EmojiReaction | null => {
-        const card = cards.find(c => c.id === cardId);
-        return getUserReactionHelper(card?.reactions ?? [], userId);
-    }, [cards]);
-
-    // Refetch manual (manteniendo compatibilidad)
-    const refetch = useCallback(async (): Promise<void> => {
-        // En el sistema optimizado, esto se maneja automáticamente por los listeners
-        // Pero mantenemos la función para compatibilidad
-        updateLocalMetrics();
-    }, [updateLocalMetrics]);
-
-    // Group cards by column for easier rendering - dynamic grouping
-    const cardsByColumn: Record<string, Card[]> = cards.reduce((acc, card) => {
-        const columnId = card.column;
-        if (!acc[columnId]) {
-            acc[columnId] = [];
-        }
-        acc[columnId].push(card);
-        return acc;
-    }, {} as Record<string, Card[]>);
+    const cardsByColumn: Record<string, Card[]> = useMemo(
+        () =>
+            cards.reduce(
+                (acc, card) => {
+                    const columnId = card.column;
+                    if (!acc[columnId]) acc[columnId] = [];
+                    acc[columnId].push(card);
+                    return acc;
+                },
+                {} as Record<string, Card[]>,
+            ),
+        [cards],
+    );
 
     return {
         cards,
         cardsByColumn,
-        loading,
+        loading: false,
         error,
-        createCard: createCardOptimized,
-        updateCard: updateCardOptimized,
-        deleteCard: deleteCardOptimized,
-        voteCard: voteCardOptimized,
-        toggleLike: toggleLikeOptimized,
-        addReaction: addReactionOptimized,
-        removeReaction: removeReactionOptimized,
-        reorderCards: reorderCardsOptimized,
+        createCard: createCardFn,
+        updateCard: updateCardFn,
+        deleteCard: deleteCardFn,
+        voteCard: voteCardFn,
+        toggleLike: toggleLikeFn,
+        addReaction: addReactionFn,
+        removeReaction: removeReactionFn,
+        reorderCards: reorderCardsFn,
         getGroupedReactions,
         getUserLiked,
         getUserReaction,
-        refetch,
-        metrics
     };
 };

@@ -1,0 +1,594 @@
+openapi: 3.1.0
+info:
+  title: RetroRocket Backend — Retrospective Board API
+  version: 0.1.0
+  description: >
+    Same-origin backend endpoints under /api/retrospectives, /api/cards, /api/groups,
+    /api/action-items, /api/notes — session-cookie authenticated (reuses
+    014-backend-auth-foundation's rr_session cookie). Backs the retrospective board
+    screen (feature 019): board load + join, card lifecycle/interactions, card
+    organization (reorder/grouping), facilitator tools (timer, private notes,
+    convert-to-action-item), action items, and sentiment-result persistence — with
+    zero direct browser-to-Firestore access for any of these operations (FR-001,
+    FR-002). The real-time delivery channel is a separate WebSocket endpoint,
+    documented in ./realtime-protocol.md (FR-018/FR-019/FR-019a), not expressible in
+    OpenAPI.
+servers:
+  - url: /api
+    description: Same-origin path prefix
+
+tags:
+  - name: board
+  - name: cards
+  - name: groups
+  - name: action-items
+  - name: notes
+  - name: sentiment
+  - name: typing
+
+paths:
+  /retrospectives/{id}:
+    get:
+      tags: [board]
+      summary: Get the board's complete current state (FR-002, FR-004)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "200":
+          description: Full board state
+          content: { application/json: { schema: { $ref: "#/components/schemas/RetrospectiveState" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /retrospectives/{id}/join:
+    post:
+      tags: [board]
+      summary: Join the board (idempotent; auto-invoked on first visit) (FR-005)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "200":
+          description: Participant record (existing or newly created)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Participant" } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /retrospectives/{id}/cards:
+    post:
+      tags: [cards]
+      summary: Create a card (FR-007)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, column]
+              properties:
+                content: { type: string, minLength: 1 }
+                column: { type: string }
+                color: { type: string }
+                groupId: { type: string }
+      responses:
+        "201": { description: Created card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /retrospectives/{id}/cards/reorder:
+    post:
+      tags: [cards]
+      summary: Atomically reorder/move a batch of cards (FR-010)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [updates]
+              properties:
+                updates:
+                  type: array
+                  items:
+                    type: object
+                    required: [cardId, order]
+                    properties:
+                      cardId: { type: string }
+                      order: { type: number }
+                      column: { type: string }
+      responses:
+        "204": { description: Applied atomically — all updates committed or none did }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /cards/{cardId}:
+    patch:
+      tags: [cards]
+      summary: Edit a card's content/color (owner only) (FR-007, FR-020)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, properties: { content: { type: string }, color: { type: string } } } } }
+      responses:
+        "200": { description: Updated card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      tags: [cards]
+      summary: Delete a card (owner only) (FR-007, FR-020)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /cards/{cardId}/vote:
+    post:
+      tags: [cards]
+      summary: Vote on a card; atomic increment, accurate under concurrent votes (FR-008)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { increment: { type: boolean, default: true } } } } }
+      responses:
+        "200": { description: Updated card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /cards/{cardId}/like:
+    post:
+      tags: [cards]
+      summary: Toggle the caller's like on a card; atomic, no lost updates (FR-009)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      responses:
+        "200": { description: Updated card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /cards/{cardId}/reaction:
+    put:
+      tags: [cards]
+      summary: Set/change the caller's emoji reaction on a card (FR-009)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [emoji], properties: { emoji: { type: string } } } } }
+      responses:
+        "200": { description: Updated card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [cards]
+      summary: Remove the caller's emoji reaction on a card (FR-009)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      responses:
+        "200": { description: Updated card, content: { application/json: { schema: { $ref: "#/components/schemas/Card" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /cards/{cardId}/convert-to-action-item:
+    post:
+      tags: [action-items]
+      summary: Convert a card into an action item (facilitator only) (FR-014)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { assignedTo: { type: string }, assignedToName: { type: string }, dueDate: { type: string, format: date-time } }
+      responses:
+        "201": { description: Created action item, content: { application/json: { schema: { $ref: "#/components/schemas/ActionItem" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /cards/{cardId}/sentiment:
+    put:
+      tags: [sentiment]
+      summary: Save a computed sentiment result for a card (FR-016)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/SentimentResultInput" } } }
+      responses:
+        "200": { description: Saved result, content: { application/json: { schema: { $ref: "#/components/schemas/SentimentResult" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /cards/{cardId}/sentiment/override:
+    put:
+      tags: [sentiment]
+      summary: Facilitator manual override of a card's sentiment (FR-016, FR-020)
+      parameters: [{ $ref: "#/components/parameters/CardId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [sentiment], properties: { sentiment: { $ref: "#/components/schemas/SentimentType" } } }
+      responses:
+        "200": { description: Saved override, content: { application/json: { schema: { $ref: "#/components/schemas/SentimentResult" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/groups:
+    post:
+      tags: [groups]
+      summary: Create a card group (FR-011)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [headCardId, memberCardIds]
+              properties: { headCardId: { type: string }, memberCardIds: { type: array, items: { type: string } }, title: { type: string } }
+      responses:
+        "201": { description: Created group, content: { application/json: { schema: { $ref: "#/components/schemas/CardGroup" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /groups/{groupId}:
+    patch:
+      tags: [groups]
+      summary: Update a group's collapse-display state (FR-011)
+      parameters: [{ $ref: "#/components/parameters/GroupId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [isCollapsed], properties: { isCollapsed: { type: boolean } } } } }
+      responses:
+        "200": { description: Updated group, content: { application/json: { schema: { $ref: "#/components/schemas/CardGroup" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [groups]
+      summary: Disband a group (FR-011)
+      parameters: [{ $ref: "#/components/parameters/GroupId" }]
+      responses:
+        "204": { description: Disbanded }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /groups/{groupId}/cards:
+    post:
+      tags: [groups]
+      summary: Add a card to a group (FR-011)
+      parameters: [{ $ref: "#/components/parameters/GroupId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [cardId], properties: { cardId: { type: string } } } } }
+      responses:
+        "200": { description: Updated group, content: { application/json: { schema: { $ref: "#/components/schemas/CardGroup" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /groups/{groupId}/cards/{cardId}:
+    delete:
+      tags: [groups]
+      summary: Remove a card from a group (promotes a new head if needed, or disbands if empty) (FR-011)
+      parameters:
+        - { $ref: "#/components/parameters/GroupId" }
+        - { $ref: "#/components/parameters/CardId" }
+      responses:
+        "200": { description: Updated group, or 204 if the group was disbanded, content: { application/json: { schema: { $ref: "#/components/schemas/CardGroup" } } } }
+        "204": { description: Group disbanded (no members left) }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /retrospectives/{id}/column-grouping:
+    patch:
+      tags: [groups]
+      summary: Save per-column group-display preference (FR-011)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ColumnGroupingStates" } } }
+      responses:
+        "204": { description: Saved }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /retrospectives/{id}/timer:
+    put:
+      tags: [board]
+      summary: Create or reconfigure the shared countdown timer (facilitator only) (FR-012)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [duration], properties: { duration: { type: number, description: seconds } } } } }
+      responses:
+        "200": { description: Timer state, content: { application/json: { schema: { $ref: "#/components/schemas/CountdownTimer" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      tags: [board]
+      summary: Delete the timer (facilitator only) (FR-012)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/timer/start:
+    post:
+      tags: [board]
+      summary: Start the timer (facilitator only) (FR-012)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "200": { description: Timer state, content: { application/json: { schema: { $ref: "#/components/schemas/CountdownTimer" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/timer/pause:
+    post:
+      tags: [board]
+      summary: Pause the timer (facilitator only) (FR-012)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "200": { description: Timer state, content: { application/json: { schema: { $ref: "#/components/schemas/CountdownTimer" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/timer/reset:
+    post:
+      tags: [board]
+      summary: Reset the timer to its original duration (facilitator only) (FR-012)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      responses:
+        "200": { description: Timer state, content: { application/json: { schema: { $ref: "#/components/schemas/CountdownTimer" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/notes:
+    post:
+      tags: [notes]
+      summary: Create a private facilitator note (FR-013)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [content], properties: { content: { type: string } } } } }
+      responses:
+        "201": { description: Created note, content: { application/json: { schema: { $ref: "#/components/schemas/FacilitatorNote" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /notes/{noteId}:
+    patch:
+      tags: [notes]
+      summary: Edit a private facilitator note (author only) (FR-013, FR-020)
+      parameters: [{ $ref: "#/components/parameters/NoteId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [content], properties: { content: { type: string } } } } }
+      responses:
+        "200": { description: Updated note, content: { application/json: { schema: { $ref: "#/components/schemas/FacilitatorNote" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      tags: [notes]
+      summary: Delete a private facilitator note (author only) (FR-013, FR-020)
+      parameters: [{ $ref: "#/components/parameters/NoteId" }]
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /retrospectives/{id}/action-items:
+    post:
+      tags: [action-items]
+      summary: Create an action item directly (FR-015)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+                assignedTo: { type: string }
+                assignedToName: { type: string }
+                dueDate: { type: string, format: date-time }
+      responses:
+        "201": { description: Created action item, content: { application/json: { schema: { $ref: "#/components/schemas/ActionItem" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /action-items/{actionItemId}:
+    patch:
+      tags: [action-items]
+      summary: Edit an action item (FR-015)
+      parameters: [{ $ref: "#/components/parameters/ActionItemId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string }
+                assignedTo: { type: string }
+                assignedToName: { type: string }
+                dueDate: { type: string, format: date-time }
+      responses:
+        "200": { description: Updated action item, content: { application/json: { schema: { $ref: "#/components/schemas/ActionItem" } } } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [action-items]
+      summary: Delete an action item (FR-015)
+      parameters: [{ $ref: "#/components/parameters/ActionItemId" }]
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /retrospectives/{id}/typing:
+    post:
+      tags: [typing]
+      summary: Record the caller's typing-status signal for a column (FR-017)
+      parameters: [{ $ref: "#/components/parameters/RetroId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [column, isActive]
+              properties: { column: { type: string }, isActive: { type: boolean } }
+      responses:
+        "204": { description: Recorded }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+components:
+  parameters:
+    RetroId: { name: id, in: path, required: true, schema: { type: string } }
+    CardId: { name: cardId, in: path, required: true, schema: { type: string } }
+    GroupId: { name: groupId, in: path, required: true, schema: { type: string } }
+    NoteId: { name: noteId, in: path, required: true, schema: { type: string } }
+    ActionItemId: { name: actionItemId, in: path, required: true, schema: { type: string } }
+
+  responses:
+    Unauthorized: { description: No valid session, content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } } }
+    Forbidden: { description: Caller is not authorized for this operation (e.g. not the card owner or facilitator), content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } } }
+    NotFound: { description: Board not found, content: { application/json: { schema: { $ref: "#/components/schemas/ApiError" } } } }
+
+  schemas:
+    ApiError:
+      type: object
+      properties:
+        error: { type: object, properties: { code: { type: string }, message: { type: string } } }
+        correlationId: { type: string }
+
+    SentimentType: { type: string, enum: [positive, negative, neutral] }
+
+    Card:
+      type: object
+      required: [id, content, column, createdBy, createdAt, updatedAt, retrospectiveId, votes, likes, reactions, order]
+      properties:
+        id: { type: string }
+        content: { type: string }
+        column: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        retrospectiveId: { type: string }
+        color: { type: string }
+        votes: { type: number }
+        likes: { type: array, items: { type: object, properties: { userId: { type: string }, username: { type: string }, timestamp: { type: string, format: date-time } } } }
+        reactions: { type: array, items: { type: object, properties: { userId: { type: string }, username: { type: string }, emoji: { type: string }, timestamp: { type: string, format: date-time } } } }
+        order: { type: number }
+        groupId: { type: string }
+        isGroupHead: { type: boolean }
+        groupOrder: { type: number }
+
+    CardGroup:
+      type: object
+      required: [id, retrospectiveId, column, headCardId, memberCardIds, isCollapsed, createdAt, createdBy, order]
+      properties:
+        id: { type: string }
+        retrospectiveId: { type: string }
+        column: { type: string }
+        headCardId: { type: string }
+        memberCardIds: { type: array, items: { type: string } }
+        title: { type: string }
+        isCollapsed: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        createdBy: { type: string }
+        order: { type: number }
+
+    ColumnGroupingStates:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          criteria: { type: string, enum: [none, user, suggestions] }
+          activeGroups: { type: array, items: { type: string } }
+
+    ActionItem:
+      type: object
+      required: [id, content, retrospectiveId, createdBy, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        content: { type: string }
+        retrospectiveId: { type: string }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        assignedTo: { type: [string, "null"] }
+        assignedToName: { type: [string, "null"] }
+        dueDate: { type: [string, "null"], format: date-time }
+        order: { type: number }
+
+    CountdownTimer:
+      type: object
+      required: [retrospectiveId, duration, originalDuration, isRunning, isPaused, createdBy]
+      properties:
+        retrospectiveId: { type: string }
+        startTime: { type: [string, "null"], format: date-time }
+        duration: { type: number, description: seconds }
+        originalDuration: { type: number, description: seconds }
+        isRunning: { type: boolean }
+        isPaused: { type: boolean }
+        endTime: { type: [string, "null"], format: date-time }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    FacilitatorNote:
+      type: object
+      required: [id, content, timestamp, retrospectiveId, facilitatorId]
+      properties:
+        id: { type: string }
+        content: { type: string }
+        timestamp: { type: string, format: date-time }
+        retrospectiveId: { type: string }
+        facilitatorId: { type: string }
+
+    SentimentResultInput:
+      type: object
+      required: [sentiment, confidence, contentHash]
+      properties:
+        sentiment: { $ref: "#/components/schemas/SentimentType" }
+        confidence: { type: number }
+        modelId: { type: string }
+        modelVersion: { type: string }
+        contentHash: { type: string }
+
+    SentimentResult:
+      allOf:
+        - $ref: "#/components/schemas/SentimentResultInput"
+        - type: object
+          properties:
+            cardId: { type: string }
+            retrospectiveId: { type: string }
+            isOverride: { type: boolean }
+            overrideBy: { type: [string, "null"] }
+            analyzedAt: { type: string, format: date-time }
+
+    Participant:
+      type: object
+      required: [id, name, userId, retrospectiveId, joinedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        userId: { type: string }
+        retrospectiveId: { type: string }
+        joinedAt: { type: string, format: date-time }
+        photoURL: { type: [string, "null"] }
+
+    Column:
+      type: object
+      required: [id, i18nKey, type, order, defaultColor]
+      properties:
+        id: { type: string }
+        i18nKey: { type: string }
+        type: { type: string, enum: [regular, action] }
+        order: { type: number }
+        defaultColor: { type: string }
+
+    RetrospectiveState:
+      type: object
+      required: [id, title, createdBy, isActive, columns, cards, groups, actionItems, participants]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        templateId: { type: string }
+        createdBy: { type: string }
+        isFacilitator: { type: boolean, description: "true if the requesting session's uid === createdBy" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        participantCount: { type: number }
+        isActive: { type: boolean }
+        columnGroupingStates: { $ref: "#/components/schemas/ColumnGroupingStates" }
+        columns: { type: array, items: { $ref: "#/components/schemas/Column" } }
+        cards: { type: array, items: { $ref: "#/components/schemas/Card" } }
+        groups: { type: array, items: { $ref: "#/components/schemas/CardGroup" } }
+        actionItems: { type: array, items: { $ref: "#/components/schemas/ActionItem" } }
+        participants: { type: array, items: { $ref: "#/components/schemas/Participant" } }
+        timer: { oneOf: [{ $ref: "#/components/schemas/CountdownTimer" }, { type: "null" }] }
+        myFacilitatorNotes: { type: array, items: { $ref: "#/components/schemas/FacilitatorNote" }, description: "Only populated when the caller is the facilitator; empty otherwise" }
+        sentimentResults: { type: array, items: { $ref: "#/components/schemas/SentimentResult" } }

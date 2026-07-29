@@ -21,7 +21,6 @@ import { ActionItem } from '@/features/boards/types/actionItem';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ExportFormat } from '@/features/boards/types/export';
 import { useUnifiedExport } from '@/features/boards/export/hooks/useUnifiedExport';
-import { useFacilitatorNotes } from '@/features/boards/facilitator/hooks/useFacilitatorNotes';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useExportOptions } from '@/features/boards/export/hooks/useExportOptions';
 import Button from '@/lib/components/ui/Button';
@@ -48,7 +47,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
     cards,
     groups,
     participants,
-    facilitatorNotes: propFacilitatorNotes,
+    facilitatorNotes = [],
     actionItems = [],
     isOpen,
     onClose,
@@ -57,7 +56,6 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
 }) => {
     const { isExporting, progress, error, success, exportRetrospective } = useUnifiedExport();
     const { user } = useAuth();
-    const { notes: facilitatorNotes } = useFacilitatorNotes(retrospective.id, user?.uid || '');
     const { t } = useLanguage();
 
     // Lock body scroll while improved popover is open

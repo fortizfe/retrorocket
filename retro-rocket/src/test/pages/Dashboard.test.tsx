@@ -54,13 +54,6 @@ vi.mock('@/features/dashboard/services/backendBoardsClient', () => ({
     deleteBoard: vi.fn(),
 }));
 
-const mockCreateRetrospective = vi.fn(() => Promise.resolve({ id: 'new-board-id' }));
-vi.mock('@/features/boards/retrospective/hooks/useRetrospective', () => ({
-    useRetrospective: () => ({
-        createRetrospective: mockCreateRetrospective,
-    }),
-}));
-
 // Mock components
 vi.mock('@/features/auth/components/AuthWrapper', () => ({
     default: ({ children }: any) => <div data-testid="auth-wrapper">{children}</div>,

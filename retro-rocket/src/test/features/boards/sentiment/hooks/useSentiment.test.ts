@@ -11,9 +11,9 @@ let handlers: Handlers;
 const postBatch = vi.fn();
 const postAnalyze = vi.fn();
 const terminate = vi.fn();
-// Model load is slow in reality (weights download) — far slower than the Firestore
-// read of persisted results — so the worker does NOT become ready synchronously.
-// Tests drive `ready` explicitly, after persisted results have loaded.
+// Model load is slow in reality (weights download) — far slower than the persisted-
+// results merge — so the worker does NOT become ready synchronously. Tests drive
+// `ready` explicitly, after persisted results have been passed in.
 const initialize = vi.fn(() => { handlers.onState({ loading: true, ready: false, error: undefined }); });
 function becomeReady() { act(() => handlers.onState({ ready: true, loading: false, error: undefined })); }
 
@@ -30,18 +30,15 @@ vi.mock('@/features/boards/sentiment/hooks/useWorkerManager', () => ({
     }),
 }));
 
-// ── Service mock (load/save persisted results) ───────────────────────────────
-const loadResults = vi.fn(() => Promise.resolve(new Map()));
-vi.mock('@/features/boards/sentiment/services/sentimentResultsService', () => ({
-    SentimentResultsService: {
-        loadResults: (...a: unknown[]) => loadResults(...a),
-        saveResultWithHash: vi.fn(() => Promise.resolve()),
-        saveOverride: vi.fn(() => Promise.resolve()),
-    },
+// ── Backend client mock (persist path only — reads now come in as a prop) ────
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+    saveSentimentResult: vi.fn(() => Promise.resolve()),
+    saveSentimentOverride: vi.fn(() => Promise.resolve()),
 }));
 
 import { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';
 import { DEFAULT_SENTIMENT_CONFIG, MODEL_VERSION, SENTIMENT_MODELS, type SentimentResult } from '@/features/boards/types/sentiment';
+import type { SentimentResult as BackendSentimentResult } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
 import { normalizeForInference } from '@/features/boards/sentiment/domain/textNormalization';
 import { detectLanguage } from '@/features/boards/sentiment/domain/languageDetection';
@@ -59,10 +56,20 @@ function routedModelId(content: string): string {
     return routeModel(detectLanguage(clean), ACTIVE_CONFIGS);
 }
 
-function freshPersisted(cardId: string, content: string, sentiment: SentimentResult['sentiment'] = 'positive'): SentimentResult {
+/** Board-state-shaped (feature 019, US7) persisted result — passed as useSentiment's
+ * 3rd arg, replacing the old mocked sentimentResultsService.loadResults(). */
+function freshPersisted(cardId: string, content: string, sentiment: SentimentResult['sentiment'] = 'positive'): BackendSentimentResult {
     return {
-        cardId, sentiment, confidence: 0.9, timestamp: new Date(),
-        contentHash: hashContent(content), modelId: routedModelId(content), modelVersion: MODEL_VERSION,
+        retrospectiveId: 'retro-1',
+        cardId,
+        sentiment,
+        confidence: 0.9,
+        contentHash: hashContent(content),
+        modelId: routedModelId(content),
+        modelVersion: MODEL_VERSION,
+        isOverride: false,
+        overrideBy: null,
+        analyzedAt: new Date(),
     };
 }
 
@@ -71,8 +78,6 @@ beforeEach(() => {
     postAnalyze.mockClear();
     terminate.mockClear();
     initialize.mockClear();
-    loadResults.mockReset();
-    loadResults.mockResolvedValue(new Map());
     vi.useFakeTimers();
 });
 afterEach(() => { vi.useRealTimers(); });
@@ -83,13 +88,13 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
             makeCard({ id: 'c1', content: 'went really well', column: 'went_well' }),
             makeCard({ id: 'c2', content: 'a real blocker', column: 'not_went_well' }),
         ];
-        loadResults.mockResolvedValue(new Map([
-            ['c1', freshPersisted('c1', 'went really well')],
-            ['c2', freshPersisted('c2', 'a real blocker', 'negative')],
-        ]));
+        const persisted = [
+            freshPersisted('c1', 'went really well'),
+            freshPersisted('c2', 'a real blocker', 'negative'),
+        ];
 
-        renderHook(() => useSentiment(cards, 'retro-1'));
-        await act(async () => { await vi.advanceTimersByTimeAsync(0); }); // flush persisted-results load
+        renderHook(() => useSentiment(cards, 'retro-1', persisted));
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); }); // flush persisted-results merge
         becomeReady();
         await act(async () => { await vi.advanceTimersByTimeAsync(300); });
 
@@ -113,12 +118,12 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
             makeCard({ id: 'c1', content: 'first text', column: 'went_well' }),
             makeCard({ id: 'c2', content: 'second text', column: 'went_well' }),
         ];
-        loadResults.mockResolvedValue(new Map([
-            ['c1', freshPersisted('c1', 'first text')],
-            ['c2', freshPersisted('c2', 'second text')],
-        ]));
+        const persisted = [
+            freshPersisted('c1', 'first text'),
+            freshPersisted('c2', 'second text'),
+        ];
 
-        const { rerender } = renderHook(({ cs }) => useSentiment(cs, 'retro-1'), { initialProps: { cs: cards } });
+        const { rerender } = renderHook(({ cs }) => useSentiment(cs, 'retro-1', persisted), { initialProps: { cs: cards } });
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
         becomeReady();
         await act(async () => { await vi.advanceTimersByTimeAsync(300); });
@@ -136,8 +141,8 @@ describe('useSentiment — reuse on reload (SC-002)', () => {
 describe('useSentiment — resilience (FR-013)', () => {
     it('surfaces a non-silent error state on worker/model-load failure without losing results', async () => {
         const cards = [makeCard({ id: 'c1', content: 'went really well', column: 'went_well' })];
-        loadResults.mockResolvedValue(new Map([['c1', freshPersisted('c1', 'went really well')]]));
-        const { result } = renderHook(() => useSentiment(cards, 'retro-1'));
+        const persisted = [freshPersisted('c1', 'went really well')];
+        const { result } = renderHook(() => useSentiment(cards, 'retro-1', persisted));
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
 
         act(() => { handlers.onState({ ready: false, loading: false, error: 'model load failed' }); });
@@ -151,8 +156,8 @@ describe('useSentiment — resilience (FR-013)', () => {
 describe('useSentiment — disable clears everything (FR-014)', () => {
     it('setEnabled(false) clears results and terminates the worker', async () => {
         const cards = [makeCard({ id: 'c1', content: 'went really well', column: 'went_well' })];
-        loadResults.mockResolvedValue(new Map([['c1', freshPersisted('c1', 'went really well')]]));
-        const { result } = renderHook(() => useSentiment(cards, 'retro-1'));
+        const persisted = [freshPersisted('c1', 'went really well')];
+        const { result } = renderHook(() => useSentiment(cards, 'retro-1', persisted));
         await act(async () => { await vi.advanceTimersByTimeAsync(0); });
         expect(result.current.getSentiment('c1')).toBeDefined();
 
