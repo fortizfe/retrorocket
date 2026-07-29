@@ -817,7 +817,11 @@
     "back": "Back",
     "exit": "Exit",
     "connectedAs": "Connected as:",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "boardDeleted": {
+      "title": "This board no longer exists",
+      "message": "The retrospective board you were viewing has been deleted."
+    }
   },
   "sentiment": {
     "positive": "Positive",

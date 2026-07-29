@@ -17,12 +17,16 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import ActionColumnToggle from '@/features/boards/retrospective/components/ActionColumnToggle';
 import SettingsRow from '@/lib/components/ui/SettingsRow';
 import uiPreferencesStore from '@/lib/uiPreferencesStore';
+import type { CountdownTimer as CountdownTimerData } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 interface ControlsTabProps {
     retrospectiveId?: string;
+    /** Sourced from useRetrospectiveRealtimeSync's board state via BoardDataContext
+     * (feature 019, US5). */
+    timer: CountdownTimerData | null;
 }
 
-const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
+const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveTimer }) => {
     const { t } = useLanguage();
 
     // Action column toggle state
@@ -36,7 +40,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
     };
 
     // Timer logic - call hook unconditionally to respect hooks rules
-    const countdown = useCountdown(retrospectiveId || '');
+    const countdown = useCountdown(retrospectiveId || '', liveTimer);
     const {
         timer,
         countdownState,
@@ -63,7 +67,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId }) => {
 
         setIsCreating(true);
         try {
-            await createTimer(totalSeconds, 'facilitator');
+            await createTimer(totalSeconds);
             setInputs({ minutes: 0, seconds: 0 });
         } finally {
             setIsCreating(false);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useTypingStatus } from '@/features/boards/retrospective/hooks/useTypingStatus';
 import { TypingIndicator } from '@/features/boards/types/typing';
+import type { TypingStatusEntry } from '@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync';
 
 interface TypingContextType {
     typingIndicators: TypingIndicator[];
@@ -16,6 +17,8 @@ interface TypingProviderProps {
     retrospectiveId: string;
     currentUserId?: string;
     currentUsername?: string;
+    /** Sourced from useRetrospectiveRealtimeSync's live state (feature 019, US3). */
+    typingStatuses: TypingStatusEntry[];
 }
 
 /**
@@ -25,12 +28,14 @@ export const TypingProvider: React.FC<TypingProviderProps> = ({
     children,
     retrospectiveId,
     currentUserId,
-    currentUsername
+    currentUsername,
+    typingStatuses
 }) => {
     const typingStatus = useTypingStatus({
         retrospectiveId,
         currentUserId,
-        currentUsername
+        currentUsername,
+        typingStatuses
     });
 
     return (

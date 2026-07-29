@@ -829,7 +829,11 @@
     "back": "Volver",
     "exit": "Salir",
     "connectedAs": "Conectado como:",
-    "backToDashboard": "Volver al Dashboard"
+    "backToDashboard": "Volver al Dashboard",
+    "boardDeleted": {
+      "title": "Este tablero ya no existe",
+      "message": "El tablero de retrospectiva que estabas viendo ha sido eliminado."
+    }
   },
   "sentiment": {
     "positive": "Positivo",

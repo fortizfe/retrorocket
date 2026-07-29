@@ -24,7 +24,7 @@ interface SelectableCardProps {
     // Props para elementos de acción
     participants?: Participant[];
     canConvertToAction?: boolean;
-    onConvertToAction?: (cardContent: string, assignedTo?: string, assignedToName?: string) => void;
+    onConvertToAction?: (cardId: string, assignedTo?: string, assignedToName?: string) => void;
 }
 
 const SelectableCard: React.FC<SelectableCardProps> = ({

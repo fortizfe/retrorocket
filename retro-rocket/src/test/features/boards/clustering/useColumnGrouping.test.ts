@@ -1,23 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
-import {
-    saveColumnGroupingState,
-    loadColumnGroupingState
-} from '@/features/boards/clustering/services/columnGroupingService';
 import { Card } from '@/features/boards/types/card';
-import { GroupingCriteria, DEFAULT_GROUPING_STATE } from '@/features/boards/types/columnGrouping';
+import { GroupingCriteria, DEFAULT_GROUPING_STATE, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 
-// Mock the column grouping service
-vi.mock('@/features/boards/clustering/services/columnGroupingService', () => ({
-    saveColumnGroupingState: vi.fn(),
-    loadColumnGroupingState: vi.fn()
+const mockSaveColumnGroupingState = vi.fn();
+
+// The initial/live state is now an INPUT (sourced from useRetrospectiveRealtimeSync's
+// board.columnGroupingStates, feature 019 US4) — this hook no longer loads it itself
+// on mount; only the write path (saveColumnGroupingState) is mocked here.
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+    saveColumnGroupingState: (...args: unknown[]) => mockSaveColumnGroupingState(...args),
 }));
-
-const mockedColumnGroupingService = {
-    saveColumnGroupingState: vi.mocked(saveColumnGroupingState),
-    loadColumnGroupingState: vi.mocked(loadColumnGroupingState)
-};
 
 describe('useColumnGrouping', () => {
     const mockCards: Card[] = [
@@ -61,77 +55,51 @@ describe('useColumnGrouping', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockedColumnGroupingService.loadColumnGroupingState.mockResolvedValue({});
-        mockedColumnGroupingService.saveColumnGroupingState.mockResolvedValue();
+        mockSaveColumnGroupingState.mockResolvedValue(undefined);
     });
 
     describe('Basic functionality', () => {
         it('should initialize without retrospective ID', () => {
             const { result } = renderHook(() => useColumnGrouping());
-
             expect(result.current.getColumnState('helped')).toEqual(DEFAULT_GROUPING_STATE);
-            expect(mockedColumnGroupingService.loadColumnGroupingState).not.toHaveBeenCalled();
         });
 
-        it('should load state from service when retrospective ID is provided', async () => {
-            const mockLoadedStates = {
+        it('adopts the initialState prop immediately (no async load)', () => {
+            const initialState: ColumnGroupingStatesStore = {
                 helped: { criteria: 'user' as GroupingCriteria, activeGroups: ['group-1'] },
                 hindered: { criteria: 'none' as GroupingCriteria, activeGroups: [] }
             };
 
-            mockedColumnGroupingService.loadColumnGroupingState.mockResolvedValue(mockLoadedStates);
+            const { result } = renderHook(() => useColumnGrouping('retro-1', initialState));
 
-            const { result } = renderHook(() => useColumnGrouping('retro-1'));
-
-            // Wait for the loading to complete
-            await vi.waitFor(() => {
-                expect(result.current.getColumnState('helped')).toEqual(mockLoadedStates.helped);
-            });
-
-            expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalledWith('retro-1');
-            expect(result.current.getColumnState('hindered')).toEqual(mockLoadedStates.hindered);
+            expect(result.current.getColumnState('helped')).toEqual(initialState.helped);
+            expect(result.current.getColumnState('hindered')).toEqual(initialState.hindered);
         });
 
-        it('should handle loading errors gracefully', async () => {
-            mockedColumnGroupingService.loadColumnGroupingState.mockRejectedValue(new Error('Load failed'));
-
-            const { result } = renderHook(() => useColumnGrouping('retro-1'));
-
-            await vi.waitFor(() => {
-                expect(result.current.getColumnState('helped')).toEqual(DEFAULT_GROUPING_STATE);
+        it('re-syncs local state when the initialState prop changes (a live update arrived)', () => {
+            const { result, rerender } = renderHook(({ initialState }) => useColumnGrouping('retro-1', initialState), {
+                initialProps: { initialState: undefined as ColumnGroupingStatesStore | undefined },
             });
 
-            expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalledWith('retro-1');
-        });
+            expect(result.current.getColumnState('helped')).toEqual(DEFAULT_GROUPING_STATE);
 
-        it('should not load state multiple times', async () => {
-            const { rerender } = renderHook(() => useColumnGrouping('retro-1'));
+            const updated: ColumnGroupingStatesStore = { helped: { criteria: 'user', activeGroups: [] } };
+            rerender({ initialState: updated });
 
-            await vi.waitFor(() => {
-                expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalledTimes(1);
-            });
-
-            // Rerender should not trigger another load
-            rerender();
-            expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalledTimes(1);
+            expect(result.current.getColumnState('helped')).toEqual(updated.helped);
         });
     });
 
     describe('Grouping criteria management', () => {
-        it('should set grouping criteria and save to service', async () => {
+        it('should set grouping criteria and save via the backend client', async () => {
             const { result } = renderHook(() => useColumnGrouping('retro-1'));
-
-            // Wait for initial loading to complete
-            await vi.waitFor(() => {
-                expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalled();
-            });
 
             await act(async () => {
                 result.current.setGroupingCriteria('helped', 'none');
             });
 
             expect(result.current.getColumnState('helped').criteria).toBe('none');
-            expect(mockedColumnGroupingService.saveColumnGroupingState).toHaveBeenCalledWith(
+            expect(mockSaveColumnGroupingState).toHaveBeenCalledWith(
                 'retro-1',
                 expect.objectContaining({
                     helped: expect.objectContaining({ criteria: 'none' })
@@ -139,7 +107,7 @@ describe('useColumnGrouping', () => {
             );
         });
 
-        it('should not save to service without retrospective ID', () => {
+        it('should not save to the backend without retrospective ID', () => {
             const { result } = renderHook(() => useColumnGrouping());
 
             act(() => {
@@ -147,18 +115,13 @@ describe('useColumnGrouping', () => {
             });
 
             expect(result.current.getColumnState('helped').criteria).toBe('none');
-            expect(mockedColumnGroupingService.saveColumnGroupingState).not.toHaveBeenCalled();
+            expect(mockSaveColumnGroupingState).not.toHaveBeenCalled();
         });
 
         it('should handle save errors gracefully', async () => {
-            mockedColumnGroupingService.saveColumnGroupingState.mockRejectedValue(new Error('Save failed'));
+            mockSaveColumnGroupingState.mockRejectedValue(new Error('Save failed'));
 
             const { result } = renderHook(() => useColumnGrouping('retro-1'));
-
-            // Wait for initial loading to complete
-            await vi.waitFor(() => {
-                expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalled();
-            });
 
             await act(async () => {
                 result.current.setGroupingCriteria('helped', 'none');
@@ -378,11 +341,6 @@ describe('useColumnGrouping', () => {
         it('should handle multiple columns independently', async () => {
             const { result } = renderHook(() => useColumnGrouping('retro-1'));
 
-            // Wait for initial loading to complete
-            await vi.waitFor(() => {
-                expect(mockedColumnGroupingService.loadColumnGroupingState).toHaveBeenCalled();
-            });
-
             await act(async () => {
                 result.current.setGroupingCriteria('helped', 'none');
             });
@@ -394,7 +352,7 @@ describe('useColumnGrouping', () => {
             expect(result.current.getColumnState('helped').criteria).toBe('none');
             expect(result.current.getColumnState('hindered').criteria).toBe('user');
 
-            expect(mockedColumnGroupingService.saveColumnGroupingState).toHaveBeenCalledTimes(2);
+            expect(mockSaveColumnGroupingState).toHaveBeenCalledTimes(2);
         });
 
         it('should preserve state across criteria changes', () => {
@@ -418,33 +376,28 @@ describe('useColumnGrouping', () => {
             expect(stateAfterNone.activeGroups).toEqual(stateAfterUser.activeGroups);
         });
 
-        it('should handle complex workflow with loaded state', async () => {
-            const mockLoadedStates = {
+        it('should handle complex workflow with an initially-loaded state', () => {
+            const initialState: ColumnGroupingStatesStore = {
                 helped: { criteria: 'user' as GroupingCriteria, activeGroups: ['group-1'] }
             };
 
-            mockedColumnGroupingService.loadColumnGroupingState.mockResolvedValue(mockLoadedStates);
+            const { result } = renderHook(() => useColumnGrouping('retro-1', initialState));
 
-            const { result } = renderHook(() => useColumnGrouping('retro-1'));
-
-            // Wait for loading
-            await vi.waitFor(() => {
-                expect(result.current.getColumnState('helped')).toEqual(mockLoadedStates.helped);
-            });
+            expect(result.current.getColumnState('helped')).toEqual(initialState.helped);
 
             // Change to suggestions (stores loaded state as previous)
-            await act(async () => {
+            act(() => {
                 result.current.setGroupingCriteria('helped', 'suggestions');
             });
 
             expect(result.current.getColumnState('helped').criteria).toBe('suggestions');
 
-            // Restore should go back to loaded state
+            // Restore should go back to the initially-loaded state
             act(() => {
                 result.current.restorePreviousState('helped');
             });
 
-            expect(result.current.getColumnState('helped')).toEqual(mockLoadedStates.helped);
+            expect(result.current.getColumnState('helped')).toEqual(initialState.helped);
         });
     });
 });

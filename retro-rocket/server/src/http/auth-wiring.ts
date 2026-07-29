@@ -1,6 +1,7 @@
 import { Google, GitHub } from 'arctic';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 import type { ServerConfig } from '../config/env';
 import type { LoggerPort } from '../application/ports/observability';
 import type { AuthRouterDeps } from './routes/auth';
@@ -70,6 +71,13 @@ function getFirebaseAuth(source: NodeJS.ProcessEnv): ReturnType<typeof getAuth> 
             // Emulator-backed runs auto-detect FIREBASE_AUTH_EMULATOR_HOST; a projectId is enough.
             initializeApp({ projectId: source.FIREBASE_PROJECT_ID ?? 'demo-retrorocket' });
         }
+        // Must be set once, before any other Firestore call on this instance. Every
+        // *-wiring.ts file below calls getFirestore() lazily on demand (boards/profile/
+        // retrospective), all sharing this one default app — an omitted optional field
+        // (e.g. a card's color, a group's title) would otherwise throw
+        // "Cannot use 'undefined' as a Firestore value" the first time any adapter
+        // writes one, rather than silently omitting it (feature 019).
+        getFirestore().settings({ ignoreUndefinedProperties: true });
     }
     return getAuth();
 }

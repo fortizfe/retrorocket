@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Copy, Share2, ArrowLeft } from 'lucide-react';
@@ -10,26 +10,41 @@ import ExportButtonGroup from '@/features/boards/export/components/ExportButtonG
 import { ResponsiveParticipantDisplay } from '@/features/boards/participants/components/index';
 import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/components/index';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
-import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
-import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
+import { useRetrospectiveRealtimeSync } from '@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 import { Card, CardGroup } from '@/features/boards/types/card';
+import { ActionItem } from '@/features/boards/types/actionItem';
+import { Retrospective } from '@/features/boards/types/retrospective';
 // ...existing code...
 
 const RetrospectivePageContent: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const [currentParticipantId, setCurrentParticipantId] = useState<string | null>(null);
-    const [hasJoined, setHasJoined] = useState(false);
-    const [isJoining, setIsJoining] = useState(false);
-    const joinAttemptRef = useRef(false);
 
-    const { retrospective, loading: retroLoading, error: retroError } = useRetrospective(id);
-    const { addParticipant, participants } = useParticipants(id);
-    const { uid, fullName, isReady } = useCurrentUser();
+    const { board, loading: retroLoading, error: retroError, notFound, typingStatuses } = useRetrospectiveRealtimeSync(id);
+    const { fullName, isReady } = useCurrentUser();
+
+    // Board/participant/columns state now comes from the backend-mediated
+    // useRetrospectiveRealtimeSync hook (US1) — join is performed internally by that
+    // hook (backendRetrospectiveClient.joinBoard()) on every (re)connect, so there is
+    // no separate auto-join effect, localStorage participant-id cache, or "joining"
+    // state to manage here anymore.
+    const retrospective: Retrospective | null = board
+        ? {
+              id: board.id,
+              title: board.title,
+              description: board.description,
+              templateId: board.templateId,
+              createdBy: board.createdBy,
+              createdAt: board.createdAt,
+              updatedAt: board.updatedAt,
+              participantCount: board.participantCount,
+              isActive: board.isActive,
+          }
+        : null;
+    const participants = board?.participants ?? [];
 
     // State for export data
 
@@ -44,72 +59,6 @@ const RetrospectivePageContent: React.FC = () => {
     const handleDataChange = (cards: Card[], groups: CardGroup[]) => {
         setExportCards(cards);
         setExportGroups(groups);
-    };
-
-    // Auto-join when user is ready and hasn't joined yet
-    useEffect(() => {
-        const autoJoinRetrospective = async () => {
-            if (!isReady || !id || !uid || !fullName || hasJoined || isJoining) {
-                return;
-            }
-
-            // Prevent multiple simultaneous join attempts
-            if (joinAttemptRef.current) {
-                return;
-            }
-
-            // Check if already joined (from localStorage)
-            const savedParticipantId = localStorage.getItem(`participant_${id}_${uid}`);
-            if (savedParticipantId) {
-                setCurrentParticipantId(savedParticipantId);
-                setHasJoined(true);
-                return;
-            }
-
-            // Auto-join
-            try {
-                joinAttemptRef.current = true;
-                setIsJoining(true);
-
-                const result = await addParticipant({
-                    name: fullName,
-                    userId: uid,
-                    retrospectiveId: id
-                });
-
-                // Only increment participant count if it's a new participant
-                if (result.isNew) {
-                    await OptimizedRetrospectiveService.incrementParticipantCount(id);
-                }
-
-                setCurrentParticipantId(result.id);
-                setHasJoined(true);
-                localStorage.setItem(`participant_${id}_${uid}`, result.id);
-
-                // Only show welcome message for new participants
-                if (result.isNew) {
-                    toast.success(`¡Bienvenido a la retrospectiva, ${fullName}!`);
-                } else {
-                    toast.success(`¡Bienvenido de nuevo, ${fullName}!`);
-                }
-            } catch (error) {
-                console.error('Error joining retrospective:', error);
-                toast.error('Error al unirse a la retrospectiva');
-            } finally {
-                setIsJoining(false);
-                joinAttemptRef.current = false;
-            }
-        };
-
-        autoJoinRetrospective();
-    }, [isReady, id, uid, fullName, hasJoined, isJoining]); // Removed addParticipant
-
-    // Handle leaving retrospective - simplified to just navigation
-    const handleLeaveRetrospective = async () => {
-        // Simply navigate back to dashboard
-        // Users remain part of the retrospective permanently once joined
-        toast.success('Volviendo al dashboard');
-        navigate('/dashboard');
     };
 
     // Copy retrospective ID to clipboard
@@ -129,18 +78,8 @@ const RetrospectivePageContent: React.FC = () => {
         }
     };
 
-    // Check if participant exists on component mount
-    useEffect(() => {
-        if (id && uid) {
-            const savedParticipantId = localStorage.getItem(`participant_${id}_${uid}`);
-            if (savedParticipantId) {
-                setCurrentParticipantId(savedParticipantId);
-                setHasJoined(true);
-            }
-        }
-    }, [id, uid]);
-
-    // Loading state
+    // Loading state — covers both the initial board load and the join call, since
+    // useRetrospectiveRealtimeSync performs both before resolving (FR-006).
     if (retroLoading || !isReady) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
@@ -149,7 +88,27 @@ const RetrospectivePageContent: React.FC = () => {
         );
     }
 
-    // Error state
+    // Board-deleted-mid-session state (US1 Acceptance Scenario 4) — distinct from a
+    // transient load error so the copy is accurate about what happened.
+    if (notFound) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+                <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">
+                        {t('retrospectivePage.boardDeleted.title')}
+                    </h2>
+                    <p className="text-text-secondary mb-6">
+                        {t('retrospectivePage.boardDeleted.message')}
+                    </p>
+                    <Button onClick={() => navigate('/dashboard')}>
+                        {t('retrospectivePage.backToDashboard')}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state (load failure)
     if (retroError || !retrospective) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
@@ -168,63 +127,35 @@ const RetrospectivePageContent: React.FC = () => {
         );
     }
 
-    // Joining state
-    if (isJoining) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
-                <div className="bg-surface-raised/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
-                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <h2 className="text-xl font-semibold text-text-primary mb-4">
-                        Uniéndose a la retrospectiva...
-                    </h2>
-                    <p className="text-text-secondary">
-                        Espera un momento mientras te conectamos.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
     // Main retrospective view
-    if (hasJoined) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
-                {/* Header moved to top-level Header to keep a single unified sticky bar */}
-                <div className="pt-4" />
-
-                {/* Main Content Area */}
-                <div className="container mx-auto px-2 pt-6 pb-6">
-                    {/* Main Board */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <RetrospectiveBoard
-                            retrospective={retrospective}
-                            currentUser={fullName}
-                            onDataChange={handleDataChange}
-                            participants={participants || []}
-                        />
-                    </motion.div>
-                </div>
-            </div>
-        );
-    }
-
-    // This should not happen with auto-join, but keeping as fallback
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
-            <div className="bg-surface-raised/90 backdrop-blur-md rounded-xl shadow-lg p-8 max-w-md text-center">
-                <h2 className="text-xl font-semibold text-text-primary mb-4">
-                    Error de conexión
-                </h2>
-                <p className="text-text-secondary mb-6">
-                    No se pudo conectar a la retrospectiva. Inténtalo de nuevo.
-                </p>
-                <Button onClick={() => window.location.reload()}>
-                    Reintentar
-                </Button>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950">
+            {/* Header moved to top-level Header to keep a single unified sticky bar */}
+            <div className="pt-4" />
+
+            {/* Main Content Area */}
+            <div className="container mx-auto px-2 pt-6 pb-6">
+                {/* Main Board */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                >
+                    <RetrospectiveBoard
+                        retrospective={retrospective}
+                        currentUser={fullName}
+                        onDataChange={handleDataChange}
+                        participants={participants || []}
+                        cards={(board?.cards ?? []) as unknown as Card[]}
+                        typingStatuses={typingStatuses}
+                        groups={(board?.groups ?? []) as unknown as CardGroup[]}
+                        columnGroupingStates={board?.columnGroupingStates}
+                        timer={board?.timer ?? null}
+                        myFacilitatorNotes={board?.myFacilitatorNotes ?? []}
+                        actionItems={(board?.actionItems ?? []) as unknown as ActionItem[]}
+                        sentimentResults={board?.sentimentResults ?? []}
+                    />
+                </motion.div>
             </div>
         </div>
     );

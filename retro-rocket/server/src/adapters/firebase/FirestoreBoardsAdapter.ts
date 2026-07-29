@@ -6,6 +6,17 @@ import { getTemplateColumns } from '../../domain/boards/templates';
 const RETROSPECTIVES = 'retrospectives';
 const PARTICIPANTS = 'participants';
 const COLUMNS = 'columns';
+const GROUPS = 'groups';
+const ACTION_ITEMS = 'actionItems';
+const FACILITATOR_NOTES = 'facilitatorNotes';
+const SENTIMENT_RESULTS = 'sentimentResults';
+const COUNTDOWN_TIMERS = 'countdown_timers';
+const TYPING_STATUS = 'typingStatus';
+/** Collections cascade-deleted by retrospectiveId when a board is deleted (feature
+ * 019, research.md §9 — optional cleanup, cheap now that adapters for all of them
+ * exist). `participants`/`cards` are deliberately excluded: today's deleteBoard
+ * already leaves them un-cascaded and touching that is outside this feature's scope. */
+const CASCADE_COLLECTIONS_BY_RETROSPECTIVE_ID = [GROUPS, ACTION_ITEMS, FACILITATOR_NOTES, SENTIMENT_RESULTS, TYPING_STATUS];
 
 /**
  * Exported (alongside toBoardSummary) so this pure mapping logic can be unit-tested
@@ -178,8 +189,17 @@ export class FirestoreBoardsAdapter implements BoardsPort {
         if (!snap.exists) throw new NotFoundError('Board not found');
         if (snap.data()?.createdBy !== uid) throw new ForbiddenError("Not this board's owner");
 
-        // Deletes only the top-level doc, matching today's exact behavior — no cascade
-        // to cards/groups/participants subcollections (research.md §6).
-        await docRef.delete();
+        // Cascade-deletes groups/actionItems/facilitatorNotes/sentimentResults/
+        // typingStatus (queried by retrospectiveId) plus the deterministic-id
+        // countdown_timers doc (feature 019, research.md §9) — participants/cards
+        // deliberately excluded, matching today's existing (pre-019) behavior.
+        const batch = this.db.batch();
+        for (const collectionName of CASCADE_COLLECTIONS_BY_RETROSPECTIVE_ID) {
+            const docs = await this.db.collection(collectionName).where('retrospectiveId', '==', id).get();
+            docs.forEach((doc) => batch.delete(doc.ref));
+        }
+        batch.delete(this.db.collection(COUNTDOWN_TIMERS).doc(id));
+        batch.delete(docRef);
+        await batch.commit();
     }
 }

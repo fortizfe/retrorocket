@@ -1,21 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { CardGroup, Card, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
-import {
-    createCardGroup,
-    disbandCardGroup,
-    addCardToGroup,
-    removeCardFromGroup,
-    updateGroupCollapseState,
-    subscribeToRetrospectiveGroups,
-    calculateGroupAggregations
-} from '@/features/boards/clustering/services/cardGroupService';
+import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+import { calculateGroupAggregations } from '@/features/boards/clustering/services/cardGroupService';
 import { findSimilarCardGroups, SimilarityConfig } from '@/features/boards/clustering/services/similarityService';
 
 interface UseCardGroupsProps {
     retrospectiveId: string;
     cards: Card[];
     currentUser?: string;
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4) —
+     * replaces this hook's own Firestore onSnapshot subscription for groups. */
+    groups?: CardGroup[];
 }
 
 interface UseCardGroupsReturn {
@@ -42,210 +38,152 @@ interface UseCardGroupsReturn {
     getCardsByColumn: (column: ColumnType, includeGrouped?: boolean) => Card[];
 }
 
+function messageOf(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
+}
+
 export const useCardGroups = ({
     retrospectiveId,
     cards,
-    currentUser
+    currentUser,
+    groups: inputGroups = [],
 }: UseCardGroupsProps): UseCardGroupsReturn => {
-    const [groups, setGroups] = useState<CardGroup[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Subscribe to groups
-    useEffect(() => {
-        if (!retrospectiveId) {
-            setLoading(false);
-            return;
-        }
-
-        const unsubscribe = subscribeToRetrospectiveGroups(retrospectiveId, (fetchedGroups) => {
-            // Calculate aggregations for each group
-            const groupsWithAggregations = fetchedGroups.map(group => {
-                const groupCards = cards.filter(card =>
-                    card.id === group.headCardId || group.memberCardIds.includes(card.id)
-                );
+    const groups = useMemo(
+        () =>
+            inputGroups.map((group) => {
+                const groupCards = cards.filter((card) => card.id === group.headCardId || group.memberCardIds.includes(card.id));
                 return calculateGroupAggregations(group, groupCards);
-            });
+            }),
+        [inputGroups, cards],
+    );
 
-            setGroups(groupsWithAggregations);
-            setLoading(false);
-            setError(null);
-        });
+    const groupedCards = cards.filter((card) => card.groupId);
+    const ungroupedCards = cards.filter((card) => !card.groupId);
 
-        return unsubscribe;
-    }, [retrospectiveId, cards]);
+    const createGroup = useCallback(
+        async (headCardId: string, memberCardIds: string[], customTitle?: string): Promise<string> => {
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
+            if (!headCardId) throw new Error('No headCardId provided');
+            if (!memberCardIds || memberCardIds.length === 0) throw new Error('At least one member card is required');
 
-    // Separate grouped and ungrouped cards
-    const groupedCards = cards.filter(card => card.groupId);
-    const ungroupedCards = cards.filter(card => !card.groupId);
-
-    // Group management functions
-    const createGroup = useCallback(async (
-        headCardId: string,
-        memberCardIds: string[],
-        customTitle?: string
-    ): Promise<string> => {
-        console.log('useCardGroups.createGroup called with:', {
-            headCardId,
-            memberCardIds,
-            customTitle,
-            currentUser,
-            retrospectiveId
-        });
-
-        // Check if we have required parameters
-        if (!retrospectiveId) {
-            console.error('No retrospectiveId provided');
-            throw new Error('No retrospectiveId provided');
-        }
-
-        if (!headCardId) {
-            console.error('No headCardId provided');
-            throw new Error('No headCardId provided');
-        }
-
-        if (!memberCardIds || memberCardIds.length === 0) {
-            console.error('No memberCardIds provided');
-            throw new Error('At least one member card is required');
-        }
-
-        if (!currentUser) {
-            console.error('User not authenticated, currentUser is:', currentUser);
-            throw new Error('User not authenticated');
-        }
-
-        try {
-            setError(null);
-            console.log('Calling createCardGroup service...');
-            const groupId = await createCardGroup(
-                retrospectiveId,
-                headCardId,
-                memberCardIds,
-                currentUser,
-                customTitle
-            );
-            console.log('Group created successfully with ID:', groupId);
-            return groupId;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to create group';
-            console.error('Error in createGroup:', err);
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    }, [retrospectiveId, currentUser]);
+            try {
+                setError(null);
+                const group = await backendRetrospectiveClient.createCardGroup(retrospectiveId, { headCardId, memberCardIds, title: customTitle });
+                return group.id;
+            } catch (err) {
+                const message = messageOf(err, 'Failed to create group');
+                setError(message);
+                throw new Error(message);
+            }
+        },
+        [retrospectiveId],
+    );
 
     const disbandGroup = useCallback(async (groupId: string): Promise<void> => {
         try {
             setError(null);
-            await disbandCardGroup(groupId);
+            await backendRetrospectiveClient.disbandCardGroup(groupId);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to disband group';
-            setError(errorMessage);
-            throw new Error(errorMessage);
+            const message = messageOf(err, 'Failed to disband group');
+            setError(message);
+            throw new Error(message);
         }
     }, []);
 
     const addToGroup = useCallback(async (groupId: string, cardId: string): Promise<void> => {
         try {
             setError(null);
-            await addCardToGroup(groupId, cardId);
+            await backendRetrospectiveClient.addCardToGroup(groupId, cardId);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to add card to group';
-            setError(errorMessage);
-            throw new Error(errorMessage);
+            const message = messageOf(err, 'Failed to add card to group');
+            setError(message);
+            throw new Error(message);
         }
     }, []);
 
-    const removeFromGroup = useCallback(async (cardId: string): Promise<void> => {
-        try {
-            setError(null);
-            await removeCardFromGroup(cardId);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to remove card from group';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    }, []);
+    const removeFromGroup = useCallback(
+        async (cardId: string): Promise<void> => {
+            const groupId = cards.find((c) => c.id === cardId)?.groupId;
+            if (!groupId) return;
+            try {
+                setError(null);
+                await backendRetrospectiveClient.removeCardFromGroup(groupId, cardId);
+            } catch (err) {
+                const message = messageOf(err, 'Failed to remove card from group');
+                setError(message);
+                throw new Error(message);
+            }
+        },
+        [cards],
+    );
 
-    const toggleGroupCollapse = useCallback(async (groupId: string): Promise<void> => {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return;
+    const toggleGroupCollapse = useCallback(
+        async (groupId: string): Promise<void> => {
+            const group = groups.find((g) => g.id === groupId);
+            if (!group) return;
 
-        try {
-            setError(null);
-            await updateGroupCollapseState(groupId, !group.isCollapsed);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to toggle group collapse';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        }
-    }, [groups]);
+            try {
+                setError(null);
+                await backendRetrospectiveClient.setGroupCollapse(groupId, !group.isCollapsed);
+            } catch (err) {
+                const message = messageOf(err, 'Failed to toggle group collapse');
+                setError(message);
+                throw new Error(message);
+            }
+        },
+        [groups],
+    );
 
-    // Similarity detection
-    const findSuggestions = useCallback((config?: Partial<SimilarityConfig>): GroupSuggestion[] => {
-        // Only suggest groups for ungrouped cards
-        return findSimilarCardGroups(ungroupedCards, config);
-    }, [ungroupedCards]);
+    const findSuggestions = useCallback((config?: Partial<SimilarityConfig>): GroupSuggestion[] => findSimilarCardGroups(ungroupedCards, config), [ungroupedCards]);
 
-    const acceptSuggestion = useCallback(async (suggestion: GroupSuggestion): Promise<string> => {
-        if (suggestion.cardIds.length < 2) {
-            throw new Error('Suggestion must have at least 2 cards');
-        }
+    const acceptSuggestion = useCallback(
+        async (suggestion: GroupSuggestion): Promise<string> => {
+            if (suggestion.cardIds.length < 2) throw new Error('Suggestion must have at least 2 cards');
+            const [headCardId, ...memberCardIds] = suggestion.cardIds;
+            return createGroup(headCardId, memberCardIds);
+        },
+        [createGroup],
+    );
 
-        const [headCardId, ...memberCardIds] = suggestion.cardIds;
-        return await createGroup(headCardId, memberCardIds);
-    }, [createGroup]);
+    const getGroupByCardId = useCallback((cardId: string): CardGroup | null => groups.find((group) => group.headCardId === cardId || group.memberCardIds.includes(cardId)) || null, [groups]);
 
-    // Helper functions
-    const getGroupByCardId = useCallback((cardId: string): CardGroup | null => {
-        return groups.find(group =>
-            group.headCardId === cardId || group.memberCardIds.includes(cardId)
-        ) || null;
-    }, [groups]);
+    const getCardsInGroup = useCallback(
+        (groupId: string): Card[] => {
+            const group = groups.find((g) => g.id === groupId);
+            if (!group) return [];
+            return cards.filter((card) => card.id === group.headCardId || group.memberCardIds.includes(card.id));
+        },
+        [groups, cards],
+    );
 
-    const getCardsInGroup = useCallback((groupId: string): Card[] => {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return [];
+    const getCardsByColumn = useCallback(
+        (column: ColumnType, includeGrouped: boolean = false): Card[] => {
+            let columnCards = cards.filter((card) => card.column === column);
+            if (!includeGrouped) columnCards = columnCards.filter((card) => !card.groupId);
+            return columnCards;
+        },
+        [cards],
+    );
 
-        return cards.filter(card =>
-            card.id === group.headCardId || group.memberCardIds.includes(card.id)
-        );
-    }, [groups, cards]);
-
-    const getCardsByColumn = useCallback((
-        column: ColumnType,
-        includeGrouped: boolean = false
-    ): Card[] => {
-        let columnCards = cards.filter(card => card.column === column);
-
-        if (!includeGrouped) {
-            columnCards = columnCards.filter(card => !card.groupId);
-        }
-
-        return columnCards;
-    }, [cards]);
+    void currentUser;
 
     return {
         groups,
         groupedCards,
         ungroupedCards,
-        loading,
+        loading: false,
         error,
-
-        // Group management
         createGroup,
         disbandGroup,
         addToGroup,
         removeFromGroup,
         toggleGroupCollapse,
-
-        // Similarity detection
         findSuggestions,
         acceptSuggestion,
-
-        // Helper functions
         getGroupByCardId,
         getCardsInGroup,
-        getCardsByColumn
+        getCardsByColumn,
     };
 };

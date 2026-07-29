@@ -13,6 +13,7 @@ import {
 import { useSentimentCache } from '@/features/boards/sentiment/hooks/useSentimentCache';
 import { useWorkerManager, WorkerState } from '@/features/boards/sentiment/hooks/useWorkerManager';
 import { useSentimentResults, isAnalyzableCard } from '@/features/boards/sentiment/hooks/useSentimentResults';
+import type { SentimentResult as BackendSentimentResult } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { hashContent } from '@/features/boards/sentiment/domain/contentHash';
 import { isFresh } from '@/features/boards/sentiment/domain/staleness';
 import { isConfident } from '@/features/boards/sentiment/domain/confidence';
@@ -41,7 +42,7 @@ function dispatchInChunks(
     }
 }
 
-export function useSentiment(cards: Card[], _retrospectiveId: string) {
+export function useSentiment(cards: Card[], _retrospectiveId: string, sentimentResults: BackendSentimentResult[] = []) {
     const [isEnabled, setIsEnabled] = useState(DEFAULT_SENTIMENT_CONFIG.enabled);
     const [workerState, setWorkerState] = useState<WorkerState>({ ready: false, loading: false, error: undefined });
     const [config, setConfig] = useState<SentimentConfiguration>(DEFAULT_SENTIMENT_CONFIG);
@@ -58,7 +59,7 @@ export function useSentiment(cards: Card[], _retrospectiveId: string) {
         getSentimentCounts: computeSentimentCounts,
         isProcessing: isCardProcessing,
         overrideSentiment,
-    } = useSentimentResults(_retrospectiveId);
+    } = useSentimentResults(_retrospectiveId, sentimentResults);
 
     const cardsRef = useRef(cards);
     useEffect(() => { cardsRef.current = cards; }, [cards]);

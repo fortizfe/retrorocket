@@ -1,19 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
-import { CountdownService } from '@/features/boards/countdown/services/countdownService';
-import { CountdownTimer } from '@/features/boards/types/countdown';
+import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+import type { CountdownTimer } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
-// Mock the CountdownService
-vi.mock('@/features/boards/countdown/services/countdownService', () => ({
-    CountdownService: {
-        subscribeToTimer: vi.fn(),
-        createOrUpdateTimer: vi.fn(),
-        startTimer: vi.fn(),
-        pauseTimer: vi.fn(),
-        resetTimer: vi.fn(),
-        deleteTimer: vi.fn()
-    }
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+    configureTimer: vi.fn(),
+    startTimer: vi.fn(),
+    pauseTimer: vi.fn(),
+    resetTimer: vi.fn(),
+    deleteTimer: vi.fn(),
 }));
 
 // Mock Audio API
@@ -26,11 +22,10 @@ Object.defineProperty(window, 'Audio', {
     }))
 });
 
-const mockedCountdownService = vi.mocked(CountdownService);
+const mockedClient = vi.mocked(backendRetrospectiveClient);
 
 describe('useCountdown', () => {
     const mockTimer: CountdownTimer = {
-        id: 'timer-1',
         retrospectiveId: 'retro-1',
         startTime: null,
         duration: 300, // 5 minutes
@@ -46,7 +41,6 @@ describe('useCountdown', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        mockedCountdownService.subscribeToTimer.mockReturnValue(vi.fn());
     });
 
     afterEach(() => {
@@ -54,11 +48,11 @@ describe('useCountdown', () => {
     });
 
     describe('Basic functionality', () => {
-        it('should initialize with loading state and setup subscription', () => {
-            const { result } = renderHook(() => useCountdown('retro-1'));
+        it('reflects a null timer input as an empty countdown state', () => {
+            const { result } = renderHook(() => useCountdown('retro-1', null));
 
-            expect(result.current.loading).toBe(true);
             expect(result.current.timer).toBeNull();
+            expect(result.current.loading).toBe(false);
             expect(result.current.error).toBeNull();
             expect(result.current.countdownState).toEqual({
                 timeRemaining: 0,
@@ -67,27 +61,12 @@ describe('useCountdown', () => {
                 isFinished: false,
                 totalDuration: 0
             });
-            expect(mockedCountdownService.subscribeToTimer).toHaveBeenCalledWith(
-                'retro-1',
-                expect.any(Function)
-            );
         });
 
-        it('should handle subscription data with timer', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            act(() => {
-                subscriptionCallback?.(mockTimer);
-            });
+        it('derives countdownState from the timer input', () => {
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             expect(result.current.timer).toEqual(mockTimer);
-            expect(result.current.loading).toBe(false);
             expect(result.current.countdownState).toEqual({
                 timeRemaining: 300,
                 isRunning: false,
@@ -97,133 +76,116 @@ describe('useCountdown', () => {
             });
         });
 
-        it('should handle subscription data with null timer', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
+        it('recomputes countdownState when the timer prop changes (e.g. a live update)', () => {
+            const { result, rerender } = renderHook(({ timer }) => useCountdown('retro-1', timer), {
+                initialProps: { timer: null as CountdownTimer | null },
             });
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            expect(result.current.countdownState.totalDuration).toBe(0);
 
-            act(() => {
-                subscriptionCallback?.(null);
-            });
+            rerender({ timer: mockTimer });
 
-            expect(result.current.timer).toBeNull();
             expect(result.current.countdownState).toEqual({
-                timeRemaining: 0,
+                timeRemaining: 300,
                 isRunning: false,
                 isPaused: false,
                 isFinished: false,
-                totalDuration: 0
+                totalDuration: 300
             });
         });
     });
 
     describe('Timer control methods', () => {
         it('should create timer', async () => {
-            mockedCountdownService.createOrUpdateTimer.mockResolvedValue();
+            mockedClient.configureTimer.mockResolvedValue(mockTimer);
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', null));
 
             await act(async () => {
-                await result.current.createTimer(300, 'user-1');
+                await result.current.createTimer(300);
             });
 
-            expect(mockedCountdownService.createOrUpdateTimer).toHaveBeenCalledWith('retro-1', 300, 'user-1');
+            expect(mockedClient.configureTimer).toHaveBeenCalledWith('retro-1', 300);
             expect(result.current.error).toBeNull();
         });
 
         it('should handle create timer error', async () => {
-            mockedCountdownService.createOrUpdateTimer.mockRejectedValue(new Error('Create failed'));
+            mockedClient.configureTimer.mockRejectedValue(new Error('Create failed'));
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', null));
 
             await act(async () => {
-                await expect(result.current.createTimer(300, 'user-1')).rejects.toThrow('Create failed');
+                await expect(result.current.createTimer(300)).rejects.toThrow('Create failed');
             });
 
             expect(result.current.error).toBe('Create failed');
         });
 
         it('should start timer', async () => {
-            mockedCountdownService.startTimer.mockResolvedValue();
+            mockedClient.startTimer.mockResolvedValue({ ...mockTimer, isRunning: true });
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await result.current.startTimer();
             });
 
-            expect(mockedCountdownService.startTimer).toHaveBeenCalledWith('retro-1');
+            expect(mockedClient.startTimer).toHaveBeenCalledWith('retro-1');
             expect(result.current.error).toBeNull();
         });
 
         it('should pause timer', async () => {
-            mockedCountdownService.pauseTimer.mockResolvedValue();
+            mockedClient.pauseTimer.mockResolvedValue({ ...mockTimer, isPaused: true });
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await result.current.pauseTimer();
             });
 
-            expect(mockedCountdownService.pauseTimer).toHaveBeenCalledWith('retro-1');
+            expect(mockedClient.pauseTimer).toHaveBeenCalledWith('retro-1');
             expect(result.current.error).toBeNull();
         });
 
         it('should reset timer', async () => {
-            mockedCountdownService.resetTimer.mockResolvedValue();
+            mockedClient.resetTimer.mockResolvedValue(mockTimer);
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await result.current.resetTimer();
             });
 
-            expect(mockedCountdownService.resetTimer).toHaveBeenCalledWith('retro-1');
+            expect(mockedClient.resetTimer).toHaveBeenCalledWith('retro-1');
             expect(result.current.error).toBeNull();
         });
 
         it('should delete timer', async () => {
-            mockedCountdownService.deleteTimer.mockResolvedValue();
+            mockedClient.deleteTimer.mockResolvedValue(undefined);
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await result.current.deleteTimer();
             });
 
-            expect(mockedCountdownService.deleteTimer).toHaveBeenCalledWith('retro-1');
+            expect(mockedClient.deleteTimer).toHaveBeenCalledWith('retro-1');
             expect(result.current.error).toBeNull();
         });
     });
 
     describe('Real-time countdown functionality', () => {
         it('should start real-time countdown when timer is running', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Create a running timer
             const runningTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date()
             };
 
-            act(() => {
-                subscriptionCallback?.(runningTimer);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', runningTimer));
 
             expect(result.current.countdownState.isRunning).toBe(true);
 
-            // Advance timer by 1 second
             act(() => {
                 vi.advanceTimersByTime(1000);
             });
@@ -232,15 +194,6 @@ describe('useCountdown', () => {
         });
 
         it('should stop countdown when timer reaches zero', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Create a timer that's almost finished
             const almostFinishedTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
@@ -248,13 +201,10 @@ describe('useCountdown', () => {
                 duration: 300
             };
 
-            act(() => {
-                subscriptionCallback?.(almostFinishedTimer);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', almostFinishedTimer));
 
             expect(result.current.countdownState.timeRemaining).toBe(1);
 
-            // Advance timer by 1 second to finish
             act(() => {
                 vi.advanceTimersByTime(1000);
             });
@@ -264,47 +214,25 @@ describe('useCountdown', () => {
         });
 
         it('should calculate time remaining correctly', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Timer started 150 seconds ago with 300 second duration
             const partialTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date(Date.now() - 150000)
             };
 
-            act(() => {
-                subscriptionCallback?.(partialTimer);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', partialTimer));
 
             expect(result.current.countdownState.timeRemaining).toBe(150);
         });
 
         it('should not go below zero for time remaining', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Timer started way in the past
             const overdueTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date(Date.now() - 500000) // Started 500 seconds ago
             };
 
-            act(() => {
-                subscriptionCallback?.(overdueTimer);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', overdueTimer));
 
             expect(result.current.countdownState.timeRemaining).toBe(0);
             expect(result.current.countdownState.isFinished).toBe(true);
@@ -313,7 +241,7 @@ describe('useCountdown', () => {
 
     describe('Time formatting', () => {
         it('should format time correctly', () => {
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', null));
 
             expect(result.current.formatTime(0)).toBe('00:00');
             expect(result.current.formatTime(30)).toBe('00:30');
@@ -336,24 +264,13 @@ describe('useCountdown', () => {
                 value: mockAudioConstructor
             });
 
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Set up a finished timer
             const finishedTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date(Date.now() - 300000) // Started 300 seconds ago
             };
 
-            act(() => {
-                subscriptionCallback?.(finishedTimer);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', finishedTimer));
 
             expect(result.current.countdownState.isFinished).toBe(true);
             expect(mockAudioConstructor).toHaveBeenCalled();
@@ -372,15 +289,6 @@ describe('useCountdown', () => {
                 value: mockAudioConstructor
             });
 
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // This should not throw even if audio play fails
             const finishedTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
@@ -388,115 +296,72 @@ describe('useCountdown', () => {
             };
 
             expect(() => {
-                act(() => {
-                    subscriptionCallback?.(finishedTimer);
-                });
+                renderHook(() => useCountdown('retro-1', finishedTimer));
             }).not.toThrow();
-
-            expect(result.current.countdownState.isFinished).toBe(true);
         });
     });
 
     describe('Cleanup and edge cases', () => {
-        it('should cleanup subscription and intervals on unmount', () => {
-            const mockUnsubscribe = vi.fn();
-            mockedCountdownService.subscribeToTimer.mockReturnValue(mockUnsubscribe);
-
-            const { unmount } = renderHook(() => useCountdown('retro-1'));
-
-            unmount();
-            expect(mockUnsubscribe).toHaveBeenCalled();
-        });
-
-        it('should clear intervals when timer stops running', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // Start with running timer
+        it('clears the countdown interval on unmount', () => {
             const runningTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date()
             };
 
-            act(() => {
-                subscriptionCallback?.(runningTimer);
+            const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
+            const { unmount } = renderHook(() => useCountdown('retro-1', runningTimer));
+
+            unmount();
+            expect(clearIntervalSpy).toHaveBeenCalled();
+        });
+
+        it('should clear intervals when timer stops running', () => {
+            const runningTimer: CountdownTimer = {
+                ...mockTimer,
+                isRunning: true,
+                startTime: new Date()
+            };
+
+            const { result, rerender } = renderHook(({ timer }) => useCountdown('retro-1', timer), {
+                initialProps: { timer: runningTimer },
             });
 
             expect(result.current.countdownState.isRunning).toBe(true);
 
-            // Stop the timer
-            const stoppedTimer: CountdownTimer = {
-                ...runningTimer,
-                isRunning: false
-            };
-
-            act(() => {
-                subscriptionCallback?.(stoppedTimer);
-            });
+            const stoppedTimer: CountdownTimer = { ...runningTimer, isRunning: false };
+            rerender({ timer: stoppedTimer });
 
             expect(result.current.countdownState.isRunning).toBe(false);
         });
 
         it('should use originalDuration for totalDuration when available', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
             const timerWithOriginalDuration: CountdownTimer = {
                 ...mockTimer,
                 duration: 150, // Current duration (might be less due to pause/resume)
                 originalDuration: 300 // Original duration
             };
 
-            act(() => {
-                subscriptionCallback?.(timerWithOriginalDuration);
-            });
+            const { result } = renderHook(() => useCountdown('retro-1', timerWithOriginalDuration));
 
             expect(result.current.countdownState.totalDuration).toBe(300);
         });
 
         it('should reset sound flag when timer is reset', () => {
-            let subscriptionCallback: ((timer: CountdownTimer | null) => void) | undefined;
-            mockedCountdownService.subscribeToTimer.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            const { result } = renderHook(() => useCountdown('retro-1'));
-
-            // First finish the timer
             const finishedTimer: CountdownTimer = {
                 ...mockTimer,
                 isRunning: true,
                 startTime: new Date(Date.now() - 300000)
             };
 
-            act(() => {
-                subscriptionCallback?.(finishedTimer);
+            const { result, rerender } = renderHook(({ timer }) => useCountdown('retro-1', timer), {
+                initialProps: { timer: finishedTimer },
             });
 
             expect(result.current.countdownState.isFinished).toBe(true);
 
-            // Then reset the timer
-            const resetTimer: CountdownTimer = {
-                ...mockTimer,
-                isRunning: false,
-                startTime: null
-            };
-
-            act(() => {
-                subscriptionCallback?.(resetTimer);
-            });
+            const resetTimerValue: CountdownTimer = { ...mockTimer, isRunning: false, startTime: null };
+            rerender({ timer: resetTimerValue });
 
             expect(result.current.countdownState.isFinished).toBe(false);
             expect(result.current.countdownState.timeRemaining).toBe(300);
@@ -505,9 +370,9 @@ describe('useCountdown', () => {
 
     describe('Error handling', () => {
         it('should handle start timer error', async () => {
-            mockedCountdownService.startTimer.mockRejectedValue(new Error('Start failed'));
+            mockedClient.startTimer.mockRejectedValue(new Error('Start failed'));
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await expect(result.current.startTimer()).rejects.toThrow('Start failed');
@@ -517,9 +382,9 @@ describe('useCountdown', () => {
         });
 
         it('should handle pause timer error', async () => {
-            mockedCountdownService.pauseTimer.mockRejectedValue(new Error('Pause failed'));
+            mockedClient.pauseTimer.mockRejectedValue(new Error('Pause failed'));
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await expect(result.current.pauseTimer()).rejects.toThrow('Pause failed');
@@ -529,9 +394,9 @@ describe('useCountdown', () => {
         });
 
         it('should handle reset timer error', async () => {
-            mockedCountdownService.resetTimer.mockRejectedValue(new Error('Reset failed'));
+            mockedClient.resetTimer.mockRejectedValue(new Error('Reset failed'));
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await expect(result.current.resetTimer()).rejects.toThrow('Reset failed');
@@ -541,9 +406,9 @@ describe('useCountdown', () => {
         });
 
         it('should handle delete timer error', async () => {
-            mockedCountdownService.deleteTimer.mockRejectedValue(new Error('Delete failed'));
+            mockedClient.deleteTimer.mockRejectedValue(new Error('Delete failed'));
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', mockTimer));
 
             await act(async () => {
                 await expect(result.current.deleteTimer()).rejects.toThrow('Delete failed');
@@ -553,22 +418,22 @@ describe('useCountdown', () => {
         });
 
         it('should clear error on successful operations', async () => {
-            mockedCountdownService.createOrUpdateTimer
+            mockedClient.configureTimer
                 .mockRejectedValueOnce(new Error('Failed'))
-                .mockResolvedValueOnce(undefined);
+                .mockResolvedValueOnce(mockTimer);
 
-            const { result } = renderHook(() => useCountdown('retro-1'));
+            const { result } = renderHook(() => useCountdown('retro-1', null));
 
             // First call fails
             await act(async () => {
-                await expect(result.current.createTimer(300, 'user-1')).rejects.toThrow('Failed');
+                await expect(result.current.createTimer(300)).rejects.toThrow('Failed');
             });
 
             expect(result.current.error).toBe('Failed');
 
             // Second call succeeds
             await act(async () => {
-                await result.current.createTimer(300, 'user-1');
+                await result.current.createTimer(300);
             });
 
             expect(result.current.error).toBeNull();

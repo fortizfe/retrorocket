@@ -2,12 +2,19 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
-import { CountdownDisplayProps } from '@/features/boards/types/countdown';
+import type { CountdownTimer as CountdownTimerData } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
-const CountdownTimer: React.FC<CountdownDisplayProps> = ({ retrospectiveId }) => {
-    const { countdownState, formatTime, loading } = useCountdown(retrospectiveId);
+interface CountdownTimerProps {
+    retrospectiveId: string;
+    /** Sourced from useRetrospectiveRealtimeSync's board state via BoardDataContext
+     * (feature 019, US5). */
+    timer: CountdownTimerData | null;
+}
 
-    if (loading || countdownState.totalDuration === 0) {
+const CountdownTimer: React.FC<CountdownTimerProps> = ({ retrospectiveId, timer }) => {
+    const { countdownState, formatTime } = useCountdown(retrospectiveId, timer);
+
+    if (countdownState.totalDuration === 0) {
         return null;
     }
 

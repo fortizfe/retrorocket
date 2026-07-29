@@ -20,23 +20,38 @@ server/src/
 │   │   ├── index.ts   # OAuthProvider, IdentityStore, SessionService, OAuthStateCodec, Clock, Random
 │   │   ├── boards.ts  # BoardsPort — list/create/join/rename/delete boards
 │   │   ├── profile.ts # ProfilePort — get-or-create profile + update display name
+│   │   ├── retrospective.ts    # RetrospectiveBoardPort, ParticipantPort (board metadata, columns, timer)
+│   │   ├── cards.ts            # CardPort, CardGroupPort
+│   │   ├── actionItems.ts      # ActionItemPort
+│   │   ├── facilitatorNotes.ts # FacilitatorNotePort (author-scoped)
+│   │   ├── sentiment.ts        # SentimentResultPort
+│   │   ├── typing.ts           # TypingStatusPort
+│   │   ├── realtime.ts         # RealtimeGatewayPort — the WS relay's port
 │   │   └── observability/  # Logger, Metrics, Tracer
 │   └── use-cases/     # StartOAuthLogin, CompleteOAuthLogin, session (get/refresh), Logout, startLinkProvider
 │       ├── boards/    # ListBoardsForUser, CreateBoard, JoinBoard, RenameBoard, DeleteBoard
-│       └── profile/   # EnsureUserProfile, UpdateDisplayName
+│       ├── profile/   # EnsureUserProfile, UpdateDisplayName
+│       └── retrospective/ # GetBoardState, JoinRetrospective, CardLifecycle, CardInteractions,
+│                           # SetTypingStatus, ReorderCards, CardGrouping, Timer, FacilitatorNotes,
+│                           # ConvertCardToActionItem, ActionItems, Sentiment
 ├── adapters/          # Driven adapters implementing the ports
 │   ├── oauth/         # Google (PKCE + id_token) & GitHub (REST) via arctic
-│   ├── firebase/      # firebase-admin identity store, custom-token minting, FirestoreBoardsAdapter, FirestoreProfileAdapter
+│   ├── firebase/      # firebase-admin identity store, custom-token minting, FirestoreBoardsAdapter,
+│   │                  # FirestoreProfileAdapter, FirestoreRetrospectiveBoardAdapter, FirestoreCardAdapter,
+│   │                  # FirestoreCardGroupAdapter, FirestoreActionItemAdapter, FirestoreFacilitatorNoteAdapter,
+│   │                  # FirestoreSentimentResultAdapter, FirestoreTypingStatusAdapter, FirestoreRealtimeGatewayAdapter
 │   ├── session/       # jose-signed session JWT + OAuth-state codec
 │   ├── observability/ # stdout structured logs/metrics/tracing (with redaction)
 │   └── system.ts      # SystemClock, SystemRandom
 ├── http/              # Driving adapter (Express)
 │   ├── app.ts         # Builds the Express app (middleware + routes)
-│   ├── composition-root.ts  # Wires ports → adapters (only place adapters are chosen)
+│   ├── composition-root.ts  # Wires ports → adapters (only place adapters are chosen); builds an
+│   │                         # http.Server (not just an Express app) so the WS upgrade can attach
 │   ├── auth-wiring.ts # Env-guarded construction of the auth subsystem
 │   ├── boards-wiring.ts # Env-guarded construction of the Dashboard boards subsystem
 │   ├── profile-wiring.ts # Env-guarded construction of the Mi Perfil profile subsystem
-│   ├── routes/        # health, auth, boards, profile
+│   ├── routes/        # health, auth, boards, profile, retrospectives
+│   ├── ws/            # realtimeUpgrade.ts — handles the `upgrade` event for the live channel
 │   ├── middleware/    # correlationId, errorHandler
 │   └── cookies.ts     # httpOnly/Secure/SameSite=Lax cookie helpers
 └── config/env.ts      # Fail-fast environment configuration
@@ -139,6 +154,58 @@ dedicated Vitest-level Firestore mock — its get-or-create/provider-union/updat
 (including the "other fields, incl. legacy `joinedBoards`, are left untouched" guarantee) is
 exercised by the Playwright E2E suite against the emulator (`e2e/profile.spec.ts`); only its
 pure mapping/union helpers are unit-tested directly.
+
+## Retrospective board
+
+> Feature: [`specs/019-retro-board-backend-access`](../../specs/019-retro-board-backend-access/)
+
+Backs the individual retrospective board screen — the last of the three screens migrated
+away from direct browser-to-Firebase access. Every data-changing action (card CRUD/vote/
+like/react/reorder, groups, action items, the facilitator's countdown timer and private
+notes, sentiment persistence, typing signals) goes through `retrospectiveRouter` instead of
+Firestore directly. Unlike Dashboard/Mi Perfil, this screen also needs **live** updates
+(another participant's card appearing instantly, a typing indicator, the participant list) —
+the standard request/response pattern doesn't push anything, so this feature adds a
+backend-mediated WebSocket relay (`FirestoreRealtimeGatewayAdapter`): one Firestore
+`onSnapshot` listener per board, reference-counted across every connected client, fanning
+out `entity_change` events to each socket connection for that board.
+
+### Endpoints (`../specs/019-retro-board-backend-access/contracts/`)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET    | `/api/retrospectives/:id` | Full current board state in one response |
+| POST   | `/api/retrospectives/:id/join` | Join a board (idempotent) |
+| GET    | `/api/retrospectives/:id/live` | **WebSocket upgrade** — live `entity_change` events for this board |
+| POST   | `/api/retrospectives/:id/cards` | Create a card |
+| PATCH \| DELETE | `/api/cards/:id` | Edit/delete a card (owner only) |
+| POST   | `/api/cards/:id/vote` \| `.../like` | Vote / toggle like |
+| PUT \| DELETE | `/api/cards/:id/reaction` | Set / remove an emoji reaction |
+| POST   | `/api/retrospectives/:id/cards/reorder` | Atomic batch reorder/move |
+| POST   | `/api/retrospectives/:id/groups` | Create a card group |
+| PATCH \| DELETE | `/api/groups/:id` | Collapse toggle / disband a group |
+| POST \| DELETE | `/api/groups/:id/cards[/:cardId]` | Add / remove a group member |
+| PATCH  | `/api/retrospectives/:id/column-grouping` | Save the per-column grouping display preference |
+| PUT \| POST \| DELETE | `/api/retrospectives/:id/timer[/start\|pause\|reset]` | Facilitator-only countdown timer control |
+| POST   | `/api/retrospectives/:id/notes` | Create a private facilitator note |
+| PATCH \| DELETE | `/api/notes/:id` | Edit/delete a note (author only) |
+| POST   | `/api/cards/:id/convert-to-action-item` | Facilitator-only: convert a card into an action item |
+| POST   | `/api/retrospectives/:id/action-items` | Create an action item directly |
+| PATCH \| DELETE | `/api/action-items/:id` | Edit/delete an action item (any participant) |
+| PUT    | `/api/cards/:id/sentiment[/override]` | Save a computed sentiment result / facilitator override |
+| POST   | `/api/retrospectives/:id/typing` | Send a typing-status signal |
+
+Deleting a board (`DELETE /api/boards/:id`, `017`) cascade-deletes this feature's
+`groups`/`actionItems`/`facilitatorNotes`/`sentimentResults`/`countdown_timers`/
+`typingStatus` documents for it too (`FirestoreBoardsAdapter.deleteBoard()`).
+
+Every adapter in this slice follows the same testing split as `FirestoreBoardsAdapter`/
+`FirestoreProfileAdapter`: no dedicated Vitest-level Firestore mock for the thin
+firebase-admin query/write composition — that's exercised by the Playwright E2E suite
+against the emulator (`e2e/retrospective-board.spec.ts`, including two-browser-context live-
+update scenarios); only pure mapping helpers and the application-layer use-cases (against an
+in-memory fake store, `server/test/application/use-cases/retrospective/retrospectiveFakes.ts`)
+are unit-tested directly.
 
 ## Configuration
 

@@ -16,6 +16,7 @@ import TeamMoodTab from '@/features/boards/facilitator/components/TeamMoodTab';
 import ControlsTab from '@/features/boards/facilitator/components/ControlsTab';
 import { Card } from '@/features/boards/types/card';
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
+import type { CountdownTimer as CountdownTimerData, FacilitatorNote } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 interface FacilitatorMenuProps {
     retrospectiveId: string;
@@ -23,6 +24,12 @@ interface FacilitatorMenuProps {
     isOwner: boolean;
     cards?: Card[];
     columnConfigs?: Record<string, DynamicColumnConfig>;
+    /** Sourced from useRetrospectiveRealtimeSync's board state via BoardDataContext
+     * (feature 019, US5). */
+    timer: CountdownTimerData | null;
+    /** Sourced from useRetrospectiveRealtimeSync's board state via BoardDataContext
+     * (feature 019, US5) — never another facilitator's notes (FR-013). */
+    myFacilitatorNotes: FacilitatorNote[];
 }
 
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
@@ -31,6 +38,8 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     isOwner,
     cards = [],
     columnConfigs = {},
+    timer,
+    myFacilitatorNotes,
 }) => {
     const { t } = useLanguage();
     const sentimentAnalysis = useSentimentContext();
@@ -41,10 +50,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const {
-        timer,
-        countdownState,
-    } = useCountdown(retrospectiveId);
+    const { countdownState } = useCountdown(retrospectiveId, timer);
 
     // Bloquear scroll cuando el menú esté abierto
     useBodyScrollLock(isOpen);
@@ -200,10 +206,11 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                     <NotesTab
                         retrospectiveId={retrospectiveId}
                         facilitatorId={facilitatorId}
+                        notes={myFacilitatorNotes}
                     />
                 );
             case 'controls':
-                return <ControlsTab retrospectiveId={retrospectiveId} />;
+                return <ControlsTab retrospectiveId={retrospectiveId} timer={timer} />;
             default:
                 return null;
         }

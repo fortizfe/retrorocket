@@ -6,31 +6,24 @@ import {
     ColumnGroupingStatesStore,
     DEFAULT_GROUPING_STATE
 } from '@/features/boards/types/columnGrouping';
-import {
-    saveColumnGroupingState,
-    loadColumnGroupingState
-} from '@/features/boards/clustering/services/columnGroupingService';
+import { saveColumnGroupingState } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
-// Hook to manage column grouping state
-export const useColumnGrouping = (retrospectiveId?: string) => {
-    const [columnStates, setColumnStates] = useState<ColumnGroupingStatesStore>({});
+/**
+ * Hook to manage column grouping state. `initialState` is sourced from
+ * useRetrospectiveRealtimeSync's `board.columnGroupingStates` (feature 019, US4) —
+ * already loaded as part of GetBoardState and kept live via 'retrospective'
+ * entity_change events, replacing this hook's own load-on-mount Firestore read.
+ * Writes go through backendRetrospectiveClient.saveColumnGroupingState().
+ */
+export const useColumnGrouping = (retrospectiveId?: string, initialState?: ColumnGroupingStatesStore) => {
+    const [columnStates, setColumnStates] = useState<ColumnGroupingStatesStore>(initialState ?? {});
     const [previousStates, setPreviousStates] = useState<ColumnGroupingStatesStore>({});
-    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load state from Firebase when retrospectiveId is available
+    // Re-sync local state whenever the live board value changes (e.g. another
+    // participant changed the grouping preference, or the initial load completed).
     useEffect(() => {
-        if (retrospectiveId && !isLoaded) {
-            loadColumnGroupingState(retrospectiveId)
-                .then((loadedStates) => {
-                    setColumnStates(loadedStates);
-                    setIsLoaded(true);
-                })
-                .catch((error) => {
-                    console.error('Failed to load column grouping state:', error);
-                    setIsLoaded(true);
-                });
-        }
-    }, [retrospectiveId, isLoaded]);
+        if (initialState) setColumnStates(initialState);
+    }, [initialState]);
 
     // Get state for a specific column
     const getColumnState = useCallback((columnId: string): ColumnGroupingState => {
@@ -59,7 +52,6 @@ export const useColumnGrouping = (retrospectiveId?: string) => {
 
         setColumnStates(newStates);
 
-        // Persist to Firebase if retrospectiveId is available
         if (retrospectiveId) {
             saveColumnGroupingState(retrospectiveId, newStates)
                 .catch((error) => {

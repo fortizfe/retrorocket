@@ -8,8 +8,6 @@ import toast from 'react-hot-toast';
 import ImprovedExportPopover from '@/features/boards/export/components/ImprovedExportPopover';
 import { ResponsiveParticipantDisplay } from '@/features/boards/participants/components/index';
 import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/components/index';
-import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
-import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useSentimentContext } from '@/features/boards/sentiment';
@@ -21,11 +19,13 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
     const navigate = useNavigate();
     const { t } = useLanguage();
 
-    const { retrospective } = useRetrospective(id);
-    const { participants } = useParticipants(id);
+    // Sourced from RetrospectivePage's useRetrospectiveRealtimeSync via BoardDataContext
+    // (feature 019, US1) — this topbar (rendered by the global Header, a sibling of
+    // RetrospectivePage's own tree) no longer opens its own independent Firestore
+    // subscription for the same board.
+    const { retrospective, participants, cards: exportCards, groups: exportGroups, actionItems: exportActionItems, columnConfigs, timer, myFacilitatorNotes } = useBoardData();
     const { uid } = useCurrentUser();
     const sentimentAnalysis = useSentimentContext();
-    const { cards: exportCards, groups: exportGroups, actionItems: exportActionItems, columnConfigs } = useBoardData();
 
     // Menu state for compact options menu (portal)
     const [optionsOpen, setOptionsOpen] = React.useState(false);
@@ -160,7 +160,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-                <CountdownTimer retrospectiveId={retrospective.id} />
+                <CountdownTimer retrospectiveId={retrospective.id} timer={timer} />
 
                 {/* Compact options hamburger that groups export/share/copy/exit */}
                 <div className="flex items-center gap-2">
@@ -246,6 +246,7 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                     cards={exportCards}
                     groups={exportGroups}
                     participants={participants || []}
+                    facilitatorNotes={myFacilitatorNotes}
                     actionItems={exportActionItems}
                     sentimentAnalysis={sentimentAnalysis}
                     isOpen={showExportPopover}
@@ -258,6 +259,8 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                     isOwner={retrospective.createdBy === uid}
                     cards={exportCards}
                     columnConfigs={columnConfigs}
+                    timer={timer}
+                    myFacilitatorNotes={myFacilitatorNotes}
                 />
             </div>
         </div>

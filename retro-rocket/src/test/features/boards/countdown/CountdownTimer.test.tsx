@@ -24,7 +24,8 @@ vi.mock('@/features/boards/countdown/hooks/useCountdown', () => ({
 
 describe('CountdownTimer', () => {
     const defaultProps = {
-        retrospectiveId: 'test-retro-id'
+        retrospectiveId: 'test-retro-id',
+        timer: null
     };
 
     const mockCountdownState = {
@@ -43,34 +44,21 @@ describe('CountdownTimer', () => {
                 const minutes = Math.floor(time / 60);
                 const seconds = time % 60;
                 return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }),
-            loading: false
+            })
         });
-    });
-
-    it('renders nothing when loading', () => {
-        mockUseCountdown.mockReturnValue({
-            countdownState: mockCountdownState,
-            formatTime: vi.fn(),
-            loading: true
-        });
-
-        const { container } = render(<CountdownTimer {...defaultProps} />);
-        expect(container.firstChild).toBeNull();
     });
 
     it('renders nothing when totalDuration is 0', () => {
         mockUseCountdown.mockReturnValue({
             countdownState: { ...mockCountdownState, totalDuration: 0 },
-            formatTime: vi.fn(),
-            loading: false
+            formatTime: vi.fn()
         });
 
         const { container } = render(<CountdownTimer {...defaultProps} />);
         expect(container.firstChild).toBeNull();
     });
 
-    it('renders timer when not loading and has duration', () => {
+    it('renders timer when it has a duration', () => {
         render(<CountdownTimer {...defaultProps} />);
 
         expect(screen.getByText('5:00')).toBeInTheDocument();
@@ -81,8 +69,7 @@ describe('CountdownTimer', () => {
     it('displays running state correctly', () => {
         mockUseCountdown.mockReturnValue({
             countdownState: { ...mockCountdownState, isRunning: true },
-            formatTime: vi.fn(() => '5:00'),
-            loading: false
+            formatTime: vi.fn(() => '5:00')
         });
 
         render(<CountdownTimer {...defaultProps} />);
@@ -94,8 +81,7 @@ describe('CountdownTimer', () => {
     it('displays paused state correctly', () => {
         mockUseCountdown.mockReturnValue({
             countdownState: { ...mockCountdownState, isPaused: true },
-            formatTime: vi.fn(() => '5:00'),
-            loading: false
+            formatTime: vi.fn(() => '5:00')
         });
 
         render(<CountdownTimer {...defaultProps} />);
@@ -107,8 +93,7 @@ describe('CountdownTimer', () => {
     it('displays finished state correctly', () => {
         mockUseCountdown.mockReturnValue({
             countdownState: { ...mockCountdownState, isFinished: true, timeRemaining: 0 },
-            formatTime: vi.fn(() => '0:00'),
-            loading: false
+            formatTime: vi.fn(() => '0:00')
         });
 
         render(<CountdownTimer {...defaultProps} />);
@@ -121,8 +106,7 @@ describe('CountdownTimer', () => {
         const mockFormatTime = vi.fn(() => '5:00');
         mockUseCountdown.mockReturnValue({
             countdownState: mockCountdownState,
-            formatTime: mockFormatTime,
-            loading: false
+            formatTime: mockFormatTime
         });
 
         render(<CountdownTimer {...defaultProps} />);
@@ -140,8 +124,7 @@ describe('CountdownTimer', () => {
     it('shows pulse animation when finished', () => {
         mockUseCountdown.mockReturnValue({
             countdownState: { ...mockCountdownState, isFinished: true },
-            formatTime: vi.fn(() => '0:00'),
-            loading: false
+            formatTime: vi.fn(() => '0:00')
         });
 
         render(<CountdownTimer {...defaultProps} />);

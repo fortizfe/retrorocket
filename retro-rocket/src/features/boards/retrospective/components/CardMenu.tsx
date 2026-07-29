@@ -11,7 +11,7 @@ interface CardMenuProps {
     card: Card;
     participants: Participant[];
     canConvertToAction: boolean; // Solo el facilitador puede convertir
-    onConvertToAction: (cardContent: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => void;
+    onConvertToAction: (cardId: string, assignedTo?: string, assignedToName?: string, dueDate?: Date | null) => void;
     className?: string;
 }
 
@@ -96,7 +96,7 @@ const CardMenu: React.FC<CardMenuProps> = ({
     const handleConvert = () => {
         const selectedParticipant = participants.find(p => p.userId === selectedAssignee);
         onConvertToAction(
-            card.content,
+            card.id,
             selectedAssignee || undefined,
             selectedParticipant?.name || undefined,
             selectedDueDate

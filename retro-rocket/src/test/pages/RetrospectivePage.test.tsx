@@ -12,14 +12,8 @@ vi.mock('react-router-dom', () => ({
     useNavigate: () => mockNavigate,
 }));
 
-const mockAddParticipant = vi.fn();
-
-vi.mock('@/features/boards/retrospective/hooks/useRetrospective', () => ({
-    useRetrospective: vi.fn(),
-}));
-
-vi.mock('@/features/boards/participants/hooks/useParticipants', () => ({
-    useParticipants: vi.fn(),
+vi.mock('@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync', () => ({
+    useRetrospectiveRealtimeSync: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/useCurrentUser', () => ({
@@ -28,12 +22,6 @@ vi.mock('@/lib/hooks/useCurrentUser', () => ({
 
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({ t: (key: string) => key, language: 'es' }),
-}));
-
-vi.mock('@/lib/services/OptimizedRetrospectiveService', () => ({
-    OptimizedRetrospectiveService: {
-        incrementParticipantCount: vi.fn().mockResolvedValue(undefined),
-    },
 }));
 
 vi.mock('@/features/boards/retrospective/components/RetrospectiveBoard', () => ({
@@ -81,53 +69,46 @@ vi.mock('react-hot-toast', () => ({
     toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-import { useRetrospective } from '@/features/boards/retrospective/hooks/useRetrospective';
-import { useParticipants } from '@/features/boards/participants/hooks/useParticipants';
+import { useRetrospectiveRealtimeSync } from '@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
-import { OptimizedRetrospectiveService } from '@/lib/services/OptimizedRetrospectiveService';
 
-const mockUseRetrospective = vi.mocked(useRetrospective);
-const mockUseParticipants = vi.mocked(useParticipants);
+const mockUseRetrospectiveRealtimeSync = vi.mocked(useRetrospectiveRealtimeSync);
 const mockUseCurrentUser = vi.mocked(useCurrentUser);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const mockRetrospective = {
+const mockBoard = {
     id: 'retro-42',
     title: 'Sprint Review',
-    template: 'start-stop-continue',
+    createdBy: 'user-1',
+    isFacilitator: false,
     createdAt: new Date(),
     updatedAt: new Date(),
-    createdBy: 'user-1',
-    isActive: true,
     participantCount: 2,
+    isActive: true,
+    columnGroupingStates: {},
+    columns: [],
+    cards: [],
+    groups: [],
+    actionItems: [],
+    participants: [],
+    timer: null,
+    myFacilitatorNotes: [],
+    sentimentResults: [],
 } as any;
 
 const setupMocks = ({
-    retroLoading = false,
-    retroError = null,
-    retro = mockRetrospective,
+    loading = false,
+    error = null as string | null,
+    notFound = false,
+    board = mockBoard,
     isReady = true,
-    uid = 'user-1',
     fullName = 'Alice',
 } = {}) => {
-    mockUseRetrospective.mockReturnValue({
-        retrospective: retro,
-        loading: retroLoading,
-        error: retroError,
-    } as any);
-
-    mockUseParticipants.mockReturnValue({
-        addParticipant: mockAddParticipant,
-        participants: [],
-        loading: false,
-        error: null,
-        removeParticipant: vi.fn(),
-        refetch: vi.fn(),
-    } as any);
+    mockUseRetrospectiveRealtimeSync.mockReturnValue({ board, loading, error, notFound } as any);
 
     mockUseCurrentUser.mockReturnValue({
-        uid,
+        uid: 'user-1',
         fullName,
         isReady,
         email: null,
@@ -150,11 +131,10 @@ const renderPage = async () => {
 describe('RetrospectivePage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        localStorage.clear();
     });
 
-    it('shows loading spinner when retroLoading=true', async () => {
-        setupMocks({ retroLoading: true, retro: null as any });
+    it('shows loading spinner while the board is loading', async () => {
+        setupMocks({ loading: true, board: null as any });
         await renderPage();
 
         expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
@@ -167,78 +147,29 @@ describe('RetrospectivePage', () => {
         expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     });
 
-    it('shows error state when retroError is set', async () => {
-        setupMocks({ retroError: 'Board not found', retro: null as any });
+    it('shows the board-deleted state when notFound=true, distinct from the generic error state', async () => {
+        setupMocks({ notFound: true, board: null as any, error: 'El tablero especificado no existe o no está disponible' });
+        await renderPage();
+
+        expect(screen.getByText('retrospectivePage.boardDeleted.title')).toBeInTheDocument();
+        expect(screen.queryByText('Retrospectiva no encontrada')).not.toBeInTheDocument();
+    });
+
+    it('shows a generic error state when the load fails for a reason other than not-found', async () => {
+        setupMocks({ error: 'Network error', board: null as any });
         await renderPage();
 
         expect(screen.getByText('Retrospectiva no encontrada')).toBeInTheDocument();
     });
 
-    it('shows error state when retrospective is null after loading', async () => {
-        setupMocks({ retro: null as any });
+    it('shows error state when board is null after loading with no explicit error', async () => {
+        setupMocks({ board: null as any });
         await renderPage();
 
         expect(screen.getByText('Retrospectiva no encontrada')).toBeInTheDocument();
     });
 
-    it('auto-joins when user is ready and no saved participantId', async () => {
-        mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(mockAddParticipant).toHaveBeenCalledWith({
-                name: 'Alice',
-                userId: 'user-1',
-                retrospectiveId: 'retro-42',
-            });
-        });
-    });
-
-    it('skips auto-join when localStorage has a saved participantId', async () => {
-        localStorage.setItem('participant_retro-42_user-1', 'p-existing');
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(mockAddParticipant).not.toHaveBeenCalled();
-        });
-    });
-
-    it('increments participant count only for new participants', async () => {
-        mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(OptimizedRetrospectiveService.incrementParticipantCount).toHaveBeenCalledWith('retro-42');
-        });
-    });
-
-    it('does not increment participant count for returning participants', async () => {
-        mockAddParticipant.mockResolvedValue({ id: 'p-old', isNew: false });
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(mockAddParticipant).toHaveBeenCalled();
-        });
-
-        expect(OptimizedRetrospectiveService.incrementParticipantCount).not.toHaveBeenCalled();
-    });
-
-    it('renders RetrospectiveBoard after joining', async () => {
-        mockAddParticipant.mockResolvedValue({ id: 'p-new', isNew: true });
-        setupMocks();
-        await renderPage();
-
-        await waitFor(() => {
-            expect(screen.getByTestId('retrospective-board')).toBeInTheDocument();
-        });
-    });
-
-    it('renders board immediately when participant already in localStorage', async () => {
-        localStorage.setItem('participant_retro-42_user-1', 'p-existing');
+    it('renders RetrospectiveBoard once the board has loaded — no separate join/joining state (join happens inside the sync hook)', async () => {
         setupMocks();
         await renderPage();
 

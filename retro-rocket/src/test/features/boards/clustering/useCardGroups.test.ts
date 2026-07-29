@@ -1,43 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups';
-import {
-    createCardGroup,
-    disbandCardGroup,
-    addCardToGroup,
-    removeCardFromGroup,
-    updateGroupCollapseState,
-    subscribeToRetrospectiveGroups,
-    calculateGroupAggregations
-} from '@/features/boards/clustering/services/cardGroupService';
 import { findSimilarCardGroups } from '@/features/boards/clustering/services/similarityService';
 import { Card, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 
-// Mock all services
-vi.mock('@/features/boards/clustering/services/cardGroupService', () => ({
-    createCardGroup: vi.fn(),
-    disbandCardGroup: vi.fn(),
-    addCardToGroup: vi.fn(),
-    removeCardFromGroup: vi.fn(),
-    updateGroupCollapseState: vi.fn(),
-    subscribeToRetrospectiveGroups: vi.fn(),
-    calculateGroupAggregations: vi.fn()
+const mockCreateCardGroup = vi.fn();
+const mockDisbandCardGroup = vi.fn();
+const mockAddCardToGroup = vi.fn();
+const mockRemoveCardFromGroup = vi.fn();
+const mockSetGroupCollapse = vi.fn();
+
+// groups are now an INPUT (sourced from useRetrospectiveRealtimeSync via
+// RetrospectiveBoard, feature 019 US4) — this hook no longer subscribes to Firestore
+// itself; only its write delegation to backendRetrospectiveClient is under test here.
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+    createCardGroup: (...args: unknown[]) => mockCreateCardGroup(...args),
+    disbandCardGroup: (...args: unknown[]) => mockDisbandCardGroup(...args),
+    addCardToGroup: (...args: unknown[]) => mockAddCardToGroup(...args),
+    removeCardFromGroup: (...args: unknown[]) => mockRemoveCardFromGroup(...args),
+    setGroupCollapse: (...args: unknown[]) => mockSetGroupCollapse(...args),
 }));
 
 vi.mock('@/features/boards/clustering/services/similarityService', () => ({
     findSimilarCardGroups: vi.fn()
 }));
-
-const mockedCardGroupService = {
-    createCardGroup: vi.mocked(createCardGroup),
-    disbandCardGroup: vi.mocked(disbandCardGroup),
-    addCardToGroup: vi.mocked(addCardToGroup),
-    removeCardFromGroup: vi.mocked(removeCardFromGroup),
-    updateGroupCollapseState: vi.mocked(updateGroupCollapseState),
-    subscribeToRetrospectiveGroups: vi.mocked(subscribeToRetrospectiveGroups),
-    calculateGroupAggregations: vi.mocked(calculateGroupAggregations)
-};
 
 const mockedSimilarityService = vi.mocked(findSimilarCardGroups);
 
@@ -84,56 +71,36 @@ describe('useCardGroups', () => {
             createdAt: new Date(),
             createdBy: 'user-1',
             order: 1,
-            totalVotes: 5,
-            totalLikes: 3
         }
     ];
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockedCardGroupService.subscribeToRetrospectiveGroups.mockReturnValue(vi.fn());
-        mockedCardGroupService.calculateGroupAggregations.mockImplementation((group) => group);
     });
 
     describe('Basic functionality', () => {
-        it('should initialize with loading state and setup subscription', () => {
+        it('is never in a loading state — groups are provided synchronously as an input', () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
-            );
-
-            expect(result.current.loading).toBe(true);
-            expect(result.current.groups).toEqual([]);
-            expect(result.current.error).toBeNull();
-            expect(mockedCardGroupService.subscribeToRetrospectiveGroups).toHaveBeenCalledWith(
-                'retro-1',
-                expect.any(Function)
-            );
-        });
-
-        it('should not setup subscription without retrospective ID', () => {
-            const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: '',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             expect(result.current.loading).toBe(false);
-            expect(mockedCardGroupService.subscribeToRetrospectiveGroups).not.toHaveBeenCalled();
+            expect(result.current.groups).toEqual([]);
+            expect(result.current.error).toBeNull();
+        });
+
+        it('reflects the groups input, with aggregations computed', () => {
+            const { result } = renderHook(() =>
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1', groups: mockGroups })
+            );
+
+            expect(result.current.groups).toHaveLength(1);
+            expect(result.current.groups[0].id).toBe('group-1');
         });
 
         it('should separate grouped and ungrouped cards', () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             expect(result.current.groupedCards).toHaveLength(1);
@@ -145,14 +112,10 @@ describe('useCardGroups', () => {
 
     describe('Group management', () => {
         it('should create a new group', async () => {
-            mockedCardGroupService.createCardGroup.mockResolvedValue('new-group-id');
+            mockCreateCardGroup.mockResolvedValue({ id: 'new-group-id' });
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             let groupId: string = '';
@@ -161,24 +124,14 @@ describe('useCardGroups', () => {
             });
 
             expect(groupId).toBe('new-group-id');
-            expect(mockedCardGroupService.createCardGroup).toHaveBeenCalledWith(
-                'retro-1',
-                'card-1',
-                ['card-2'],
-                'user-1',
-                'Custom title'
-            );
+            expect(mockCreateCardGroup).toHaveBeenCalledWith('retro-1', { headCardId: 'card-1', memberCardIds: ['card-2'], title: 'Custom title' });
         });
 
         it('should handle create group errors', async () => {
-            mockedCardGroupService.createCardGroup.mockRejectedValue(new Error('Create failed'));
+            mockCreateCardGroup.mockRejectedValue(new Error('Create failed'));
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
@@ -191,86 +144,71 @@ describe('useCardGroups', () => {
         });
 
         it('should disband a group', async () => {
-            mockedCardGroupService.disbandCardGroup.mockResolvedValue();
+            mockDisbandCardGroup.mockResolvedValue(undefined);
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
                 await result.current.disbandGroup('group-1');
             });
 
-            expect(mockedCardGroupService.disbandCardGroup).toHaveBeenCalledWith('group-1');
+            expect(mockDisbandCardGroup).toHaveBeenCalledWith('group-1');
         });
 
         it('should add card to group', async () => {
-            mockedCardGroupService.addCardToGroup.mockResolvedValue();
+            mockAddCardToGroup.mockResolvedValue(mockGroups[0]);
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
                 await result.current.addToGroup('group-1', 'card-2');
             });
 
-            expect(mockedCardGroupService.addCardToGroup).toHaveBeenCalledWith('group-1', 'card-2');
+            expect(mockAddCardToGroup).toHaveBeenCalledWith('group-1', 'card-2');
         });
 
-        it('should remove card from group', async () => {
-            mockedCardGroupService.removeCardFromGroup.mockResolvedValue();
+        it("removes a card from its group, resolving the group id from the card's own groupId field", async () => {
+            mockRemoveCardFromGroup.mockResolvedValue(mockGroups[0]);
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
                 await result.current.removeFromGroup('card-3');
             });
 
-            expect(mockedCardGroupService.removeCardFromGroup).toHaveBeenCalledWith('card-3');
+            expect(mockRemoveCardFromGroup).toHaveBeenCalledWith('group-1', 'card-3');
+        });
+
+        it('is a no-op when the card is not currently in a group', async () => {
+            const { result } = renderHook(() =>
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
+            );
+
+            await act(async () => {
+                await result.current.removeFromGroup('card-1');
+            });
+
+            expect(mockRemoveCardFromGroup).not.toHaveBeenCalled();
         });
 
         it('should toggle group collapse state', async () => {
-            mockedCardGroupService.updateGroupCollapseState.mockResolvedValue();
-
-            let subscriptionCallback: ((groups: CardGroup[]) => void) | undefined;
-            mockedCardGroupService.subscribeToRetrospectiveGroups.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
+            mockSetGroupCollapse.mockResolvedValue({ ...mockGroups[0], isCollapsed: true });
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1', groups: mockGroups })
             );
-
-            // Set up groups first
-            act(() => {
-                subscriptionCallback?.(mockGroups);
-            });
 
             await act(async () => {
                 await result.current.toggleGroupCollapse('group-1');
             });
 
-            expect(mockedCardGroupService.updateGroupCollapseState).toHaveBeenCalledWith('group-1', true);
+            expect(mockSetGroupCollapse).toHaveBeenCalledWith('group-1', true);
         });
     });
 
@@ -289,11 +227,7 @@ describe('useCardGroups', () => {
             mockedSimilarityService.mockReturnValue(mockSuggestions);
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             const suggestions = result.current.findSuggestions({ threshold: 0.7 });
@@ -306,14 +240,10 @@ describe('useCardGroups', () => {
         });
 
         it('should accept a suggestion and create group', async () => {
-            mockedCardGroupService.createCardGroup.mockResolvedValue('suggestion-group-id');
+            mockCreateCardGroup.mockResolvedValue({ id: 'suggestion-group-id' });
 
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             const suggestion: GroupSuggestion = {
@@ -330,22 +260,12 @@ describe('useCardGroups', () => {
             });
 
             expect(groupId).toBe('suggestion-group-id');
-            expect(mockedCardGroupService.createCardGroup).toHaveBeenCalledWith(
-                'retro-1',
-                'card-1',
-                ['card-2', 'card-3'],
-                'user-1',
-                undefined
-            );
+            expect(mockCreateCardGroup).toHaveBeenCalledWith('retro-1', { headCardId: 'card-1', memberCardIds: ['card-2', 'card-3'], title: undefined });
         });
 
         it('should reject suggestion with insufficient cards', async () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             const suggestion: GroupSuggestion = {
@@ -366,24 +286,9 @@ describe('useCardGroups', () => {
 
     describe('Helper functions', () => {
         it('should get group by card ID', () => {
-            let subscriptionCallback: ((groups: CardGroup[]) => void) | undefined;
-            mockedCardGroupService.subscribeToRetrospectiveGroups.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1', groups: mockGroups })
             );
-
-            // Set up groups
-            act(() => {
-                subscriptionCallback?.(mockGroups);
-            });
 
             const group = result.current.getGroupByCardId('card-3');
             expect(group?.id).toBe('group-1');
@@ -393,24 +298,9 @@ describe('useCardGroups', () => {
         });
 
         it('should get cards in group', () => {
-            let subscriptionCallback: ((groups: CardGroup[]) => void) | undefined;
-            mockedCardGroupService.subscribeToRetrospectiveGroups.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1', groups: mockGroups })
             );
-
-            // Set up groups
-            act(() => {
-                subscriptionCallback?.(mockGroups);
-            });
 
             const groupCards = result.current.getCardsInGroup('group-1');
             expect(groupCards).toHaveLength(1);
@@ -419,11 +309,7 @@ describe('useCardGroups', () => {
 
         it('should get cards by column excluding grouped', () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             const wellCards = result.current.getCardsByColumn('helped', false);
@@ -436,11 +322,7 @@ describe('useCardGroups', () => {
 
         it('should get cards by column including grouped', () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             const improveCards = result.current.getCardsByColumn('hindered', true);
@@ -452,11 +334,7 @@ describe('useCardGroups', () => {
     describe('Validation and edge cases', () => {
         it('should throw error when creating group without retrospective ID', async () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: '',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: '', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
@@ -466,29 +344,9 @@ describe('useCardGroups', () => {
             });
         });
 
-        it('should throw error when creating group without current user', async () => {
-            const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: undefined
-                })
-            );
-
-            await act(async () => {
-                await expect(
-                    result.current.createGroup('card-1', ['card-2'])
-                ).rejects.toThrow('User not authenticated');
-            });
-        });
-
         it('should throw error when creating group without head card', async () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
@@ -500,11 +358,7 @@ describe('useCardGroups', () => {
 
         it('should throw error when creating group without member cards', async () => {
             const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
             await act(async () => {
@@ -512,58 +366,6 @@ describe('useCardGroups', () => {
                     result.current.createGroup('card-1', [])
                 ).rejects.toThrow('At least one member card is required');
             });
-        });
-    });
-
-    describe('Subscription handling', () => {
-        it('should handle subscription data with aggregations', () => {
-            let subscriptionCallback: ((groups: CardGroup[]) => void) | undefined;
-            mockedCardGroupService.subscribeToRetrospectiveGroups.mockImplementation((retroId, callback) => {
-                subscriptionCallback = callback;
-                return vi.fn();
-            });
-
-            mockedCardGroupService.calculateGroupAggregations.mockImplementation((group, cards) => ({
-                ...group,
-                totalVotes: cards.length * 2,
-                totalLikes: cards.length
-            }));
-
-            const { result } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
-            );
-
-            act(() => {
-                subscriptionCallback?.(mockGroups);
-            });
-
-            expect(result.current.groups).toHaveLength(1);
-            expect(result.current.loading).toBe(false);
-            expect(result.current.error).toBeNull();
-            expect(mockedCardGroupService.calculateGroupAggregations).toHaveBeenCalledWith(
-                mockGroups[0],
-                expect.any(Array)
-            );
-        });
-
-        it('should cleanup subscription on unmount', () => {
-            const mockUnsubscribe = vi.fn();
-            mockedCardGroupService.subscribeToRetrospectiveGroups.mockReturnValue(mockUnsubscribe);
-
-            const { unmount } = renderHook(() =>
-                useCardGroups({
-                    retrospectiveId: 'retro-1',
-                    cards: mockCards,
-                    currentUser: 'user-1'
-                })
-            );
-
-            unmount();
-            expect(mockUnsubscribe).toHaveBeenCalled();
         });
     });
 });
