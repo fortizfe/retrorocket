@@ -47,4 +47,13 @@ describe('toCard', () => {
         const grouped = { ...data, groupId: 'g1', isGroupHead: true, groupOrder: 0 };
         expect(toCard('c1', grouped)).toMatchObject({ groupId: 'g1', isGroupHead: true, groupOrder: 0 });
     });
+
+    it('maps createdByName when present (spec 020-user-display-name-fix)', () => {
+        const withName = { ...data, createdByName: 'Jane Smith' };
+        expect(toCard('c1', withName).createdByName).toBe('Jane Smith');
+    });
+
+    it('leaves createdByName undefined on a legacy document that predates this field', () => {
+        expect(toCard('c1', data).createdByName).toBeUndefined();
+    });
 });

@@ -109,6 +109,19 @@ describe('backendRetrospectiveClient', () => {
             });
             expect(created.id).toBe('c1');
         });
+
+        it('carries createdByName through onto the returned Card (spec 020-user-display-name-fix)', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 201, { ...cardDto, createdByName: 'Jane Smith' })));
+            const created = await createCard('r1', { content: 'hi', column: 'col1' });
+            expect(created.createdByName).toBe('Jane Smith');
+        });
+
+        it('leaves createdByName undefined when the DTO omits it (legacy card)', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 201, cardDto));
+            vi.stubGlobal('fetch', fetchMock);
+            const created = await createCard('r1', { content: 'hi', column: 'col1' });
+            expect(created.createdByName).toBeUndefined();
+        });
     });
 
     describe('editCard', () => {

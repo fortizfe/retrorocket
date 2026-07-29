@@ -185,6 +185,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
                 content: typeof body.content === 'string' ? body.content : '',
                 column: typeof body.column === 'string' ? body.column : '',
                 createdBy: session.sub,
+                createdByName: displayNameOf(session.user),
                 color: typeof body.color === 'string' ? body.color : undefined,
             },
         );

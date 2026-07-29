@@ -249,7 +249,8 @@
       "groupByUser": "Group by user",
       "groupCardsByCreator": "Group cards by creator",
       "suggestedGroupings": "Suggested groupings",
-      "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity"
+      "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity",
+      "unknownAuthor": "Unknown author"
     },
     "groupCard": {
       "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",

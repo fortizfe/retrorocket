@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
+import { signInWithGoogle, createBoard, TEST_USER_DISPLAY_NAME } from './fixtures/auth-helpers';
 import { LONG_URL, addCardToFirstColumn, cardByContent, expectNoHorizontalOverflow, openReactionPicker } from './fixtures/board';
 
 /** Critical flow: add a card, like (vote on) a card, and group cards in a column. */
@@ -23,6 +23,11 @@ test('user adds cards, likes a card, and groups cards by creator', async ({ page
     // container is a plain region (its drag handle is a separate button now), so it is
     // located by its test id + content rather than by role.
     const cardOne = cardByContent(page, 'Card one');
+
+    // spec 020-user-display-name-fix: the card's author label must show the
+    // creator's display name, never their raw Firebase uid.
+    await expect(cardOne.getByText(TEST_USER_DISPLAY_NAME)).toBeVisible();
+
     const likeButton = cardOne.getByRole('button', { name: /^\d+$/ });
     await expect(likeButton).toHaveText('0');
     await likeButton.click();
@@ -38,6 +43,10 @@ test('user adds cards, likes a card, and groups cards by creator', async ({ page
     await page.locator('[aria-label="Grouping options"]').first().click();
     await page.getByText('Agrupar por usuario', { exact: true }).click();
     await expect(page.getByText('2 tarjetas')).toBeVisible();
+
+    // spec 020-user-display-name-fix: the group header must show the creator's
+    // display name, never their raw Firebase uid.
+    await expect(page.getByRole('heading', { name: TEST_USER_DISPLAY_NAME })).toBeVisible();
 });
 
 /** US1 / SC-001: a card containing a very long URL wraps and does not overflow. */

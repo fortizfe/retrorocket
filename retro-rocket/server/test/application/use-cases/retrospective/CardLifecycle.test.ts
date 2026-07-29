@@ -10,13 +10,19 @@ function seededCard() {
 describe('createCard', () => {
     it('creates a card with the given content/column/color', async () => {
         const store = createRetrospectiveFakeStore();
-        const card = await createCard({ ...store }, { retrospectiveId: 'r1', content: 'hello', column: 'col1', createdBy: 'u1', color: 'pastelBlue' });
+        const card = await createCard({ ...store }, { retrospectiveId: 'r1', content: 'hello', column: 'col1', createdBy: 'u1', createdByName: 'Jane Smith', color: 'pastelBlue' });
         expect(card).toMatchObject({ content: 'hello', column: 'col1', createdBy: 'u1', color: 'pastelBlue', votes: 0 });
     });
 
     it('400s on empty content', async () => {
         const store = createRetrospectiveFakeStore();
-        await expect(createCard({ ...store }, { retrospectiveId: 'r1', content: '   ', column: 'col1', createdBy: 'u1' })).rejects.toThrow(AppError);
+        await expect(createCard({ ...store }, { retrospectiveId: 'r1', content: '   ', column: 'col1', createdBy: 'u1', createdByName: 'Jane Smith' })).rejects.toThrow(AppError);
+    });
+
+    it('forwards createdByName to cardPort.createCard so the author display name is captured at creation time', async () => {
+        const store = createRetrospectiveFakeStore();
+        const card = await createCard({ ...store }, { retrospectiveId: 'r1', content: 'hello', column: 'col1', createdBy: 'u1', createdByName: 'Jane Smith' });
+        expect(card.createdByName).toBe('Jane Smith');
     });
 });
 

@@ -1,4 +1,5 @@
 import { Card, EmojiReaction, Like, Reaction, GroupedReaction } from '@/features/boards/types/card';
+import { Participant } from '@/features/boards/types/participant';
 
 /**
  * Groups reactions by emoji and counts them
@@ -52,4 +53,20 @@ export const calculateNextOrder = (cards: Card[], column: string): number => {
  */
 export const sortCardsByOrder = (cards: Card[]): Card[] => {
     return [...cards].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+};
+
+/**
+ * Resolves a card author's display name for rendering: the name captured on the
+ * card at creation time, else a live match in the current participants list (by
+ * userId, not by name — keeps two same-named authors distinct), else the given
+ * fallback label. Never returns `card.createdBy` (the raw uid) itself.
+ */
+export const resolveAuthorDisplayName = (
+    card: Pick<Card, 'createdBy' | 'createdByName'>,
+    participants: Participant[] | undefined,
+    fallbackLabel: string
+): string => {
+    if (card.createdByName) return card.createdByName;
+    const participant = participants?.find(p => p.userId === card.createdBy);
+    return participant?.name ?? fallbackLabel;
 };

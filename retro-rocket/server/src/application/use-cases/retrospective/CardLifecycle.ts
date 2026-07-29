@@ -6,6 +6,7 @@ export interface CreateCardParams {
     content: string;
     column: string;
     createdBy: string;
+    createdByName: string;
     color?: string;
 }
 
@@ -21,6 +22,7 @@ export async function createCard(deps: { cardPort: CardPort }, params: CreateCar
         content,
         column: params.column,
         createdBy: params.createdBy,
+        createdByName: params.createdByName,
         color: params.color,
     });
 }

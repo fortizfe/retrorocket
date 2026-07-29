@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
 import { Card } from '@/features/boards/types/card';
+import { Participant } from '@/features/boards/types/participant';
 import { GroupingCriteria, DEFAULT_GROUPING_STATE, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 
 const mockSaveColumnGroupingState = vi.fn();
@@ -11,6 +12,12 @@ const mockSaveColumnGroupingState = vi.fn();
 // on mount; only the write path (saveColumnGroupingState) is mocked here.
 vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
     saveColumnGroupingState: (...args: unknown[]) => mockSaveColumnGroupingState(...args),
+}));
+
+// react-i18next's t() resolves the unknownAuthor fallback key used when a group's
+// author can't be resolved from createdByName or the live participants list.
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 describe('useColumnGrouping', () => {
@@ -201,19 +208,42 @@ describe('useColumnGrouping', () => {
             });
         });
 
-        it('should sort user groups alphabetically', () => {
+        it('should sort user groups alphabetically by resolved display name, not by raw uid', () => {
             const { result } = renderHook(() => useColumnGrouping());
 
+            // uids are deliberately in the opposite order from their display names,
+            // so a passing test proves sorting is name-based, not uid-based.
             const cardsWithMoreUsers: Card[] = [
-                { ...mockCards[0], createdBy: 'user-zorro' },
-                { ...mockCards[1], createdBy: 'user-alpha' },
-                { ...mockCards[2], createdBy: 'user-beta' }
+                { ...mockCards[0], createdBy: 'user-uid-3', createdByName: 'Zoe' },
+                { ...mockCards[1], createdBy: 'user-uid-1', createdByName: 'Alex' },
+                { ...mockCards[2], createdBy: 'user-uid-2', createdByName: 'Beth' }
             ];
 
             const grouped = result.current.groupCards(cardsWithMoreUsers, 'user');
             const groupKeys = Object.keys(grouped);
 
-            expect(groupKeys).toEqual(['user-alpha', 'user-beta', 'user-zorro']);
+            // Keys stay uid-based (uniqueness) but their insertion order follows the
+            // display-name sort: Alex, Beth, Zoe.
+            expect(groupKeys).toEqual(['user-uid-1', 'user-uid-2', 'user-uid-3']);
+        });
+
+        it('keeps two participants with the same display name in separate groups (uniqueness by uid, not by name)', () => {
+            const { result } = renderHook(() => useColumnGrouping());
+
+            const participants: Participant[] = [
+                { id: 'p1', userId: 'user-a', name: 'Sam Lee', retrospectiveId: 'r1', joinedAt: new Date() },
+                { id: 'p2', userId: 'user-b', name: 'Sam Lee', retrospectiveId: 'r1', joinedAt: new Date() },
+            ];
+            const cards: Card[] = [
+                { ...mockCards[0], id: 'a1', createdBy: 'user-a', createdByName: undefined },
+                { ...mockCards[1], id: 'b1', createdBy: 'user-b', createdByName: undefined },
+            ];
+
+            const grouped = result.current.groupCards(cards, 'user', participants);
+
+            expect(Object.keys(grouped)).toEqual(['user-a', 'user-b']);
+            expect(grouped['user-a']).toEqual([cards[0]]);
+            expect(grouped['user-b']).toEqual([cards[1]]);
         });
 
         it('should handle suggestions criteria as ungrouped', () => {

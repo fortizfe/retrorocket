@@ -17,7 +17,7 @@ import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/ty
 import { Participant } from '@/features/boards/types/participant';
 
 import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
-import { groupReactions, hasUserLiked } from '@/lib/utils/cardHelpers';
+import { groupReactions, hasUserLiked, resolveAuthorDisplayName } from '@/lib/utils/cardHelpers';
 import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
@@ -228,7 +228,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     {/* Header autor y sentimiento */}
                     <div className="flex items-center justify-between gap-2 mb-1">
                         <CardHeader
-                            author={card.createdBy}
+                            author={resolveAuthorDisplayName(card, participants, t('retrospective.grouping.unknownAuthor'))}
                             badge={sentimentBadge}
                         />
                         <div className="flex items-center gap-1 shrink-0">
