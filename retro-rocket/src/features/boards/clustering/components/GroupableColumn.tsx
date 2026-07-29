@@ -103,8 +103,8 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     // Process ungrouped cards with grouping - using useMemo to trigger re-render when state changes
     const processedUngroupedCards = React.useMemo(() => {
-        return processCards(ungroupedCards, column.id);
-    }, [processCards, ungroupedCards, columnState.criteria, column.id]);
+        return processCards(ungroupedCards, column.id, participants);
+    }, [processCards, ungroupedCards, columnState.criteria, column.id, participants]);
 
     const handleCreateCard = async () => {
         if (!newCardContent.trim() || !currentUser) {

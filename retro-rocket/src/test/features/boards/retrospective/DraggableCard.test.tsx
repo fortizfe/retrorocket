@@ -126,12 +126,18 @@ vi.mock('@/features/boards/retrospective/components/CardMenu', () => ({
     ),
 }));
 
-// Mock card helpers
-vi.mock('@/lib/utils/cardHelpers', () => ({
-    groupReactions: vi.fn(() => ({})),
-    hasUserLiked: vi.fn(() => false),
-    getUserReaction: vi.fn(() => null),
-}));
+// Mock card helpers, keeping the real resolveAuthorDisplayName so these tests
+// exercise the actual author-name resolution (spec 020-user-display-name-fix)
+// rather than a stand-in.
+vi.mock('@/lib/utils/cardHelpers', async () => {
+    const actual = await vi.importActual<typeof import('@/lib/utils/cardHelpers')>('@/lib/utils/cardHelpers');
+    return {
+        ...actual,
+        groupReactions: vi.fn(() => ({})),
+        hasUserLiked: vi.fn(() => false),
+        getUserReaction: vi.fn(() => null),
+    };
+});
 
 // Mock card colors
 vi.mock('@/lib/utils/cardColors', () => ({
@@ -470,6 +476,32 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} currentUser="user2" />);
 
             expect(screen.queryByLabelText('retrospective.card.deleteCard')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Author display name (spec 020-user-display-name-fix)', () => {
+        it('resolves the author label from the live participants list when createdByName is absent (legacy card)', () => {
+            const legacyCard = { ...mockCard, createdBy: 'user1', createdByName: undefined };
+            render(<DraggableCard {...defaultProps} card={legacyCard} />);
+
+            expect(screen.getByText('User One')).toBeInTheDocument();
+            expect(screen.queryByText('user1')).not.toBeInTheDocument();
+        });
+
+        it('shows the captured createdByName even when the author has left (no longer in participants)', () => {
+            const cardWithCapturedName = { ...mockCard, createdBy: 'departed-uid', createdByName: 'Departed Person' };
+            render(<DraggableCard {...defaultProps} card={cardWithCapturedName} participants={mockParticipants} />);
+
+            expect(screen.getByText('Departed Person')).toBeInTheDocument();
+            expect(screen.queryByText('departed-uid')).not.toBeInTheDocument();
+        });
+
+        it('shows the localized fallback label for a legacy card whose author is no longer resolvable at all', () => {
+            const unresolvableCard = { ...mockCard, createdBy: 'departed-uid', createdByName: undefined };
+            render(<DraggableCard {...defaultProps} card={unresolvableCard} participants={mockParticipants} />);
+
+            expect(screen.getByText('retrospective.grouping.unknownAuthor')).toBeInTheDocument();
+            expect(screen.queryByText('departed-uid')).not.toBeInTheDocument();
         });
     });
 

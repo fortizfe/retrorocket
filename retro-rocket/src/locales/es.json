@@ -307,7 +307,8 @@
       "groupByUser": "Agrupar por usuario",
       "groupCardsByCreator": "Agrupar tarjetas por creador",
       "suggestedGroupings": "Agrupaciones sugeridas",
-      "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud"
+      "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud",
+      "unknownAuthor": "Sin autor"
     },
     "facilitator": {
       "menu": "Facilitador",

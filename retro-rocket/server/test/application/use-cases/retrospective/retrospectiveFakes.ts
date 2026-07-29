@@ -199,6 +199,7 @@ export function createRetrospectiveFakeStore(seed: {
                 content: input.content,
                 column: input.column,
                 createdBy: input.createdBy,
+                createdByName: input.createdByName,
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 retrospectiveId: input.retrospectiveId,

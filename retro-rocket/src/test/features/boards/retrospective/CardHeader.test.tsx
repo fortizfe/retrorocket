@@ -24,6 +24,13 @@ describe('CardHeader', () => {
         const { container } = render(<CardHeader author="Bob" />);
         expect(container.firstChild).toHaveClass('text-text-muted');
     });
+
+    it('renders whatever author string it is given verbatim, with no lookup/resolution logic of its own (spec 020-user-display-name-fix)', () => {
+        // CardHeader must stay presentational — resolving a uid to a display name
+        // is the caller's responsibility (resolveAuthorDisplayName), not this component's.
+        render(<CardHeader author="uid-abc123-not-a-real-name" />);
+        expect(screen.getByText('uid-abc123-not-a-real-name')).toBeInTheDocument();
+    });
 });
 
 describe('CardVoteControl', () => {

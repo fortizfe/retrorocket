@@ -103,6 +103,15 @@ describe('POST /api/retrospectives/:id/cards', () => {
         expect(res.body).toMatchObject({ content: 'Great sprint', column: 'col1', createdBy: 'u1' });
     });
 
+    it('captures the caller\'s display name as createdByName (spec 020-user-display-name-fix)', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
+        const res = await request(app)
+            .post('/api/retrospectives/r1/cards')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ content: 'Great sprint', column: 'col1' });
+        expect(res.body.createdByName).toBe('User u1');
+    });
+
     it('401s without a session cookie', async () => {
         const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
         const res = await request(app).post('/api/retrospectives/r1/cards').send({ content: 'x', column: 'col1' });

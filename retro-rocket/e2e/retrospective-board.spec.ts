@@ -358,11 +358,52 @@ test('grouping cards, adding/removing a member, and disbanding propagate live to
     await contextB.close();
 });
 
+// spec 020-user-display-name-fix: group-by-user headers must show each author's
+// display name, sorted alphabetically, and never the raw Firebase uid — regression
+// coverage for the bug where the group heading (and the per-card author label)
+// rendered the internal uid instead of a human-readable name.
+test('group-by-user headers show participant display names in alphabetical order, never raw uids', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner24@example.com', 'Zoe Yamamoto', 'E2E Alphabetical Grouping Board');
+    const ownerCardRes = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Owner Card', column: 'helped' } });
+    expect(ownerCardRes.ok()).toBeTruthy();
+    const { createdBy: ownerUid } = (await ownerCardRes.json()) as { createdBy: string; createdByName: string };
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant24@example.com', 'Alex Chen');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Alphabetical Grouping Board')).toBeVisible({ timeout: 30_000 });
+
+    const participantCardRes = await pageB.request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Participant Card', column: 'helped' } });
+    expect(participantCardRes.ok()).toBeTruthy();
+    const { createdBy: participantUid } = (await participantCardRes.json()) as { createdBy: string; createdByName: string };
+
+    // Default column state is 'user' grouping (DEFAULT_GROUPING_STATE) — reload to
+    // pick up both newly-created cards' groups.
+    await pageB.reload();
+    await expect(pageB.getByText('E2E Alphabetical Grouping Board')).toBeVisible({ timeout: 30_000 });
+
+    const alexHeading = pageB.getByRole('heading', { name: 'Alex Chen' });
+    const zoeHeading = pageB.getByRole('heading', { name: 'Zoe Yamamoto' });
+    await expect(alexHeading).toBeVisible({ timeout: 10_000 });
+    await expect(zoeHeading).toBeVisible({ timeout: 10_000 });
+
+    // Neither raw uid is ever rendered anywhere on the board.
+    await expect(pageB.getByText(ownerUid, { exact: true })).toHaveCount(0);
+    await expect(pageB.getByText(participantUid, { exact: true })).toHaveCount(0);
+
+    // "Alex Chen" (A) sorts before "Zoe Yamamoto" (Z) among the group headings.
+    const headingTexts = await pageB.getByRole('heading').allTextContents();
+    expect(headingTexts.indexOf('Alex Chen')).toBeLessThan(headingTexts.indexOf('Zoe Yamamoto'));
+
+    await contextB.close();
+});
+
 test('the column-grouping preference propagates live to a second participant', async ({ browser, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner14@example.com', 'E2E Retro Owner 14', 'E2E Column Grouping Live Board');
     const createRes = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Column Grouping Card', column: 'helped' } });
     expect(createRes.ok()).toBeTruthy();
-    const { createdBy } = (await createRes.json()) as { createdBy: string };
+    const { createdByName } = (await createRes.json()) as { createdByName: string };
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -376,11 +417,12 @@ test('the column-grouping preference propagates live to a second participant', a
     await pageB.goto(`/retro/${boardId}`);
     await expect(pageB.getByText('E2E Column Grouping Live Board')).toBeVisible({ timeout: 30_000 });
 
-    // The card itself also displays its author's uid as an attribution label, so
-    // scope the assertion to the group heading specifically (an <h4>, GroupedCardList
-    // .tsx) rather than a bare getByText(createdBy), which would also match that
-    // unrelated label and make a strict-mode locator ambiguous.
-    const groupHeading = pageB.getByRole('heading', { name: createdBy });
+    // The card itself also displays its author's display name as an attribution
+    // label (spec 020-user-display-name-fix), so scope the assertion to the group
+    // heading specifically (an <h4>, GroupedCardList.tsx) rather than a bare
+    // getByText(createdByName), which would also match that unrelated label and
+    // make a strict-mode locator ambiguous.
+    const groupHeading = pageB.getByRole('heading', { name: createdByName });
 
     // The column's default state ('user' grouping, DEFAULT_GROUPING_STATE) already
     // renders a creator heading, so first switch to 'none' to get an observable

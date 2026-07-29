@@ -22,6 +22,11 @@ export interface CardDTO {
     content: string;
     column: string;
     createdBy: string;
+    /** Author's display name, captured at creation time. Absent on cards created
+     * before this field existed ("legacy cards") — callers must resolve those via
+     * a live participants lookup, then a generic fallback label; never render
+     * `createdBy` directly (spec 020-user-display-name-fix). */
+    createdByName?: string;
     createdAt: Date;
     updatedAt: Date;
     retrospectiveId: string;
@@ -40,6 +45,9 @@ export interface CreateCardInput {
     content: string;
     column: string;
     createdBy: string;
+    /** Server-derived from the session (never client-supplied) — same trust model
+     * as `createdBy` (spec 020-user-display-name-fix). */
+    createdByName: string;
     color?: string;
 }
 

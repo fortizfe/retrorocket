@@ -95,6 +95,10 @@ export interface Card {
     content: string;
     column: string; // Changed from ColumnType to string for dynamic column support
     createdBy: string;
+    /** Author's display name, captured at creation time. Absent on cards created
+     * before this field existed ("legacy cards") — resolve those via
+     * resolveAuthorDisplayName (cardHelpers.ts), never render createdBy directly. */
+    createdByName?: string;
     createdAt: Date;
     updatedAt: Date;
     retrospectiveId: string;
