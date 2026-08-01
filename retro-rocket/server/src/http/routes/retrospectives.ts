@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { ActionItemPort } from '../../application/ports/actionItems';
 import type { CardGroupPort, CardPort } from '../../application/ports/cards';
@@ -147,15 +147,19 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
     const router = Router();
 
     // Same rationale as boardsLimiter/profileLimiter — blunt brute-force/resource-
-    // exhaustion protection within Vercel's free-tier request budget. Skipped in
-    // testMode (never production) for the same reason as boards.ts's boardsLimiter.
+    // exhaustion protection within Vercel's free-tier request budget, now keyed by
+    // session identity (falling back to the trust-proxy-aware IP) via rateLimiting.ts
+    // so a reconnect storm from one participant cannot throttle another's (research.md
+    // §1, US3, FR-002, FR-010). Skipped in testMode (never production) for the same
+    // reason as boards.ts's boardsLimiter.
     if (!deps.testMode) {
-        const retrospectiveLimiter = rateLimit({
+        const retrospectiveLimiter = createRateLimiter({
+            sessionService: deps.sessionService,
+            clock: deps.clock,
             windowMs: 15 * 60 * 1000,
-            limit: 300,
-            standardHeaders: 'draft-7',
-            legacyHeaders: false,
-            validate: false,
+            limit: 400, // per identity per window — this screen's REST resync (on every WS
+            // reconnect) plus ordinary card/group/timer activity is the highest-volume
+            // router, resized above auth/boards/profile's 150 accordingly
         });
         router.use(retrospectiveLimiter);
     }

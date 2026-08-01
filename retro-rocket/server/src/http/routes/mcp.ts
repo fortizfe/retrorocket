@@ -112,13 +112,24 @@ export function mcpRouter(deps: McpRouterDeps): Router {
     const router = Router();
 
     // Same rationale as auth.ts's authLimiter: blunt brute-force/resource exhaustion
-    // within Vercel's free-tier request budget (FR-015, FR-016).
+    // within Vercel's free-tier request budget (FR-015, FR-016). Unlike
+    // auth/boards/profile/retrospectives, these two stay IP-keyed (the default
+    // `express-rate-limit` behavior) rather than switching to rateLimiting.ts's
+    // session-first resolver: both routes are authenticated by an MCP client
+    // (OAuth token exchange / Bearer access token), never by the browser's rr_session
+    // cookie, so there is no session identity to key on here. What both already needed
+    // — and tokenLimiter was still missing — is app.ts's trust-proxy fix (T005, which
+    // benefits every router including this one for free) plus the same ApiErrorBody
+    // envelope every other limiter in the app returns (FR-004) (021, research.md §1).
     const tokenLimiter = rateLimit({
         windowMs: 15 * 60 * 1000,
         limit: 60,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: false,
+        handler: (_req, res) => {
+            res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests — please wait a moment and try again.' }, correlationId: correlationOf(res) });
+        },
     });
     const toolLimiter = rateLimit({
         windowMs: 60 * 1000,

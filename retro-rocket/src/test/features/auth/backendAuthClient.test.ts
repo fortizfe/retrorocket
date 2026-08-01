@@ -32,18 +32,39 @@ describe('backendAuthClient', () => {
         expect(fetch).toHaveBeenCalledWith('/api/auth/session', { credentials: 'include' });
     });
 
-    it('fetchSession returns unauthenticated on a non-OK response or network error', async () => {
-        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false }) as unknown as Response));
+    it('fetchSession returns unauthenticated on a 401 (genuinely signed out) or a network error', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 401 }) as unknown as Response));
         expect(await fetchSession()).toEqual({ authenticated: false, user: null, firebaseCustomToken: null });
         vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
         expect(await fetchSession()).toEqual({ authenticated: false, user: null, firebaseCustomToken: null });
     });
 
-    it('bootstrapSession signs into Firebase with the custom token when authenticated', async () => {
+    // US1/FR-004: a 429 must never be silently treated as "signed out" — that hides the real
+    // cause from the user and is exactly the reported "can't even log in" symptom's UX gap.
+    it('fetchSession throws (does not silently report unauthenticated) on a 429 rate-limited response', async () => {
+        const body = { error: { code: 'rate_limited', message: 'Too many requests — please wait a moment and try again.' }, correlationId: 'cid-1' };
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429, json: async () => body }) as unknown as Response));
+
+        await expect(fetchSession()).rejects.toThrow('Too many requests — please wait a moment and try again.');
+    });
+
+    it('bootstrapSession propagates the 429 error rather than swallowing it', async () => {
+        const body = { error: { code: 'rate_limited', message: 'Too many requests — please wait a moment and try again.' }, correlationId: 'cid-1' };
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 429, json: async () => body }) as unknown as Response));
+
+        await expect(bootstrapSession()).rejects.toThrow('Too many requests — please wait a moment and try again.');
+        expect(signInWithCustomToken).not.toHaveBeenCalled();
+    });
+
+    // 021, research.md §4: once no browser code depends on an authenticated Firebase client
+    // context (the columns listener and the participant-photo cache — both removed), this
+    // call serves no purpose and is itself a direct browser-to-Firebase request (FR-005).
+    it('bootstrapSession does NOT sign into Firebase, even when the backend session is authenticated', async () => {
         const body = { authenticated: true, user: { uid: 'u1' }, firebaseCustomToken: 'ct-123' };
         vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => body }) as unknown as Response));
-        await bootstrapSession();
-        expect(signInWithCustomToken).toHaveBeenCalledWith({}, 'ct-123');
+        const result = await bootstrapSession();
+        expect(signInWithCustomToken).not.toHaveBeenCalled();
+        expect(result).toEqual(body);
     });
 
     it('bootstrapSession does not sign in when unauthenticated', async () => {

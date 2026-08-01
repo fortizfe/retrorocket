@@ -43,6 +43,9 @@ export function buildMcpTestApp(options: McpTestAppOptions = {}): { app: Express
     };
 
     const app = express();
+    // Mirrors createApp()'s trust-proxy setting (server/src/http/app.ts) so IP-keyed
+    // rate-limit behavior in tests reflects the real, single-Vercel-hop configuration.
+    app.set('trust proxy', 1);
     app.use(express.json());
     app.use(correlationId());
     app.use(mcpRouter(deps));

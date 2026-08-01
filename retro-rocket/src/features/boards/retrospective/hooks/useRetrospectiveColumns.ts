@@ -1,7 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { db, FIRESTORE_COLLECTIONS } from '@/lib/services/firebase';
 
 export interface RetrospectiveColumn {
     id: string;
@@ -34,17 +32,24 @@ export function getColumnRole(columnId: string): ColumnRole {
     return 'neutral';
 }
 
-export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
-    const [columns, setColumns] = useState<RetrospectiveColumn[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+/**
+ * Derives the board's column configuration/order/action-column from the `columns` already
+ * present in the board state fetched once by useRetrospectiveRealtimeSync
+ * (GET /api/retrospectives/:id) and passed down as a prop (021, research.md §2). Columns are
+ * static after board creation (019 already made this observation when scoping the prior
+ * live-listener out), so a pure, synchronous derivation replaces what used to be this hook's
+ * own standing Firestore `onSnapshot` connection — the reason a "channel" request stayed open
+ * for the entire time a board was open in a browser tab.
+ */
+export function useRetrospectiveColumns(columns: RetrospectiveColumn[] | undefined) {
     const { t } = useTranslation();
+    const cols = columns ?? [];
 
     // Convert RetrospectiveColumn to DynamicColumnConfig for compatibility with existing components
     const columnConfigs = useMemo((): Record<string, DynamicColumnConfig> => {
         const configs: Record<string, DynamicColumnConfig> = {};
 
-        columns.forEach(column => {
+        cols.forEach(column => {
             // Migration compatibility: handle old i18n keys without 'retrospective.' prefix
             let i18nKey = column.i18nKey;
             if (i18nKey.startsWith('columns.')) {
@@ -66,72 +71,24 @@ export function useRetrospectiveColumns(retrospectiveId: string | undefined) {
         });
 
         return configs;
-    }, [columns, t]);
+    }, [cols, t]);
 
     const columnOrder = useMemo((): string[] => {
-        return columns
+        return cols
             .filter(col => col.type === 'regular')
             .sort((a, b) => a.order - b.order)
             .map(col => col.id);
-    }, [columns]);
+    }, [cols]);
 
     const actionColumn = useMemo((): RetrospectiveColumn | null => {
-        return columns.find(col => col.type === 'action') || null;
-    }, [columns]);
-
-    useEffect(() => {
-        if (!retrospectiveId || !db) {
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        const columnsRef = collection(db, FIRESTORE_COLLECTIONS.RETROSPECTIVES, retrospectiveId, 'columns');
-        const columnsQuery = query(columnsRef, orderBy('order', 'asc'));
-
-        const unsubscribe = onSnapshot(
-            columnsQuery,
-            (snapshot) => {
-                const columnsData: RetrospectiveColumn[] = [];
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-
-                    columnsData.push({
-                        id: doc.id,
-                        i18nKey: data.i18nKey,
-                        type: data.type || 'regular',
-                        order: data.order || 0,
-                        defaultColor: data.defaultColor || 'bg-slate-50 dark:bg-slate-900/40'
-                    });
-                });
-
-                setColumns(columnsData);
-                setLoading(false);
-            },
-            (error) => {
-                console.error('Error fetching retrospective columns:', error);
-                setError('Failed to load columns');
-                setLoading(false);
-            }
-        );
-
-        return () => {
-            if (typeof unsubscribe === 'function') {
-                unsubscribe();
-            }
-        };
-    }, [retrospectiveId]);
+        return cols.find(col => col.type === 'action') || null;
+    }, [cols]);
 
     return {
-        columns,
+        columns: cols,
         columnConfigs,
         columnOrder,
         actionColumn,
-        loading,
-        error
     };
 }
 

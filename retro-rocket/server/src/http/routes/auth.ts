@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rateLimiting';
 import type {
     ClockPort,
     IdentityStorePort,
@@ -55,23 +55,24 @@ export function authRouter(deps: AuthRouterDeps): Router {
     const errorRedirect = deps.signInErrorRedirect ?? '/';
 
     // Throttle auth endpoints to blunt brute-force / resource-exhaustion attempts. Applied
-    // to every /api/auth/* route below. Note: serverless instances each hold their own
-    // in-memory window, so this is per-instance; Vercel's platform DDoS protection sits in
-    // front, and a shared store (e.g. Redis) can be added later for global limits.
+    // to every /api/auth/* route below. Keyed by session identity when a valid rr_session
+    // cookie is present, falling back to the (trust-proxy-aware, app.ts) client IP for
+    // pre-session routes like /api/auth/login/:provider — see rateLimiting.ts and
+    // research.md §1. This is per-instance (Vercel's platform DDoS protection sits in front;
+    // a shared store such as Redis can be added later for global limits).
     //
     // Skipped entirely when testMode is on: that flag is exclusively for the emulator-backed
     // local/CI E2E run (never production — see auth-wiring.ts), where every spec's
     // /api/auth/test-login call plus every page load's /api/auth/session check share one
     // long-lived dev-server process and the same window, so the full suite's cumulative
-    // request volume can legitimately exceed 100/15min without any real abuse occurring.
+    // request volume can legitimately exceed the limit without any real abuse occurring.
     if (!deps.testMode) {
-        const authLimiter = rateLimit({
+        const authLimiter = createRateLimiter({
+            sessionService: deps.sessionService,
+            clock: deps.clock,
             windowMs: 15 * 60 * 1000, // 15 minutes
-            limit: 100, // per IP per window
-            standardHeaders: 'draft-7',
-            legacyHeaders: false,
-            // Trust-proxy/IP validations are noisy and not applicable to the serverless model.
-            validate: false,
+            limit: 150, // per identity per window — resized for a 10-participant team's steady
+            // state plus reconnect churn now that identity attribution is correct (research.md §1)
         });
         router.use(authLimiter);
     }

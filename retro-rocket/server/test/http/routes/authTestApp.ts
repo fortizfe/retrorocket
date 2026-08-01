@@ -26,6 +26,9 @@ export function buildAuthTestApp(overrides: Partial<AuthRouterDeps> = {}): Expre
     };
 
     const app = express();
+    // Mirrors createApp()'s trust-proxy setting (server/src/http/app.ts) so IP-keyed rate-limit
+    // behavior in tests reflects the real, single-Vercel-hop production configuration.
+    app.set('trust proxy', 1);
     app.use(express.json());
     app.use(correlationId());
     app.use(authRouter(deps));

@@ -12,13 +12,12 @@ import { signInWithGoogle, signInAs, TEST_USER_DISPLAY_NAME, TEST_USER_EMAIL } f
  */
 
 // This E2E suite runs the real app against the local Firebase Emulator Suite
-// (playwright.config.ts): the frontend's Firestore client SDK is wired to
-// localhost:8080 (connectFirestoreEmulator, src/lib/services/firebase.ts), so a
-// browser-side Firestore call shows up as a request to that port, not to
-// firestore.googleapis.com (which is what it would hit in production). Deliberately
-// narrower than the Auth Emulator (localhost:9099), which bootstrapSession()'s
-// signInWithCustomToken() and signOutUser() are expected to keep using
-// (research.md §5, §14) — this pattern only targets Firestore.
+// (playwright.config.ts). Historically the frontend's Firestore client SDK was wired to
+// localhost:8080 (connectFirestoreEmulator), so a browser-side Firestore call would show
+// up as a request to that port rather than firestore.googleapis.com (production). As of
+// 021 (research.md §3/§4), src/lib/services/firebase.ts no longer initializes a Firestore
+// client at all — this pattern is kept broad (both hosts) as a standing regression guard
+// in case one is ever reintroduced.
 const FIRESTORE_HOST_PATTERN = /firestore\.googleapis\.com|localhost:8080/;
 
 /** Collects request URLs matching a direct browser-to-Firestore call. */
@@ -42,8 +41,8 @@ test('an existing user sees their correct profile fields, with zero direct Fireb
     await expect(page.getByText(TEST_USER_EMAIL)).toBeVisible();
     await expect(page.getByText('Miembro desde')).toBeVisible();
 
-    // The one-time signInWithCustomToken call from bootstrapSession() is expected and
-    // out of scope (research.md §5); nothing else on this screen should reach Firebase.
+    // 021, research.md §4: bootstrapSession() no longer calls signInWithCustomToken at
+    // all — nothing on this screen should reach Firebase, full stop.
     expect(firestoreHits).toEqual([]);
 });
 

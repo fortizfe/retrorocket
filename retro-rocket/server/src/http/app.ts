@@ -34,6 +34,13 @@ export function createApp(deps: AppDeps): Express {
     const { config, observability } = deps;
     const app = express();
 
+    // Vercel's edge network sits in front of this Function as a single proxy hop, setting
+    // X-Forwarded-For to the real client's address. Without trusting that one hop, Express's
+    // req.ip falls back to the connecting socket's own address (the proxy's, not the client's),
+    // collapsing every distinct user into the same address for IP-keyed rate limiting — the
+    // root cause of the shared-bucket 429s fixed by this feature (research.md §1, FR-002).
+    app.set('trust proxy', 1);
+
     app.disable('x-powered-by');
     app.use(express.json());
     app.use(correlationId());

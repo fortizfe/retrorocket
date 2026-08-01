@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { ProfilePort, ProfileRecord } from '../../application/ports/profile';
 import type { PublicUser } from '../../domain/auth/types';
@@ -51,14 +51,14 @@ export function profileRouter(deps: ProfileRouterDeps): Router {
     const router = Router();
 
     // Same rationale as boards.ts's boardsLimiter — see that file's comment for the
-    // testMode skip's justification (shared emulator-backed E2E run/session).
+    // testMode skip's justification (shared emulator-backed E2E run/session) and
+    // rateLimiting.ts for the session-first/trust-proxy-aware keying (021, research.md §1).
     if (!deps.testMode) {
-        const profileLimiter = rateLimit({
+        const profileLimiter = createRateLimiter({
+            sessionService: deps.sessionService,
+            clock: deps.clock,
             windowMs: 15 * 60 * 1000,
-            limit: 100,
-            standardHeaders: 'draft-7',
-            legacyHeaders: false,
-            validate: false,
+            limit: 150,
         });
         router.use(profileLimiter);
     }

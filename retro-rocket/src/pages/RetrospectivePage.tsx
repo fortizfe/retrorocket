@@ -149,6 +149,7 @@ const RetrospectivePageContent: React.FC = () => {
                         cards={(board?.cards ?? []) as unknown as Card[]}
                         typingStatuses={typingStatuses}
                         groups={(board?.groups ?? []) as unknown as CardGroup[]}
+                        columns={board?.columns ?? []}
                         columnGroupingStates={board?.columnGroupingStates}
                         timer={board?.timer ?? null}
                         myFacilitatorNotes={board?.myFacilitatorNotes ?? []}
