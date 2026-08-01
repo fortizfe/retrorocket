@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { ProfilePort, ProfileRecord } from '../../application/ports/profile';
+import type { ParticipantPort } from '../../application/ports/retrospective';
 import type { PublicUser } from '../../domain/auth/types';
 import { AppError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
@@ -10,6 +11,7 @@ import { updateDisplayName as updateDisplayNameUseCase } from '../../application
 
 export interface ProfileRouterDeps {
     profilePort: ProfilePort;
+    participantPort: ParticipantPort;
     sessionService: SessionServicePort;
     clock: ClockPort;
     /** Skips profileLimiter, mirroring boards.ts's testMode. MUST be false in production. */
@@ -82,7 +84,7 @@ export function profileRouter(deps: ProfileRouterDeps): Router {
         const session = await requireSession(req, deps);
         const body = req.body as { displayName?: unknown };
         const profile = await updateDisplayNameUseCase(
-            { profilePort: deps.profilePort },
+            { profilePort: deps.profilePort, participantPort: deps.participantPort },
             { uid: session.sub, displayName: typeof body.displayName === 'string' ? body.displayName : '' },
         );
         res.status(200).json(serializeProfile(profile));

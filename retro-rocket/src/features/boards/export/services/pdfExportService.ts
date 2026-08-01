@@ -12,10 +12,22 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { SentimentResult } from '@/features/boards/types/sentiment';
 import { TeamMoodReport } from '@/features/boards/types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
 import { getCardColorHex } from '@/lib/utils/cardColors';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
+
+/**
+ * Resolves a card's author line for the PDF's card footer. Exported (alongside the
+ * `createCard` closure that uses it) so its resolution behavior can be unit-tested
+ * directly — the surrounding `createRetrospectivePDF` document tree is otherwise only
+ * exercised end-to-end via `exportRetrospectiveToPdf` (022, FR-005, SC-001).
+ */
+export function buildCardAuthorLine(card: Pick<Card, 'createdBy' | 'createdByName'>, participants: Participant[] | undefined): string {
+    return `ℹ️ Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, 'Anónimo')}`;
+}
 
 // Registra la fuente de emojis (esto se hace una sola vez en tu aplicación)
 Font.registerEmojiSource({
@@ -39,7 +51,7 @@ export interface RetrospectiveExportData {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
     // New sentiment data
@@ -590,7 +602,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
                 React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
                     React.createElement(View, { key: 'left', style: styles.cardMetaLeft }, [
                         React.createElement(Text, { key: 'author' },
-                            `ℹ️ Autor: ${card.createdBy || 'Anónimo'}`
+                            buildCardAuthorLine(card, data.participants)
                         ),
                         React.createElement(Text, { key: 'votes' },
                             `🗳️ Votos: ${card.likes?.length ?? 0}`

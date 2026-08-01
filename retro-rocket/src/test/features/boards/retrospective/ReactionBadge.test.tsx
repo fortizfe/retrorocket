@@ -12,7 +12,7 @@ vi.mock('framer-motion', () => ({
     },
 }));
 
-const reaction: GroupedReaction = { emoji: '😀', count: 3, users: ['a', 'b', 'c'] };
+const reaction: GroupedReaction = { emoji: '😀', count: 3, users: ['a', 'b', 'c'], userIds: ['a-id', 'b-id', 'c-id'] };
 
 describe('ReactionBadge', () => {
     it('shows the emoji and count', () => {

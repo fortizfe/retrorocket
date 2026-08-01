@@ -80,6 +80,7 @@ describe('EmojiReactions Component', () => {
                 emoji: '😄',
                 count: 2,
                 users: ['Alice', 'Bob'],
+                userIds: ['alice-id', 'bob-id'],
             },
         ];
 
@@ -94,12 +95,13 @@ describe('EmojiReactions Component', () => {
         expect(screen.getByText('2')).toBeInTheDocument();
     });
 
-    it('highlights user reactions when user is in users array', () => {
+    it('highlights user reactions when the current user is in userIds (not by matching the display name)', () => {
         const groupedReactions: GroupedReaction[] = [
             {
                 emoji: '😄',
                 count: 1,
-                users: ['testuser'], // Current user has reacted
+                users: ['Test User'], // resolved display name — deliberately different from currentUserId
+                userIds: ['testuser'], // Current user has reacted
             },
         ];
 
@@ -118,17 +120,44 @@ describe('EmojiReactions Component', () => {
         expect(reactionButton).toHaveClass('border-info-fg');
     });
 
+    it('does NOT highlight a reaction merely because a resolved display name happens to equal currentUserId (regression: self-detection must key off userIds, never users)', () => {
+        const groupedReactions: GroupedReaction[] = [
+            {
+                emoji: '😄',
+                count: 1,
+                users: ['testuser'], // a resolved display name that happens to match currentUserId's string
+                userIds: ['someone-elses-uid'], // but the reactor is NOT the current user
+            },
+        ];
+
+        render(
+            <EmojiReactions
+                {...defaultProps}
+                groupedReactions={groupedReactions}
+            />
+        );
+
+        const reactionButtons = screen.getAllByRole('button');
+        const reactionButton = reactionButtons.find(button =>
+            button.textContent?.includes('😄')
+        );
+
+        expect(reactionButton).not.toHaveClass('border-info-fg');
+    });
+
     it('handles multiple reactions correctly', () => {
         const groupedReactions: GroupedReaction[] = [
             {
                 emoji: '😄',
                 count: 3,
                 users: ['Alice', 'Bob', 'Charlie'],
+                userIds: ['alice-id', 'bob-id', 'charlie-id'],
             },
             {
                 emoji: '👍',
                 count: 1,
                 users: ['Dave'],
+                userIds: ['dave-id'],
             },
         ];
 
@@ -191,7 +220,8 @@ describe('EmojiReactions Component', () => {
             {
                 emoji: '😄',
                 count: 1,
-                users: ['testuser'], // Current user has reacted
+                users: ['Test User'],
+                userIds: ['testuser'], // Current user has reacted
             },
         ];
 
@@ -222,7 +252,8 @@ describe('EmojiReactions Component', () => {
             {
                 emoji: '😄',
                 count: 1,
-                users: ['otheruser'], // Other user has reacted, not current user
+                users: ['Other User'],
+                userIds: ['otheruser'], // Other user has reacted, not current user
             },
         ];
 

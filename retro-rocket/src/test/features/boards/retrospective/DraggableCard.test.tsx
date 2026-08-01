@@ -505,6 +505,24 @@ describe('DraggableCard', () => {
         });
     });
 
+    describe('Author display name resolution priority (022, FR-001a)', () => {
+        it('prefers the live participant match over the captured createdByName, and leaves vote/like counts unaffected', () => {
+            const renamedAuthorCard = { ...mockCard, createdBy: 'user1', createdByName: 'Old Captured Name' };
+            const participantsWithNewName: Participant[] = [
+                { ...mockParticipants[0], name: 'New Current Name' },
+                mockParticipants[1],
+            ];
+
+            render(<DraggableCard {...defaultProps} card={renamedAuthorCard} participants={participantsWithNewName} />);
+
+            expect(screen.getByText('New Current Name')).toBeInTheDocument();
+            expect(screen.queryByText('Old Captured Name')).not.toBeInTheDocument();
+            // FR-010: resolving a different display name must not change vote/like counts.
+            expect(screen.getByText('3')).toBeInTheDocument(); // votes, unchanged
+            expect(screen.getByText('Like (2)')).toBeInTheDocument(); // likesCount, unchanged
+        });
+    });
+
     describe('Edge cases', () => {
         it('handles missing optional props gracefully', () => {
             const minimalProps = {

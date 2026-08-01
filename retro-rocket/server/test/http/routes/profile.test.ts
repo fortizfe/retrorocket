@@ -85,6 +85,16 @@ describe('PATCH /api/profile', () => {
         const res = await request(app).patch('/api/profile').send({ displayName: 'X' });
         expect(res.status).toBe(401);
     });
+
+    it('fans the new name out to participantPort before responding (022, FR-007)', async () => {
+        const { app, deps } = buildProfileTestApp({ profiles: [profile({})] });
+        const res = await request(app)
+            .patch('/api/profile')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ displayName: 'New Name' });
+        expect(res.status).toBe(200);
+        expect(deps.participantPort.renameParticipantsForUser).toHaveBeenCalledExactlyOnceWith('u1', 'New Name');
+    });
 });
 
 // 021, research.md §1: profileLimiter shares the same shared-bucket fix as authLimiter

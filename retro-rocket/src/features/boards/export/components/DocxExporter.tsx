@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { useExportDocx } from '@/features/boards/export/hooks/useExportDocx';
 
 interface DocxExporterProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     actionItems?: ActionItem[];
     variant?: 'button' | 'full';
     className?: string;

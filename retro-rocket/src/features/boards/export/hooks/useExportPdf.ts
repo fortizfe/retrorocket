@@ -3,12 +3,13 @@ import { exportRetrospectiveToPdf, ExportOptions, RetrospectiveExportData } from
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
+import { Participant } from '@/features/boards/types/participant';
 
 interface UseExportPdfProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
 }
 

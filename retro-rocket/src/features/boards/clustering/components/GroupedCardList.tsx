@@ -6,7 +6,7 @@ import { Card as CardType, EmojiReaction } from '@/features/boards/types/card';
 import { GroupingCriteria } from '@/features/boards/types/columnGrouping';
 import { Participant } from '@/features/boards/types/participant';
 import DragDropColumn from '@/features/boards/retrospective/components/DragDropColumn';
-import { resolveAuthorDisplayName } from '@/lib/utils/cardHelpers';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 interface GroupedCardListProps {
     groupedCards: { [groupName: string]: CardType[] };
@@ -94,7 +94,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                                     )}
                                     <h4 className="text-sm font-medium text-text-secondary truncate">
                                         {groupBy === 'user'
-                                            ? resolveAuthorDisplayName(cardsInGroup[0], participants, t('retrospective.grouping.unknownAuthor'))
+                                            ? resolveDisplayName(cardsInGroup[0].createdBy, cardsInGroup[0].createdByName, participants, t('retrospective.grouping.unknownAuthor'))
                                             : groupName}
                                     </h4>
                                 </div>

@@ -51,9 +51,9 @@ describe('TXT Export Service - Template Support', () => {
     ];
 
     const mockParticipants = [
-        { name: 'User1', joinedAt: new Date('2024-01-01') },
-        { name: 'User2', joinedAt: new Date('2024-01-01') },
-        { name: 'User3', joinedAt: new Date('2024-01-01') }
+        { id: 'p1', userId: 'user1', name: 'User1', retrospectiveId: 'test-retro', joinedAt: new Date('2024-01-01') },
+        { id: 'p2', userId: 'user2', name: 'User2', retrospectiveId: 'test-retro', joinedAt: new Date('2024-01-01') },
+        { id: 'p3', userId: 'user3', name: 'User3', retrospectiveId: 'test-retro', joinedAt: new Date('2024-01-01') }
     ];
 
     const mockActionItems = [

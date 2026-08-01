@@ -36,8 +36,11 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     const { t } = useLanguage();
 
     // Current user's reaction: explicit prop wins, otherwise derive from the data.
+    // Must key off userIds (raw ids), never users (resolved display names) — the
+    // latter previously produced a latent false-positive/negative when a display
+    // name happened to collide with (or differ from) the current user's own id.
     const computedReaction = groupedReactions.find((reaction) =>
-        currentUserId ? reaction.users?.includes(currentUserId) : false
+        currentUserId ? reaction.userIds?.includes(currentUserId) : false
     )?.emoji || null;
     const userReaction = typeof userReactionProp !== 'undefined' ? userReactionProp : computedReaction;
 

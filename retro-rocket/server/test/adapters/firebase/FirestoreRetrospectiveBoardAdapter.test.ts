@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { toDate, toRetrospective, toParticipant, toTimer } from '../../../src/adapters/firebase/FirestoreRetrospectiveBoardAdapter';
+import { toDate, toRetrospective, toParticipant, toTimer, chunk } from '../../../src/adapters/firebase/FirestoreRetrospectiveBoardAdapter';
 
 // FirestoreRetrospectiveBoardAdapter's query/write composition (getRetrospective, join's
-// idempotency, timer control's facilitator-only guard) is exercised end-to-end by the
-// Playwright E2E suite against the Firestore emulator, consistent with
-// FirestoreBoardsAdapter/FirestoreProfileAdapter having no dedicated Vitest-level
-// Firestore mock. Only this adapter's pure mapping helpers are unit-tested here.
+// idempotency, timer control's facilitator-only guard, renameParticipantsForUser's fan-out)
+// is exercised end-to-end by the Playwright E2E suite against the Firestore emulator,
+// consistent with FirestoreBoardsAdapter/FirestoreProfileAdapter having no dedicated
+// Vitest-level Firestore mock. Only this adapter's pure mapping/chunking helpers are
+// unit-tested here.
 
 describe('toDate', () => {
     it('unwraps a Firestore Timestamp-like value via .toDate()', () => {
@@ -52,6 +53,26 @@ describe('toParticipant', () => {
     it('preserves a present photoURL', () => {
         const data = { name: 'Alice', userId: 'u1', retrospectiveId: 'r1', joinedAt: new Date(), isActive: true, photoURL: 'https://x/y.png' };
         expect(toParticipant('p1', data).photoURL).toBe('https://x/y.png');
+    });
+});
+
+describe('chunk', () => {
+    it('returns a single chunk when the input is within the chunk size', () => {
+        expect(chunk([1, 2, 3], 500)).toEqual([[1, 2, 3]]);
+    });
+
+    it('returns no chunks for an empty array', () => {
+        expect(chunk([], 500)).toEqual([]);
+    });
+
+    it('splits an input larger than the chunk size into multiple chunks of at most that size (Firestore\'s 500-write batch limit)', () => {
+        const items = Array.from({ length: 1201 }, (_, i) => i);
+        const chunks = chunk(items, 500);
+        expect(chunks).toHaveLength(3);
+        expect(chunks[0]).toHaveLength(500);
+        expect(chunks[1]).toHaveLength(500);
+        expect(chunks[2]).toHaveLength(201);
+        expect(chunks.flat()).toEqual(items);
     });
 });
 

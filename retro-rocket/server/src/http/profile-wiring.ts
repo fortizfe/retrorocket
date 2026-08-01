@@ -4,6 +4,7 @@ import type { LoggerPort } from '../application/ports/observability';
 import type { SessionServicePort } from '../application/ports';
 import type { ProfileRouterDeps } from './routes/profile';
 import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
+import { FirestoreRetrospectiveBoardAdapter } from '../adapters/firebase/FirestoreRetrospectiveBoardAdapter';
 import { SystemClock } from '../adapters/system';
 
 /**
@@ -27,6 +28,7 @@ export function buildProfileDeps(
 
     return {
         profilePort: new FirestoreProfileAdapter(db),
+        participantPort: new FirestoreRetrospectiveBoardAdapter(db),
         sessionService,
         clock: new SystemClock(),
         testMode: config.authTestMode,

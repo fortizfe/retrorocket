@@ -55,7 +55,8 @@ export interface Reaction {
 export interface GroupedReaction {
     emoji: EmojiReaction;
     count: number;
-    users: string[]; // usernames who reacted with this emoji
+    users: string[]; // resolved display names who reacted with this emoji
+    userIds: string[]; // raw userIds, parallel-indexed with `users`
 }
 
 // Similarity algorithms for automatic grouping

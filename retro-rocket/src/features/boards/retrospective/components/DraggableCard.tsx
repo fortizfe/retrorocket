@@ -17,7 +17,7 @@ import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/ty
 import { Participant } from '@/features/boards/types/participant';
 
 import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
-import { groupReactions, hasUserLiked, resolveAuthorDisplayName } from '@/lib/utils/cardHelpers';
+import { groupReactions, hasUserLiked, resolveDisplayName } from '@/lib/utils/cardHelpers';
 import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
@@ -75,7 +75,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     // Calculate reactions directly from card data
     const likesCount = card.likes?.length ?? 0;
     const isLiked = hasUserLiked(card.likes ?? [], currentUser);
-    const groupedReactions = groupReactions(card.reactions ?? []);
+    const groupedReactions = groupReactions(card.reactions ?? [], participants, t('retrospective.grouping.unknownAuthor'));
 
     // Get card color styling with validation
     const cardColor = validateColor(card.color);
@@ -228,7 +228,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     {/* Header autor y sentimiento */}
                     <div className="flex items-center justify-between gap-2 mb-1">
                         <CardHeader
-                            author={resolveAuthorDisplayName(card, participants, t('retrospective.grouping.unknownAuthor'))}
+                            author={resolveDisplayName(card.createdBy, card.createdByName, participants, t('retrospective.grouping.unknownAuthor'))}
                             badge={sentimentBadge}
                         />
                         <div className="flex items-center gap-1 shrink-0">
@@ -265,6 +265,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                 onToggleLike={handleToggleLike}
                                 disabled={!onLike}
                                 likes={card.likes || []}
+                                participants={participants}
                             />
                             <EmojiReactions
                                 cardId={card.id}

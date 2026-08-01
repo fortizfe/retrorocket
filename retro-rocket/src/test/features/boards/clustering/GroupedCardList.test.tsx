@@ -109,3 +109,23 @@ describe('GroupedCardList — user grouping headers (spec 020-user-display-name-
         expect(screen.getByText('Suggested group 1')).toBeInTheDocument();
     });
 });
+
+describe('GroupedCardList — group header resolution priority (022, FR-001a)', () => {
+    it('prefers the live participant match over the captured createdByName', () => {
+        const card = makeCard({ createdBy: 'user-1', createdByName: 'Old Captured Name' });
+        const participants: Participant[] = [
+            { id: 'p1', userId: 'user-1', name: 'New Current Name', retrospectiveId: 'r1', joinedAt: new Date() },
+        ];
+        render(
+            <GroupedCardList
+                {...requiredProps}
+                groupedCards={{ 'user-1': [card] }}
+                groupBy="user"
+                participants={participants}
+            />
+        );
+
+        expect(screen.getByText('New Current Name')).toBeInTheDocument();
+        expect(screen.queryByText('Old Captured Name')).not.toBeInTheDocument();
+    });
+});

@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { UnifiedExportOptions, ExportFormat, SortOrder } from '@/features/boards/types/export';
 import { useUnifiedExport } from '@/features/boards/export/hooks/useUnifiedExport';
 import { UnifiedExportService } from '@/features/boards/export/services/unifiedExportService';
@@ -28,7 +29,7 @@ interface UnifiedExporterProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     actionItems?: ActionItem[];
     variant?: 'button' | 'full';
     className?: string;

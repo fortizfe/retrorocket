@@ -10,8 +10,8 @@ const ColorSystemTest: React.FC = () => {
 
     // Estado para testing de emojis
     const [testReactions, setTestReactions] = useState<GroupedReaction[]>([
-        { emoji: '👍', count: 3, users: ['Ana', 'Luis', 'María'] },
-        { emoji: '❤️', count: 1, users: ['Carlos'] }
+        { emoji: '👍', count: 3, users: ['Ana', 'Luis', 'María'], userIds: ['ana', 'luis', 'maria'] },
+        { emoji: '❤️', count: 1, users: ['Carlos'], userIds: ['carlos'] }
     ]);
     const [userReaction, setUserReaction] = useState<EmojiReaction | null>(null);
 
@@ -26,11 +26,11 @@ const ColorSystemTest: React.FC = () => {
             if (existing) {
                 return prev.map(r =>
                     r.emoji === emoji
-                        ? { ...r, count: r.count + 1, users: [...r.users, 'Tú'] }
+                        ? { ...r, count: r.count + 1, users: [...r.users, 'Tú'], userIds: [...r.userIds, 'me'] }
                         : r
                 );
             } else {
-                return [...prev, { emoji, count: 1, users: ['Tú'] }];
+                return [...prev, { emoji, count: 1, users: ['Tú'], userIds: ['me'] }];
             }
         });
     };

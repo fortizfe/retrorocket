@@ -109,6 +109,6 @@ describe('useOptimizedCards', () => {
         expect(result.current.getUserLiked('c1', 'u1')).toBe(true);
         expect(result.current.getUserLiked('c1', 'someone-else')).toBe(false);
         expect(result.current.getUserReaction('c1', 'u1')).toBe('👍');
-        expect(result.current.getGroupedReactions('c1')).toEqual([{ emoji: '👍', count: 1, users: ['Alice'] }]);
+        expect(result.current.getGroupedReactions('c1')).toEqual([{ emoji: '👍', count: 1, users: ['Alice'], userIds: ['u1'] }]);
     });
 });

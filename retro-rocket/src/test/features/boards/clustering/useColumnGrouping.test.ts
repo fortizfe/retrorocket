@@ -257,6 +257,41 @@ describe('useColumnGrouping', () => {
         });
     });
 
+    describe('Group header resolution priority and non-regression (022, FR-001a, FR-006, FR-010, FR-011)', () => {
+        it('sorts by the live participant match when it differs from the captured createdByName (priority flip)', () => {
+            const { result } = renderHook(() => useColumnGrouping());
+
+            // Captured names are already alphabetical (Alex, Beth); the live participant
+            // names reverse that order (Zoe, Alex) — a passing test proves the resolver
+            // prefers the participant match, not the captured name, per FR-001a.
+            const cards: Card[] = [
+                { ...mockCards[0], id: 'a1', createdBy: 'user-1', createdByName: 'Alex' },
+                { ...mockCards[1], id: 'b1', createdBy: 'user-2', createdByName: 'Beth' },
+            ];
+            const participants: Participant[] = [
+                { id: 'p1', userId: 'user-1', name: 'Zoe', retrospectiveId: 'r1', joinedAt: new Date() },
+                { id: 'p2', userId: 'user-2', name: 'Alex', retrospectiveId: 'r1', joinedAt: new Date() },
+            ];
+
+            const grouped = result.current.groupCards(cards, 'user', participants);
+
+            expect(Object.keys(grouped)).toEqual(['user-2', 'user-1']); // Alex (user-2) before Zoe (user-1)
+        });
+
+        it('does not change which cards belong to which group, or how many cards each group has (FR-010)', () => {
+            const { result } = renderHook(() => useColumnGrouping());
+
+            const withoutParticipants = result.current.groupCards(mockCards, 'user');
+            const withParticipants = result.current.groupCards(mockCards, 'user', [
+                { id: 'p1', userId: 'user-alice', name: 'Alice Renamed', retrospectiveId: 'r1', joinedAt: new Date() },
+            ]);
+
+            expect(Object.keys(withParticipants).sort()).toEqual(Object.keys(withoutParticipants).sort());
+            expect(withParticipants['user-alice']).toEqual(withoutParticipants['user-alice']);
+            expect(withParticipants['user-bob']).toEqual(withoutParticipants['user-bob']);
+        });
+    });
+
     describe('Card processing', () => {
         it('should process cards for a column with current state', () => {
             const { result } = renderHook(() => useColumnGrouping());

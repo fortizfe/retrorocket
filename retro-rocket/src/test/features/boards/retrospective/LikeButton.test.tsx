@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import LikeButton from '@/features/boards/retrospective/components/LikeButton';
 import { Like } from '@/features/boards/types/card';
+import { Participant } from '@/features/boards/types/participant';
 
 // Mock dependencies
 vi.mock('@/lib/hooks/useLanguage', () => ({
@@ -264,6 +265,66 @@ describe('LikeButton Component', () => {
 
             const button = screen.getByRole('button');
             expect(button).toBeDisabled();
+        });
+    });
+
+    describe('Display Name Resolution (022, FR-001, FR-001a)', () => {
+        function makeParticipant(overrides: Partial<Participant> = {}): Participant {
+            return { id: 'p1', userId: 'user1', name: 'Alice', retrospectiveId: 'r1', joinedAt: new Date(), ...overrides };
+        }
+
+        it('resolves the tooltip name via a live participants match, preferring it over the captured like.username', () => {
+            const likes: Like[] = [{ userId: 'user1', username: 'Old Name', timestamp: new Date() }];
+            const participants = [makeParticipant({ userId: 'user1', name: 'New Name' })];
+
+            render(<LikeButton {...defaultProps} likesCount={1} likes={likes} participants={participants} />);
+
+            const button = screen.getByRole('button');
+            expect(button).toHaveAttribute('title', 'New Name liked this');
+        });
+
+        it('falls back to the captured like.username when no participants prop is given', () => {
+            const likes: Like[] = [{ userId: 'user1', username: 'Alice', timestamp: new Date() }];
+
+            render(<LikeButton {...defaultProps} likesCount={1} likes={likes} />);
+
+            const button = screen.getByRole('button');
+            expect(button).toHaveAttribute('title', 'Alice liked this');
+        });
+
+        it('falls back to the captured like.username when a participants array is given but has no match for this like (022, FR-003, deleted account)', () => {
+            const likes: Like[] = [{ userId: 'departed-uid', username: 'Old Name', timestamp: new Date() }];
+            const participants = [makeParticipant({ userId: 'user1', name: 'Someone Else' })];
+
+            render(<LikeButton {...defaultProps} likesCount={1} likes={likes} participants={participants} />);
+
+            const button = screen.getByRole('button');
+            expect(button).toHaveAttribute('title', 'Old Name liked this');
+        });
+
+        it('falls back to the generic label when neither a participant match nor a captured username exists (022, FR-004)', () => {
+            const likes: Like[] = [{ userId: 'departed-uid', username: '', timestamp: new Date() }];
+
+            render(<LikeButton {...defaultProps} likesCount={1} likes={likes} participants={[]} />);
+
+            const button = screen.getByRole('button');
+            expect(button).toHaveAttribute('title', 'retrospective.grouping.unknownAuthor liked this');
+        });
+
+        it('resolves each like independently by userId when multiple participants share a display name', () => {
+            const likes: Like[] = [
+                { userId: 'user-a', username: 'Old A', timestamp: new Date() },
+                { userId: 'user-b', username: 'Old B', timestamp: new Date() },
+            ];
+            const participants = [
+                makeParticipant({ userId: 'user-a', name: 'Sam Lee' }),
+                makeParticipant({ userId: 'user-b', name: 'Sam Lee' }),
+            ];
+
+            render(<LikeButton {...defaultProps} likesCount={2} likes={likes} participants={participants} />);
+
+            const button = screen.getByRole('button');
+            expect(button).toHaveAttribute('title', 'Sam Lee and Sam Lee liked this');
         });
     });
 

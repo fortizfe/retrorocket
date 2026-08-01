@@ -19,6 +19,7 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
+import { Participant } from '@/features/boards/types/participant';
 import { ExportFormat } from '@/features/boards/types/export';
 import { useUnifiedExport } from '@/features/boards/export/hooks/useUnifiedExport';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -31,7 +32,7 @@ interface ImprovedExportPopoverProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
     isOpen: boolean;
