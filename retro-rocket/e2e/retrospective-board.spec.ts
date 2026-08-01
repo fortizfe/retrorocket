@@ -396,6 +396,138 @@ test('group-by-user headers show participant display names in alphabetical order
     await contextB.close();
 });
 
+// 022-display-name-consistency, User Story 1: a display-name change must propagate
+// live — without a page reload — to every surface referencing that user on a board
+// another participant already has open: the card author label, the like tooltip, the
+// reaction tooltip, and the participant list (FR-001, FR-001a, FR-007, SC-002).
+test('renaming a participant propagates live to a second, already-open session — card author, like tooltip, reaction tooltip, and participant list all update without reloading', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner25@example.com', 'Jane Smith', 'E2E Rename Propagation Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInAs(pageA, 'e2e-retro-owner25@example.com', 'Jane Smith');
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Rename Propagation Board')).toBeVisible({ timeout: 30_000 });
+
+    // Jane creates a card, likes it, and reacts to it — all via the backend API,
+    // mirroring the UI-driven flows already covered by other specs in this file.
+    const createRes = await pageA.request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Janes card for rename propagation', column: 'helped' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const { id: cardId } = (await createRes.json()) as { id: string };
+    const likeRes = await pageA.request.post(`/api/cards/${cardId}/like`);
+    expect(likeRes.ok()).toBeTruthy();
+    const reactRes = await pageA.request.put(`/api/cards/${cardId}/reaction`, { data: { emoji: '👍' } });
+    expect(reactRes.ok()).toBeTruthy();
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant25@example.com', 'Other Participant');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Rename Propagation Board')).toBeVisible({ timeout: 30_000 });
+
+    const card = cardByContent(pageB, 'Janes card for rename propagation');
+    await expect(card).toBeVisible({ timeout: 10_000 });
+
+    // Original name visible everywhere before the rename. Tooltips (like + reaction)
+    // are scoped to the card itself — the page also has a participant-avatar title
+    // attribute with the same name, which is a separate surface (asserted below).
+    await expect(card.getByText('Jane Smith')).toBeVisible(); // author label
+    await expect(card.getByTitle(/Jane Smith/)).toHaveCount(2); // like tooltip + reaction tooltip
+    await expect(pageB.getByText('Jane Smith').first()).toBeVisible(); // participant list
+
+    // Rename via PATCH /api/profile in session A's own request context (equivalent to
+    // saving on the Profile page) — without ever reloading session B.
+    const renameRes = await pageA.request.patch('/api/profile', { data: { displayName: 'Jane S. Renamed' } });
+    expect(renameRes.ok()).toBeTruthy();
+
+    // Every surface in session B updates live to the new name, with zero reload.
+    await expect(card.getByText('Jane S. Renamed')).toBeVisible({ timeout: 10_000 });
+    await expect(card.getByText('Jane Smith')).not.toBeVisible();
+    await expect(card.getByTitle(/Jane S\. Renamed/)).toHaveCount(2, { timeout: 10_000 });
+    await expect(pageB.getByText('Jane S. Renamed').first()).toBeVisible({ timeout: 10_000 });
+
+    await contextA.close();
+    await contextB.close();
+});
+
+// 022-display-name-consistency, User Story 2: content whose author's account no longer
+// exists still shows a real name, never a raw uid/blank/error — and a participant list
+// entry for such a user still shows its last-known name (FR-003, FR-004, SC-003).
+// "Account deleted" is simulated per research.md §4: content written directly to the
+// Firestore emulator whose userId has no corresponding `participants` doc.
+test('content from a departed/legacy author still shows a real name — never a raw uid, blank field, or error', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner26@example.com', 'E2E Retro Owner 26', 'E2E Deleted Author Board');
+
+    const db = getEmulatorFirestore();
+
+    // A card/like/reaction from a user with no matching participants doc — the captured
+    // name is used (FR-003).
+    await db.collection('cards').doc('e2e-departed-card').set({
+        content: 'Card from a departed author',
+        column: 'helped',
+        createdBy: 'departed-uid',
+        createdByName: 'Departed Person',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        retrospectiveId: boardId,
+        votes: 0,
+        likes: [{ userId: 'departed-uid', username: 'Departed Person', timestamp: new Date() }],
+        reactions: [{ userId: 'departed-uid', username: 'Departed Person', emoji: '👍', timestamp: new Date() }],
+        order: 0,
+    });
+
+    // A legacy card predating captured-name capture (no createdByName) whose author also
+    // has no participants doc — neither a current nor a captured name exists, so the
+    // generic fallback is used, never the raw uid (FR-004).
+    await db.collection('cards').doc('e2e-legacy-card').set({
+        content: 'Legacy card with no captured author name',
+        column: 'helped',
+        createdBy: 'legacy-departed-uid',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        retrospectiveId: boardId,
+        votes: 0,
+        likes: [],
+        reactions: [],
+        order: 1,
+    });
+
+    // A participant entry whose account is also gone — still shows its last-known name
+    // (SC-003), not a raw id, not a disappeared entry.
+    await db.collection('participants').doc('e2e-departed-participant').set({
+        retrospectiveId: boardId,
+        userId: 'departed-participant-uid',
+        name: 'Departed Participant',
+        joinedAt: new Date(),
+        isActive: true,
+    });
+
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Deleted Author Board')).toBeVisible({ timeout: 30_000 });
+
+    const departedCard = cardByContent(page, 'Card from a departed author');
+    await expect(departedCard).toBeVisible({ timeout: 10_000 });
+    await expect(departedCard.getByText('Departed Person')).toBeVisible();
+    await expect(departedCard.getByTitle(/Departed Person/)).toHaveCount(2); // like + reaction tooltips
+
+    const legacyCard = cardByContent(page, 'Legacy card with no captured author name');
+    await expect(legacyCard).toBeVisible({ timeout: 10_000 });
+    await expect(legacyCard.getByText('Sin autor')).toBeVisible();
+
+    // The participant list only shows full names inside its popover (the topbar's
+    // default view is avatar-only) — open it via the avatar group trigger.
+    await page.getByTitle('Departed Participant').click();
+    await expect(page.getByText('Departed Participant').first()).toBeVisible({ timeout: 10_000 });
+
+    // Neither raw uid is ever rendered anywhere on the board.
+    await expect(page.getByText('departed-uid', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('legacy-departed-uid', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('departed-participant-uid', { exact: true })).toHaveCount(0);
+});
+
 test('the column-grouping preference propagates live to a second participant', async ({ browser, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner14@example.com', 'E2E Retro Owner 14', 'E2E Column Grouping Live Board');
     const createRes = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Column Grouping Card', column: 'helped' } });

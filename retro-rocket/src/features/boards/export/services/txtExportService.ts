@@ -3,9 +3,16 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { SentimentResult } from '@/features/boards/types/sentiment';
 import { TeamMoodReport, TeamMoodMetrics, TeamMoodInsight } from '@/features/boards/types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate, DynamicColumnConfig } from '@/features/boards/export/utils/exportColumns';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
+
+/** Export documents are generated in a single fixed locale (Spanish), matching this
+ * file's other hardcoded copy — mirrors the `retrospective.grouping.unknownAuthor`
+ * i18n key's Spanish value rather than introducing a second fallback string. */
+const UNKNOWN_AUTHOR_LABEL = 'Sin autor';
 
 export interface TxtExportOptions {
     includeParticipants?: boolean;
@@ -23,7 +30,7 @@ export interface RetrospectiveTxtData {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
     // New sentiment data
@@ -184,7 +191,7 @@ export class TxtExportService {
     /**
      * Create elegant participant list
      */
-    private createParticipantList(participants: Array<{ name: string; joinedAt: Date }>): string[] {
+    private createParticipantList(participants: Participant[]): string[] {
         const lines: string[] = [];
 
         lines.push(...this.createSectionHeader('PARTICIPANTES', '👥'));
@@ -201,7 +208,7 @@ export class TxtExportService {
     /**
      * Create elegant card display
      */
-    private createCardDisplay(card: Card, index: number, options: TxtExportOptions, sentimentResults?: Map<string, SentimentResult>): string[] {
+    private createCardDisplay(card: Card, index: number, options: TxtExportOptions, sentimentResults?: Map<string, SentimentResult>, participants?: Participant[]): string[] {
         const lines: string[] = [];
         const cardNumber = (index + 1).toString().padStart(2, '0');
         const content = card.content?.trim() || '[Sin contenido]';
@@ -216,7 +223,7 @@ export class TxtExportService {
         });
 
         // Metadata section
-        const metadata = this.buildCardMetadata(card, options);
+        const metadata = this.buildCardMetadata(card, options, participants);
         if (metadata.length > 0 || (options.includeSentimentBadges && sentimentResults)) {
             lines.push('├' + '─'.repeat(52) + '┤');
 
@@ -461,7 +468,7 @@ export class TxtExportService {
 
             // Cards
             columnCards.forEach((card, index) => {
-                lines.push(...this.createCardDisplay(card, index, options, data.sentimentResults));
+                lines.push(...this.createCardDisplay(card, index, options, data.sentimentResults, data.participants));
             });
 
             lines.push('');
@@ -729,12 +736,12 @@ export class TxtExportService {
     /**
      * Build card metadata based on options
      */
-    private buildCardMetadata(card: Card, options: TxtExportOptions): string[] {
+    private buildCardMetadata(card: Card, options: TxtExportOptions, participants?: Participant[]): string[] {
         const metadata: string[] = [];
 
         // Author
         if (options.includeCardAuthors && card.createdBy?.trim()) {
-            metadata.push(`Autor: ${card.createdBy}`);
+            metadata.push(`Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, UNKNOWN_AUTHOR_LABEL)}`);
         }
 
         // Votes

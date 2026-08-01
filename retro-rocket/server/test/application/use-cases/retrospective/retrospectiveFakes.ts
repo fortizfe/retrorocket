@@ -181,6 +181,11 @@ export function createRetrospectiveFakeStore(seed: {
             board.updatedAt = new Date();
             return { ...participant };
         },
+        async renameParticipantsForUser(uid, name) {
+            for (const participant of participants.values()) {
+                if (participant.userId === uid) participant.name = name;
+            }
+        },
     };
 
     function requireCard(cardId: string): CardDTO {

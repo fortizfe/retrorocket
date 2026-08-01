@@ -62,6 +62,20 @@ export function toParticipant(id: string, data: FirebaseFirestore.DocumentData):
     };
 }
 
+/**
+ * Splits an array into chunks of at most `size` elements — exported so the ≤500-doc
+ * Firestore batch-write limit's chunking logic (renameParticipantsForUser) can be
+ * unit-tested directly, mirroring toDate/toParticipant's precedent (this file's test
+ * suite has no dedicated Firestore mock).
+ */
+export function chunk<T>(items: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += size) {
+        chunks.push(items.slice(i, i + size));
+    }
+    return chunks;
+}
+
 export function toTimer(retrospectiveId: string, data: FirebaseFirestore.DocumentData): CountdownTimerDTO {
     return {
         retrospectiveId,
@@ -152,6 +166,16 @@ export class FirestoreRetrospectiveBoardAdapter implements RetrospectiveBoardPor
             // so the caller gets a usable joinedAt immediately rather than null.
             return toParticipant(participantRef.id, { ...participantData, joinedAt: new Date() });
         });
+    }
+
+    async renameParticipantsForUser(uid: string, name: string): Promise<void> {
+        const snap = await this.db.collection(PARTICIPANTS).where('userId', '==', uid).get();
+        if (snap.empty) return;
+        for (const docs of chunk(snap.docs, 500)) {
+            const batch = this.db.batch();
+            docs.forEach((doc) => batch.update(doc.ref, { name }));
+            await batch.commit();
+        }
     }
 
     async getTimer(retrospectiveId: string): Promise<CountdownTimerDTO | null> {

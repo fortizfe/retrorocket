@@ -78,4 +78,11 @@ export interface ParticipantPort {
     listParticipants(retrospectiveId: string): Promise<ParticipantDTO[]>;
     /** Idempotent: no duplicate participant record if uid already joined (FR-005). */
     join(retrospectiveId: string, uid: string, userName: string, photoURL: string | null): Promise<ParticipantDTO>;
+    /**
+     * Fan-out for a display-name change (022, FR-007) — updates `name` on every
+     * participants doc where userId === uid, across every retrospective the user has
+     * ever joined. Idempotent, no-op if the user has never joined anything. Chunks
+     * writes in batches of ≤500 (Firestore batch-write limit).
+     */
+    renameParticipantsForUser(uid: string, name: string): Promise<void>;
 }

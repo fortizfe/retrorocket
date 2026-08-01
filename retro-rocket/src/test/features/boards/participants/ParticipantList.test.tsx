@@ -81,6 +81,17 @@ describe('ParticipantList - Optimized UX', () => {
             expect(screen.queryByText('Participantes')).not.toBeInTheDocument();
             expect(screen.getByText('Alice')).toBeInTheDocument();
         });
+
+        it('shows a participant\'s last-known name even when their account has since been deleted (022, FR-003) — ParticipantList reads participant.name directly, with no account-existence check', () => {
+            // The last fan-out-written name (or the join-time name, if the account was
+            // deleted before ever renaming) is exactly what's stored on the participant
+            // doc — no separate "does the account still exist" lookup is ever performed.
+            const participant = createMockParticipant({ userId: 'departed-uid', name: 'Departed Person' });
+            render(<ParticipantList participants={[participant]} />);
+
+            expect(screen.getByText('Departed Person')).toBeInTheDocument();
+            expect(screen.queryByText('departed-uid')).not.toBeInTheDocument();
+        });
     });
 
     describe('Alphabetical Sorting', () => {

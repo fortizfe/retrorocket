@@ -5,8 +5,18 @@ import { errorHandler, notFoundHandler } from '../../../src/http/middleware/erro
 import { profileRouter, type ProfileRouterDeps } from '../../../src/http/routes/profile';
 import type { SessionServicePort } from '../../../src/application/ports';
 import type { ProfileRecord } from '../../../src/application/ports/profile';
+import type { ParticipantPort } from '../../../src/application/ports/retrospective';
 import { fixedClock } from '../../application/use-cases/mcp/mcpFakes';
 import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
+
+/** Spy-only fake — profile route tests assert the rename fan-out is invoked, not its Firestore effects (022, FR-007). */
+function fakeParticipantPort(): ParticipantPort {
+    return {
+        listParticipants: vi.fn(async () => []),
+        join: vi.fn(),
+        renameParticipantsForUser: vi.fn(async () => { }),
+    } as unknown as ParticipantPort;
+}
 
 /**
  * Mirrors boardsTestApp.ts's fakeSessionServiceWithUser: profile routes read
@@ -38,6 +48,7 @@ export interface ProfileTestAppOptions {
 export function buildProfileTestApp(options: ProfileTestAppOptions = {}): { app: Express; deps: ProfileRouterDeps } {
     const deps: ProfileRouterDeps = {
         profilePort: inMemoryProfilePort(options.profiles ?? []),
+        participantPort: fakeParticipantPort(),
         sessionService: fakeSessionServiceWithUser(options.users ?? {}),
         clock: fixedClock(),
         ...options.overrides,

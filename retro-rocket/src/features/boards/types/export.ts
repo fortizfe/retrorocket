@@ -52,7 +52,7 @@ export interface UnifiedExportData {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[]; // Añadir elementos de acción
     // New sentiment analysis data
@@ -72,3 +72,4 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';

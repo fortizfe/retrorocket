@@ -4,6 +4,7 @@ import ImprovedExportPopover from '@/features/boards/export/components/ImprovedE
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useSentiment } from '@/features/boards/sentiment';
 
@@ -11,7 +12,7 @@ interface ExportButtonGroupProps {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     actionItems?: ActionItem[];
     className?: string;
     // New sentiment analysis props

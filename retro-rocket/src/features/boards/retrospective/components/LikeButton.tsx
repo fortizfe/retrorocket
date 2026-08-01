@@ -2,7 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { Like } from '@/features/boards/types/card';
+import { Participant } from '@/features/boards/types/participant';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 interface LikeButtonProps {
     cardId: string;
@@ -11,6 +13,7 @@ interface LikeButtonProps {
     onToggleLike: () => void;
     disabled?: boolean;
     likes?: Like[]; // Array of like objects with usernames
+    participants?: Participant[];
 }
 
 const LikeButton: React.FC<LikeButtonProps> = ({
@@ -19,7 +22,8 @@ const LikeButton: React.FC<LikeButtonProps> = ({
     isLiked,
     onToggleLike,
     disabled = false,
-    likes = []
+    likes = [],
+    participants
 }) => {
     const { t } = useLanguage();
 
@@ -29,7 +33,10 @@ const LikeButton: React.FC<LikeButtonProps> = ({
             return t('retrospective.likeButton.likeCard');
         }
 
-        const usernames = likes.map(like => like.username);
+        const fallbackLabel = t('retrospective.grouping.unknownAuthor');
+        const usernames = likes.map(like =>
+            resolveDisplayName(like.userId, like.username, participants, fallbackLabel)
+        );
 
         if (likesCount === 1) {
             return t('retrospective.likeButton.singleLike', { username: usernames[0] });

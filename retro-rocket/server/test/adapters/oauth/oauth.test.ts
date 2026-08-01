@@ -86,4 +86,18 @@ describe('GithubOAuthAdapter', () => {
         const adapter = new GithubOAuthAdapter(client, fetchFn as unknown as typeof fetch);
         await expect(adapter.exchangeCode('code', null)).rejects.toThrow(/GitHub user fetch failed/);
     });
+
+    it('falls back to the GitHub username (login) as displayName when the account has no public name (022, FR-008 acceptance scenario 2)', async () => {
+        const fetchFn = vi.fn(async (input: string | URL | Request) => {
+            const url = String(input);
+            if (url.endsWith('/user')) return jsonResponse({ id: 99, login: 'no-name-user', name: null, avatar_url: 'http://p/nn.png', email: null });
+            if (url.endsWith('/user/emails')) {
+                return jsonResponse([{ email: 'noname@x.com', primary: true, verified: true }]);
+            }
+            throw new Error(`unexpected fetch ${url}`);
+        });
+        const adapter = new GithubOAuthAdapter(client, fetchFn as unknown as typeof fetch);
+        const profile = await adapter.exchangeCode('code', null);
+        expect(profile.displayName).toBe('no-name-user');
+    });
 });

@@ -37,7 +37,8 @@ describe('TxtExportService', () => {
                     retrospectiveId: 'retro-1',
                     column: 'helped',
                     content: 'Test card content',
-                    createdBy: 'User 1',
+                    createdBy: 'user-1',
+                    createdByName: 'User 1',
                     createdAt: new Date('2024-01-01'),
                     updatedAt: new Date('2024-01-01'),
                     votes: 3,
@@ -55,7 +56,8 @@ describe('TxtExportService', () => {
                     retrospectiveId: 'retro-1',
                     column: 'hindered',
                     content: 'Another test card',
-                    createdBy: 'User 2',
+                    createdBy: 'user-2',
+                    createdByName: 'User 2',
                     createdAt: new Date('2024-01-01'),
                     updatedAt: new Date('2024-01-01'),
                     votes: 1,
@@ -82,8 +84,8 @@ describe('TxtExportService', () => {
                 },
             ],
             participants: [
-                { name: 'User 1', joinedAt: new Date('2024-01-01') },
-                { name: 'User 2', joinedAt: new Date('2024-01-01') },
+                { id: 'p1', userId: 'user-1', name: 'User 1', retrospectiveId: 'retro-1', joinedAt: new Date('2024-01-01') },
+                { id: 'p2', userId: 'user-2', name: 'User 2', retrospectiveId: 'retro-1', joinedAt: new Date('2024-01-01') },
             ],
             facilitatorNotes: [
                 {
@@ -151,6 +153,69 @@ describe('TxtExportService', () => {
 
             expect(content).toContain('Autor: User 1');
             expect(content).toContain('Autor: User 2');
+        });
+
+        it('resolves the author via the live participant match, never rendering the raw createdBy uid (022, FR-005)', async () => {
+            const dataWithRenamedAuthor = {
+                ...mockData,
+                cards: [
+                    { ...mockData.cards[0], createdBy: 'user-1', createdByName: 'Old Captured Name' },
+                ],
+                participants: [
+                    { ...mockData.participants[0], userId: 'user-1', name: 'New Current Name' },
+                ],
+            };
+            const options: TxtExportOptions = { includeCardAuthors: true };
+
+            await service.exportRetrospective(dataWithRenamedAuthor, options);
+
+            const saveAsCall = vi.mocked(saveAs).mock.calls[0];
+            const blob = saveAsCall[0] as Blob;
+            const content = await blob.text();
+
+            expect(content).toContain('Autor: New Current Name');
+            expect(content).not.toContain('Autor: Old Captured Name');
+            expect(content).not.toContain('user-1');
+        });
+
+        it('falls back to the captured createdByName when the author has no matching participant (022, FR-003, deleted account)', async () => {
+            const dataWithDeletedAuthor = {
+                ...mockData,
+                cards: [
+                    { ...mockData.cards[0], createdBy: 'departed-uid', createdByName: 'Old Name' },
+                ],
+                participants: [],
+            };
+            const options: TxtExportOptions = { includeCardAuthors: true };
+
+            await service.exportRetrospective(dataWithDeletedAuthor, options);
+
+            const saveAsCall = vi.mocked(saveAs).mock.calls[0];
+            const blob = saveAsCall[0] as Blob;
+            const content = await blob.text();
+
+            expect(content).toContain('Autor: Old Name');
+            expect(content).not.toContain('departed-uid');
+        });
+
+        it('falls back to a generic label, never the raw uid, when neither a participant match nor a captured name exists (022, FR-004)', async () => {
+            const dataWithUnresolvableAuthor = {
+                ...mockData,
+                cards: [
+                    { ...mockData.cards[0], createdBy: 'departed-uid', createdByName: undefined },
+                ],
+                participants: [],
+            };
+            const options: TxtExportOptions = { includeCardAuthors: true };
+
+            await service.exportRetrospective(dataWithUnresolvableAuthor, options);
+
+            const saveAsCall = vi.mocked(saveAs).mock.calls[0];
+            const blob = saveAsCall[0] as Blob;
+            const content = await blob.text();
+
+            expect(content).toContain('Autor: Sin autor');
+            expect(content).not.toContain('departed-uid');
         });
 
         it('should include group details when option is enabled', async () => {

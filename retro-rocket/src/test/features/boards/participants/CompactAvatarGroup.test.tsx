@@ -103,6 +103,16 @@ describe('CompactAvatarGroup', () => {
             expect(screen.getByText('3')).toBeInTheDocument();
         });
 
+        it('shows a participant\'s last-known name even when their account has since been deleted (022, FR-003) — reads participant.name directly, with no account-existence check', () => {
+            const departedParticipant: Participant = {
+                id: 'departed', name: 'Departed Person', photoURL: null, userId: 'departed-uid',
+                retrospectiveId: 'retro1', joinedAt: new Date(), isActive: true,
+            };
+            render(<CompactAvatarGroup participants={[departedParticipant]} />);
+
+            expect(screen.getByTestId('user-avatar')).toHaveAttribute('data-user-name', 'Departed Person');
+        });
+
         it('should render with default props', () => {
             render(<CompactAvatarGroup participants={mockParticipants.slice(0, 2)} />);
 

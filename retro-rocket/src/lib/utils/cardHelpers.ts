@@ -2,9 +2,16 @@ import { Card, EmojiReaction, Like, Reaction, GroupedReaction } from '@/features
 import { Participant } from '@/features/boards/types/participant';
 
 /**
- * Groups reactions by emoji and counts them
+ * Groups reactions by emoji and counts them. `users` holds each reactor's
+ * resolved display name (via resolveDisplayName); `userIds` carries the raw
+ * userIds, parallel-indexed with `users`, for membership checks (e.g. "is this
+ * my reaction") that must never compare against a display name.
  */
-export const groupReactions = (reactions: Reaction[]): GroupedReaction[] => {
+export const groupReactions = (
+    reactions: Reaction[],
+    participants: Participant[] | undefined,
+    fallbackLabel: string
+): GroupedReaction[] => {
     const grouped = {} as Record<EmojiReaction, GroupedReaction>;
 
     reactions.forEach(reaction => {
@@ -12,11 +19,15 @@ export const groupReactions = (reactions: Reaction[]): GroupedReaction[] => {
             grouped[reaction.emoji] = {
                 emoji: reaction.emoji,
                 count: 0,
-                users: []
+                users: [],
+                userIds: []
             };
         }
         grouped[reaction.emoji].count++;
-        grouped[reaction.emoji].users.push(reaction.username);
+        grouped[reaction.emoji].users.push(
+            resolveDisplayName(reaction.userId, reaction.username, participants, fallbackLabel)
+        );
+        grouped[reaction.emoji].userIds.push(reaction.userId);
     });
 
     return Object.values(grouped);
@@ -56,17 +67,21 @@ export const sortCardsByOrder = (cards: Card[]): Card[] => {
 };
 
 /**
- * Resolves a card author's display name for rendering: the name captured on the
- * card at creation time, else a live match in the current participants list (by
- * userId, not by name — keeps two same-named authors distinct), else the given
- * fallback label. Never returns `card.createdBy` (the raw uid) itself.
+ * Resolves any user-attributed identifier to a display name, applying the same
+ * order everywhere (FR-005): a live match in the current participants list (by
+ * userId, not by name — keeps two same-named authors distinct) first, since the
+ * rename fan-out keeps it current for as long as the account exists; else the
+ * name captured at the time of the action; else the given fallback label. Never
+ * returns the raw userId itself.
  */
-export const resolveAuthorDisplayName = (
-    card: Pick<Card, 'createdBy' | 'createdByName'>,
+export const resolveDisplayName = (
+    userId: string,
+    capturedName: string | undefined,
     participants: Participant[] | undefined,
     fallbackLabel: string
 ): string => {
-    if (card.createdByName) return card.createdByName;
-    const participant = participants?.find(p => p.userId === card.createdBy);
-    return participant?.name ?? fallbackLabel;
+    const participant = participants?.find(p => p.userId === userId);
+    if (participant?.name) return participant.name;
+    if (capturedName) return capturedName;
+    return fallbackLabel;
 };

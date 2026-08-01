@@ -231,30 +231,35 @@ describe('Card Types', () => {
             const groupedReaction: GroupedReaction = {
                 emoji: '👍',
                 count: 5,
-                users: ['user1', 'user2', 'user3']
+                users: ['user1', 'user2', 'user3'],
+                userIds: ['uid1', 'uid2', 'uid3']
             };
 
             expect(typeof groupedReaction.emoji).toBe('string');
             expect(typeof groupedReaction.count).toBe('number');
             expect(Array.isArray(groupedReaction.users)).toBe(true);
+            expect(Array.isArray(groupedReaction.userIds)).toBe(true);
 
             // Required properties
             expect(groupedReaction).toHaveProperty('emoji');
             expect(groupedReaction).toHaveProperty('count');
             expect(groupedReaction).toHaveProperty('users');
+            expect(groupedReaction).toHaveProperty('userIds');
         });
 
         it('should handle empty and populated user arrays', () => {
             const emptyGrouped: GroupedReaction = {
                 emoji: '😢',
                 count: 0,
-                users: []
+                users: [],
+                userIds: []
             };
 
             const populatedGrouped: GroupedReaction = {
                 emoji: '🎉',
                 count: 3,
-                users: ['alice', 'bob', 'charlie']
+                users: ['alice', 'bob', 'charlie'],
+                userIds: ['alice-id', 'bob-id', 'charlie-id']
             };
 
             expect(emptyGrouped.users).toHaveLength(0);

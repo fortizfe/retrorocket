@@ -21,10 +21,12 @@ import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { FacilitatorNote } from '@/features/boards/types/facilitatorNotes';
 import { ActionItem } from '@/features/boards/types/actionItem';
+import { Participant } from '@/features/boards/types/participant';
 import { SentimentResult } from '@/features/boards/types/sentiment';
 import { TeamMoodReport } from '@/features/boards/types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
 import { getCardColorHex } from '@/lib/utils/cardColors';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 export interface DocxExportOptions {
     includeParticipants?: boolean;
@@ -44,7 +46,7 @@ export interface RetrospectiveDocxData {
     retrospective: Retrospective;
     cards: Card[];
     groups: CardGroup[];
-    participants: Array<{ name: string; joinedAt: Date }>;
+    participants: Participant[];
     facilitatorNotes?: FacilitatorNote[];
     actionItems?: ActionItem[];
     // New sentiment data
@@ -68,7 +70,7 @@ export class DocxExportService {
             const headerSections = this.createDocumentHeader(data.retrospective);
             const infoSections = this.createRetrospectiveInfo(data.retrospective, data.participants, options);
             const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups, data.actionItems) : [];
-            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective, data.sentimentResults);
+            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective, data.sentimentResults, data.participants);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
             const actionItemsSections = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ?
@@ -361,7 +363,7 @@ export class DocxExportService {
      */
     private createRetrospectiveInfo(
         retrospective: Retrospective,
-        participants: Array<{ name: string; joinedAt: Date }>,
+        participants: Participant[],
         options: DocxExportOptions
     ): Paragraph[] {
         const infoItems: Array<{ label: string, value: string }> = [];
@@ -554,7 +556,8 @@ export class DocxExportService {
         groups: CardGroup[],
         options: DocxExportOptions,
         retrospective: Retrospective,
-        sentimentResults?: Map<string, SentimentResult>
+        sentimentResults?: Map<string, SentimentResult>,
+        participants?: Participant[]
     ): Paragraph[] {
         const sections: Paragraph[] = [];
 
@@ -650,13 +653,13 @@ export class DocxExportService {
 
             // Add groups first
             columnGroups.forEach(group => {
-                sections.push(...this.createGroupSection(group, cards, options, sentimentResults));
+                sections.push(...this.createGroupSection(group, cards, options, sentimentResults, participants));
             });
 
             // Add ungrouped cards
             const ungroupedCards = columnCards.filter(card => !card.groupId);
             ungroupedCards.forEach(card => {
-                sections.push(...this.createCardSection(card, false, false, options, sentimentResults));
+                sections.push(...this.createCardSection(card, false, false, options, sentimentResults, participants));
             });
         });
 
@@ -695,7 +698,8 @@ export class DocxExportService {
         group: CardGroup,
         allCards: Card[],
         options: DocxExportOptions,
-        sentimentResults?: Map<string, SentimentResult>
+        sentimentResults?: Map<string, SentimentResult>,
+        participants?: Participant[]
     ): Paragraph[] {
         const groupCards = allCards.filter(card =>
             card.id === group.headCardId || group.memberCardIds.includes(card.id)
@@ -750,12 +754,12 @@ export class DocxExportService {
 
         // Add head card first
         if (headCard) {
-            sections.push(...this.createCardSection(headCard, true, true, options, sentimentResults));
+            sections.push(...this.createCardSection(headCard, true, true, options, sentimentResults, participants));
         }
 
         // Add member cards with indentation
         memberCards.forEach(card => {
-            sections.push(...this.createCardSection(card, true, false, options, sentimentResults));
+            sections.push(...this.createCardSection(card, true, false, options, sentimentResults, participants));
         });
 
         return sections;
@@ -769,7 +773,8 @@ export class DocxExportService {
         isGrouped: boolean = false,
         isHeadCard: boolean = false,
         options?: DocxExportOptions,
-        sentimentResults?: Map<string, SentimentResult>
+        sentimentResults?: Map<string, SentimentResult>,
+        participants?: Participant[]
     ): Paragraph[] {
         const sections: Paragraph[] = [];
         const cardColor = card.color ?? 'pastelWhite';
@@ -833,7 +838,7 @@ export class DocxExportService {
         sections.push(cardParagraph);
 
         // Card metadata in elegant format
-        const metadata = this.buildCardMetadata(card);
+        const metadata = this.buildCardMetadata(card, participants);
         if (metadata.length > 0) {
             sections.push(
                 new Paragraph({
@@ -901,11 +906,11 @@ export class DocxExportService {
     /**
      * Build card metadata string
      */
-    private buildCardMetadata(card: Card): string[] {
+    private buildCardMetadata(card: Card, participants?: Participant[]): string[] {
         const metadata: string[] = [];
 
         if (card.createdBy) {
-            metadata.push(`Autor: ${card.createdBy}`);
+            metadata.push(`Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, 'Sin autor')}`);
         }
 
         if (card.likes && card.likes.length > 0) {

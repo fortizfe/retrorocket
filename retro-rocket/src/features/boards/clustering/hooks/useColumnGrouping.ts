@@ -9,7 +9,7 @@ import {
     DEFAULT_GROUPING_STATE
 } from '@/features/boards/types/columnGrouping';
 import { saveColumnGroupingState } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
-import { resolveAuthorDisplayName } from '@/lib/utils/cardHelpers';
+import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 /**
  * Hook to manage column grouping state. `initialState` is sourced from
@@ -87,7 +87,7 @@ export const useColumnGrouping = (retrospectiveId?: string, initialState?: Colum
 
             const fallbackLabel = t('retrospective.grouping.unknownAuthor');
             const displayLabelOf = (key: string): string =>
-                resolveAuthorDisplayName(groups[key][0], participants, fallbackLabel);
+                resolveDisplayName(groups[key][0].createdBy, groups[key][0].createdByName, participants, fallbackLabel);
 
             // Sort group keys alphabetically by resolved display name, not by the
             // raw key, so the visible order matches what's now shown on screen.

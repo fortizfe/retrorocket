@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Card, CreateCardInput, EmojiReaction, GroupedReaction } from '@/features/boards/types/card';
 import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { groupReactions, hasUserLiked, getUserReaction as getUserReactionHelper } from '@/lib/utils/cardHelpers';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface UseOptimizedCardsReturn {
     cards: Card[];
@@ -36,6 +37,7 @@ function messageOf(error: unknown, fallback: string): string {
  */
 export const useOptimizedCards = (retrospectiveId: string | undefined, cards: Card[]): UseOptimizedCardsReturn => {
     const [error, setError] = useState<string | null>(null);
+    const { t } = useLanguage();
 
     const createCardFn = useCallback(async (cardInput: CreateCardInput): Promise<string> => {
         try {
@@ -138,9 +140,9 @@ export const useOptimizedCards = (retrospectiveId: string | undefined, cards: Ca
         (cardId: string): GroupedReaction[] => {
             const card = cards.find((c) => c.id === cardId);
             if (!card?.reactions) return [];
-            return groupReactions(card.reactions);
+            return groupReactions(card.reactions, undefined, t('retrospective.grouping.unknownAuthor'));
         },
-        [cards],
+        [cards, t],
     );
 
     const getUserLiked = useCallback(
