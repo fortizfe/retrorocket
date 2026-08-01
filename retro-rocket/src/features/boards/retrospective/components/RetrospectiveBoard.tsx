@@ -4,14 +4,13 @@ import toast from 'react-hot-toast';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
 import ActionItemsColumn from '@/features/boards/retrospective/components/ActionItemsColumn';
 import uiPreferencesStore from '@/lib/uiPreferencesStore';
-import Loading from '@/lib/components/ui/Loading';
 import { TypingProvider } from '@/features/boards/retrospective/contexts/TypingProvider';
 import { useOptimizedCards } from '@/features/boards/retrospective/hooks/useOptimizedCards';
 import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups';
 import { useActionItems } from '@/features/boards/retrospective/hooks/useActionItems';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { useRetrospectiveColumns, DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
+import { useRetrospectiveColumns, DynamicColumnConfig, type RetrospectiveColumn } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { useBoardGridColumns } from '@/lib/hooks/useBoardGridColumns';
 import { useSentiment, useSentimentSetter } from '@/features/boards/sentiment';
 import { useBoardDataSetter } from '@/features/boards/retrospective/contexts/BoardDataContext';
@@ -38,6 +37,9 @@ interface RetrospectiveBoardProps {
     /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4) —
      * replaces this component's own Firestore onSnapshot subscription for groups. */
     groups?: CardGroup[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (021, research.md §2) —
+     * replaces this component's own Firestore onSnapshot subscription for columns. */
+    columns?: RetrospectiveColumn[];
     /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4). */
     columnGroupingStates?: ColumnGroupingStatesStore;
     /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US5) —
@@ -62,6 +64,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     cards: boardCards = [],
     typingStatuses = [],
     groups: boardGroups = [],
+    columns: boardColumns = [],
     columnGroupingStates,
     timer = null,
     myFacilitatorNotes = [],
@@ -71,13 +74,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     // Get language context to trigger re-render when language changes
     const { t } = useLanguage();
 
-    // Get dynamic columns from Firestore or fallback to default
-    const {
-        columnConfigs,
-        columnOrder,
-        loading: columnsLoading,
-        error: columnsError
-    } = useRetrospectiveColumns(retrospective.id);
+    // Dynamic columns, derived synchronously from the board state already fetched by
+    // RetrospectivePage (021, research.md §2) — falls back to the default column set below.
+    const { columnConfigs, columnOrder } = useRetrospectiveColumns(boardColumns);
 
     const [showActionColumn, setShowActionColumn] = React.useState<boolean>(() => uiPreferencesStore.getShowActionColumn());
 
@@ -164,16 +163,6 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     // Fallback to default columns if no custom columns are found
     const finalColumnConfigs = Object.keys(columnConfigs).length > 0 ? columnConfigs : getColumns();
     const COLUMN_ORDER_ARRAY = columnOrder.length > 0 ? columnOrder : COLUMN_ORDER;
-
-    // Show loading state while columns are being fetched
-    if (columnsLoading) {
-        return <Loading />;
-    }
-
-    // Show error state if columns failed to load, but continue with fallback
-    if (columnsError) {
-        console.error('Failed to load columns:', columnsError);
-    }
 
     const currentUsername = fullName || displayName || email?.split('@')[0] || 'Usuario';
     const isFacilitator = isFacilitatorFlag;

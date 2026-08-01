@@ -155,15 +155,12 @@ test('a direct Firestore-emulator write (bypassing the REST API) is relayed live
 test('creates and likes a card — the card write itself goes through the backend only', async ({ page, context, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner6@example.com', 'E2E Retro Owner 6', 'E2E Card CRUD Board');
 
-    // A blanket "zero Firestore traffic on this page" assertion isn't true yet at US2
-    // — RetrospectiveBoard.tsx still mounts other not-yet-migrated hooks
-    // (useCardGroups/useActionItems/useRetrospectiveColumns/sentiment analysis, US4-
-    // US7) that keep their own onSnapshot listeners open, and local sentiment analysis
-    // reacting to the new card legitimately still writes via sentimentResultsService.ts
-    // (US7). What's meaningful *now* is that the card write itself — creating and
-    // liking it — reaches the backend's /api/cards* endpoints, not Firestore directly.
-    // The comprehensive "zero direct Firebase requests" check runs once at Polish
-    // (T118), after every story has migrated its own slice.
+    // What's meaningful here is that the card write itself — creating and liking it —
+    // reaches the backend's /api/cards* endpoints, not Firestore directly. The
+    // comprehensive "zero direct Firebase requests for the whole board session" check
+    // (every US1-US7 hook, plus columns and participant photos, per 021) lives in
+    // e2e/concurrent-board-network.spec.ts, now that nothing on this screen retains a
+    // direct Firestore listener of its own.
     const createCardResponses: import('@playwright/test').Response[] = [];
     const likeResponses: import('@playwright/test').Response[] = [];
     page.on('response', (res) => {

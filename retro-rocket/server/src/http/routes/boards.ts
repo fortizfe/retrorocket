@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { BoardsPort } from '../../application/ports/boards';
 import type { PublicUser } from '../../domain/auth/types';
@@ -59,20 +59,21 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
     const router = Router();
 
     // Same rationale as auth.ts's authLimiter / mcp.ts's tokenLimiter: blunt
-    // brute-force/resource-exhaustion within Vercel's free-tier request budget.
+    // brute-force/resource-exhaustion within Vercel's free-tier request budget, now
+    // keyed by session identity (falling back to the trust-proxy-aware IP) via
+    // rateLimiting.ts (021, research.md §1, FR-002).
     //
     // Skipped entirely when testMode is on (never production — see auth-wiring.ts):
     // the emulator-backed E2E suite shares one dev-server process/session across every
     // spec file (playwright.config.ts), so its cumulative request volume across a full
-    // run can legitimately exceed 100/15min for /api/boards without any real abuse
+    // run can legitimately exceed the limit for /api/boards without any real abuse
     // occurring — mirrors auth.ts's authLimiter skip for the exact same reason.
     if (!deps.testMode) {
-        const boardsLimiter = rateLimit({
+        const boardsLimiter = createRateLimiter({
+            sessionService: deps.sessionService,
+            clock: deps.clock,
             windowMs: 15 * 60 * 1000,
-            limit: 100,
-            standardHeaders: 'draft-7',
-            legacyHeaders: false,
-            validate: false,
+            limit: 150,
         });
         router.use(boardsLimiter);
     }

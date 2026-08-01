@@ -108,6 +108,21 @@ describe('UserProvider bootstrap', () => {
         const toast = (await import('react-hot-toast')).default;
         expect(toast.error).toHaveBeenCalledWith('Error al cargar tu perfil');
     });
+
+    // US1/FR-004: a 429 from the session check must surface a visible error, not present as a
+    // plain signed-out state with no explanation (backendAuthClient's fetchSession now throws
+    // instead of swallowing a 429 into UNAUTHENTICATED — see backendAuthClient.test.ts).
+    it('surfaces a visible error (toast) when the session check itself is rate-limited (429)', async () => {
+        mockBootstrapSession.mockRejectedValue(new Error('Too many requests — please wait a moment and try again.'));
+
+        const { result } = renderHook(() => useUser(), { wrapper });
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isAuthenticated).toBe(false);
+        expect(result.current.error).toBe('Too many requests — please wait a moment and try again.');
+
+        const toast = (await import('react-hot-toast')).default;
+        expect(toast.error).toHaveBeenCalledWith('Error al cargar tu perfil');
+    });
 });
 
 describe('sign-in and sign-out', () => {

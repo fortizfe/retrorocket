@@ -18,7 +18,7 @@ vi.mock('@/features/boards/participants/components/index', () => ({
         >
             <span data-testid="participant-count">{participants.length}</span>
             {participants.slice(0, maxVisible).map((p: Participant) => (
-                <div key={p.id} data-testid={`avatar-${p.id}`}>
+                <div key={p.id} data-testid={`avatar-${p.id}`} data-photo-url={p.photoURL ?? ''}>
                     {p.name}
                 </div>
             ))}
@@ -43,12 +43,9 @@ vi.mock('@/features/boards/participants/components/index', () => ({
     ))
 }));
 
-vi.mock('@/features/boards/participants/hooks/useEnrichedParticipants', () => ({
-    useEnrichedParticipants: vi.fn((participants: Participant[]) => ({
-        enrichedParticipants: participants.map(p => ({ ...p, photoURL: `https://example.com/${p.id}.jpg` })),
-        loading: false
-    }))
-}));
+// 021, research.md §3: no useEnrichedParticipants hook exists anymore — the participants
+// prop already carries photoURL (see backend ParticipantDTO / frontend Participant type),
+// so this component must render it directly with no separate Firestore-backed enrichment.
 
 describe('ResponsiveParticipantDisplay', () => {
     const mockParticipants: Participant[] = [
@@ -321,13 +318,34 @@ describe('ResponsiveParticipantDisplay', () => {
         });
     });
 
-    describe('Enriched Participants Integration', () => {
-        it('renders component when hook returns enriched participants', () => {
+    describe('Direct photoURL rendering (021 — no enrichment hook)', () => {
+        it('renders each participant\'s own photoURL directly from the participants prop, stable after any pending async work settles', async () => {
             render(<ResponsiveParticipantDisplay participants={mockParticipants} />);
 
-            // Component should render successfully with enriched participants from mock
+            // Flush any pending microtasks/effects — a leftover async enrichment step (the
+            // pre-021 useEnrichedParticipants hook) would overwrite photoURL by now; direct
+            // prop rendering has nothing async to wait for and stays correct either way.
+            await act(async () => {
+                await Promise.resolve();
+            });
+
             expect(screen.getByTestId('compact-avatar-group')).toBeInTheDocument();
             expect(screen.getByTestId('participant-count')).toHaveTextContent(mockParticipants.length.toString());
+
+            expect(screen.getByTestId('avatar-1')).toHaveAttribute('data-photo-url', 'https://example.com/alice.jpg');
+            // A participant with no photoURL at all (undefined) renders with an empty attribute,
+            // not a fetched/derived one — there is no enrichment step to fill it in.
+            expect(screen.getByTestId('avatar-2')).toHaveAttribute('data-photo-url', '');
+        });
+
+        it('updates immediately when a participant\'s photoURL changes in the prop (e.g. a live update), with no async enrichment delay', () => {
+            const { rerender } = render(<ResponsiveParticipantDisplay participants={mockParticipants} />);
+            expect(screen.getByTestId('avatar-1')).toHaveAttribute('data-photo-url', 'https://example.com/alice.jpg');
+
+            const updated = mockParticipants.map((p) => (p.id === '1' ? { ...p, photoURL: 'https://example.com/alice-new.jpg' } : p));
+            rerender(<ResponsiveParticipantDisplay participants={updated} />);
+
+            expect(screen.getByTestId('avatar-1')).toHaveAttribute('data-photo-url', 'https://example.com/alice-new.jpg');
         });
     });
 

@@ -162,3 +162,34 @@ describe('DELETE /api/boards/:id', () => {
         expect(res.status).toBe(401);
     });
 });
+
+// 021, research.md §1: boardsLimiter shares the same shared-bucket fix as authLimiter
+// (server/test/http/routes/authLogin.test.ts) and retrospectiveLimiter (retrospectives.test.ts).
+describe('boardsLimiter — session/IP isolation (021, FR-002)', () => {
+    it('two distinct authenticated sessions are throttled independently', async () => {
+        const { app } = buildBoardsTestApp({ boards: [board({ id: 'b1' })], overrides: { testMode: false } });
+
+        let lastA;
+        for (let i = 0; i < 151; i++) {
+            lastA = await request(app).get('/api/boards').set('Cookie', sessionCookieFor('boards-user-a'));
+        }
+        expect(lastA!.status).toBe(429);
+
+        const bRes = await request(app).get('/api/boards').set('Cookie', sessionCookieFor('boards-user-b'));
+        expect(bRes.status).toBe(200);
+    });
+
+    it('a legitimately throttled request returns the ApiErrorBody envelope', async () => {
+        const { app } = buildBoardsTestApp({ boards: [board({ id: 'b1' })], overrides: { testMode: false } });
+
+        let throttled;
+        for (let i = 0; i < 151; i++) {
+            throttled = await request(app).get('/api/boards').set('Cookie', sessionCookieFor('boards-user-c'));
+        }
+        expect(throttled!.status).toBe(429);
+        expect(throttled!.body).toEqual({
+            error: { code: 'rate_limited', message: expect.any(String) },
+            correlationId: expect.any(String),
+        });
+    });
+});

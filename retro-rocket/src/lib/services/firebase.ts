@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator, Firestore } from "firebase/firestore";
-import { getAuth, connectAuthEmulator, signOut, signInWithCustomToken, onAuthStateChanged, Auth } from "firebase/auth";
+import { getAuth, connectAuthEmulator, signOut, signInWithCustomToken, Auth } from "firebase/auth";
 
 // Set by playwright.config.ts / e2e global-setup so the real app connects to the local
 // Firebase Emulator Suite instead of a production project. Never set outside E2E runs.
@@ -19,34 +18,35 @@ const firebaseConfig = {
 // Check if we're in development mode without Firebase config
 const isDevMode = !import.meta.env.VITE_FIREBASE_API_KEY && !useEmulator;
 
-// Initialize Firebase safely
-const initializeFirebase = (): { db: Firestore | null; auth: Auth | null } => {
+// 021, research.md §3/§4: no browser code reads Firestore directly anymore (the board-
+// columns listener and the participant-photo cache were the last two, both removed), so
+// this module now only ever initializes Firebase Auth — kept solely for signOutUser below
+// and the emulator-only E2E sign-in hook, neither of which is a Firestore read/write.
+const initializeFirebaseAuth = (): Auth | null => {
   if (isDevMode) {
     console.log('Firebase not configured, running in mock mode');
-    return { db: null, auth: null };
+    return null;
   }
 
   try {
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const auth = getAuth(app);
 
     if (useEmulator) {
-      connectFirestoreEmulator(db, 'localhost', 8080);
       connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-      console.log('Firebase connected to local Emulator Suite');
+      console.log('Firebase Auth connected to local Emulator Suite');
     } else {
-      console.log('Firebase initialized successfully');
+      console.log('Firebase Auth initialized successfully');
     }
 
-    return { db, auth };
+    return auth;
   } catch (error) {
-    console.error('Firebase initialization failed:', error);
-    return { db: null, auth: null };
+    console.error('Firebase Auth initialization failed:', error);
+    return null;
   }
 };
 
-const { db, auth } = initializeFirebase();
+const auth = initializeFirebaseAuth();
 
 // E2E-only sign-in hook: lets Playwright specs that aren't testing the login flow
 // itself establish an authenticated session via a pre-minted custom token instead of
@@ -68,14 +68,3 @@ export const signOutUser = async () => {
     throw error;
   }
 };
-
-// Export firestore constants
-export const FIRESTORE_COLLECTIONS = {
-  RETROSPECTIVES: 'retrospectives',
-  CARDS: 'cards',
-  PARTICIPANTS: 'participants',
-  USERS: 'users',
-  COUNTDOWN_TIMERS: 'countdown_timers'
-} as const;
-
-export { db, auth, onAuthStateChanged, isDevMode };

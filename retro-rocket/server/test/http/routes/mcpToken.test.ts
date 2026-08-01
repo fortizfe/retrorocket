@@ -93,3 +93,41 @@ describe('POST /api/mcp/token', () => {
         expect(res.body.error.code).toBe('invalid_grant');
     });
 });
+
+// 021, research.md §1: MCP clients authenticate the token exchange itself with no
+// rr_session cookie (it's a machine-to-machine OAuth call, not a browser fetch), so —
+// unlike auth/boards/profile/retrospectives — tokenLimiter is NOT switched to the
+// session-first resolver in rateLimiting.ts; it stays IP-keyed, which is already correct
+// once app.ts trusts Vercel's proxy hop (T005) so distinct client IPs resolve correctly.
+// What was still missing here specifically is the same ApiErrorBody envelope every other
+// limiter in the app already returns (FR-004) — tokenLimiter had no custom `handler`.
+describe('tokenLimiter — trust-proxy IP isolation + envelope (021, FR-002, FR-004)', () => {
+    it('two distinct client IPs are throttled independently', async () => {
+        const { app } = buildMcpTestApp({ registeredClients: [client()] });
+        const body = { grant_type: 'authorization_code', code: 'bogus', redirect_uri: REDIRECT_URI, client_id: 'client1', code_verifier: VERIFIER };
+
+        let lastIp1;
+        for (let i = 0; i < 61; i++) {
+            lastIp1 = await request(app).post('/api/mcp/token').set('X-Forwarded-For', '203.0.113.30').send(body);
+        }
+        expect(lastIp1!.status).toBe(429);
+
+        const ip2 = await request(app).post('/api/mcp/token').set('X-Forwarded-For', '203.0.113.40').send(body);
+        expect(ip2.status).not.toBe(429);
+    });
+
+    it('a legitimately throttled request returns the ApiErrorBody envelope', async () => {
+        const { app } = buildMcpTestApp({ registeredClients: [client()] });
+        const body = { grant_type: 'authorization_code', code: 'bogus', redirect_uri: REDIRECT_URI, client_id: 'client1', code_verifier: VERIFIER };
+
+        let throttled;
+        for (let i = 0; i < 61; i++) {
+            throttled = await request(app).post('/api/mcp/token').set('X-Forwarded-For', '203.0.113.50').send(body);
+        }
+        expect(throttled!.status).toBe(429);
+        expect(throttled!.body).toEqual({
+            error: { code: 'rate_limited', message: expect.any(String) },
+            correlationId: expect.any(String),
+        });
+    });
+});

@@ -1,10 +1,11 @@
 import { Page } from '@playwright/test';
 
-// The Firestore emulator (src/lib/services/firebase.ts) listens on localhost:8080.
-// The Auth emulator (localhost:9099) is expected/out of scope — bootstrapSession()'s
-// one-time signInWithCustomToken call still hits it (spec Assumptions) so that other,
-// not-yet-migrated screens keep working; only direct Firestore reads/writes are what
-// this feature (FR-001/SC-002) eliminates from the Dashboard.
+// The Firestore emulator historically listened on localhost:8080 when
+// src/lib/services/firebase.ts still initialized a Firestore client. As of 021
+// (research.md §3/§4) that client no longer exists at all — bootstrapSession() no
+// longer calls signInWithCustomToken either, so the Auth emulator (localhost:9099) is
+// not expected to see any traffic from this app anymore either. This pattern is kept as
+// a standing regression guard for Firestore specifically.
 const FIRESTORE_EMULATOR_HOST_PATTERN = /localhost:8080|127\.0\.0\.1:8080/;
 
 /**

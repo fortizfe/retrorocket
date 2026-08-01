@@ -64,6 +64,48 @@ describe('GET /api/retrospectives/:id', () => {
     });
 });
 
+// US3, research.md §1: the WebSocket reconnect flow's REST resync (backendRealtimeClient.ts —
+// GET /api/retrospectives/:id, performed on every reconnect) must not be able to throttle a
+// participant because of a *different* participant's simultaneous reconnect. The WS upgrade
+// endpoint's own concurrent-connection cap is already session-scoped (019, research.md §5;
+// contracts/rate-limiting-contract.md) and unaffected by this fix — only the REST resync,
+// governed by retrospectiveLimiter, needed the same session-first/trust-proxy-aware keying
+// as auth.ts's authLimiter (server/test/http/routes/authLogin.test.ts).
+describe('retrospectiveLimiter — reconnect-storm isolation (US3, FR-002, FR-010)', () => {
+    it('two participants reconnecting (repeated GET /api/retrospectives/:id resyncs) at the same time are throttled independently', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], overrides: { testMode: false } });
+        const sessionA = sessionCookieFor('reconnect-user-a');
+        const sessionB = sessionCookieFor('reconnect-user-b');
+
+        let lastA;
+        for (let i = 0; i < 401; i++) {
+            lastA = await request(app).get('/api/retrospectives/r1').set('Cookie', sessionA);
+        }
+        expect(lastA!.status).toBe(429);
+
+        // Participant B's resync must still succeed — a reconnect storm from A (e.g. a
+        // dropped connection retried aggressively) must never throttle B's own reconnect.
+        const bRes = await request(app).get('/api/retrospectives/r1').set('Cookie', sessionB);
+        expect(bRes.status).toBe(200);
+    });
+
+    it('a legitimately throttled resync returns the ApiErrorBody envelope (FR-004)', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], overrides: { testMode: false } });
+        const session = sessionCookieFor('reconnect-user-c');
+
+        let throttled;
+        for (let i = 0; i < 401; i++) {
+            throttled = await request(app).get('/api/retrospectives/r1').set('Cookie', session);
+        }
+
+        expect(throttled!.status).toBe(429);
+        expect(throttled!.body).toEqual({
+            error: { code: 'rate_limited', message: expect.any(String) },
+            correlationId: expect.any(String),
+        });
+    });
+});
+
 describe('POST /api/retrospectives/:id/join', () => {
     it('joins the board and returns the participant record', async () => {
         const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
