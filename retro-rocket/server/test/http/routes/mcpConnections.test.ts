@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { buildMcpTestApp, sessionCookieFor } from './mcpTestApp';
-import { McpConnection } from '../../../src/domain/mcp/McpConnection';
+import { McpConnection, type McpConnectionData } from '../../../src/domain/mcp/McpConnection';
+import { hydrateConnectionData } from '../../../src/adapters/firebase/FirestoreMcpConnectionAdapter';
 
 async function seedConnections(deps: import('../../../src/http/routes/mcp').McpRouterDeps) {
     const mine = McpConnection.createPending({ id: 'c1', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: deps.clock.nowSeconds() }).activated('h1');
@@ -56,6 +57,28 @@ describe('GET /api/mcp/connections', () => {
         expect(res.status).toBe(200);
         expect(res.body.connections[0]).toMatchObject({ origin: 'mobile' });
         expect(res.body.connections[0].lastUsedAt).toBeTruthy();
+    });
+
+    it('does not 500 on a connection written before origin/lastUsedAt tracking existed (production regression)', async () => {
+        const { app, deps } = buildMcpTestApp();
+        // Simulates a real Firestore document from before feature 023: no `origin` or
+        // `lastUsedAt` keys at all (not `null` — genuinely absent), as
+        // FirestoreMcpConnectionAdapter's read paths would receive it from `doc.data()`.
+        const legacyDoc = {
+            id: 'c-legacy',
+            uid: 'u1',
+            clientId: 'client1',
+            clientName: 'Claude',
+            status: 'active',
+            createdAt: deps.clock.nowSeconds(),
+            revokedAt: null,
+            refreshTokenHash: 'legacy-hash',
+        } as unknown as McpConnectionData;
+        await deps.connectionStore.saveConnection(new McpConnection(hydrateConnectionData(legacyDoc)));
+
+        const res = await request(app).get('/api/mcp/connections').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        expect(res.body.connections[0]).toMatchObject({ id: 'c-legacy', origin: 'unknown', lastUsedAt: null });
     });
 });
 
