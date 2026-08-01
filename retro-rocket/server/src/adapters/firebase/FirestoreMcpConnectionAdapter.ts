@@ -13,6 +13,25 @@ const CODES = 'mcpAuthorizationCodes';
 const CONNECTIONS = 'mcpConnections';
 
 /**
+ * Connection documents written before feature 023 (origin/lastUsedAt tracking) shipped
+ * don't have those fields at all — not `null`, simply absent from the Firestore document.
+ * Backfilling them here (data-model.md: "Existing connections... default to 'unknown'...
+ * no backfill required") keeps every read path returning a value that matches
+ * `McpConnectionData`'s required (non-optional) fields, so callers never have to
+ * special-case `undefined`. Without this, `lastUsedAt` being `undefined` (not `null`)
+ * reached `new Date(undefined * 1000).toISOString()` in the connections route handler and
+ * threw (`RangeError: Invalid time value`), 500ing GET /api/mcp/connections for any user
+ * with a connection older than this feature.
+ */
+export function hydrateConnectionData(raw: FirebaseFirestore.DocumentData): McpConnectionData {
+    return {
+        ...(raw as McpConnectionData),
+        origin: raw.origin ?? 'unknown',
+        lastUsedAt: raw.lastUsedAt ?? null,
+    };
+}
+
+/**
  * Read/write Admin SDK access to the three MCP connector-state collections. This is the
  * one Firestore write path this feature introduces — connection/DCR/code bookkeeping,
  * never retrospective data (that stays behind the read-only FirestoreRetrospectiveReadAdapter).
@@ -91,7 +110,7 @@ export class FirestoreMcpConnectionAdapter implements McpClientStorePort, McpCon
     async getConnectionById(connectionId: string): Promise<McpConnection | null> {
         const snap = await this.db.collection(CONNECTIONS).doc(connectionId).get();
         if (!snap.exists) return null;
-        return new McpConnection(snap.data() as McpConnectionData);
+        return new McpConnection(hydrateConnectionData(snap.data()!));
     }
 
     async saveConnection(connection: McpConnection): Promise<void> {
@@ -100,12 +119,12 @@ export class FirestoreMcpConnectionAdapter implements McpClientStorePort, McpCon
 
     async listConnectionsForUser(uid: string): Promise<McpConnection[]> {
         const snap = await this.db.collection(CONNECTIONS).where('uid', '==', uid).get();
-        return snap.docs.map((doc) => new McpConnection(doc.data() as McpConnectionData));
+        return snap.docs.map((doc) => new McpConnection(hydrateConnectionData(doc.data())));
     }
 
     async getConnectionByRefreshTokenHash(hash: string): Promise<McpConnection | null> {
         const snap = await this.db.collection(CONNECTIONS).where('refreshTokenHash', '==', hash).limit(1).get();
         if (snap.empty) return null;
-        return new McpConnection(snap.docs[0].data() as McpConnectionData);
+        return new McpConnection(hydrateConnectionData(snap.docs[0].data()));
     }
 }
