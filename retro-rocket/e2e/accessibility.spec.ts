@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
 import { addCardToFirstColumn, cardByContent, openReactionPicker } from './fixtures/board';
+import { registerAndConnectMcpClient, revokeMcpConnectionsForClient } from './fixtures/mcp';
 
 /**
  * WCAG 2.1 AA audit gate (FR-013 / SC-003).
@@ -93,9 +94,21 @@ for (const theme of THEMES) {
         await applyThemeClass(page, theme);
         await expectNoViolations(page, `/dashboard (${theme})`);
 
+        // Populate the Connected Apps list (origin label + last-used markup, US2 of
+        // 023-fix-mcp-connection-management) so the real axe-core gate actually scans
+        // that new UI, not an empty-state card.
+        const mcpClientName = `A11y MCP Client ${theme}`;
+        await registerAndConnectMcpClient(page, mcpClientName);
+
         await page.goto('/perfil');
         await applyThemeClass(page, theme);
         await expectNoViolations(page, `/perfil (${theme})`);
+
+        // Clean up immediately: this suite shares one Firestore Emulator instance and
+        // test-login identity across every spec file (no per-spec isolation), so an
+        // unrevoked connection here would otherwise leak into and break specs that run
+        // later (e.g. mcp-connector.spec.ts's own connection-management assertions).
+        await revokeMcpConnectionsForClient(page, mcpClientName);
     });
 
     test(`Board (cards/columns/voting) has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {

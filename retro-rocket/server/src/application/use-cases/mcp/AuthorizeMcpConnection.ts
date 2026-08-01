@@ -1,6 +1,7 @@
 import type { ClockPort, RandomPort, SessionServicePort } from '../../ports';
 import type { McpClientStorePort, McpConnectionStorePort } from '../../ports/mcp';
 import { McpConnection } from '../../../domain/mcp/McpConnection';
+import type { ConnectionOrigin } from '../../../domain/mcp/ConnectionOrigin';
 
 export const MCP_AUTHORIZATION_REQUEST_TTL_SECONDS = 60 * 10; // 10 minutes, mirrors OAuthState's TTL
 
@@ -76,6 +77,8 @@ export interface DecideMcpAuthorizationInput {
     /** The uid of the currently signed-in user deciding — re-checked against the request's uid. */
     uid: string;
     approve: boolean;
+    /** Classified from the consent-decision request's User-Agent header (research.md §2/§3). */
+    origin: ConnectionOrigin;
 }
 
 export type DecideMcpAuthorizationResult =
@@ -103,6 +106,7 @@ export async function decideMcpAuthorization(
         clientId: record.clientId,
         clientName: record.clientName,
         nowSeconds: deps.clock.nowSeconds(),
+        origin: input.origin,
     });
     await deps.connectionStore.decideAuthorizationRequest(input.requestCode, { approved: true, connection });
 

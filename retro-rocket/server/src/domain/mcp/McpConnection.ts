@@ -1,4 +1,5 @@
 import { AppError } from '../errors';
+import type { ConnectionOrigin } from './ConnectionOrigin';
 
 export type McpConnectionStatus = 'pending' | 'active' | 'revoked';
 
@@ -18,6 +19,8 @@ export interface McpConnectionData {
     createdAt: number;
     revokedAt: number | null;
     refreshTokenHash: string | null;
+    origin: ConnectionOrigin;
+    lastUsedAt: number | null;
 }
 
 /**
@@ -35,6 +38,7 @@ export class McpConnection {
         clientId: string;
         clientName: string;
         nowSeconds: number;
+        origin?: ConnectionOrigin;
     }): McpConnection {
         return new McpConnection({
             id: params.id,
@@ -45,6 +49,8 @@ export class McpConnection {
             createdAt: params.nowSeconds,
             revokedAt: null,
             refreshTokenHash: null,
+            origin: params.origin ?? 'unknown',
+            lastUsedAt: null,
         });
     }
 
@@ -69,5 +75,10 @@ export class McpConnection {
 
     get isActive(): boolean {
         return this.data.status === 'active';
+    }
+
+    /** Records a successful tool-call use, on an active connection (mcpAuthMiddleware.ts). */
+    touched(nowSeconds: number): McpConnection {
+        return new McpConnection({ ...this.data, lastUsedAt: nowSeconds });
     }
 }

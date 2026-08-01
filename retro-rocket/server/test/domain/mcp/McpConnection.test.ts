@@ -15,6 +15,29 @@ describe('McpConnection.createPending', () => {
         expect(c.data.revokedAt).toBeNull();
         expect(c.isActive).toBe(false);
     });
+
+    it('stores a supplied origin', () => {
+        const c = McpConnection.createPending({ id: 'c1', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: T0, origin: 'mobile' });
+        expect(c.data.origin).toBe('mobile');
+    });
+
+    it('defaults origin to "unknown" when omitted', () => {
+        const c = pending();
+        expect(c.data.origin).toBe('unknown');
+    });
+
+    it('starts with lastUsedAt null', () => {
+        const c = pending();
+        expect(c.data.lastUsedAt).toBeNull();
+    });
+});
+
+describe('McpConnection.touched', () => {
+    it('returns a copy with lastUsedAt set to the given time', () => {
+        const active = pending().activated('hash1');
+        const touched = active.touched(T0 + 42);
+        expect(touched.data.lastUsedAt).toBe(T0 + 42);
+    });
 });
 
 describe('McpConnection.activated', () => {

@@ -34,6 +34,7 @@ export function mcpAuthMiddleware(deps: McpAuthDeps): RequestHandler {
                 if (!connection || !connection.isActive || connection.data.uid !== claims.sub) {
                     return unauthorized(res);
                 }
+                await deps.connectionStore.saveConnection(connection.touched(now));
                 res.locals.mcpAuth = claims;
                 next();
             })

@@ -10,6 +10,7 @@ import { readCookie, SESSION_COOKIE } from '../cookies';
 import { mcpAuthMiddleware, type McpAuthDeps } from '../middleware/mcpAuth';
 import { registerMcpClient } from '../../application/use-cases/mcp/RegisterMcpClient';
 import { startMcpAuthorization, decideMcpAuthorization } from '../../application/use-cases/mcp/AuthorizeMcpConnection';
+import { classifyOrigin } from '../../domain/mcp/ConnectionOrigin';
 import { exchangeMcpToken } from '../../application/use-cases/mcp/ExchangeMcpToken';
 import { listConnections } from '../../application/use-cases/mcp/ListConnections';
 import { revokeConnection } from '../../application/use-cases/mcp/RevokeConnection';
@@ -222,7 +223,12 @@ export function mcpRouter(deps: McpRouterDeps): Router {
 
         const result = await decideMcpAuthorization(
             { connectionStore: deps.connectionStore, clock: deps.clock, random: deps.random },
-            { requestCode: body.requestCode, uid: session.sub, approve: body.approve },
+            {
+                requestCode: body.requestCode,
+                uid: session.sub,
+                approve: body.approve,
+                origin: classifyOrigin(req.header('user-agent')),
+            },
         );
         if (result.kind === 'not_found') throw new NotFoundError('Authorization request not found, already decided, or expired');
 
@@ -281,6 +287,8 @@ export function mcpRouter(deps: McpRouterDeps): Router {
                 clientName: c.clientName,
                 createdAt: new Date(c.createdAt * 1000).toISOString(),
                 status: c.status,
+                origin: c.origin,
+                lastUsedAt: c.lastUsedAt !== null ? new Date(c.lastUsedAt * 1000).toISOString() : null,
             })),
         });
     });

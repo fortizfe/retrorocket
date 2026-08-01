@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Bot, ShieldOff } from 'lucide-react';
+import { Bot, ShieldOff, Monitor, Smartphone, Globe, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useConnectedApps } from '@/features/auth/hooks/useConnectedApps';
+import type { ConnectedApp } from '@/features/auth/services/connectedAppsService';
 import Button from '@/lib/components/ui/Button';
 import Card from '@/lib/components/ui/Card';
 import Loading from '@/lib/components/ui/Loading';
@@ -11,6 +12,13 @@ import Loading from '@/lib/components/ui/Loading';
 interface ConnectedAppsCardProps {
     className?: string;
 }
+
+const ORIGIN_ICONS: Record<ConnectedApp['origin'], React.ElementType> = {
+    desktop: Monitor,
+    mobile: Smartphone,
+    web: Globe,
+    unknown: HelpCircle,
+};
 
 /**
  * Lists the AI clients (feature 015) a user has authorized via the MCP connector, and
@@ -63,6 +71,7 @@ const ConnectedAppsCard: React.FC<ConnectedAppsCardProps> = ({ className = '' })
                 <div className="space-y-3">
                     {connectedApps.map((app) => {
                         const isRevoking = revokingIds.includes(app.id);
+                        const OriginIcon = ORIGIN_ICONS[app.origin];
                         return (
                             <motion.div
                                 key={app.id}
@@ -73,9 +82,20 @@ const ConnectedAppsCard: React.FC<ConnectedAppsCardProps> = ({ className = '' })
                                 <div className="flex items-center gap-3">
                                     <Bot className="w-5 h-5 text-text-secondary" aria-hidden="true" />
                                     <div>
-                                        <div className="font-medium text-text-primary">{app.clientName}</div>
+                                        <div className="flex items-center gap-2 font-medium text-text-primary">
+                                            {app.clientName}
+                                            <span className="inline-flex items-center gap-1 text-xs font-normal text-text-secondary">
+                                                <OriginIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                                                {t(`mcpConnector.connectedApps.origin${app.origin.charAt(0).toUpperCase()}${app.origin.slice(1)}`)}
+                                            </span>
+                                        </div>
                                         <div className="text-xs text-text-muted">
                                             {t('mcpConnector.connectedApps.connectedOn', { date: formatDate(app.createdAt) })}
+                                        </div>
+                                        <div className="text-xs text-text-muted">
+                                            {app.lastUsedAt
+                                                ? t('mcpConnector.connectedApps.lastUsedOn', { date: formatDate(app.lastUsedAt) })
+                                                : t('mcpConnector.connectedApps.neverUsedYet')}
                                         </div>
                                     </div>
                                 </div>

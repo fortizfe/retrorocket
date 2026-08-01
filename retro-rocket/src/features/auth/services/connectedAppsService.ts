@@ -8,7 +8,9 @@ export interface ConnectedApp {
     id: string;
     clientName: string;
     createdAt: string;
-    status: 'pending' | 'active' | 'revoked';
+    status: 'pending' | 'active';
+    origin: 'desktop' | 'mobile' | 'web' | 'unknown';
+    lastUsedAt: string | null;
 }
 
 const API = '/api/mcp';
