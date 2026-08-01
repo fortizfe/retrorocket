@@ -23,7 +23,7 @@ function buildApp(connectionStore: McpConnectionStorePort) {
     return app;
 }
 
-function storeWith(connection: McpConnection | null): McpConnectionStorePort {
+function storeWith(connection: McpConnection | null, onSave?: (saved: McpConnection) => void): McpConnectionStorePort {
     return {
         createAuthorizationRequest: async () => {},
         getAuthorizationRequest: async () => null,
@@ -31,7 +31,9 @@ function storeWith(connection: McpConnection | null): McpConnectionStorePort {
         consumeAuthorizationCode: async () => null,
         getConnectionById: async () => connection,
         getConnectionByRefreshTokenHash: async () => null,
-        saveConnection: async () => {},
+        saveConnection: async (saved) => {
+            onSave?.(saved);
+        },
         listConnectionsForUser: async () => [],
     };
 }
@@ -81,5 +83,14 @@ describe('mcpAuthMiddleware', () => {
             .get('/protected')
             .set('Authorization', `Bearer ${token.slice(0, -3)}aaa`);
         expect(res.status).toBe(401);
+    });
+
+    it('touches lastUsedAt to the current clock time on a successful request', async () => {
+        let saved: McpConnection | undefined;
+        const res = await request(buildApp(storeWith(activeConnection, (c) => (saved = c))))
+            .get('/protected')
+            .set('Authorization', `Bearer ${token}`);
+        expect(res.status).toBe(200);
+        expect(saved?.data.lastUsedAt).toBe(NOW);
     });
 });

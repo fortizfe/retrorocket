@@ -102,7 +102,7 @@ describe('decideMcpAuthorization', () => {
         const { connectionStore, requestCode } = await withConsentRequest();
         const result = await decideMcpAuthorization(
             { connectionStore, clock: fixedClock(), random: sequentialRandom() },
-            { requestCode, uid: 'u1', approve: true },
+            { requestCode, uid: 'u1', approve: true, origin: 'unknown' },
         );
         expect(result.kind).toBe('redirect');
         if (result.kind === 'redirect') {
@@ -115,11 +115,22 @@ describe('decideMcpAuthorization', () => {
         expect(record?.connectionId).not.toBeNull();
     });
 
+    it('passes the input origin through to the created connection', async () => {
+        const { connectionStore, requestCode } = await withConsentRequest();
+        await decideMcpAuthorization(
+            { connectionStore, clock: fixedClock(), random: sequentialRandom() },
+            { requestCode, uid: 'u1', approve: true, origin: 'mobile' },
+        );
+        const record = await connectionStore.getAuthorizationRequest(requestCode);
+        const connection = await connectionStore.getConnectionById(record!.connectionId!);
+        expect(connection?.data.origin).toBe('mobile');
+    });
+
     it('on denial, redirects with access_denied and creates no connection', async () => {
         const { connectionStore, requestCode } = await withConsentRequest();
         const result = await decideMcpAuthorization(
             { connectionStore, clock: fixedClock(), random: sequentialRandom() },
-            { requestCode, uid: 'u1', approve: false },
+            { requestCode, uid: 'u1', approve: false, origin: 'unknown' },
         );
         expect(result.kind).toBe('redirect');
         if (result.kind === 'redirect') expect(result.params.error).toBe('access_denied');
@@ -131,7 +142,7 @@ describe('decideMcpAuthorization', () => {
         const { connectionStore, requestCode } = await withConsentRequest();
         const result = await decideMcpAuthorization(
             { connectionStore, clock: fixedClock(), random: sequentialRandom() },
-            { requestCode, uid: 'someone-else', approve: true },
+            { requestCode, uid: 'someone-else', approve: true, origin: 'unknown' },
         );
         expect(result.kind).toBe('not_found');
     });

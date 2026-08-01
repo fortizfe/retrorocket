@@ -26,6 +26,37 @@ describe('GET /api/mcp/connections', () => {
         const res = await request(app).get('/api/mcp/connections');
         expect(res.status).toBe(401);
     });
+
+    it('does not include a revoked connection (reported bug: still shows as active after reload)', async () => {
+        const { app, deps } = buildMcpTestApp();
+        await seedConnections(deps);
+        const revokeRes = await request(app).delete('/api/mcp/connections/c1').set('Cookie', sessionCookieFor('u1'));
+        expect(revokeRes.status).toBe(204);
+
+        const res = await request(app).get('/api/mcp/connections').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        expect(res.body.connections).toEqual([]);
+    });
+
+    it('reflects origin and lastUsedAt on each connection', async () => {
+        const { app, deps } = buildMcpTestApp();
+        const withOriginAndLastUsed = McpConnection.createPending({
+            id: 'c5',
+            uid: 'u1',
+            clientId: 'client1',
+            clientName: 'Claude',
+            nowSeconds: deps.clock.nowSeconds(),
+            origin: 'mobile',
+        })
+            .activated('h5')
+            .touched(deps.clock.nowSeconds() + 5);
+        await deps.connectionStore.saveConnection(withOriginAndLastUsed);
+
+        const res = await request(app).get('/api/mcp/connections').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        expect(res.body.connections[0]).toMatchObject({ origin: 'mobile' });
+        expect(res.body.connections[0].lastUsedAt).toBeTruthy();
+    });
 });
 
 describe('DELETE /api/mcp/connections/:id', () => {

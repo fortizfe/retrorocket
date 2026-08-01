@@ -92,4 +92,20 @@ describe('POST /api/mcp/authorize/decision', () => {
             .send({ requestCode: 'does-not-exist', approve: true });
         expect(res.status).toBe(404);
     });
+
+    it('classifies the request’s User-Agent into the created connection’s origin', async () => {
+        const { app, deps } = buildMcpTestApp({ registeredClients: [client()] });
+        const requestCode = await requestCodeFor(app);
+        const mobileUa =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+        await request(app)
+            .post('/api/mcp/authorize/decision')
+            .set('Cookie', sessionCookieFor('u1'))
+            .set('User-Agent', mobileUa)
+            .send({ requestCode, approve: true });
+
+        const record = await deps.connectionStore.getAuthorizationRequest(requestCode);
+        const connection = await deps.connectionStore.getConnectionById(record!.connectionId!);
+        expect(connection?.data.origin).toBe('mobile');
+    });
 });

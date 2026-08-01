@@ -82,6 +82,11 @@ test('connect an AI client, see it in Connected Apps, revoke it, and confirm imm
     await page.getByRole('button', { name: /Revocar/ }).click();
     await expect(connectedAppRow).toHaveCount(0, { timeout: 10_000 });
 
+    // 6a. Reload the page — regression check for the reported bug: a revoked
+    // connection must not reappear as "connected" after a page reload.
+    await page.reload();
+    await expect(connectedAppRow).toHaveCount(0, { timeout: 10_000 });
+
     // 7. Confirm the connection is rejected immediately — the very next request using
     // its refresh token fails, not merely once some future expiry is reached.
     const refreshAfterRevoke = await page.request.post('/api/mcp/token', {
@@ -94,4 +99,47 @@ test('connect an AI client, see it in Connected Apps, revoke it, and confirm imm
     // 018 / SC-002 regression: listing and revoking from Mi Perfil introduced no new
     // direct browser-to-Firestore calls now that userProfile is backend-sourced.
     expect(firestoreHits).toEqual([]);
+});
+
+const MOBILE_USER_AGENT =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+/** Registers (if no clientId given) or reuses a client, then drives the real
+ *  consent screen to approve a connection for it, returning the client id. */
+async function authorizeAndApprove(page: import('@playwright/test').Page, clientId: string): Promise<void> {
+    const { verifier, challenge } = pkcePair();
+    const authorizeUrl =
+        `/api/mcp/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&code_challenge=${challenge}&code_challenge_method=S256&state=e2e-origin-${Math.random()}`;
+    await page.goto(authorizeUrl);
+    await page.getByRole('button', { name: 'Permitir' }).click();
+    await page.waitForURL(/code=/, { timeout: 10_000 });
+    void verifier; // PKCE verifier isn't needed again here — only the consent decision matters for origin capture.
+}
+
+test('two connections for the same AI client show distinct, automatically detected origin labels (US2)', async ({ page, context, browser }) => {
+    await signInWithGoogle(page, context);
+
+    const registerRes = await page.request.post('/api/mcp/register', {
+        data: { client_name: 'E2E Multi-Origin Client', redirect_uris: [REDIRECT_URI] },
+    });
+    expect(registerRes.ok()).toBe(true);
+    const { client_id: clientId } = await registerRes.json();
+
+    // Connection 1: approved from the default (desktop-like) browser context.
+    await authorizeAndApprove(page, clientId);
+
+    // Connection 2: approved from a second context with a mobile-like User-Agent,
+    // signed in as the same test user.
+    const mobileContext = await browser.newContext({ userAgent: MOBILE_USER_AGENT });
+    const mobilePage = await mobileContext.newPage();
+    await signInWithGoogle(mobilePage, mobileContext);
+    await authorizeAndApprove(mobilePage, clientId);
+
+    await page.goto('/perfil');
+    await expect(page.getByText('E2E Multi-Origin Client').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Web')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Móvil')).toBeVisible({ timeout: 10_000 });
+
+    await mobileContext.close();
 });
