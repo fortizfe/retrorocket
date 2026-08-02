@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { test, expect } from '@playwright/test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { signInWithGoogle } from './fixtures/auth-helpers';
+import { signInWithGoogle, signInAs } from './fixtures/auth-helpers';
 import { revokeMcpConnectionsForClient } from './fixtures/mcp';
 
 /**
@@ -104,6 +104,49 @@ test('connect an AI client, see it in Connected Apps, revoke it, and confirm imm
     expect(firestoreHits).toEqual([]);
 });
 
+test('two different users connecting through the same AI client at the same apparent IP both succeed (025, US1)', async ({ page, context, browser }) => {
+    await signInWithGoogle(page, context);
+
+    const registerRes = await page.request.post('/api/mcp/register', {
+        data: { client_name: 'E2E Concurrent Users Client', redirect_uris: [REDIRECT_URI] },
+    });
+    expect(registerRes.ok()).toBe(true);
+    const { client_id: clientId } = await registerRes.json();
+
+    // A genuinely distinct second identity, in its own browser context — both share this
+    // test run's single IP, exactly like two RetroRocket users connecting through the
+    // same hosted AI client's shared infrastructure (research.md §1).
+    const secondContext = await browser.newContext();
+    const secondPage = await secondContext.newPage();
+    await signInAs(secondPage, 'e2e-mcp-second-user@example.com', 'E2E MCP Second User');
+
+    async function authorizeAndExchange(p: import('@playwright/test').Page, state: string): Promise<boolean> {
+        const { verifier, challenge } = pkcePair();
+        const authorizeUrl =
+            `/api/mcp/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+            `&code_challenge=${challenge}&code_challenge_method=S256&state=${state}`;
+        await p.goto(authorizeUrl);
+        await p.getByRole('button', { name: 'Permitir' }).click();
+        await p.waitForURL(/code=/, { timeout: 10_000 });
+        const code = new URL(p.url()).searchParams.get('code');
+        const tokenRes = await p.request.post('/api/mcp/token', {
+            data: { grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, client_id: clientId, code_verifier: verifier },
+        });
+        return tokenRes.ok();
+    }
+
+    // Both users complete their own authorize -> consent -> token-exchange sequence
+    // concurrently, through the same registered client and the same test-runner IP — the
+    // browser-level regression test for the reported "always rejected" bug.
+    const [okA, okB] = await Promise.all([authorizeAndExchange(page, 'e2e-concurrent-a'), authorizeAndExchange(secondPage, 'e2e-concurrent-b')]);
+    expect(okA).toBe(true);
+    expect(okB).toBe(true);
+
+    await revokeMcpConnectionsForClient(page, 'E2E Concurrent Users Client');
+    await revokeMcpConnectionsForClient(secondPage, 'E2E Concurrent Users Client');
+    await secondContext.close();
+});
+
 test('a failed authorization attempt (bad PKCE verifier) never appears in Connected Apps (024, US1)', async ({ page, context }) => {
     await signInWithGoogle(page, context);
 
@@ -178,6 +221,15 @@ test('reconnecting after a revoke succeeds end-to-end and the new connection can
     await expect(connectedAppRow).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: /Revocar/ }).click();
     await expect(connectedAppRow).toHaveCount(0, { timeout: 10_000 });
+
+    // 025, T017/T018: simulate the same shared-IP contention (unrelated garbage token
+    // requests from this apparent IP) that Phase 3/4's route-level tests proved no
+    // longer blocks a legitimate reconnection — reproduced here at the browser/E2E level.
+    for (let i = 0; i < 60; i++) {
+        await page.request.post('/api/mcp/token', {
+            data: { grant_type: 'authorization_code', code: 'bogus', redirect_uri: REDIRECT_URI, client_id: clientId, code_verifier: 'irrelevant' },
+        });
+    }
 
     // 2. Reconnect from scratch for the same client — the reported broken flow.
     const { accessToken } = await authorizeAndExchange();

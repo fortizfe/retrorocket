@@ -1,9 +1,10 @@
 import { Router, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
 import type { ClockPort, RandomPort, SessionServicePort } from '../../application/ports';
+import type { MetricsPort } from '../../application/ports/observability';
 import type { McpClientStorePort, McpConnectionStorePort, RetrospectiveReadPort } from '../../application/ports/mcp';
 import { AppError, NotFoundError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
@@ -11,7 +12,7 @@ import { mcpAuthMiddleware, type McpAuthDeps } from '../middleware/mcpAuth';
 import { registerMcpClient } from '../../application/use-cases/mcp/RegisterMcpClient';
 import { startMcpAuthorization, decideMcpAuthorization } from '../../application/use-cases/mcp/AuthorizeMcpConnection';
 import { classifyOrigin } from '../../domain/mcp/ConnectionOrigin';
-import { exchangeMcpToken } from '../../application/use-cases/mcp/ExchangeMcpToken';
+import { exchangeMcpToken, hashRefreshToken } from '../../application/use-cases/mcp/ExchangeMcpToken';
 import { listConnections } from '../../application/use-cases/mcp/ListConnections';
 import { revokeConnection } from '../../application/use-cases/mcp/RevokeConnection';
 import { listRetrospectives } from '../../application/use-cases/mcp/ListRetrospectives';
@@ -25,12 +26,45 @@ export interface McpRouterDeps extends McpAuthDeps {
     sessionService: SessionServicePort;
     clock: ClockPort;
     random: RandomPort;
+    metrics: MetricsPort;
     /** Public base URL of this deployment (e.g. https://retrorocket.example.com). */
     baseUrl: string;
     /** SPA route to send an unauthenticated user to sign in; receives ?returnTo=... */
     signInRedirect: string;
     /** SPA route that renders the consent screen; receives ?requestCode=...&clientName=... */
     consentRedirect: string;
+}
+
+/**
+ * Resolves the real per-user identity behind a POST /api/mcp/token request — the uid
+ * behind the authorization `code` (authorization_code grant) or behind the hashed
+ * `refresh_token` (refresh_token grant) — using the same, existing non-mutating store
+ * reads `exchangeMcpToken` performs moments later. This is `tokenLimiter`'s keyGenerator
+ * (025, research.md §2): distinct users must never collide in the same bucket just
+ * because they connect through the same AI client's shared infrastructure/IP. A request
+ * whose identity can't be resolved (unknown/garbage code or token, or an unsupported
+ * grant_type) falls back to the pre-025 IP-keyed behavior, preserving abuse protection
+ * for genuinely invalid input.
+ */
+async function mcpTokenKeyGenerator(deps: { connectionStore: McpConnectionStorePort }, req: Request, res: Response): Promise<string> {
+    const body = req.body as Record<string, unknown>;
+
+    if (body.grant_type === 'authorization_code' && typeof body.code === 'string' && body.code !== '') {
+        const record = await deps.connectionStore.getAuthorizationRequest(body.code);
+        if (record) {
+            res.locals.mcpRateLimitKeyType = 'uid';
+            return `mcp-uid:${record.uid}`;
+        }
+    } else if (body.grant_type === 'refresh_token' && typeof body.refresh_token === 'string' && body.refresh_token !== '') {
+        const connection = await deps.connectionStore.getConnectionByRefreshTokenHash(hashRefreshToken(body.refresh_token));
+        if (connection) {
+            res.locals.mcpRateLimitKeyType = 'uid';
+            return `mcp-uid:${connection.data.uid}`;
+        }
+    }
+
+    res.locals.mcpRateLimitKeyType = 'ip';
+    return `ip:${ipKeyGenerator(req.ip ?? 'unknown')}`;
 }
 
 function firstQuery(value: unknown): string {
@@ -114,24 +148,29 @@ export function mcpRouter(deps: McpRouterDeps): Router {
 
     // Same rationale as auth.ts's authLimiter: blunt brute-force/resource exhaustion
     // within Vercel's free-tier request budget (FR-015, FR-016). Unlike
-    // auth/boards/profile/retrospectives, these two stay IP-keyed (the default
-    // `express-rate-limit` behavior) rather than switching to rateLimiting.ts's
-    // session-first resolver: both routes are authenticated by an MCP client
-    // (OAuth token exchange / Bearer access token), never by the browser's rr_session
-    // cookie, so there is no session identity to key on here. What both already needed
-    // — and tokenLimiter was still missing — is app.ts's trust-proxy fix (T005, which
-    // benefits every router including this one for free) plus the same ApiErrorBody
-    // envelope every other limiter in the app returns (FR-004) (021, research.md §1).
+    // auth/boards/profile/retrospectives, this route is authenticated by an MCP client
+    // (OAuth token exchange), never by the browser's rr_session cookie, so it can't use
+    // rateLimiting.ts's session-first resolver — but the caller is the AI client's own
+    // shared backend, not one person's browser, so staying IP-keyed collapses distinct
+    // RetroRocket users into one bucket (025, research.md §1/§2: this is the root cause
+    // of connections "always" resolving as rejected). mcpTokenKeyGenerator resolves the
+    // real per-user identity instead, falling back to IP only when it can't be resolved.
     const tokenLimiter = rateLimit({
         windowMs: 15 * 60 * 1000,
         limit: 60,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: false,
+        keyGenerator: (req, res) => mcpTokenKeyGenerator({ connectionStore: deps.connectionStore }, req, res),
         handler: (_req, res) => {
+            deps.metrics.increment('mcp.token.rate_limited', { keyType: res.locals.mcpRateLimitKeyType ?? 'ip' });
             res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests — please wait a moment and try again.' }, correlationId: correlationOf(res) });
         },
     });
+    // Runs after mcpAuthMiddleware already resolved a real Bearer-token uid for the
+    // call, but stays IP-keyed (025, plan.md Summary): tool calls are out of this
+    // feature's "connection attempt" scope, and rescoping it is deliberately deferred
+    // per Constitution V (YAGNI) until a spec calls for it.
     const toolLimiter = rateLimit({
         windowMs: 60 * 1000,
         limit: 120,

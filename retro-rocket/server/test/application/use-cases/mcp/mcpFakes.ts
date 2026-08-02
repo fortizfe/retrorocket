@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { ClockPort, RandomPort, SessionServicePort } from '../../../../src/application/ports';
+import type { MetricsPort } from '../../../../src/application/ports/observability';
 import type {
     CreateAuthorizationRequestParams,
     McpAccessTokenClaims,
@@ -90,6 +91,13 @@ export function fakeTokenService(): McpTokenServicePort {
                 return null;
             }
         }),
+    };
+}
+
+export function fakeMetrics(): MetricsPort {
+    return {
+        increment: vi.fn(),
+        timing: vi.fn(),
     };
 }
 

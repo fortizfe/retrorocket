@@ -1,6 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import type { ServerConfig } from '../config/env';
-import type { LoggerPort } from '../application/ports/observability';
+import type { LoggerPort, MetricsPort } from '../application/ports/observability';
 import type { SessionServicePort } from '../application/ports';
 import type { McpRouterDeps } from './routes/mcp';
 import { JoseMcpTokenAdapter } from '../adapters/session/JoseMcpTokenAdapter';
@@ -22,6 +22,7 @@ export function buildMcpDeps(
     _config: ServerConfig,
     logger: LoggerPort,
     sessionService: SessionServicePort | undefined,
+    metrics: MetricsPort,
 ): McpRouterDeps | null {
     const signingKey = source.SESSION_SIGNING_KEY;
     const baseUrl = source.MCP_PUBLIC_BASE_URL ?? source.OAUTH_REDIRECT_BASE_URL;
@@ -41,6 +42,7 @@ export function buildMcpDeps(
         sessionService,
         clock: new SystemClock(),
         random: new SystemRandom(),
+        metrics,
         baseUrl,
         signInRedirect: '/',
         consentRedirect: '/mcp/consent',
