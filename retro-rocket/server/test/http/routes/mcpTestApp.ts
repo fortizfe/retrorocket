@@ -49,6 +49,10 @@ export function buildMcpTestApp(options: McpTestAppOptions = {}): { app: Express
     // rate-limit behavior in tests reflects the real, single-Vercel-hop configuration.
     app.set('trust proxy', 1);
     app.use(express.json());
+    // Mirrors app.ts: RFC 6749 mandates application/x-www-form-urlencoded for the OAuth
+    // token endpoint, which real MCP clients use — without this, req.body was left
+    // undefined for that content type and every real token exchange 500'd.
+    app.use(express.urlencoded({ extended: false }));
     app.use(correlationId());
     app.use(mcpRouter(deps));
     app.use(notFoundHandler());

@@ -43,6 +43,13 @@ export function createApp(deps: AppDeps): Express {
 
     app.disable('x-powered-by');
     app.use(express.json());
+    // RFC 6749 §4.1.3/§6 mandates application/x-www-form-urlencoded for the OAuth token
+    // endpoint (POST /api/mcp/token) — spec-compliant MCP clients (e.g. Claude's
+    // remote-connector backend) send it this way, not JSON. Without this, req.body was
+    // left undefined for every such request, crashing with "Cannot read properties of
+    // undefined (reading 'grant_type')" — a second, more fundamental cause of MCP
+    // connections resolving as rejected than the rate-limiter bug fixed in 025.
+    app.use(express.urlencoded({ extended: false }));
     app.use(correlationId());
 
     // Routes
