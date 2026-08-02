@@ -38,12 +38,18 @@ const LandingPage: React.FC = () => {
 
     const handleProviderSignIn = async (providerId: AuthProviderType) => {
         try {
+            // A user arriving via the MCP connector's "needs_login" redirect
+            // (GET /api/mcp/authorize -> server/src/http/routes/mcp.ts) carries the
+            // original authorize URL as ?returnTo=... — thread it through so login lands
+            // back there instead of defaulting to '/', which otherwise silently drops the
+            // user before they ever see the consent screen (024 follow-up).
+            const returnTo = new URLSearchParams(window.location.search).get('returnTo') ?? undefined;
             switch (providerId) {
                 case 'google':
-                    await signInWithGoogle();
+                    await signInWithGoogle(returnTo);
                     break;
                 case 'github':
-                    await signInWithGithub();
+                    await signInWithGithub(returnTo);
                     break;
                 default:
                     console.warn(`Provider ${providerId} not yet implemented`);
