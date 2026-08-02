@@ -9,6 +9,7 @@ import {
     sequentialRandom,
     fixedClock,
     fakeSessionServiceFor,
+    fakeMetrics,
     NOW,
 } from '../../application/use-cases/mcp/mcpFakes';
 import { fakeRetrospectiveReadPort, type FakeRetrospectiveFixture } from '../../application/use-cases/mcp/fakes';
@@ -36,6 +37,7 @@ export function buildMcpTestApp(options: McpTestAppOptions = {}): { app: Express
         sessionService: fakeSessionServiceFor(options.signedInUid ?? 'u1'),
         clock: fixedClock(),
         random: sequentialRandom(),
+        metrics: fakeMetrics(),
         baseUrl: BASE_URL,
         signInRedirect: SIGN_IN_REDIRECT,
         consentRedirect: CONSENT_REDIRECT,
