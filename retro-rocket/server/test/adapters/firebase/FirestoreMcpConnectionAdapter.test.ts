@@ -28,6 +28,15 @@ describe('hydrateConnectionData', () => {
         expect(data.lastUsedAt).toBe(1_700_000_500);
     });
 
+    it('defaults failedAt to null (not undefined) for a document written before the failed/expired terminal state existed', () => {
+        expect(hydrateConnectionData(legacyDoc).failedAt).toBeNull();
+    });
+
+    it('preserves a present failedAt unchanged', () => {
+        const data = hydrateConnectionData({ ...legacyDoc, failedAt: 1_700_000_600 });
+        expect(data.failedAt).toBe(1_700_000_600);
+    });
+
     it('preserves every other field unchanged', () => {
         expect(hydrateConnectionData(legacyDoc)).toMatchObject({
             id: 'c1',

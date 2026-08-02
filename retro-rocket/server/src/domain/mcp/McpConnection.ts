@@ -1,7 +1,7 @@
 import { AppError } from '../errors';
 import type { ConnectionOrigin } from './ConnectionOrigin';
 
-export type McpConnectionStatus = 'pending' | 'active' | 'revoked';
+export type McpConnectionStatus = 'pending' | 'active' | 'revoked' | 'failed';
 
 export class InvalidConnectionTransitionError extends AppError {
     constructor(message: string) {
@@ -18,6 +18,7 @@ export interface McpConnectionData {
     status: McpConnectionStatus;
     createdAt: number;
     revokedAt: number | null;
+    failedAt: number | null;
     refreshTokenHash: string | null;
     origin: ConnectionOrigin;
     lastUsedAt: number | null;
@@ -27,7 +28,9 @@ export interface McpConnectionData {
  * An AI client's authorized link to a RetroRocket user's account (data-model.md
  * "McpConnection"). Lifecycle: pending (consent given, code not yet exchanged) ->
  * active (token issued) -> revoked (terminal — Clarification Session 2026-07-27 Q1:
- * revocation must be checked live on every request, never re-activatable).
+ * revocation must be checked live on every request, never re-activatable), or
+ * pending -> failed (terminal — Clarification Session 2026-08-02: an explicit failure
+ * signal or a timeout marks an attempt that never completed, feature 024).
  */
 export class McpConnection {
     constructor(public readonly data: McpConnectionData) {}
@@ -48,6 +51,7 @@ export class McpConnection {
             status: 'pending',
             createdAt: params.nowSeconds,
             revokedAt: null,
+            failedAt: null,
             refreshTokenHash: null,
             origin: params.origin ?? 'unknown',
             lastUsedAt: null,
@@ -65,12 +69,24 @@ export class McpConnection {
     }
 
     /**
-     * pending|active -> revoked. Idempotent: revoking an already-revoked connection
-     * returns it unchanged (preserving the original revokedAt) rather than erroring.
+     * pending|active -> revoked. Idempotent/terminal-safe: revoking an already-revoked
+     * or already-failed connection returns it unchanged (preserving whichever terminal
+     * state it already reached) rather than erroring or overwriting it.
      */
     revoked(nowSeconds: number): McpConnection {
-        if (this.data.status === 'revoked') return this;
+        if (this.data.status === 'revoked' || this.data.status === 'failed') return this;
         return new McpConnection({ ...this.data, status: 'revoked', revokedAt: nowSeconds });
+    }
+
+    /**
+     * pending -> failed (terminal): a connection attempt that failed an explicit signal
+     * (ExchangeMcpToken.ts) or timed out (ListConnections.ts) without ever completing.
+     * No-op for any other current status — mirrors .revoked()'s idempotent/terminal-safe
+     * shape, so callers never need to check status before calling this.
+     */
+    failed(nowSeconds: number): McpConnection {
+        if (this.data.status !== 'pending') return this;
+        return new McpConnection({ ...this.data, status: 'failed', failedAt: nowSeconds });
     }
 
     get isActive(): boolean {

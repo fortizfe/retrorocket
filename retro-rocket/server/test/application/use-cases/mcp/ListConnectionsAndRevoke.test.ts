@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { listConnections } from '../../../../src/application/use-cases/mcp/ListConnections';
 import { revokeConnection } from '../../../../src/application/use-cases/mcp/RevokeConnection';
+import { MCP_AUTHORIZATION_REQUEST_TTL_SECONDS } from '../../../../src/application/use-cases/mcp/AuthorizeMcpConnection';
 import { McpConnection } from '../../../../src/domain/mcp/McpConnection';
 import { inMemoryConnectionStore, fixedClock, NOW } from './mcpFakes';
 
@@ -16,12 +17,12 @@ async function seeded() {
 describe('listConnections', () => {
     it('lists only the caller’s own connections, with name and creation date', async () => {
         const connectionStore = await seeded();
-        const result = await listConnections({ connectionStore }, 'u1');
+        const result = await listConnections({ connectionStore, clock: fixedClock() }, 'u1');
         expect(result).toEqual([{ id: 'c1', clientName: 'Claude', createdAt: NOW, status: 'active', origin: 'unknown', lastUsedAt: null }]);
     });
 
     it('returns an empty list for a user with no connections', async () => {
-        const result = await listConnections({ connectionStore: await seeded() }, 'u-none');
+        const result = await listConnections({ connectionStore: await seeded(), clock: fixedClock() }, 'u-none');
         expect(result).toEqual([]);
     });
 
@@ -31,7 +32,7 @@ describe('listConnections', () => {
             .activated('h3')
             .revoked(NOW + 5);
         await connectionStore.saveConnection(revoked);
-        const result = await listConnections({ connectionStore }, 'u1');
+        const result = await listConnections({ connectionStore, clock: fixedClock() }, 'u1');
         expect(result.map((c) => c.id)).not.toContain('c3');
         expect(result.map((c) => c.id)).toEqual(['c1']);
     });
@@ -49,9 +50,43 @@ describe('listConnections', () => {
             .activated('h4')
             .touched(NOW + 30);
         await connectionStore.saveConnection(withOriginAndLastUsed);
-        const result = await listConnections({ connectionStore }, 'u1');
+        const result = await listConnections({ connectionStore, clock: fixedClock() }, 'u1');
         const summary = result.find((c) => c.id === 'c4');
         expect(summary).toMatchObject({ origin: 'desktop', lastUsedAt: NOW + 30 });
+    });
+
+    it('excludes a fresh, still-in-progress pending connection from the result, and leaves it untouched (FR-001)', async () => {
+        const connectionStore = await seeded();
+        const freshPending = McpConnection.createPending({ id: 'c5', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: NOW });
+        await connectionStore.saveConnection(freshPending);
+        const result = await listConnections({ connectionStore, clock: fixedClock(NOW) }, 'u1');
+        expect(result.map((c) => c.id)).not.toContain('c5');
+        expect((await connectionStore.getConnectionById('c5'))?.data.status).toBe('pending');
+    });
+
+    it('lazily expires a stale pending connection (past the authorization-code TTL) to failed, persists it, and excludes it from the result (FR-008b, FR-009)', async () => {
+        const connectionStore = await seeded();
+        const stalePending = McpConnection.createPending({ id: 'c6', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: NOW });
+        await connectionStore.saveConnection(stalePending);
+        const laterNow = NOW + MCP_AUTHORIZATION_REQUEST_TTL_SECONDS + 1;
+        const result = await listConnections({ connectionStore, clock: fixedClock(laterNow) }, 'u1');
+        expect(result.map((c) => c.id)).not.toContain('c6');
+        const persisted = await connectionStore.getConnectionById('c6');
+        expect(persisted?.data.status).toBe('failed');
+        expect(persisted?.data.failedAt).toBe(laterNow);
+    });
+
+    it('leaves a genuinely active connection untouched when a stale pending connection for the same client/uid expires alongside it (spec.md US1 Acceptance Scenario 2 / FR-003)', async () => {
+        const connectionStore = await seeded(); // seeds 'c1' active for u1/client1
+        const stalePendingSameClient = McpConnection.createPending({ id: 'c7', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: NOW });
+        await connectionStore.saveConnection(stalePendingSameClient);
+        const laterNow = NOW + MCP_AUTHORIZATION_REQUEST_TTL_SECONDS + 1;
+        const result = await listConnections({ connectionStore, clock: fixedClock(laterNow) }, 'u1');
+        expect(result.map((c) => c.id)).toEqual(['c1']);
+        const active = await connectionStore.getConnectionById('c1');
+        expect(active?.data).toMatchObject({ status: 'active' });
+        const failed = await connectionStore.getConnectionById('c7');
+        expect(failed?.data.status).toBe('failed');
     });
 });
 

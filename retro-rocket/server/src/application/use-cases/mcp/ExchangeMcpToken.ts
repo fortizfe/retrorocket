@@ -21,6 +21,24 @@ function verifyPkce(codeVerifier: string, codeChallenge: string): boolean {
     return createHash('sha256').update(codeVerifier).digest('base64url') === codeChallenge;
 }
 
+/**
+ * Marks the connection tied to a failed authorization_code exchange as `failed` (024,
+ * FR-008a's explicit-signal path) — a no-op if the connection is missing, or is anything
+ * other than `pending` (e.g. already `active` from an earlier, genuinely successful
+ * exchange of the same code being replayed: `McpConnection.failed()` correctly leaves a
+ * working connection alone rather than retroactively breaking it).
+ */
+async function markConnectionFailed(
+    deps: { connectionStore: McpConnectionStorePort },
+    connectionId: string | null,
+    now: number,
+): Promise<void> {
+    if (!connectionId) return;
+    const connection = await deps.connectionStore.getConnectionById(connectionId);
+    if (!connection) return;
+    await deps.connectionStore.saveConnection(connection.failed(now));
+}
+
 export interface ExchangeMcpTokenDeps {
     connectionStore: McpConnectionStorePort;
     tokenService: McpTokenServicePort;
@@ -45,13 +63,29 @@ export async function exchangeMcpToken(deps: ExchangeMcpTokenDeps, input: Exchan
 
     if (input.grantType === 'authorization_code') {
         const record = await deps.connectionStore.consumeAuthorizationCode(input.code, now);
-        if (!record) throw new InvalidGrantError();
-        if (record.clientId !== input.clientId || record.redirectUri !== input.redirectUri) throw new InvalidGrantError();
-        if (!verifyPkce(input.codeVerifier, record.codeChallenge)) throw new InvalidGrantError();
-        if (!record.connectionId) throw new InvalidGrantError();
+        if (!record) {
+            // consumeAuthorizationCode only reports null/not-consumable, not why — look up
+            // the raw record for a specific, diagnosable message (research.md §3) and to
+            // resolve a connectionId even though it was never returned to us above.
+            const raw = await deps.connectionStore.getAuthorizationRequest(input.code);
+            await markConnectionFailed(deps, raw?.connectionId ?? null, now);
+            if (!raw) throw new InvalidGrantError('Authorization code is unknown');
+            if (raw.approved !== true) throw new InvalidGrantError('Authorization was denied or has not been completed yet');
+            if (raw.consumedAt !== null) throw new InvalidGrantError('Authorization code has already been used');
+            throw new InvalidGrantError('Authorization code has expired');
+        }
+        if (record.clientId !== input.clientId || record.redirectUri !== input.redirectUri) {
+            await markConnectionFailed(deps, record.connectionId, now);
+            throw new InvalidGrantError('client_id or redirect_uri does not match the original authorization request');
+        }
+        if (!verifyPkce(input.codeVerifier, record.codeChallenge)) {
+            await markConnectionFailed(deps, record.connectionId, now);
+            throw new InvalidGrantError('code_verifier does not match the original code_challenge');
+        }
+        if (!record.connectionId) throw new InvalidGrantError('Authorization has no associated connection to activate');
 
         const connection = await deps.connectionStore.getConnectionById(record.connectionId);
-        if (!connection) throw new InvalidGrantError();
+        if (!connection) throw new InvalidGrantError('The connection record for this authorization could not be found');
 
         const refreshToken = deps.random.sessionId();
         const activated = connection.activated(hashRefreshToken(refreshToken));

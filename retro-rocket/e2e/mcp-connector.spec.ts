@@ -1,6 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { test, expect } from '@playwright/test';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { signInWithGoogle } from './fixtures/auth-helpers';
+import { revokeMcpConnectionsForClient } from './fixtures/mcp';
 
 /**
  * MCP connector critical flow (feature 015, User Story 1): register a client, authorize
@@ -101,11 +104,112 @@ test('connect an AI client, see it in Connected Apps, revoke it, and confirm imm
     expect(firestoreHits).toEqual([]);
 });
 
+test('a failed authorization attempt (bad PKCE verifier) never appears in Connected Apps (024, US1)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+
+    const registerRes = await page.request.post('/api/mcp/register', {
+        data: { client_name: 'E2E Failed Attempt Client', redirect_uris: [REDIRECT_URI] },
+    });
+    expect(registerRes.ok()).toBe(true);
+    const { client_id: clientId } = await registerRes.json();
+
+    const { challenge } = pkcePair();
+    const authorizeUrl =
+        `/api/mcp/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&code_challenge=${challenge}&code_challenge_method=S256&state=e2e-failed-attempt`;
+    await page.goto(authorizeUrl);
+    await expect(page.getByText('E2E Failed Attempt Client').first()).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Permitir' }).click();
+    await page.waitForURL(/code=/, { timeout: 10_000 });
+    const code = new URL(page.url()).searchParams.get('code');
+
+    // Deliberately exchange with the wrong code_verifier so the token exchange fails —
+    // the consent-approved connection is left as an incomplete attempt, never activated.
+    const tokenRes = await page.request.post('/api/mcp/token', {
+        data: {
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: REDIRECT_URI,
+            client_id: clientId,
+            code_verifier: 'deliberately-wrong-verifier',
+        },
+    });
+    expect(tokenRes.ok()).toBe(false);
+
+    await page.goto('/perfil');
+    await expect(page.getByText('E2E Failed Attempt Client')).toHaveCount(0, { timeout: 10_000 });
+
+    // Regression check: still absent after a reload, not just on the current page load.
+    await page.reload();
+    await expect(page.getByText('E2E Failed Attempt Client')).toHaveCount(0, { timeout: 10_000 });
+});
+
+test('reconnecting after a revoke succeeds end-to-end and the new connection can make a real MCP tool call (024, US2)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+
+    const registerRes = await page.request.post('/api/mcp/register', {
+        data: { client_name: 'E2E Reconnect Client', redirect_uris: [REDIRECT_URI] },
+    });
+    expect(registerRes.ok()).toBe(true);
+    const { client_id: clientId } = await registerRes.json();
+
+    async function authorizeAndExchange(): Promise<{ accessToken: string }> {
+        const { verifier, challenge } = pkcePair();
+        const authorizeUrl =
+            `/api/mcp/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+            `&code_challenge=${challenge}&code_challenge_method=S256&state=e2e-reconnect-${Math.random()}`;
+        await page.goto(authorizeUrl);
+        await page.getByRole('button', { name: 'Permitir' }).click();
+        await page.waitForURL(/code=/, { timeout: 10_000 });
+        const code = new URL(page.url()).searchParams.get('code');
+        const tokenRes = await page.request.post('/api/mcp/token', {
+            data: { grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, client_id: clientId, code_verifier: verifier },
+        });
+        expect(tokenRes.ok()).toBe(true);
+        const { access_token: accessToken } = await tokenRes.json();
+        expect(accessToken).toBeTruthy();
+        return { accessToken };
+    }
+
+    // 1. Connect, then revoke it via the real Profile page.
+    await authorizeAndExchange();
+    await page.goto('/perfil');
+    const connectedAppRow = page.getByText('E2E Reconnect Client').first();
+    await expect(connectedAppRow).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: /Revocar/ }).click();
+    await expect(connectedAppRow).toHaveCount(0, { timeout: 10_000 });
+
+    // 2. Reconnect from scratch for the same client — the reported broken flow.
+    const { accessToken } = await authorizeAndExchange();
+
+    // 3. The new connection must be genuinely usable, not just accepted by /token.
+    const transport = new StreamableHTTPClientTransport(new URL('/api/mcp', 'http://localhost:3000'), {
+        requestInit: { headers: { Authorization: `Bearer ${accessToken}` } },
+    });
+    const client = new Client({ name: 'e2e-test-client', version: '1.0.0' });
+    await client.connect(transport);
+    const result = await client.callTool({ name: 'list_retrospectives', arguments: {} });
+    expect(result.isError).toBeFalsy();
+    await client.close();
+
+    // All E2E specs share one Firestore instance and the same test-login identity with no
+    // per-test isolation (e2e/fixtures/mcp.ts) — the reconnected active connection this
+    // test deliberately leaves behind would otherwise leak into and pollute later tests'
+    // assertions against the same user's Connected Apps list (e.g. the origin-label test
+    // below, which asserts exact-text uniqueness).
+    await revokeMcpConnectionsForClient(page, 'E2E Reconnect Client');
+});
+
 const MOBILE_USER_AGENT =
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-/** Registers (if no clientId given) or reuses a client, then drives the real
- *  consent screen to approve a connection for it, returning the client id. */
+/**
+ * Registers (if no clientId given) or reuses a client, drives the real consent screen to
+ * approve a connection for it, and completes the token exchange so the connection
+ * actually reaches `active` (024: `listConnections` now excludes anything short of that,
+ * so a connection left merely `pending` — as this helper used to do — would no longer
+ * appear in the Connected Apps list this test asserts against).
+ */
 async function authorizeAndApprove(page: import('@playwright/test').Page, clientId: string): Promise<void> {
     const { verifier, challenge } = pkcePair();
     const authorizeUrl =
@@ -114,7 +218,11 @@ async function authorizeAndApprove(page: import('@playwright/test').Page, client
     await page.goto(authorizeUrl);
     await page.getByRole('button', { name: 'Permitir' }).click();
     await page.waitForURL(/code=/, { timeout: 10_000 });
-    void verifier; // PKCE verifier isn't needed again here — only the consent decision matters for origin capture.
+    const code = new URL(page.url()).searchParams.get('code');
+    const tokenRes = await page.request.post('/api/mcp/token', {
+        data: { grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, client_id: clientId, code_verifier: verifier },
+    });
+    if (!tokenRes.ok()) throw new Error(`mcp token exchange failed: ${tokenRes.status()}`);
 }
 
 test('two connections for the same AI client show distinct, automatically detected origin labels (US2)', async ({ page, context, browser }) => {
