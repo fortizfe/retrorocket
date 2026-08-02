@@ -47,7 +47,10 @@ export interface McpRouterDeps extends McpAuthDeps {
  * for genuinely invalid input.
  */
 async function mcpTokenKeyGenerator(deps: { connectionStore: McpConnectionStorePort }, req: Request, res: Response): Promise<string> {
-    const body = req.body as Record<string, unknown>;
+    // req.body is undefined (not {}) whenever the request's Content-Type doesn't match
+    // any mounted body parser — e.g. a client that omits the header entirely — so this
+    // can't assume an object came out of app.ts's express.json()/urlencoded() parsers.
+    const body = (req.body ?? {}) as Record<string, unknown>;
 
     if (body.grant_type === 'authorization_code' && typeof body.code === 'string' && body.code !== '') {
         const record = await deps.connectionStore.getAuthorizationRequest(body.code);
@@ -204,7 +207,7 @@ export function mcpRouter(deps: McpRouterDeps): Router {
     // --- Dynamic Client Registration ----------------------------------------
 
     router.post('/api/mcp/register', async (req, res) => {
-        const body = req.body as { client_name?: unknown; redirect_uris?: unknown };
+        const body = (req.body ?? {}) as { client_name?: unknown; redirect_uris?: unknown };
         const client = await registerMcpClient(
             { clientStore: deps.clientStore, clock: deps.clock, random: deps.random },
             {
@@ -255,7 +258,7 @@ export function mcpRouter(deps: McpRouterDeps): Router {
 
     router.post('/api/mcp/authorize/decision', async (req, res) => {
         const session = await requireSession(req, deps);
-        const body = req.body as { requestCode?: unknown; approve?: unknown };
+        const body = (req.body ?? {}) as { requestCode?: unknown; approve?: unknown };
         if (typeof body.requestCode !== 'string' || typeof body.approve !== 'boolean') {
             throw new AppError('invalid_request', 'requestCode and approve are required', 400);
         }
@@ -279,7 +282,7 @@ export function mcpRouter(deps: McpRouterDeps): Router {
     // --- Token exchange -------------------------------------------------------
 
     router.post('/api/mcp/token', tokenLimiter, async (req, res) => {
-        const body = req.body as Record<string, unknown>;
+        const body = (req.body ?? {}) as Record<string, unknown>;
         const tokenDeps = { connectionStore: deps.connectionStore, tokenService: deps.tokenService, clock: deps.clock, random: deps.random };
 
         if (body.grant_type === 'authorization_code') {
