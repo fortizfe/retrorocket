@@ -18,8 +18,8 @@ interface AuthCoreState {
 }
 
 interface AuthContextType extends AuthCoreState {
-    signInWithGoogle: () => Promise<void>;
-    signInWithGithub: () => Promise<void>;
+    signInWithGoogle: (returnTo?: string) => Promise<void>;
+    signInWithGithub: (returnTo?: string) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
@@ -84,12 +84,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
     // Sign-in is now a full-page redirect to the backend (FR-008/FR-009); the browser no
     // longer performs the OAuth handshake. State is (re)established on load via bootstrap.
-    const handleSignInWithGoogle = useCallback(async (): Promise<void> => {
-        startLogin('google');
+    // `returnTo` (e.g. a pending MCP connector authorization request, 024) is threaded
+    // through unchanged so the post-login redirect lands back where the user started,
+    // instead of always defaulting to '/' (sanitizeReturnTo, server/src/domain/auth/OAuthState.ts).
+    const handleSignInWithGoogle = useCallback(async (returnTo?: string): Promise<void> => {
+        startLogin('google', returnTo);
     }, []);
 
-    const handleSignInWithGithub = useCallback(async (): Promise<void> => {
-        startLogin('github');
+    const handleSignInWithGithub = useCallback(async (returnTo?: string): Promise<void> => {
+        startLogin('github', returnTo);
     }, []);
 
     const handleSignOut = useCallback(async (): Promise<void> => {

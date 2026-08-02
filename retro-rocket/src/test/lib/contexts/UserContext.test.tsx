@@ -131,10 +131,22 @@ describe('sign-in and sign-out', () => {
         await waitFor(() => expect(result.current.loading).toBe(false));
 
         await act(async () => { await result.current.signInWithGoogle(); });
-        expect(mockStartLogin).toHaveBeenCalledWith('google');
+        expect(mockStartLogin).toHaveBeenCalledWith('google', undefined);
 
         await act(async () => { await result.current.signInWithGithub(); });
-        expect(mockStartLogin).toHaveBeenCalledWith('github');
+        expect(mockStartLogin).toHaveBeenCalledWith('github', undefined);
+    });
+
+    it('threads a returnTo through to startLogin unchanged (e.g. a pending MCP authorize request)', async () => {
+        const { result } = renderHook(() => useAuthContext(), { wrapper });
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        const returnTo = '/api/mcp/authorize?client_id=abc&redirect_uri=https%3A%2F%2Fclaude.ai%2Fcallback';
+        await act(async () => { await result.current.signInWithGoogle(returnTo); });
+        expect(mockStartLogin).toHaveBeenCalledWith('google', returnTo);
+
+        await act(async () => { await result.current.signInWithGithub(returnTo); });
+        expect(mockStartLogin).toHaveBeenCalledWith('github', returnTo);
     });
 
     it('signOut clears the backend session, signs out Firebase, and resets state', async () => {
