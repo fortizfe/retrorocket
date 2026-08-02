@@ -42,6 +42,25 @@ describe('POST /api/mcp/token', () => {
         expect(res.body.refresh_token).toBeTruthy();
     });
 
+    it('exchanges a valid code when sent as application/x-www-form-urlencoded (RFC 6749 §4.1.3/§6 — the content type real MCP clients use)', async () => {
+        const { app } = buildMcpTestApp({ registeredClients: [client()] });
+        const code = await issuedCode(app);
+        const res = await request(app)
+            .post('/api/mcp/token')
+            .type('form')
+            .send({ grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, client_id: 'client1', code_verifier: VERIFIER });
+        expect(res.status).toBe(200);
+        expect(res.body.access_token).toBeTruthy();
+        expect(res.body.refresh_token).toBeTruthy();
+    });
+
+    it('returns a 400 unsupported_grant_type, not a 500, when the request has no parseable body at all', async () => {
+        const { app } = buildMcpTestApp({ registeredClients: [client()] });
+        const res = await request(app).post('/api/mcp/token');
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('unsupported_grant_type');
+    });
+
     it('rejects reusing an already-consumed code', async () => {
         const { app } = buildMcpTestApp({ registeredClients: [client()] });
         const code = await issuedCode(app);
