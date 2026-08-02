@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
-import { exchangeMcpToken, InvalidGrantError } from '../../../../src/application/use-cases/mcp/ExchangeMcpToken';
+import { exchangeMcpToken } from '../../../../src/application/use-cases/mcp/ExchangeMcpToken';
 import { McpConnection } from '../../../../src/domain/mcp/McpConnection';
 import { inMemoryConnectionStore, fakeTokenService, fixedClock, sequentialRandom, NOW } from './mcpFakes';
 
@@ -172,7 +172,7 @@ describe('exchangeMcpToken — refresh_token grant', () => {
         expect(refreshed.refreshToken).not.toBe(first.refreshToken);
     });
 
-    it('fails with invalid_grant for a revoked connection', async () => {
+    it('fails with a distinct, non-generic message for a revoked connection — not the old generic "expired" wording that made a stale reconnect look like an expiry (bug: revoking once blocked reconnecting)', async () => {
         const connectionStore = await withApprovedCode();
         const first = await exchangeMcpToken(
             { connectionStore, tokenService: fakeTokenService(), clock: fixedClock(), random: sequentialRandom() },
@@ -186,6 +186,30 @@ describe('exchangeMcpToken — refresh_token grant', () => {
                 { connectionStore, tokenService: fakeTokenService(), clock: fixedClock(NOW + 100), random: sequentialRandom() },
                 { grantType: 'refresh_token', refreshToken: first.refreshToken, clientId: 'client1' },
             ),
-        ).rejects.toThrow(InvalidGrantError);
+        ).rejects.toThrow('This connection has been revoked');
+    });
+
+    it('fails with a distinct message for an unknown/already-rotated refresh token', async () => {
+        const connectionStore = inMemoryConnectionStore();
+        await expect(
+            exchangeMcpToken(
+                { connectionStore, tokenService: fakeTokenService(), clock: fixedClock(), random: sequentialRandom() },
+                { grantType: 'refresh_token', refreshToken: 'never-issued', clientId: 'client1' },
+            ),
+        ).rejects.toThrow('Refresh token is unknown');
+    });
+
+    it('fails with a distinct message for a client_id mismatch', async () => {
+        const connectionStore = await withApprovedCode();
+        const first = await exchangeMcpToken(
+            { connectionStore, tokenService: fakeTokenService(), clock: fixedClock(), random: sequentialRandom() },
+            { grantType: 'authorization_code', code: 'code1', redirectUri: REDIRECT_URI, clientId: 'client1', codeVerifier: VERIFIER },
+        );
+        await expect(
+            exchangeMcpToken(
+                { connectionStore, tokenService: fakeTokenService(), clock: fixedClock(NOW + 100), random: sequentialRandom() },
+                { grantType: 'refresh_token', refreshToken: first.refreshToken, clientId: 'someone-elses-client' },
+            ),
+        ).rejects.toThrow('client_id does not match');
     });
 });

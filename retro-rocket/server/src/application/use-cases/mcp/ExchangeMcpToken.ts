@@ -102,7 +102,23 @@ export async function exchangeMcpToken(deps: ExchangeMcpTokenDeps, input: Exchan
     // grantType === 'refresh_token'
     const hashed = hashRefreshToken(input.refreshToken);
     const connection = await deps.connectionStore.getConnectionByRefreshTokenHash(hashed);
-    if (!connection || !connection.isActive || connection.data.clientId !== input.clientId) throw new InvalidGrantError();
+    if (!connection) throw new InvalidGrantError('Refresh token is unknown or has already been rotated');
+    if (connection.data.clientId !== input.clientId) throw new InvalidGrantError('client_id does not match the connection this refresh token belongs to');
+    if (!connection.isActive) {
+        // `revoked()` never clears `refreshTokenHash` (data-model.md), so a client that
+        // cached a refresh token from before a revoke still resolves here — this branch,
+        // not the authorization_code one, is what a "reconnect" attempt actually hits when
+        // the AI client silently tries to refresh its old session before falling back to a
+        // fresh authorize flow. The prior generic "invalid, expired, or already used"
+        // message made a revoked connection look identical to a genuinely expired one,
+        // which is precisely what surfaced as a confusing "connection has expired" report
+        // right after the user had revoked and was trying to reconnect.
+        throw new InvalidGrantError(
+            connection.data.status === 'revoked'
+                ? 'This connection has been revoked; reconnect by completing a new authorization'
+                : 'This connection is not active',
+        );
+    }
 
     const newRefreshToken = deps.random.sessionId();
     const rotated = new McpConnection({ ...connection.data, refreshTokenHash: hashRefreshToken(newRefreshToken) } as McpConnectionData);
