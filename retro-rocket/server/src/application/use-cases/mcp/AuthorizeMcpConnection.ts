@@ -94,6 +94,16 @@ export async function decideMcpAuthorization(
     if (!record || record.uid !== input.uid || record.approved !== null) {
         return { kind: 'not_found' };
     }
+    // The route handler's error message already promised "not found, already decided, or
+    // expired" (mcp.ts) — this request-level expiry was never actually enforced here, only
+    // later at token-exchange time (ExchangeMcpToken.ts's own, separate expiresAt check).
+    // A user who takes longer than MCP_AUTHORIZATION_REQUEST_TTL_SECONDS to click Allow
+    // would see the approval "succeed" here, only for the code to fail as inexplicably
+    // "expired" moments later when the AI client exchanges it — surfacing as a confusing,
+    // seemingly random connection failure instead of a clear "this request expired, retry."
+    if (record.expiresAt < deps.clock.nowSeconds()) {
+        return { kind: 'not_found' };
+    }
 
     if (!input.approve) {
         await deps.connectionStore.decideAuthorizationRequest(input.requestCode, { approved: false });

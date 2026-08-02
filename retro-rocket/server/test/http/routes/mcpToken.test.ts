@@ -106,7 +106,7 @@ describe('POST /api/mcp/token', () => {
         expect(newOne?.data.status).toBe('active');
     });
 
-    it('refresh_token grant fails for a revoked connection', async () => {
+    it('refresh_token grant fails for a revoked connection with a message identifying it as revoked, not generically "expired" (bug: revoking once blocked reconnecting)', async () => {
         const { app, deps } = buildMcpTestApp({ registeredClients: [client()] });
         const code = await issuedCode(app);
         const first = await request(app)
@@ -121,6 +121,7 @@ describe('POST /api/mcp/token', () => {
             .send({ grant_type: 'refresh_token', refresh_token: first.body.refresh_token, client_id: 'client1' });
         expect(res.status).toBe(400);
         expect(res.body.error.code).toBe('invalid_grant');
+        expect(res.body.error.message).toContain('revoked');
     });
 });
 

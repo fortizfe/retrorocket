@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { startMcpAuthorization, decideMcpAuthorization } from '../../../../src/application/use-cases/mcp/AuthorizeMcpConnection';
+import { startMcpAuthorization, decideMcpAuthorization, MCP_AUTHORIZATION_REQUEST_TTL_SECONDS } from '../../../../src/application/use-cases/mcp/AuthorizeMcpConnection';
 import { McpClientRegistration } from '../../../../src/domain/mcp/McpClientRegistration';
 import { inMemoryClientStore, inMemoryConnectionStore, fixedClock, sequentialRandom, fakeSessionServiceFor, NOW } from './mcpFakes';
 
@@ -145,5 +145,18 @@ describe('decideMcpAuthorization', () => {
             { requestCode, uid: 'someone-else', approve: true, origin: 'unknown' },
         );
         expect(result.kind).toBe('not_found');
+    });
+
+    it('rejects an approval that arrives after the authorization request has already expired, creating no connection', async () => {
+        const { connectionStore, requestCode } = await withConsentRequest();
+        const tooLate = NOW + MCP_AUTHORIZATION_REQUEST_TTL_SECONDS + 1;
+        const result = await decideMcpAuthorization(
+            { connectionStore, clock: fixedClock(tooLate), random: sequentialRandom() },
+            { requestCode, uid: 'u1', approve: true, origin: 'unknown' },
+        );
+        expect(result.kind).toBe('not_found');
+        const record = await connectionStore.getAuthorizationRequest(requestCode);
+        expect(record?.approved).toBeNull();
+        expect(record?.connectionId).toBeNull();
     });
 });
