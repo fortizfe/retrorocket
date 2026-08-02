@@ -79,3 +79,35 @@ describe('McpConnection.revoked', () => {
         expect(second.data.revokedAt).toBe(T0 + 10);
     });
 });
+
+describe('McpConnection.failed', () => {
+    it('transitions pending -> failed, recording failedAt', () => {
+        const failed = pending().failed(T0 + 10);
+        expect(failed.data.status).toBe('failed');
+        expect(failed.data.failedAt).toBe(T0 + 10);
+        expect(failed.isActive).toBe(false);
+    });
+
+    it('is a no-op on an active connection (leaves it unchanged, including a null failedAt)', () => {
+        const active = pending().activated('hash1');
+        const result = active.failed(T0 + 10);
+        expect(result.data.status).toBe('active');
+        expect(result.data.refreshTokenHash).toBe('hash1');
+        expect(result.data.failedAt).toBeNull();
+    });
+
+    it('is a no-op on a revoked connection (leaves it unchanged, including its original revokedAt)', () => {
+        const revoked = pending().activated('hash1').revoked(T0 + 5);
+        const result = revoked.failed(T0 + 999);
+        expect(result.data.status).toBe('revoked');
+        expect(result.data.revokedAt).toBe(T0 + 5);
+        expect(result.data.failedAt).toBeNull();
+    });
+
+    it('is idempotent: failing an already-failed connection keeps the original failedAt', () => {
+        const first = pending().failed(T0 + 10);
+        const second = first.failed(T0 + 999);
+        expect(second.data.status).toBe('failed');
+        expect(second.data.failedAt).toBe(T0 + 10);
+    });
+});

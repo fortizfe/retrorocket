@@ -76,6 +76,36 @@ describe('POST /api/mcp/token', () => {
         expect(res.body.access_token).toBeTruthy();
     });
 
+    it('a fresh reconnection after revoking a prior connection succeeds and produces a new, distinct active connection (024, SC-002)', async () => {
+        const { app, deps } = buildMcpTestApp({ registeredClients: [client()] });
+
+        const firstCode = await issuedCode(app);
+        const first = await request(app)
+            .post('/api/mcp/token')
+            .send({ grant_type: 'authorization_code', code: firstCode, redirect_uri: REDIRECT_URI, client_id: 'client1', code_verifier: VERIFIER });
+        expect(first.status).toBe(200);
+
+        const firstConnections = await deps.connectionStore.listConnectionsForUser('u1');
+        expect(firstConnections).toHaveLength(1);
+        await deps.connectionStore.saveConnection(firstConnections[0].revoked(deps.clock.nowSeconds()));
+
+        const secondCode = await issuedCode(app);
+        const second = await request(app)
+            .post('/api/mcp/token')
+            .send({ grant_type: 'authorization_code', code: secondCode, redirect_uri: REDIRECT_URI, client_id: 'client1', code_verifier: VERIFIER });
+        expect(second.status).toBe(200);
+        expect(second.body.access_token).toBeTruthy();
+        expect(second.body.refresh_token).toBeTruthy();
+        expect(second.body.refresh_token).not.toBe(first.body.refresh_token);
+
+        const allConnections = await deps.connectionStore.listConnectionsForUser('u1');
+        expect(allConnections).toHaveLength(2);
+        const revokedOne = allConnections.find((c) => c.data.id === firstConnections[0].data.id);
+        const newOne = allConnections.find((c) => c.data.id !== firstConnections[0].data.id);
+        expect(revokedOne?.data.status).toBe('revoked');
+        expect(newOne?.data.status).toBe('active');
+    });
+
     it('refresh_token grant fails for a revoked connection', async () => {
         const { app, deps } = buildMcpTestApp({ registeredClients: [client()] });
         const code = await issuedCode(app);

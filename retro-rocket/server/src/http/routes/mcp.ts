@@ -280,7 +280,7 @@ export function mcpRouter(deps: McpRouterDeps): Router {
 
     router.get('/api/mcp/connections', async (req, res) => {
         const session = await requireSession(req, deps);
-        const connections = await listConnections({ connectionStore: deps.connectionStore }, session.sub);
+        const connections = await listConnections({ connectionStore: deps.connectionStore, clock: deps.clock }, session.sub);
         res.status(200).json({
             connections: connections.map((c) => ({
                 id: c.id,

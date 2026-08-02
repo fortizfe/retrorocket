@@ -13,21 +13,22 @@ const CODES = 'mcpAuthorizationCodes';
 const CONNECTIONS = 'mcpConnections';
 
 /**
- * Connection documents written before feature 023 (origin/lastUsedAt tracking) shipped
- * don't have those fields at all — not `null`, simply absent from the Firestore document.
- * Backfilling them here (data-model.md: "Existing connections... default to 'unknown'...
- * no backfill required") keeps every read path returning a value that matches
- * `McpConnectionData`'s required (non-optional) fields, so callers never have to
- * special-case `undefined`. Without this, `lastUsedAt` being `undefined` (not `null`)
- * reached `new Date(undefined * 1000).toISOString()` in the connections route handler and
- * threw (`RangeError: Invalid time value`), 500ing GET /api/mcp/connections for any user
- * with a connection older than this feature.
+ * Connection documents written before feature 023 (origin/lastUsedAt tracking) or 024
+ * (failedAt) shipped don't have those fields at all — not `null`, simply absent from the
+ * Firestore document. Backfilling them here (data-model.md: "Existing connections...
+ * default to 'unknown'... no backfill required") keeps every read path returning a value
+ * that matches `McpConnectionData`'s required (non-optional) fields, so callers never
+ * have to special-case `undefined`. Without this, `lastUsedAt` being `undefined` (not
+ * `null`) reached `new Date(undefined * 1000).toISOString()` in the connections route
+ * handler and threw (`RangeError: Invalid time value`), 500ing GET /api/mcp/connections
+ * for any user with a connection older than this feature.
  */
 export function hydrateConnectionData(raw: FirebaseFirestore.DocumentData): McpConnectionData {
     return {
         ...(raw as McpConnectionData),
         origin: raw.origin ?? 'unknown',
         lastUsedAt: raw.lastUsedAt ?? null,
+        failedAt: raw.failedAt ?? null,
     };
 }
 

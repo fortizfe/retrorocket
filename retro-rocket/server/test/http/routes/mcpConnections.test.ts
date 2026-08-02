@@ -59,6 +59,19 @@ describe('GET /api/mcp/connections', () => {
         expect(res.body.connections[0].lastUsedAt).toBeTruthy();
     });
 
+    it('never includes a pending connection, fresh or stale (reported bug: failed connections appear as successful)', async () => {
+        const { app, deps } = buildMcpTestApp();
+        const freshPending = McpConnection.createPending({ id: 'c-fresh', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: deps.clock.nowSeconds() });
+        await deps.connectionStore.saveConnection(freshPending);
+        const stalePending = McpConnection.createPending({ id: 'c-stale', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: deps.clock.nowSeconds() - 10_000 });
+        await deps.connectionStore.saveConnection(stalePending);
+
+        const res = await request(app).get('/api/mcp/connections').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        expect(res.body.connections.map((c: { id: string }) => c.id)).not.toContain('c-fresh');
+        expect(res.body.connections.map((c: { id: string }) => c.id)).not.toContain('c-stale');
+    });
+
     it('does not 500 on a connection written before origin/lastUsedAt tracking existed (production regression)', async () => {
         const { app, deps } = buildMcpTestApp();
         // Simulates a real Firestore document from before feature 023: no `origin` or

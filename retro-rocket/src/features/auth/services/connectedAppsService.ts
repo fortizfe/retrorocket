@@ -8,19 +8,31 @@ export interface ConnectedApp {
     id: string;
     clientName: string;
     createdAt: string;
-    status: 'pending' | 'active';
+    status: 'active';
     origin: 'desktop' | 'mobile' | 'web' | 'unknown';
     lastUsedAt: string | null;
 }
 
+/** The raw shape of one entry as it comes off the wire — `status` isn't trusted as the
+ *  narrowed `'active'` literal until the defensive filter below confirms it. */
+interface ConnectedAppResponseEntry extends Omit<ConnectedApp, 'status'> {
+    status: string;
+}
+
 const API = '/api/mcp';
 
-/** GET /api/mcp/connections — every AI client connection the signed-in user has authorized. */
+/**
+ * GET /api/mcp/connections — every AI client connection the signed-in user has authorized.
+ * Defensively filters to `status === 'active'` even though the backend is only ever
+ * supposed to return active connections (024, research.md §5) — this is a trust/audit
+ * surface, and a prior bug had the backend include non-active entries that this UI then
+ * rendered as connected without checking `status` at all.
+ */
 export async function fetchConnectedApps(): Promise<ConnectedApp[]> {
     const res = await fetch(`${API}/connections`, { credentials: 'include' });
     if (!res.ok) throw new Error(`Failed to fetch connected apps: ${res.status}`);
-    const body = (await res.json()) as { connections: ConnectedApp[] };
-    return body.connections;
+    const body = (await res.json()) as { connections: ConnectedAppResponseEntry[] };
+    return body.connections.filter((c): c is ConnectedApp => c.status === 'active');
 }
 
 /** DELETE /api/mcp/connections/:id — revoke one connection; takes effect immediately. */
