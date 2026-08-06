@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // TypingStatusPort — write access for the short-lived typing-status signal
 // (feature 019). Deterministic doc id `{retroId}_{userId}_{column}`; server
-// enforces the 5000ms hard TTL independently of the client's 300ms debounce
-// (data-model.md, matching OptimizedTypingStatusService's exact constants).
+// enforces a 3000ms hard TTL (feature 026) as the sole backstop for a
+// disconnected participant's indicator — the client itself writes isActive:false
+// immediately on any explicit stop, or after its own 3-second inactivity timeout.
 // ---------------------------------------------------------------------------
 
 export interface TypingStatusDTO {

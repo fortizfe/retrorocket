@@ -28,8 +28,8 @@ export function toTypingStatus(id: string, data: FirebaseFirestore.DocumentData)
 /**
  * Read/write Admin SDK access to the typingStatus collection (feature 019, US3).
  * Deterministic doc id `{retroId}_{userId}_{column}`; isActive:false deletes the doc
- * rather than setting a field (data-model.md). The 5000ms hard TTL is enforced
- * server-side by FirestoreRealtimeGatewayAdapter's sweep, not here.
+ * rather than setting a field (data-model.md). The 3000ms hard TTL (feature 026) is
+ * enforced server-side by FirestoreRealtimeGatewayAdapter's sweep, not here.
  */
 export class FirestoreTypingStatusAdapter implements TypingStatusPort {
     constructor(private readonly db: Firestore) {}

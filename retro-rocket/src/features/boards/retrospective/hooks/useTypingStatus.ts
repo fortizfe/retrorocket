@@ -21,10 +21,12 @@ interface UseTypingStatusReturn {
 }
 
 /**
- * Hook to manage typing status for real-time collaboration. Writes go through
- * OptimizedTypingStatusService (preserving its exact 300ms debounce), which itself now
- * calls backendRetrospectiveClient.setTypingStatus() instead of writing to Firestore
- * directly; reads come from the live channel via the `typingStatuses` param.
+ * Hook to manage typing status for real-time collaboration. This hook is the sole owner
+ * of the "has this user stopped typing" decision (feature 026, research.md §2): it
+ * throttles refresh writes to at most one per UPDATE_THROTTLE, and independently tracks
+ * per-column keystroke recency to fire an explicit stop after INACTIVITY_TIMEOUT_MS of
+ * silence. OptimizedTypingStatusService is just a thin write-forwarder with no timing
+ * logic of its own; reads come from the live channel via the `typingStatuses` param.
  */
 export function useTypingStatus({
     retrospectiveId,
@@ -37,6 +39,7 @@ export function useTypingStatus({
     const lastUpdateTimers = useRef<Map<string, number>>(new Map());
 
     const UPDATE_THROTTLE = 2000; // 2 seconds between backend updates
+    const INACTIVITY_TIMEOUT_MS = 3000; // grace period before assuming the user stopped typing
 
     // Cleanup on unmount / page unload — stop any typing signal this user left active.
     useEffect(() => {
@@ -84,7 +87,7 @@ export function useTypingStatus({
             const timer = setTimeout(() => {
                 stopTyping(column);
                 // eslint-disable-next-line react-hooks/exhaustive-deps -- stopTyping is stable within this closure's lifetime
-            }, 4000);
+            }, INACTIVITY_TIMEOUT_MS);
             debounceTimers.current.set(column, timer);
         },
         [currentUserId, currentUsername, retrospectiveId],

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { signInWithGoogle, signInAs, createBoardViaApi } from './fixtures/auth-helpers';
 import { getEmulatorFirestore } from './fixtures/firestoreAdmin';
 import { addCardToFirstColumn, cardByContent } from './fixtures/board';
@@ -578,7 +579,21 @@ test('the column-grouping preference propagates live to a second participant', a
 // US3: typing status + participants, backend-mediated and live.
 // ---------------------------------------------------------------------------
 
-test('a typing indicator appears live for a second participant and clears after typing stops', async ({ browser, request }) => {
+/** The visible typing card's text (`text-blue-700`), scoped to exclude the always-
+ * mounted accessible live region (feature 026, FR-009) added alongside it — both
+ * render the same "... está escribiendo" string, so an unscoped getByText(/está
+ * escribiendo/) resolves to two elements once the live region exists. */
+function visibleTypingText(page: import('@playwright/test').Page, pattern: RegExp | string = /está escribiendo/) {
+    return page.locator('span.text-blue-700', { hasText: pattern });
+}
+
+/** The typing live region itself — one per column, so scope to the one currently
+ * carrying the "está escribiendo" text when asserting its content. */
+function typingLiveRegion(page: import('@playwright/test').Page) {
+    return page.getByRole('status').filter({ hasText: /está escribiendo/ });
+}
+
+test('a typing indicator appears live for a second participant, stays visible without flicker while typing continues, and clears after typing stops', async ({ browser, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner9@example.com', 'E2E Retro Owner 9', 'E2E Typing Indicator Board');
 
     const contextA = await browser.newContext();
@@ -603,12 +618,256 @@ test('a typing indicator appears live for a second participant and clears after 
     await pageA.locator('textarea').first().fill('typing but not yet submitted');
 
     // B sees a live "... está escribiendo" indicator, never reloading.
-    await expect(pageB.getByText(/está escribiendo/)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+    await expect(typingLiveRegion(pageB)).toHaveText('E2E Google User está escribiendo');
 
-    // A stops typing (blurs the textarea) — indicator clears on B within a few seconds
-    // (300ms server debounce + 5000ms hard TTL sweep, data-model.md).
-    await pageA.locator('textarea').first().blur();
-    await expect(pageB.getByText(/está escribiendo/)).not.toBeVisible({ timeout: 10_000 });
+    // US1 (FR-002/SC-001/SC-003): keep A "typing" for several seconds and sample B's
+    // view every ~500ms across that whole window — this is the direct regression
+    // check for the reported defect (the indicator used to flicker off ~300ms after
+    // each keystroke burst). A short per-sample timeout means a genuine, even brief,
+    // disappearance fails immediately instead of being masked by Playwright's own
+    // auto-retry. The live region's accessible text must stay identical throughout —
+    // no duplicate announcement while the typist set hasn't changed (FR-009, User
+    // Story 4 Acceptance Scenario 2).
+    const accessibleTextSamples = new Set<string>();
+    for (let i = 0; i < 10; i++) {
+        if (i % 2 === 0) {
+            await pageA.locator('textarea').first().press('a');
+        }
+        await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 200 });
+        accessibleTextSamples.add(await typingLiveRegion(pageB).innerText());
+        await pageB.waitForTimeout(500);
+    }
+    expect(accessibleTextSamples).toEqual(new Set(['E2E Google User está escribiendo']));
+
+    // FR-008: the same continuous-visibility behavior holds in a second column, not
+    // just the one this test happened to use first.
+    await pageA.locator('textarea').first().fill('');
+    await pageA.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 5_000 });
+
+    await pageA.getByText('Agregar primera tarjeta').nth(1).click();
+    await pageA.locator('textarea').nth(0).fill('typing in a second column');
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+    for (let i = 0; i < 4; i++) {
+        await pageA.locator('textarea').nth(0).press('a');
+        await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 200 });
+        await pageB.waitForTimeout(500);
+    }
+
+    // US2 (FR-003, Acceptance Scenario 1): A stops typing with no explicit action —
+    // indicator clears for B within the 3-second grace period plus render/network
+    // slack, and stays cleared (no reappearing on its own).
+    const stopStart = Date.now();
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 4_500 });
+    expect(Date.now() - stopStart).toBeLessThan(4_500);
+    await expect(typingLiveRegion(pageB)).toHaveCount(0);
+    await pageB.waitForTimeout(2_000);
+    await expect(visibleTypingText(pageB)).not.toBeVisible();
+
+    await contextA.close();
+    await contextB.close();
+});
+
+test('typing indicator clears promptly for the other participant when the typer submits their card, without waiting the full grace period', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner30@example.com', 'E2E Retro Owner 30', 'E2E Typing Explicit Stop Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing Explicit Stop Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant30@example.com', 'E2E Retro Participant 30');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Typing Explicit Stop Board')).toBeVisible({ timeout: 30_000 });
+
+    const firstCardBtn = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtn.isVisible().catch(() => false)) {
+        await firstCardBtn.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('submitting this one');
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+
+    await pageA.getByRole('button', { name: 'Crear tarjeta' }).click();
+
+    // Well under the 3-second inactivity grace period — the explicit stop writes
+    // isActive:false immediately (spec.md User Story 2 Acceptance Scenario 2).
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 2_000 });
+
+    await contextA.close();
+    await contextB.close();
+});
+
+test('typing indicator clears for the other participant when a participant disconnects while marked as typing', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner31@example.com', 'E2E Retro Owner 31', 'E2E Typing Disconnect Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing Disconnect Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant31@example.com', 'E2E Retro Participant 31');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Typing Disconnect Board')).toBeVisible({ timeout: 30_000 });
+
+    const firstCardBtn = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtn.isVisible().catch(() => false)) {
+        await firstCardBtn.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('typing then disconnecting');
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+
+    // A's own browser context closes entirely (simulating disconnect/tab-close) while
+    // still marked as typing — no beforeunload/explicit stop write is guaranteed to
+    // land; only the server's retuned TTL sweep (~3.5s worst case,
+    // FirestoreRealtimeGatewayAdapter.ts, FR-004) can clear the indicator for B.
+    await contextA.close();
+
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 5_000 });
+
+    await contextB.close();
+});
+
+test('a typing indicator does not flicker for the other participant under a brief simulated network delay', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner32@example.com', 'E2E Retro Owner 32', 'E2E Typing Delay Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing Delay Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    // Delay every server->client frame on B's live channel by ~1.5s (spec.md
+    // Assumptions: "brief" == up to ~2s) without ever dropping the connection —
+    // distinct from the "board deleted" spec's forced-close routing above.
+    await pageB.routeWebSocket(/\/live$/, (ws) => {
+        const server = ws.connectToServer();
+        server.onMessage((message) => {
+            setTimeout(() => ws.send(message), 1_500);
+        });
+    });
+    await signInAs(pageB, 'e2e-retro-participant32@example.com', 'E2E Retro Participant 32');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Typing Delay Board')).toBeVisible({ timeout: 30_000 });
+
+    const firstCardBtn = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtn.isVisible().catch(() => false)) {
+        await firstCardBtn.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('typing under a delayed channel');
+
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+    for (let i = 0; i < 6; i++) {
+        await pageA.locator('textarea').first().press('a');
+        await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 200 });
+        await pageA.waitForTimeout(700);
+    }
+
+    await contextA.close();
+    await contextB.close();
+});
+
+test('multiple participants typing in the same column are represented independently, with no cross-flicker when one stops', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner33@example.com', 'E2E Retro Owner 33', 'E2E Typing Concurrent Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing Concurrent Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant33b@example.com', 'E2E Retro Participant 33B');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Typing Concurrent Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextC = await browser.newContext();
+    const pageC = await contextC.newPage();
+    await signInAs(pageC, 'e2e-retro-participant33c@example.com', 'E2E Retro Participant 33C');
+    await pageC.goto(`/retro/${boardId}`);
+    await expect(pageC.getByText('E2E Typing Concurrent Board')).toBeVisible({ timeout: 30_000 });
+
+    // A starts typing first; C sees only A.
+    const firstCardBtnA = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtnA.isVisible().catch(() => false)) {
+        await firstCardBtnA.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('A is typing');
+    await expect(visibleTypingText(pageC, /E2E Google User está escribiendo/)).toBeVisible({ timeout: 10_000 });
+
+    // B joins in on the same column; C now sees both.
+    const firstCardBtnB = pageB.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtnB.isVisible().catch(() => false)) {
+        await firstCardBtnB.click();
+    } else {
+        await pageB.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageB.locator('textarea').first().fill('B is typing too');
+    await expect(visibleTypingText(pageC, /y 1 más están escribiendo|y .+ están escribiendo/)).toBeVisible({ timeout: 10_000 });
+
+    // A stops (submits); B keeps going. C must end up seeing only B, with B's own
+    // indicator never flickering because of A's state change.
+    await pageA.getByRole('button', { name: 'Crear tarjeta' }).click();
+
+    for (let i = 0; i < 6; i++) {
+        await pageB.locator('textarea').first().press('a');
+        await expect(visibleTypingText(pageC)).toBeVisible({ timeout: 200 });
+        await pageC.waitForTimeout(500);
+    }
+    await expect(visibleTypingText(pageC, 'E2E Google User está escribiendo')).not.toBeVisible();
+    await expect(visibleTypingText(pageC, 'E2E Retro Participant 33B está escribiendo')).toBeVisible();
+
+    await contextA.close();
+    await contextB.close();
+    await contextC.close();
+});
+
+test('the typing indicator and its accessible live region introduce no new WCAG 2.1 AA violations', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner34@example.com', 'E2E Retro Owner 34', 'E2E Typing A11y Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing A11y Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant34@example.com', 'E2E Retro Participant 34');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Typing A11y Board')).toBeVisible({ timeout: 30_000 });
+
+    const firstCardBtn = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtn.isVisible().catch(() => false)) {
+        await firstCardBtn.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('checked for accessibility');
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+
+    await pageB.addStyleTag({
+        content: `*, *::before, *::after { animation: none !important; transition: none !important; }`,
+    });
+    const results = await new AxeBuilder({ page: pageB }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 
     await contextA.close();
     await contextB.close();

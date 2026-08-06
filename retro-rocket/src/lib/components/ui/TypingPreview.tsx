@@ -14,12 +14,10 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
     typingUsers,
     className = ''
 }) => {
-    if (typingUsers.length === 0) {
-        return null;
-    }
-
-    const formatTypingText = () => {
-        if (typingUsers.length === 1) {
+    const formatTypingText = (): string => {
+        if (typingUsers.length === 0) {
+            return '';
+        } else if (typingUsers.length === 1) {
             return `${typingUsers[0].username} está escribiendo`;
         } else if (typingUsers.length === 2) {
             return `${typingUsers[0].username} y ${typingUsers[1].username} están escribiendo`;
@@ -28,10 +26,28 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
         }
     };
 
+    // Always mounted, independent of the visual card below (which mounts/unmounts via
+    // AnimatePresence): a role="status" region that doesn't yet exist in the DOM when
+    // its content first changes is unreliably announced by screen readers, so this
+    // stays present with empty text rather than appearing only alongside the card
+    // (feature 026, FR-009, research.md §4). Mirrors the same text the visible card
+    // renders — no new user-facing string is introduced.
+    const liveRegion = (
+        <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {formatTypingText()}
+        </span>
+    );
+
+    if (typingUsers.length === 0) {
+        return liveRegion;
+    }
+
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+        <>
+            {liveRegion}
+            <AnimatePresence>
+                <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{
@@ -101,8 +117,9 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                         <TypingDots />
                     </div>
                 </div>
-            </motion.div>
-        </AnimatePresence>
+                </motion.div>
+            </AnimatePresence>
+        </>
     );
 };
 

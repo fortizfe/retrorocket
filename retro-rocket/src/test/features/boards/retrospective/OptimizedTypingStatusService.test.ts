@@ -10,11 +10,9 @@ describe('OptimizedTypingStatusService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        OptimizedTypingStatusService.cleanup();
     });
 
     afterEach(() => {
-        OptimizedTypingStatusService.cleanup();
         vi.useRealTimers();
     });
 
@@ -23,26 +21,13 @@ describe('OptimizedTypingStatusService', () => {
         expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'helped', true);
     });
 
-    it('auto-deactivates after the 300ms debounce window if no further keystroke resets it', () => {
+    it('never auto-deactivates on its own — isActive:false is only ever written when explicitly called', () => {
         OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
-        mockSetTypingStatus.mockClear();
 
-        vi.advanceTimersByTime(300);
-        expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'helped', false);
-    });
+        vi.advanceTimersByTime(10000);
 
-    it('a repeated isActive:true call before the debounce fires resets the timer without a duplicate write', () => {
-        OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
-        mockSetTypingStatus.mockClear();
-
-        vi.advanceTimersByTime(150);
-        OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
-        // Already "initialized" within the 5000ms TYPING_TIMEOUT window — no immediate re-write.
-        expect(mockSetTypingStatus).not.toHaveBeenCalled();
-
-        vi.advanceTimersByTime(150);
-        // The reset 300ms debounce hasn't elapsed yet from the second call.
-        expect(mockSetTypingStatus).not.toHaveBeenCalled();
+        expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+        expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'helped', true);
     });
 
     it('isActive:false writes the deactivation immediately, not after a debounce', () => {

@@ -12,10 +12,13 @@ const TYPING_STATUS = 'typingStatus';
 const PARTICIPANTS = 'participants';
 const COUNTDOWN_TIMERS = 'countdown_timers';
 
-/** Server-enforced hard TTL for typing-status docs, consolidating the client-side check
- * OptimizedTypingStatusService used to perform per-browser (data-model.md). */
-const TYPING_STATUS_TTL_MS = 5000;
-const TYPING_STATUS_SWEEP_INTERVAL_MS = 1000;
+/** Server-enforced hard TTL for typing-status docs — the only mechanism that clears a
+ * typing indicator when a participant disconnects without sending an explicit stop
+ * (feature 026, research.md §3). Bounded at 3s/500ms so a disconnected participant's
+ * indicator clears for other viewers within ~3.5s worst case, matching the client's own
+ * 3-second inactivity grace period (useTypingStatus.ts). */
+const TYPING_STATUS_TTL_MS = 3000;
+const TYPING_STATUS_SWEEP_INTERVAL_MS = 500;
 
 /**
  * Exported so this pure Firestore-docChanges()-to-wire-event translation logic can be
