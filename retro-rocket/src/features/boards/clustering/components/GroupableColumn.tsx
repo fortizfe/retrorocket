@@ -327,13 +327,13 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     )}
                 </AnimatePresence>
 
-                {/* Typing Preview */}
-                {typingUsers.length > 0 && (
-                    <TypingPreview
-                        typingUsers={typingUsers}
-                        className="mb-3"
-                    />
-                )}
+                {/* Typing Preview — always rendered (even with zero typists) so its
+                    accessible live region (feature 026, FR-009) is already present in
+                    the DOM before the first typing event, not mounted alongside it. */}
+                <TypingPreview
+                    typingUsers={typingUsers}
+                    className="mb-3"
+                />
 
                 {/* Groups */}
                 {columnGroups.map(group => {

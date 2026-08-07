@@ -134,6 +134,36 @@ describe('applyTypingStatusChange', () => {
         const event: EntityChangeEvent = { type: 'entity_change', entity: 'card', op: 'created', id: 'c1', data: {} };
         expect(applyTypingStatusChange(existing, event)).toBe(existing);
     });
+
+    it('converges to the participant\'s actual latest activity across a create/refresh/stop/restart sequence, with no stale state stuck in between (FR-007)', () => {
+        const created: EntityChangeEvent = {
+            type: 'entity_change', entity: 'typingStatus', op: 'created', id: 'r1_u1_col1',
+            data: { userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'col1', timestamp: '2026-01-01T00:00:00.000Z' },
+        };
+        const refreshed: EntityChangeEvent = {
+            type: 'entity_change', entity: 'typingStatus', op: 'updated', id: 'r1_u1_col1',
+            data: { userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'col1', timestamp: '2026-01-01T00:00:02.000Z' },
+        };
+        const stopped: EntityChangeEvent = { type: 'entity_change', entity: 'typingStatus', op: 'deleted', id: 'r1_u1_col1' };
+        const restarted: EntityChangeEvent = {
+            type: 'entity_change', entity: 'typingStatus', op: 'created', id: 'r1_u1_col1',
+            data: { userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'col1', timestamp: '2026-01-01T00:00:05.000Z' },
+        };
+
+        let state = applyTypingStatusChange([], created);
+        expect(state).toHaveLength(1);
+
+        state = applyTypingStatusChange(state, refreshed);
+        expect(state).toHaveLength(1);
+        expect(state[0].timestamp).toEqual(new Date('2026-01-01T00:00:02.000Z'));
+
+        state = applyTypingStatusChange(state, stopped);
+        expect(state).toEqual([]);
+
+        state = applyTypingStatusChange(state, restarted);
+        expect(state).toHaveLength(1);
+        expect(state[0].timestamp).toEqual(new Date('2026-01-01T00:00:05.000Z'));
+    });
 });
 
 describe('useRetrospectiveRealtimeSync', () => {

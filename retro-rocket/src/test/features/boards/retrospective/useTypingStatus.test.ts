@@ -118,7 +118,7 @@ describe('useTypingStatus Hook', () => {
             expect(mockSetTypingStatusDebounced).not.toHaveBeenCalled();
         });
 
-        it('should auto-stop typing after timeout', () => {
+        it('should auto-stop typing after the 3-second inactivity timeout, not a moment before', () => {
             const { result } = renderHook(() =>
                 useTypingStatus({ retrospectiveId: mockRetrospectiveId, currentUserId: mockUserId, currentUsername: mockUsername, typingStatuses: [] }),
             );
@@ -138,7 +138,15 @@ describe('useTypingStatus Hook', () => {
             mockSetTypingStatusDebounced.mockClear();
 
             act(() => {
-                vi.advanceTimersByTime(4000);
+                vi.advanceTimersByTime(2999);
+            });
+
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'good', isActive: false }),
+            );
+
+            act(() => {
+                vi.advanceTimersByTime(1);
             });
 
             expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
@@ -162,6 +170,65 @@ describe('useTypingStatus Hook', () => {
             });
 
             expect(mockSetTypingStatusDebounced).toHaveBeenCalledTimes(1);
+        });
+
+        it('never sends isActive:false while keystrokes keep arriving within the inactivity window (regression for the reported flicker)', () => {
+            const { result } = renderHook(() =>
+                useTypingStatus({ retrospectiveId: mockRetrospectiveId, currentUserId: mockUserId, currentUsername: mockUsername, typingStatuses: [] }),
+            );
+
+            for (let i = 0; i < 12; i++) {
+                act(() => {
+                    result.current.startTyping('good');
+                    vi.advanceTimersByTime(500);
+                });
+            }
+
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'good', isActive: false }),
+            );
+        });
+
+        it('switching to a different column mid-grace-period clears the old column promptly and starts the new one', () => {
+            const { result } = renderHook(() =>
+                useTypingStatus({ retrospectiveId: mockRetrospectiveId, currentUserId: mockUserId, currentUsername: mockUsername, typingStatuses: [] }),
+            );
+
+            act(() => {
+                result.current.startTyping('helped');
+            });
+            mockSetTypingStatusDebounced.mockClear();
+
+            act(() => {
+                vi.advanceTimersByTime(1000);
+                result.current.startTyping('hindered');
+            });
+
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'hindered',
+                isActive: true,
+            });
+            mockSetTypingStatusDebounced.mockClear();
+
+            // 'helped' received no further keystrokes — its own 3000ms timer (started when
+            // it was first typed) still fires independently, with no stale duplicate.
+            act(() => {
+                vi.advanceTimersByTime(2000);
+            });
+
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith({
+                userId: mockUserId,
+                username: mockUsername,
+                retrospectiveId: mockRetrospectiveId,
+                column: 'helped',
+                isActive: false,
+            });
+            expect(mockSetTypingStatusDebounced).not.toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'hindered', isActive: false }),
+            );
         });
     });
 
