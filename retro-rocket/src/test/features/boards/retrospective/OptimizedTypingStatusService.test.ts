@@ -6,6 +6,26 @@ vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', (
     setTypingStatus: (...args: unknown[]) => mockSetTypingStatus(...args),
 }));
 
+/** A promise the test controls the settlement of, to simulate a write whose network
+ * round trip hasn't completed yet. */
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
+
+/** Drains the microtask queue enough times for a chain of `.then()`/`await` hops
+ * (queue → setTypingStatusImmediate's internal await → its caller) to settle. */
+async function flushMicrotasks(times = 5): Promise<void> {
+    for (let i = 0; i < times; i++) {
+        await Promise.resolve();
+    }
+}
+
 describe('OptimizedTypingStatusService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -40,5 +60,65 @@ describe('OptimizedTypingStatusService', () => {
         expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'helped', false);
         expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'hindered', false);
         expect(mockSetTypingStatus).toHaveBeenCalledWith('r1', 'improve', false);
+    });
+
+    // Feature 027: fix the ordering race behind the "ghost" typing indicator — a
+    // later write for the same participant+column must never reach the server before
+    // an earlier one that is still in flight.
+    describe('write ordering (feature 027)', () => {
+        it('does not send a later write for the same key until an earlier pending write for that key has settled', async () => {
+            const first = deferred<void>();
+            mockSetTypingStatus.mockReturnValueOnce(first.promise);
+            mockSetTypingStatus.mockResolvedValueOnce(undefined);
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: false });
+
+            // The second call must not have reached the server yet — it's queued
+            // behind the still-pending first write.
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(1, 'r1', 'helped', true);
+
+            first.resolve();
+            await flushMicrotasks();
+
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(2);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(2, 'r1', 'helped', false);
+        });
+
+        it('discards a failed write and still processes the next queued write for the same key (FR-007)', async () => {
+            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const failing = deferred<void>();
+            mockSetTypingStatus.mockReturnValueOnce(failing.promise);
+            mockSetTypingStatus.mockResolvedValueOnce(undefined);
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: false });
+
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            failing.reject(new Error('network error'));
+            await flushMicrotasks();
+
+            // The rejected first write must not block the second, queued write.
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(2);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(2, 'r1', 'helped', false);
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('does not serialize writes for different keys against each other', () => {
+            const pendingHelped = deferred<void>();
+            mockSetTypingStatus.mockReturnValueOnce(pendingHelped.promise);
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'hindered', isActive: true });
+
+            // A pending write for 'helped' must not delay an unrelated write for
+            // 'hindered' — both reach the server immediately.
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(2);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(1, 'r1', 'helped', true);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(2, 'r1', 'hindered', true);
+        });
     });
 });
