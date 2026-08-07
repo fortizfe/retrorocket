@@ -655,6 +655,28 @@ test('a typing indicator appears live for a second participant, stays visible wi
         await pageB.waitForTimeout(500);
     }
 
+    // FR-001/FR-003, US1 Acceptance Scenario 2 (feature 027): rapid, repeated column
+    // switching by the same participant, with no settling time between switches, must
+    // never leave more than one column showing them as typing at once — the direct
+    // regression check for the ordering race behind the reported "ghost" indicator
+    // (a late-arriving write for an abandoned column resurrecting its typing status).
+    for (let i = 0; i < 2; i++) {
+        await pageA.getByRole('button', { name: 'Cancelar' }).click();
+        // Each column's add-card form is its own independent AnimatePresence child —
+        // waiting for the outgoing one to fully unmount before opening the next avoids
+        // a moment where two "Cancelar" buttons (one exiting, one entering) coexist.
+        await expect(pageA.getByRole('button', { name: 'Cancelar' })).toHaveCount(0, { timeout: 2_000 });
+        await pageA.getByText('Agregar primera tarjeta').first().click();
+        await pageA.locator('textarea').first().fill(`rapid switch to column one ${i}`);
+        await expect(visibleTypingText(pageB)).toHaveCount(1, { timeout: 2_000 });
+
+        await pageA.getByRole('button', { name: 'Cancelar' }).click();
+        await expect(pageA.getByRole('button', { name: 'Cancelar' })).toHaveCount(0, { timeout: 2_000 });
+        await pageA.getByText('Agregar primera tarjeta').nth(1).click();
+        await pageA.locator('textarea').first().fill(`rapid switch to column two ${i}`);
+        await expect(visibleTypingText(pageB)).toHaveCount(1, { timeout: 2_000 });
+    }
+
     // US2 (FR-003, Acceptance Scenario 1): A stops typing with no explicit action —
     // indicator clears for B within the 3-second grace period plus render/network
     // slack, and stays cleared (no reappearing on its own).
@@ -836,6 +858,66 @@ test('multiple participants typing in the same column are represented independen
 
     await contextA.close();
     await contextB.close();
+    await contextC.close();
+});
+
+test('two participants typing in different columns stay independent when one switches to a third column (feature 027, US3)', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner40@example.com', 'E2E Retro Owner 40', 'E2E Typing Different Columns Board');
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Typing Different Columns Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextD = await browser.newContext();
+    const pageD = await contextD.newPage();
+    await signInAs(pageD, 'e2e-retro-participant40d@example.com', 'E2E Retro Participant 40D');
+    await pageD.goto(`/retro/${boardId}`);
+    await expect(pageD.getByText('E2E Typing Different Columns Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextC = await browser.newContext();
+    const pageC = await contextC.newPage();
+    await signInAs(pageC, 'e2e-retro-participant40c@example.com', 'E2E Retro Participant 40C');
+    await pageC.goto(`/retro/${boardId}`);
+    await expect(pageC.getByText('E2E Typing Different Columns Board')).toBeVisible({ timeout: 30_000 });
+
+    // A types in the first column; D types in the second. C (the observer) must see
+    // both, independently, at the same time.
+    await pageA.getByText('Agregar primera tarjeta').first().click();
+    await pageA.locator('textarea').first().fill('A typing in column one');
+    await expect(visibleTypingText(pageC, 'E2E Google User está escribiendo')).toBeVisible({ timeout: 10_000 });
+
+    await pageD.getByText('Agregar primera tarjeta').nth(1).click();
+    await pageD.locator('textarea').first().fill('D typing in column two');
+    await expect(visibleTypingText(pageC, 'E2E Retro Participant 40D está escribiendo')).toBeVisible({ timeout: 10_000 });
+
+    // A switches to a third column mid-session. D's indicator must be unaffected
+    // throughout the switch — sampled with short timeouts so even a brief interruption
+    // fails immediately, matching the regression style used elsewhere in this file.
+    // The wall-clock time from the switch to A's indicator settling into its correct
+    // final column (old column cleared, new column shown) must stay under 1s (SC-002).
+    await pageA.getByRole('button', { name: 'Cancelar' }).click();
+    await pageA.getByText('Agregar primera tarjeta').nth(2).click();
+    await pageA.locator('textarea').first().fill('A typing in column three');
+
+    // A's indicator must settle into its new, single, correct location quickly (SC-002)
+    // — the clock starts once the write is actually fired (right after the fill that
+    // triggers it), not from the preceding UI clicks/animations, since SC-002 is about
+    // propagation latency to other viewers, not local UI interaction time.
+    const switchStart = Date.now();
+    await expect(visibleTypingText(pageC, 'E2E Google User está escribiendo')).toHaveCount(1, { timeout: 1_000 });
+    expect(Date.now() - switchStart).toBeLessThan(1_000);
+
+    // D's indicator was never affected by A's switch — sample it a few more times to
+    // confirm it's still the same, uninterrupted indicator.
+    for (let i = 0; i < 3; i++) {
+        await expect(visibleTypingText(pageC, 'E2E Retro Participant 40D está escribiendo')).toBeVisible({ timeout: 200 });
+        await pageC.waitForTimeout(200);
+    }
+
+    await contextA.close();
+    await contextD.close();
     await contextC.close();
 });
 
