@@ -644,6 +644,14 @@ test('a typing indicator appears live for a second participant, stays visible wi
     // just the one this test happened to use first.
     await pageA.locator('textarea').first().fill('');
     await pageA.getByRole('button', { name: 'Cancelar' }).click();
+    // Wait for column one's own form to fully unmount on A's page before opening
+    // column two — waiting only on B's view (below) confirms the *data* settled, but
+    // not that A's local DOM has caught up. Without this, `textarea.nth(0)` below can
+    // still resolve to column one's own-about-to-unmount textarea under a slow render
+    // (e.g. a CPU-constrained CI runner), sending a stray startTyping for column one
+    // instead of column two — the exact mechanism behind the CI-only "ghost indicator"
+    // flake this regression test exists to catch (feature 027).
+    await expect(pageA.getByRole('button', { name: 'Cancelar' })).toHaveCount(0, { timeout: 2_000 });
     await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 5_000 });
 
     await pageA.getByText('Agregar primera tarjeta').nth(1).click();
@@ -898,6 +906,11 @@ test('two participants typing in different columns stay independent when one swi
     // The wall-clock time from the switch to A's indicator settling into its correct
     // final column (old column cleared, new column shown) must stay under 1s (SC-002).
     await pageA.getByRole('button', { name: 'Cancelar' }).click();
+    // Wait for column one's own form to fully unmount before opening column three —
+    // otherwise `textarea.first()` below can still resolve to column one's own
+    // about-to-unmount textarea under a slow render, corrupting both the switch itself
+    // and the SC-002 timing measurement below (feature 027).
+    await expect(pageA.getByRole('button', { name: 'Cancelar' })).toHaveCount(0, { timeout: 2_000 });
     await pageA.getByText('Agregar primera tarjeta').nth(2).click();
     await pageA.locator('textarea').first().fill('A typing in column three');
 
