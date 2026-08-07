@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
@@ -19,6 +20,9 @@ const MetricsDashboard = lazy(() => import('@/features/dev-tools/components/Metr
 
 const App: React.FC = () => {
   return (
+    // reducedMotion="user" makes every framer-motion animation in the app
+    // honor prefers-reduced-motion automatically (spec 028, research.md R2).
+    <MotionConfig reducedMotion="user">
     <AuthGuard>
       <Router>
         <BoardDataStoreProvider>
@@ -80,6 +84,7 @@ const App: React.FC = () => {
         />
       </Router>
     </AuthGuard>
+    </MotionConfig>
   );
 };
 

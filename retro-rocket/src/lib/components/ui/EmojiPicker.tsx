@@ -137,9 +137,13 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                 <Smile className={sizes[size]} />
             </Button>
 
-            {/* Emoji Picker Portal */}
-            {isOpen && createPortal(
+            {/* Emoji Picker Portal — createPortal/AnimatePresence stay mounted
+                unconditionally; isOpen gates only the content inside, so the
+                exit animation can actually run (design audit finding, spec
+                028: same AnimatePresence-boundary bug class as DAF-001). */}
+            {createPortal(
                 <AnimatePresence>
+                    {isOpen && (
                     <motion.div
                         ref={pickerRef}
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -193,6 +197,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({
                             </p>
                         </div>
                     </motion.div>
+                    )}
                 </AnimatePresence>,
                 document.body
             )}

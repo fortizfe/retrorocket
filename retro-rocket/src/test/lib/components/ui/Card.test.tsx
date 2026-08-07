@@ -236,8 +236,9 @@ describe('Card Component', () => {
             render(<Card hover>Motion sensitive</Card>);
 
             const card = getCardWrapper('Motion sensitive');
-            // animations.default is transition-all
-            expect(card).toHaveClass('transition-all'); // From animations.default
+            // animations.default narrows transition-all to the specific properties
+            // Card actually changes (design audit finding, spec 028).
+            expect(card).toHaveClass('transition-[background-color,border-color,box-shadow,transform,color]'); // From animations.default
         });
     });
 

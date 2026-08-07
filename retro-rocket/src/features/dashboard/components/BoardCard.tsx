@@ -118,9 +118,10 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, currentUserId, onBoardDele
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     className="relative group"
                 >
-                    <Card className="p-6 h-full flex flex-col hover:shadow-medium transition-all duration-300 border border-border-default hover:border-info-fg">
+                    <Card className="p-6 h-full flex flex-col hover:shadow-medium transition-[box-shadow,border-color] duration-300 border border-border-default hover:border-info-fg">
                         {/* Header with title and action buttons */}
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex-1 mr-2">

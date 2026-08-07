@@ -245,30 +245,37 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                 <span className="hidden lg:inline font-medium">{t('retrospective.facilitator.menu')}</span>
             </button>
 
-            {/* Portal Dropdown Menu */}
-            {isOpen && createPortal(
+            {/* Portal Dropdown Menu — AnimatePresence must stay mounted across the isOpen
+                transition; `isOpen &&` previously gated the whole portal (including
+                AnimatePresence itself), removing it in one render pass before the
+                declared exit animation could run (design audit finding, spec 028; same
+                class as DAF-001). createPortal is now called unconditionally, and
+                `isOpen` gates only the motion.div child. */}
+            {createPortal(
                 <AnimatePresence>
-                    <motion.div
-                        ref={menuRef}
-                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed z-[99999]"
-                        style={triggerRect ? getPositionStyles() : {}}
-                    >
-                        <FacilitatorMenuTabs
-                            activeTab={activeTab}
-                            onTabChange={handleTabChange}
-                            onClose={handleClose}
-                            timerBadge={getTimerBadge()}
-                            sentimentBadge={getSentimentBadge()}
-                            teamMoodBadge={getTeamMoodBadge()}
-                            notesBadge={undefined} // Could add notes count here later
+                    {isOpen && (
+                        <motion.div
+                            ref={menuRef}
+                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="fixed z-[99999]"
+                            style={triggerRect ? getPositionStyles() : {}}
                         >
-                            {renderTabContent()}
-                        </FacilitatorMenuTabs>
-                    </motion.div>
+                            <FacilitatorMenuTabs
+                                activeTab={activeTab}
+                                onTabChange={handleTabChange}
+                                onClose={handleClose}
+                                timerBadge={getTimerBadge()}
+                                sentimentBadge={getSentimentBadge()}
+                                teamMoodBadge={getTeamMoodBadge()}
+                                notesBadge={undefined} // Could add notes count here later
+                            >
+                                {renderTabContent()}
+                            </FacilitatorMenuTabs>
+                        </motion.div>
+                    )}
                 </AnimatePresence>,
                 document.body
             )}

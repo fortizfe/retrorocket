@@ -18,7 +18,7 @@ const CardVoteControl: React.FC<CardVoteControlProps> = ({ votes, onVote }) => {
             <button
                 type="button"
                 onClick={() => onVote(true)}
-                className="text-text-secondary hover:text-info-fg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-full"
+                className="text-text-secondary hover:text-info-fg active:scale-95 transition-[color,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-full"
                 aria-label={t('retrospective.card.voteUp')}
             >
                 <ThumbsUp size={12} />
@@ -27,7 +27,7 @@ const CardVoteControl: React.FC<CardVoteControlProps> = ({ votes, onVote }) => {
             <button
                 type="button"
                 onClick={() => onVote(false)}
-                className="text-text-secondary hover:text-error-fg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-full disabled:opacity-40"
+                className="text-text-secondary hover:text-error-fg active:scale-95 transition-[color,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-full disabled:opacity-40 disabled:active:scale-100"
                 aria-label={t('retrospective.card.voteDown')}
                 disabled={votes === 0}
             >

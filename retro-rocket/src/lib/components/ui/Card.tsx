@@ -65,7 +65,9 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       variants[variant],
       paddings[padding],
       loading && 'pointer-events-none opacity-70',
-      hover && `${shadows.cardElevated} hover:border-action cursor-pointer hover:-translate-y-1`,
+      // No hover:-translate-y-1 here: motionProps' whileHover below already drives
+      // the y translation via an inline style, which always overrides this class.
+      hover && `${shadows.cardElevated} hover:border-action cursor-pointer`,
       interactive && 'cursor-pointer',
       className
     );

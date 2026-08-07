@@ -17,7 +17,13 @@ vi.mock('framer-motion', () => ({
             </div>
         ))
     },
-    AnimatePresence: vi.fn(({ children }: any) => children)
+    // A detectable marker (not a bare passthrough) so tests can assert AnimatePresence
+    // stays mounted (via the portal) across the isOpen transition — required for the
+    // popover to exit-animate instead of vanishing instantly (design audit finding,
+    // spec 028: same AnimatePresence-boundary bug class as DAF-001; `{isOpen &&
+    // createPortal(<AnimatePresence>...)}` previously removed AnimatePresence itself
+    // along with everything inside it in one render pass).
+    AnimatePresence: vi.fn(({ children }: any) => <div data-testid="animate-presence">{children}</div>)
 }));
 
 vi.mock('lucide-react', () => ({
@@ -361,6 +367,18 @@ describe('ParticipantPopover', () => {
             render(<ParticipantPopover {...defaultProps} />);
 
             // Verify content is properly wrapped and rendered
+            expect(screen.getByText('Participants')).toBeInTheDocument();
+        });
+
+        it('keeps AnimatePresence mounted even when closed, so the popover can exit-animate instead of being removed via `isOpen &&` gating the whole portal (design audit finding, spec 028)', () => {
+            const { rerender } = render(<ParticipantPopover {...defaultProps} isOpen={false} />);
+
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+            expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+
+            rerender(<ParticipantPopover {...defaultProps} isOpen={true} />);
+
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
             expect(screen.getByText('Participants')).toBeInTheDocument();
         });
     });

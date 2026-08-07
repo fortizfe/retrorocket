@@ -95,7 +95,9 @@ const LandingPage: React.FC = () => {
                     {/* Logo and Title */}
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="mb-8"
                     >
                         <div className="flex items-center justify-center gap-3 mb-4">
@@ -117,8 +119,9 @@ const LandingPage: React.FC = () => {
                     {/* Quick Access Auth Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="max-w-md mx-auto mb-16"
                     >
                         <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50">
@@ -147,25 +150,26 @@ const LandingPage: React.FC = () => {
                     {/* Features Grid */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="grid md:grid-cols-3 gap-6 mb-12"
                     >
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
                             <Users className="w-8 h-8 text-primary-500 mx-auto mb-3" />
                             <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.connectTeams.title')}</h3>
                             <p className="text-text-secondary text-sm">
                                 {t('landing.features.connectTeams.description')}
                             </p>
                         </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
                             <Zap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
                             <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.immediateResults.title')}</h3>
                             <p className="text-text-secondary text-sm">
                                 {t('landing.features.immediateResults.description')}
                             </p>
                         </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300">
+                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
                             <Heart className="w-8 h-8 text-sky-500 mx-auto mb-3" />
                             <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.easyToAdopt.title')}</h3>
                             <p className="text-text-secondary text-sm">
@@ -177,8 +181,9 @@ const LandingPage: React.FC = () => {
                     {/* Main Features Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
@@ -192,7 +197,7 @@ const LandingPage: React.FC = () => {
 
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                             {/* Authentication */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Shield className="w-6 h-6 text-white" />
                                 </div>
@@ -205,7 +210,7 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             {/* Real-time Collaboration */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Users className="w-6 h-6 text-white" />
                                 </div>
@@ -218,7 +223,7 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             {/* Card System */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <MessageSquare className="w-6 h-6 text-white" />
                                 </div>
@@ -231,7 +236,7 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             {/* Smart Grouping */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Group className="w-6 h-6 text-white" />
                                 </div>
@@ -244,7 +249,7 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             {/* Professional Export */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <FileText className="w-6 h-6 text-white" />
                                 </div>
@@ -257,7 +262,7 @@ const LandingPage: React.FC = () => {
                             </div>
 
                             {/* Modern UI */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-all duration-300 text-center">
+                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
                                 <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Palette className="w-6 h-6 text-white" />
                                 </div>
@@ -274,8 +279,9 @@ const LandingPage: React.FC = () => {
                     {/* How It Works Section */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
@@ -390,8 +396,9 @@ const LandingPage: React.FC = () => {
                     {/* Technology Stack */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.0 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="mt-16 mb-16"
                     >
                         <div className="text-center mb-12">
@@ -448,8 +455,9 @@ const LandingPage: React.FC = () => {
                     {/* Final Message */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.2 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.5 }}
                         className="text-center mb-16"
                     >
                         <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 max-w-xl mx-auto">

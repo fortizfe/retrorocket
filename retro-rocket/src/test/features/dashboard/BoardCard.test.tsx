@@ -47,7 +47,12 @@ vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
         button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+        dialog: ({ children, open, ...props }: any) => <dialog open={open} {...props}>{children}</dialog>,
     },
+    // BoardCard renders EditRetrospectiveModal -> Modal, which now always mounts
+    // AnimatePresence (design audit finding, spec 028: it previously early-returned
+    // before ever reaching it, so this export was never exercised here before).
+    AnimatePresence: ({ children }: any) => children,
 }));
 
 vi.mock('@/lib/components/ui/Button', () => ({

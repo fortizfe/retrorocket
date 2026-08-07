@@ -98,8 +98,6 @@ const Modal: React.FC<ModalProps> = ({
         }
     }, [isOpen]);
 
-    if (!isOpen) return null;
-
     const handleBackdropClick = (event: React.MouseEvent) => {
         if (closeOnBackdropClick && event.target === event.currentTarget) {
             onClose();
@@ -162,8 +160,14 @@ const Modal: React.FC<ModalProps> = ({
         };
     };
 
+    // AnimatePresence must stay mounted across the isOpen transition — an early
+    // `if (!isOpen) return null` (previously above) skipped this whole tree in one
+    // step, so the exit animations below were dead code (design audit finding, spec
+    // 028; same class as DAF-001). createPortal is now called unconditionally, and
+    // `isOpen` gates only the content inside AnimatePresence.
     return createPortal(
         <AnimatePresence>
+            {isOpen && (
             <div
                 className={`fixed inset-0 overflow-y-auto z-${zIndex}`}
             >
@@ -191,7 +195,6 @@ const Modal: React.FC<ModalProps> = ({
                             relative w-full ${maxWidthClasses[maxWidth]}
                             bg-surface-overlay
                             rounded-xl shadow-2xl
-                            transform transition-all
                             max-h-[90vh] overflow-hidden
                             ${className}
                         `}
@@ -249,6 +252,7 @@ const Modal: React.FC<ModalProps> = ({
                     </motion.dialog>
                 </div>
             </div>
+            )}
         </AnimatePresence>,
         document.body
     );

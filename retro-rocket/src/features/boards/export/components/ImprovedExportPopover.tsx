@@ -194,9 +194,16 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                 </div>
             )}
 
-            {/* Popover rendered in a portal so it shows above other portals/stacking contexts */}
-            {isOpen && createPortal(
+            {/* Popover rendered in a portal so it shows above other portals/stacking
+                contexts. AnimatePresence must stay mounted across the isOpen transition
+                — `isOpen &&` previously gated the whole portal (including
+                AnimatePresence itself), removing it in one render pass before the exit
+                animation could run (design audit finding, spec 028; same class as
+                DAF-001). createPortal is now called unconditionally, and `isOpen` gates
+                only the inner content. */}
+            {createPortal(
                 <AnimatePresence>
+                    {isOpen && (
                     <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-20 px-4">
                         {/* Backdrop */}
                         <button
@@ -441,22 +448,31 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                     </Button>
                                 </div>
 
-                                {/* Status Messages */}
+                                {/* Status Messages — each gets its own AnimatePresence + exit so
+                                    clearing an error or completing an export animates out,
+                                    not just in (design audit finding, spec 028). */}
+                                <AnimatePresence>
                                 {error && (
                                     <motion.div
+                                        key="export-error"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
                                         className="flex items-center gap-2 p-3 bg-error-bg border border-error-fg rounded-lg"
                                     >
                                         <AlertCircle className="w-4 h-4 text-error-fg" />
                                         <span className="text-sm text-error-fg">{error}</span>
                                     </motion.div>
                                 )}
+                                </AnimatePresence>
 
+                                <AnimatePresence>
                                 {success && (
                                     <motion.div
+                                        key="export-success"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
                                         className="flex items-center gap-2 p-3 bg-success-bg border border-success-fg rounded-lg"
                                     >
                                         <CheckCircle className="w-4 h-4 text-success-fg" />
@@ -465,9 +481,11 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                         </span>
                                     </motion.div>
                                 )}
+                                </AnimatePresence>
                             </div>
                         </motion.div>
                     </div>
+                    )}
                 </AnimatePresence>
                 , document.body)
             }

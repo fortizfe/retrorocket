@@ -139,6 +139,44 @@ describe("LanguageSelector", () => {
         });
     });
 
+    describe('Dropdown origin (design audit finding, spec 028)', () => {
+        it('anchors transform-origin to top right when the dropdown right-aligns under the trigger', async () => {
+            const { container } = render(<LanguageSelector />);
+            const triggerButton = container.querySelector('button');
+
+            await user.click(triggerButton!);
+
+            await waitFor(() => {
+                const dropdown = container.querySelector('[class*="fixed z-50"]') as HTMLElement;
+                expect(dropdown.style.transformOrigin).toBe('top right');
+            });
+        });
+
+        it('anchors transform-origin to top left when the trigger sits near the left viewport edge', async () => {
+            Element.prototype.getBoundingClientRect = vi.fn(() => ({
+                top: 100,
+                left: 5,
+                bottom: 120,
+                right: 60,
+                width: 55,
+                height: 20,
+                x: 5,
+                y: 100,
+                toJSON: vi.fn()
+            }));
+
+            const { container } = render(<LanguageSelector />);
+            const triggerButton = container.querySelector('button');
+
+            await user.click(triggerButton!);
+
+            await waitFor(() => {
+                const dropdown = container.querySelector('[class*="fixed z-50"]') as HTMLElement;
+                expect(dropdown.style.transformOrigin).toBe('top left');
+            });
+        });
+    });
+
     describe('Language Selection', () => {
         it('renders language options correctly', async () => {
             const { container } = render(<LanguageSelector />);

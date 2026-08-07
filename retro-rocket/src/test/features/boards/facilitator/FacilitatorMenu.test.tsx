@@ -7,7 +7,13 @@ vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    // A detectable marker (not a bare fragment passthrough) so tests can assert
+    // AnimatePresence stays mounted (in the portal) across the isOpen transition —
+    // required for the dropdown to exit-animate instead of vanishing instantly
+    // (design audit finding, spec 028: same AnimatePresence-boundary bug class as
+    // DAF-001; `{isOpen && createPortal(<AnimatePresence>...)}` previously removed
+    // AnimatePresence itself along with everything inside it in one render pass).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
 }));
 
 vi.mock('@/lib/components/ui/Button', () => ({
@@ -163,6 +169,25 @@ describe('FacilitatorMenu', () => {
             await user.click(menuButton);
 
             // menu content should appear (tabs container is rendered)
+            expect(screen.getByTestId('facilitator-menu-tabs')).toBeInTheDocument();
+        });
+
+        it('keeps AnimatePresence mounted even when closed, so the dropdown can exit-animate instead of being removed via `isOpen &&` gating the whole portal (design audit finding, spec 028)', async () => {
+            const user = userEvent.setup();
+            render(<FacilitatorMenu {...defaultProps} />);
+
+            // AnimatePresence must always be present (portaled to document.body),
+            // independent of isOpen — only its child should be conditional.
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+            expect(screen.queryByTestId('facilitator-menu-tabs')).not.toBeInTheDocument();
+
+            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            await user.click(menuButton);
+
+            // Open state now also renders ControlsTab's own AnimatePresence boundaries
+            // (design audit finding DAF's timer-panel exit fixes), so multiple markers
+            // are expected here — the assertion is that at least one persists.
+            expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
             expect(screen.getByTestId('facilitator-menu-tabs')).toBeInTheDocument();
         });
 

@@ -185,35 +185,40 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                 />
                             </div>
 
-                            {/* Member Cards */}
-                            {memberCards.map((card, index) => (
-                                <motion.div
-                                    key={card.id}
-                                    layout
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="ml-4 relative"
-                                >
-                                    {/* Connection line */}
-                                    <div className="absolute -left-2 top-4 w-2 h-0.5 bg-border-default"></div>
-                                    <div className="absolute -left-2 top-0 w-0.5 h-full bg-border-default"></div>
+                            {/* Member Cards — AnimatePresence must directly parent this list for a
+                                removed member card to exit-animate (design audit finding, spec 028;
+                                same class as DAF-001). Stagger delay capped at 80ms/item per the
+                                30-80ms stagger guideline (was 100ms/item, uncapped). */}
+                            <AnimatePresence>
+                                {memberCards.map((card, index) => (
+                                    <motion.div
+                                        key={card.id}
+                                        layout
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ delay: Math.min(index * 0.06, 0.3) }}
+                                        className="ml-4 relative"
+                                    >
+                                        {/* Connection line */}
+                                        <div className="absolute -left-2 top-4 w-2 h-0.5 bg-border-default"></div>
+                                        <div className="absolute -left-2 top-0 w-0.5 h-full bg-border-default"></div>
 
-                                    <DraggableCard
-                                        card={card}
-                                        onUpdate={onCardUpdate}
-                                        onDelete={() => handleRemoveCard(card.id)}
-                                        onVote={onCardVote}
-                                        onLike={onCardLike}
-                                        onReaction={onCardReaction}
-                                        onReactionRemove={onCardReactionRemove}
-                                        currentUser={currentUserId}
-                                        canEdit={!isReadOnly}
-                                        isDragging={false}
-                                    />
-                                </motion.div>
-                            ))}
+                                        <DraggableCard
+                                            card={card}
+                                            onUpdate={onCardUpdate}
+                                            onDelete={() => handleRemoveCard(card.id)}
+                                            onVote={onCardVote}
+                                            onLike={onCardLike}
+                                            onReaction={onCardReaction}
+                                            onReactionRemove={onCardReactionRemove}
+                                            currentUser={currentUserId}
+                                            canEdit={!isReadOnly}
+                                            isDragging={false}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         </div>
                     </motion.div>
                 )}

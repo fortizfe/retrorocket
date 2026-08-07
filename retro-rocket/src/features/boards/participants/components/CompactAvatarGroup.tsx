@@ -95,7 +95,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
         return (
             <button
                 onClick={handleClick}
-                className="transition-all duration-200 hover:bg-surface-raised rounded-lg p-1 -m-1"
+                className="transition-[background-color] duration-200 hover:bg-surface-raised rounded-lg p-1 -m-1"
                 title={`Ver todos los participantes (${totalCount})`}
             >
                 {groupElement}

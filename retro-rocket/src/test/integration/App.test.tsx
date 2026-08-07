@@ -106,4 +106,18 @@ describe('App Integration Tests', () => {
             expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
         });
     });
+
+    it('wraps the app in MotionConfig with reducedMotion="user" so framer-motion animations honor the OS/browser preference (spec 028, research.md R2)', async () => {
+        render(<App />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Verificando autenticación...')).toBeInTheDocument();
+        });
+
+        const motionConfig = document.querySelector('[data-testid="motion-config"]');
+        expect(motionConfig).toBeTruthy();
+        expect(motionConfig).toHaveAttribute('data-reduced-motion', 'user');
+        // It must wrap the whole app, not just a fragment of it.
+        expect(motionConfig).toContainElement(screen.getByText('Verificando autenticación...'));
+    });
 });

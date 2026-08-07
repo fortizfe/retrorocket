@@ -172,7 +172,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                 ${config.colorButton}
                 ${colorConfig.preview}
                 border-2 rounded-full
-                transition-all duration-200
+                transition-[transform,box-shadow,border-color] duration-200
                 hover:scale-110 hover:shadow-md
                 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
                 ${isSelected
@@ -234,7 +234,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           ${selectedConfig.preview}
           border-2 border-border-strong rounded-full
           flex items-center justify-center
-          transition-all duration-200
+          transition-[transform,box-shadow,border-color] duration-200
           hover:scale-105 hover:shadow-md hover:border-border-strong
           focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}

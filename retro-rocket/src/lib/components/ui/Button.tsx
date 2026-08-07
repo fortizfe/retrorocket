@@ -21,7 +21,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   }, ref) => {
     // Standardized focus-visible ring uses the `focus` token (≥3:1 both themes),
     // with the offset matching the page surface so the ring reads in both themes.
-    const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-[background-color,opacity] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
       primary: 'bg-action text-text-inverse hover:bg-action-hover active:bg-action-active shadow-sm',

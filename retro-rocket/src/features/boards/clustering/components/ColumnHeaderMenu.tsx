@@ -64,7 +64,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                 onClick={() => setMenuOpen(!menuOpen)}
                 className={`
                     flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium
-                    transition-all duration-200 hover:bg-surface-raised
+                    transition-[background-color,box-shadow,color,border-color] duration-200 hover:bg-surface-raised
                     ${menuOpen ? 'bg-surface shadow-sm' : ''}
                     ${currentGrouping !== 'none' ? 'bg-info-bg text-info-fg border border-info-fg' : 'text-text-secondary border border-border-default'}
                 `}
@@ -85,7 +85,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full right-0 mt-1 bg-surface-raised rounded-lg shadow-lg border border-border-default py-1 z-50 min-w-[220px]"
+                        className="absolute top-full right-0 mt-1 origin-top-right bg-surface-raised rounded-lg shadow-lg border border-border-default py-1 z-50 min-w-[220px]"
                         aria-label="Grouping options"
                     >
                         {groupingOptions.map((option) => (

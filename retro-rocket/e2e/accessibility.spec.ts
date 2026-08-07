@@ -121,6 +121,38 @@ for (const theme of THEMES) {
     });
 }
 
+// --- Error route states (both themes) — spec 028 Polish (T052) --------------
+// Surfaced during the design-alignment audit: prior scans only ever exercised
+// each route's `default` state. `dashboard-board-list` and `profile` both have
+// a documented `error` state (data-model.md) with its own visible error text
+// via `error.spec.ts`'s mocking pattern (page.route(...).abort('failed')) —
+// scan that state too, since a real backend failure is exactly the moment a
+// user most needs the error message to be legible/AA-compliant.
+
+for (const theme of THEMES) {
+    test(`Dashboard error state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await page.route('**/api/boards', (route) => route.abort('failed'));
+
+        await page.goto('/dashboard');
+        await applyThemeClass(page, theme);
+        await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 30_000 });
+        await expectNoViolations(page, `/dashboard error state (${theme})`);
+    });
+
+    test(`Profile error state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await page.route('**/api/profile', (route) => route.abort('failed'));
+
+        await page.goto('/perfil');
+        await applyThemeClass(page, theme);
+        await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 30_000 });
+        await expectNoViolations(page, `/perfil error state (${theme})`);
+    });
+}
+
 // --- Reaction picker surface (both themes) — US3 / FR-016 / SC-008 ----------
 
 for (const theme of THEMES) {
@@ -182,6 +214,30 @@ test('toggling theme mid-session keeps the board WCAG 2.1 AA compliant', async (
     await applyThemeClass(page, 'dark');
     // No surface should retain prior-theme colors; a full axe pass proves it.
     await expectNoViolations(page, 'board after switch → dark');
+});
+
+// --- Reduced motion (FR-006 / SC-005) — spec 028 Polish (T053) --------------
+// Automates what quickstart.md's check 5 previously documented as a manual
+// DevTools walkthrough: emulate prefers-reduced-motion and prove the P1 core
+// flow still completes with its result immediately visible (card appears,
+// vote count updates), i.e. the root <MotionConfig reducedMotion="user">
+// (T006) doesn't leave anything invisibly stuck mid-animation.
+
+test('the P1 core flow (add card, vote, group) completes with prefers-reduced-motion enabled', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Reduced Motion Board');
+    await waitForBoardReady(page);
+
+    await addCardToFirstColumn(page, 'Reduced motion card');
+    const card = cardByContent(page, 'Reduced motion card');
+    await expect(card).toBeVisible();
+
+    const like = card.getByRole('button', { name: /^\d+$/ });
+    await expect(like).toBeVisible();
+    const before = await like.textContent();
+    await like.click();
+    await expect(like).not.toHaveText(before ?? '');
 });
 
 // --- Keyboard focus visibility (T033 / SC-004) ------------------------------

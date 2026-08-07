@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Settings,
     Play,
@@ -145,11 +145,17 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                         icon={TimerIcon}
                     >
                         <div className="space-y-4">
-                            {/* Current Timer Status */}
+                            {/* Current Timer Status — each conditional panel below gets its own
+                                AnimatePresence + exit so switching between timer states (no
+                                timer / creating / running) animates out, not just in (design
+                                audit finding, spec 028). */}
+                            <AnimatePresence>
                             {timer && (
                                 <motion.div
+                                    key="timer-status"
                                     initial={{ opacity: 0, y: -6 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
                                     className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-border-default"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
@@ -169,11 +175,15 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
 
                                             <div className="mt-3">
                                                 <div className="h-2 w-full bg-border-default rounded-full overflow-hidden">
+                                                    {/* transform: scaleX(), not width — this re-renders once per second for the
+                                                        entire duration of an active countdown, so it must stay on the
+                                                        GPU-accelerated path rather than triggering layout every tick
+                                                        (design audit finding, spec 028). */}
                                                     <motion.div
-                                                        initial={{ width: '100%' }}
-                                                        animate={{ width: `${countdownState.totalDuration > 0 ? (countdownState.timeRemaining / countdownState.totalDuration) * 100 : 100}%` }}
+                                                        initial={{ transform: 'scaleX(1)' }}
+                                                        animate={{ transform: `scaleX(${countdownState.totalDuration > 0 ? countdownState.timeRemaining / countdownState.totalDuration : 1})` }}
                                                         transition={{ duration: 0.5 }}
-                                                        className={`h-full rounded-full ${getProgressBarColor()}`}
+                                                        className={`h-full w-full origin-left rounded-full ${getProgressBarColor()}`}
                                                     />
                                                 </div>
                                             </div>
@@ -181,12 +191,16 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     </div>
                                 </motion.div>
                             )}
+                            </AnimatePresence>
 
                             {/* Timer Creation */}
+                            <AnimatePresence>
                             {(!timer || (countdownState && countdownState.totalDuration === 0)) && (
                                 <motion.div
+                                    key="timer-creation"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
                                     className="space-y-4"
                                 >
                                     <div className="flex items-center gap-2 text-text-secondary">
@@ -259,12 +273,16 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     </div>
                                 </motion.div>
                             )}
+                            </AnimatePresence>
 
                             {/* Timer Controls */}
+                            <AnimatePresence>
                             {timer && countdownState && countdownState.totalDuration > 0 && (
                                 <motion.div
+                                    key="timer-controls"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
                                     className="space-y-4"
                                 >
                                     <div className="flex items-center gap-2 text-text-secondary">
@@ -323,12 +341,16 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     </div>
                                 </motion.div>
                             )}
+                            </AnimatePresence>
 
                             {/* Quick Timer Presets */}
+                            <AnimatePresence>
                             {(!timer || (countdownState && countdownState.totalDuration === 0)) && (
                                 <motion.div
+                                    key="quick-presets"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
                                     className="space-y-3"
                                 >
                                     <h4 className="text-sm font-medium text-text-secondary">
@@ -351,6 +373,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     </div>
                                 </motion.div>
                             )}
+                            </AnimatePresence>
                         </div>
                     </ControlCard>
                 )}

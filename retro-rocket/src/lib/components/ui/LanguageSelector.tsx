@@ -13,6 +13,10 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
     const [showDropdown, setShowDropdown] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+    // The dropdown scales from the trigger button, not a fixed center (design audit
+    // finding, spec 028): 'top right' in the common case (right-aligned below the
+    // button), 'top left' when it falls back to left-alignment near the viewport edge.
+    const [dropdownOrigin, setDropdownOrigin] = useState<'top right' | 'top left'>('top right');
 
     const languages = getAvailableLanguages();
     const currentLang = languages.find(lang => lang.code === currentLanguage) || languages[0];
@@ -30,14 +34,17 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
         const viewportWidth = window.innerWidth;
 
         let left = buttonRect.right - dropdownWidth;
+        let origin: 'top right' | 'top left' = 'top right';
         if (left < 10) {
             left = buttonRect.left;
+            origin = 'top left';
         }
 
         setDropdownPosition({
             top: buttonRect.bottom + 8,
             left: left
         });
+        setDropdownOrigin(origin);
     };
 
     const handleToggle = () => {
@@ -76,7 +83,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
                 className="fixed z-50 bg-surface-overlay rounded-lg shadow-lg border border-border-default py-2 min-w-[140px]"
                 style={{
                     top: dropdownPosition.top,
-                    left: dropdownPosition.left
+                    left: dropdownPosition.left,
+                    transformOrigin: dropdownOrigin
                 }}
             >
                 {languages.map((language) => (
@@ -103,11 +111,11 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
             <button
                 ref={buttonRef}
                 onClick={handleToggle}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium 
-                           text-text-secondary 
-                           hover:text-text-primary 
-                           hover:bg-surface-raised 
-                           transition-all duration-200"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+                           text-text-secondary
+                           hover:text-text-primary
+                           hover:bg-surface-raised
+                           transition-[color,background-color] duration-200"
                 title="Change language"
             >
                 <Languages className="w-4 h-4" />

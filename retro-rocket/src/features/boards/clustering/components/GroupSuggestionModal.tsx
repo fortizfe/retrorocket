@@ -39,8 +39,6 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
     // Get language context
     const { t } = useLanguage();
 
-    if (!isOpen) return null;
-
     const getCardById = (cardId: string) => cards.find(card => card.id === cardId);
 
     const getSimilarityColor = (similarity: number) => {
@@ -73,7 +71,12 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
     };
 
     return (
+        // AnimatePresence must stay mounted across the isOpen transition — an early
+        // `if (!isOpen) return null` (previously above) removed it along with
+        // everything inside in one render pass, so the exit animation never got a
+        // chance to run (design audit finding, spec 028; same class as DAF-001).
         <AnimatePresence>
+            {isOpen && (
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -282,6 +285,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                     )}
                 </motion.div>
             </motion.div>
+            )}
         </AnimatePresence>
     );
 };

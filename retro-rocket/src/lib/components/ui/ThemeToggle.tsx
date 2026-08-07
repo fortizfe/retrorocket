@@ -44,16 +44,20 @@ const ThemeToggle: React.FC = () => {
         w-10 h-10 rounded-lg
         bg-surface-raised hover:bg-surface
         border border-border-default
-        transition-all duration-200
+        transition-[background-color,box-shadow] duration-200
         focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface
       "
             aria-label={isDark ? t('header.switchToLight') : t('header.switchToDark')}
             title={isDark ? t('header.switchToLight') : t('header.switchToDark')}
         >
+            {/* scale never hits 0 — a fully-collapsed icon reads as appearing from
+                nowhere; opacity carries the rest of the disappearance (design audit
+                finding, spec 028). */}
             <motion.div
                 initial={false}
                 animate={{
-                    scale: isDark ? 0 : 1,
+                    scale: isDark ? 0.5 : 1,
+                    opacity: isDark ? 0 : 1,
                     rotate: isDark ? 180 : 0,
                 }}
                 transition={{
@@ -69,7 +73,8 @@ const ThemeToggle: React.FC = () => {
             <motion.div
                 initial={false}
                 animate={{
-                    scale: isDark ? 1 : 0,
+                    scale: isDark ? 1 : 0.5,
+                    opacity: isDark ? 1 : 0,
                     rotate: isDark ? 0 : -180,
                 }}
                 transition={{
