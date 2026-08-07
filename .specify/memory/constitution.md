@@ -1,23 +1,23 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.0 → 3.1.0
-- Rationale: MINOR bump. Adds a new Core Principle (VIII. Accessibility
-  Compliance — WCAG 2.1 AA) making conformance to WCAG 2.1 Level AA a
-  governing, non-negotiable standard for all user-facing development. This is
-  additive/materially expanded guidance, not a backward-incompatible removal
-  or redefinition, hence MINOR per this constitution's versioning policy. The
-  pre-existing "Accessibility (a11y)" entry under "Technology Stack &
-  Additional Standards" is retained but now cross-references Principle VIII and
-  is strengthened to cite the WCAG 2.1 AA contrast, focus-visibility, and
-  use-of-color requirements. A verification expectation is added to
-  "Development Workflow & Quality Gates".
+- Version change: 3.1.0 → 3.2.0
+- Rationale: MINOR bump. Adds a new Core Principle (IX. Apple-Inspired Design
+  & Motion Tooling) making the use of the installed Apple-design-principles
+  skill package (emil-design-eng, apple-design, animate, review-animations,
+  improve-animations, find-animation-opportunities, prototype,
+  animation-vocabulary, pick-ui-library) mandatory for any frontend task that
+  involves visual design or motion/animation decisions. This is additive
+  guidance, not a backward-incompatible removal or redefinition, hence MINOR
+  per this constitution's versioning policy. "Technology Stack & Additional
+  Standards" gains a cross-referencing bullet, and "Development Workflow &
+  Quality Gates" gains a PR documentation expectation.
 - Modified principles/sections:
-  - Added: "VIII. Accessibility Compliance — WCAG 2.1 AA (NON-NEGOTIABLE)"
-  - "Technology Stack & Additional Standards" → "Accessibility (a11y)" bullet
-    expanded to reference Principle VIII and WCAG 2.1 AA
-  - "Development Workflow & Quality Gates" → added an accessibility
-    verification / merge-blocking gate bullet
-  - Core Principles I–VII unchanged
+  - Added: "IX. Apple-Inspired Design & Motion Tooling (NON-NEGOTIABLE)"
+  - "Technology Stack & Additional Standards" → added "UI & Motion Design
+    Tooling" bullet cross-referencing Principle IX
+  - "Development Workflow & Quality Gates" → added a design/animation-skill
+    documentation bullet
+  - Core Principles I–VIII unchanged
 - Added sections: none (new principle added within existing Core Principles)
 - Removed sections: none
 - Templates requiring updates:
@@ -25,11 +25,9 @@ Sync Impact Report
     generic/dynamic ("Gates determined based on constitution file"); no
     hardcoded principle list, no changes needed
   - ✅ .specify/templates/tasks-template.md — references the constitution
-    generically (TDD, NON-NEGOTIABLE); no hardcoded principle enumeration, no
-    changes needed
-  - ✅ .specify/templates/spec-template.md — generic; features add
-    accessibility requirements as needed (see feature 009-wcag-theme-
-    compliance), no forced section added, no changes needed
+    generically; no hardcoded principle enumeration, no changes needed
+  - ✅ .specify/templates/spec-template.md — generic; no forced section
+    added, no changes needed
   - ✅ .specify/templates/checklist-template.md — no conflicts found, no
     changes needed
 - Follow-up TODOs: none
@@ -144,6 +142,52 @@ the keyboard. A fixed, verifiable accessibility bar (WCAG 2.1 AA) makes
 inclusion a contract rather than a best-effort afterthought, and prevents
 inaccessible surfaces from reaching `main`.
 
+### IX. Apple-Inspired Design & Motion Tooling (NON-NEGOTIABLE)
+
+Any task that designs, builds, reviews, or audits a user-facing frontend
+surface — new UI, layout, visual polish, component behavior, or
+animation/motion — MUST use the installed Apple-design-principles skill
+package instead of unstructured design intuition. The applicable skill MUST
+be selected by task shape:
+
+- Implementing new motion (transitions, gestures, loading states,
+  micro-interactions) MUST use the `animate` skill to make and justify each
+  animation decision (whether to animate at all, purpose, tool, properties,
+  curve/duration, interruption behavior, exit).
+- General UI/visual design work (component structure, visual hierarchy,
+  spacing, typography, materials/depth, gesture-driven interactions) MUST
+  consult the `apple-design` and `emil-design-eng` skills for Apple-derived
+  interface principles and polish guidance.
+- Reviewing or critiquing existing animations MUST use the
+  `review-animations` skill.
+- Auditing animation quality across the codebase (not a single change) MUST
+  use the `improve-animations` skill to produce a prioritized, self-contained
+  plan.
+- Deciding whether an area of the UI would benefit from motion at all MUST
+  use the `find-animation-opportunities` skill before motion is added
+  speculatively.
+- Exploring multiple genuinely different directions for a UI piece MUST use
+  the `prototype` skill to build and compare live variants rather than
+  committing to a single first draft.
+- Naming or communicating a desired motion effect precisely (in a PR
+  description, to a teammate, or to another AI) MUST use the
+  `animation-vocabulary` skill.
+- Choosing a UI/component library for a new interface need MUST use the
+  `pick-ui-library` skill to select from the project's trusted, in-use
+  libraries rather than introducing an unvetted one.
+
+This principle does not replace Principle VIII: any design or animation
+produced through these skills MUST still independently satisfy WCAG 2.1 AA
+conformance, including honoring `prefers-reduced-motion`.
+
+**Rationale**: RetroRocket already depends on framer-motion inside a
+deliberate, real-time collaborative UI; leaving animation and visual-design
+choices to ad hoc judgment produces inconsistent motion and polish across
+features. Standardizing on the installed Apple-design-principles skill
+package gives every design or animation decision a repeatable process and a
+shared vocabulary, and keeps output consistent with the interaction-quality
+bar already implied by Principle VIII.
+
 ## Technology Stack & Additional Standards
 
 - **Strict Type Safety**: TypeScript `strict` mode (already enabled) MUST
@@ -160,6 +204,12 @@ inaccessible surfaces from reaching `main`.
   hardcoded strings in components are prohibited. Every new feature that
   introduces user-visible text MUST add the corresponding keys to all
   supported locales.
+- **UI & Motion Design Tooling**: Frontend visual design and animation work
+  is governed by Principle IX. The `emil-design-eng`/`apple-design` skill
+  package (including `animate`, `review-animations`, `improve-animations`,
+  `find-animation-opportunities`, `prototype`, `animation-vocabulary`, and
+  `pick-ui-library`) MUST be used for the corresponding task shape instead of
+  ad hoc design decisions.
 - **Accessibility (a11y)**: Accessibility is governed by Principle VIII
   (WCAG 2.1 AA). Interactive components (drag & drop, voting, modals) MUST be
   operable via keyboard and MUST expose correct ARIA roles, and all
@@ -197,6 +247,9 @@ inaccessible surfaces from reaching `main`.
   MUST run as a required merge-blocking check and MUST fail the build on any
   WCAG 2.1 AA violation; until such automation exists, conformance MUST be
   verified in human code review.
+- Any pull request that introduces or modifies frontend visual design or
+  animation MUST note, in the PR description, which Apple-design skill(s)
+  from Principle IX were used to make the design/motion decisions.
 - Every PR MUST still demonstrate TDD compliance (tests precede
   implementation); this is verified through human code review in addition
   to the automated pre-merge CI gate.
@@ -226,4 +279,4 @@ incompatible governance/principle removals or redefinitions, MINOR for new
 principles or materially expanded guidance, PATCH for clarifications and
 non-semantic refinements.
 
-**Version**: 3.1.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-07-22
+**Version**: 3.2.0 | **Ratified**: 2026-07-21 | **Last Amended**: 2026-08-07
