@@ -6,6 +6,18 @@ import { Card } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 import { Participant } from '@/features/boards/types/participant';
 
+// Local override (not the global passthrough in src/test/setup.ts) so this file can
+// assert the card list is actually wrapped in AnimatePresence — required for the
+// deletion exit animation to run at all, since AnimatePresence must directly parent
+// the point where a card is removed from this list (design audit finding, spec 028:
+// it was previously nested one level too deep, inside DraggableCard itself, where it
+// never got to see a real unmount).
+vi.mock('framer-motion', () => ({
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+        <div data-testid="card-list-animate-presence">{children}</div>
+    ),
+}));
+
 // Mock @dnd-kit libraries
 vi.mock('@dnd-kit/core', () => ({
     DndContext: ({ children, onDragStart, onDragEnd, onDragOver }: any) => (
@@ -478,6 +490,17 @@ describe('DragDropColumn', () => {
             // Just check that the first and last cards are rendered
             expect(screen.getByTestId('sortable-card-card-0')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-card-card-99')).toBeInTheDocument();
+        });
+    });
+
+    describe('Exit animation boundary (design audit finding, spec 028)', () => {
+        it('wraps the rendered card list in AnimatePresence, so a removed card can exit-animate instead of vanishing instantly', () => {
+            render(<DragDropColumn {...defaultProps} />);
+
+            const animatePresence = screen.getByTestId('card-list-animate-presence');
+            expect(animatePresence).toBeInTheDocument();
+            expect(animatePresence).toContainElement(screen.getByTestId('sortable-card-card-1'));
+            expect(animatePresence).toContainElement(screen.getByTestId('sortable-card-card-3'));
         });
     });
 

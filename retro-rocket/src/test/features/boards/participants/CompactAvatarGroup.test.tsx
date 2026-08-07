@@ -256,7 +256,9 @@ describe('CompactAvatarGroup', () => {
 
             const button = screen.getByRole('button');
             expect(button).toBeInTheDocument();
-            expect(button).toHaveClass('transition-all', 'duration-200', 'hover:bg-surface-raised', 'rounded-lg', 'p-1', '-m-1');
+            // transition-[background-color], not transition-all — narrowed to the one
+            // property that actually changes on hover (design audit finding, spec 028).
+            expect(button).toHaveClass('transition-[background-color]', 'duration-200', 'hover:bg-surface-raised', 'rounded-lg', 'p-1', '-m-1');
         });
 
         it('should call onShowAll when clicked', async () => {

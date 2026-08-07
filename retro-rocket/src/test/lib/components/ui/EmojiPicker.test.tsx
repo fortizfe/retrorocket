@@ -8,7 +8,13 @@ vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     },
-    AnimatePresence: ({ children }: any) => children,
+    // A detectable marker (not a bare passthrough) so tests can assert AnimatePresence
+    // stays mounted (via the portal) across the isOpen transition — required for the
+    // picker to exit-animate instead of vanishing instantly (design audit finding,
+    // spec 028: same AnimatePresence-boundary bug class as DAF-001; `{isOpen &&
+    // createPortal(<AnimatePresence>...)}` previously removed AnimatePresence itself
+    // along with everything inside it in one render pass).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
     createPortal: vi.fn(),
 }));
 
@@ -119,6 +125,35 @@ describe('EmojiPicker Component', () => {
             render(<EmojiPicker onEmojiSelect={mockOnEmojiSelect} />);
 
             expect(screen.queryByText('Emociones')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('AnimatePresence boundary', () => {
+        it('keeps AnimatePresence mounted via the portal even while closed, so exit animations can run', () => {
+            // createPortal must be called unconditionally (isOpen gates only the
+            // content inside AnimatePresence) or the picker vanishes instantly
+            // instead of exit-animating (design audit finding, spec 028).
+            render(<EmojiPicker onEmojiSelect={mockOnEmojiSelect} />);
+
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+        });
+
+        it('keeps a single AnimatePresence boundary mounted across open/close', async () => {
+            const user = userEvent.setup();
+            render(<EmojiPicker onEmojiSelect={mockOnEmojiSelect} />);
+
+            const button = screen.getByRole('button');
+            await user.click(button);
+            await waitFor(() => {
+                expect(screen.getByText('Emociones')).toBeInTheDocument();
+            });
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+
+            await user.click(button);
+            await waitFor(() => {
+                expect(screen.queryByText('Emociones')).not.toBeInTheDocument();
+            });
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
         });
     });
 

@@ -13,7 +13,11 @@ vi.mock('framer-motion', () => ({
         button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
         section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    // A detectable marker (not a bare fragment passthrough) so tests can count how many
+    // distinct AnimatePresence boundaries exist — used to assert the groups list gets
+    // its own, in addition to the pre-existing new-card-form and empty-state ones
+    // (design audit finding, spec 028: same AnimatePresence-boundary bug class as DAF-001).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
 }));
 
 // Mock lucide-react icons
@@ -440,6 +444,20 @@ describe('GroupableColumn', () => {
 
             const groups = screen.getAllByTestId('group-card');
             expect(groups).toHaveLength(2);
+        });
+
+        it('wraps the groups list in its own AnimatePresence, so a disbanded group can exit-animate instead of vanishing instantly (design audit finding, spec 028)', () => {
+            const multipleGroups: CardGroup[] = [
+                { ...mockGroups[0], title: 'Group A', order: 2 },
+                { ...mockGroups[0], id: 'group-2', title: 'Group B', order: 1 },
+            ];
+
+            render(<GroupableColumn {...defaultProps} groups={multipleGroups} />);
+
+            // Two AnimatePresence boundaries already exist unconditionally (the
+            // new-card-form and empty-state ones) regardless of groups content — a
+            // correct fix adds a third, dedicated one directly around the groups list.
+            expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(3);
         });
     });
 

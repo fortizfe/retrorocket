@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { createElement } from 'react';
 
 // Node's own experimental `localStorage`/`sessionStorage` globals (unavailable without
 // --localstorage-file) already exist on globalThis before Vitest's jsdom environment
@@ -139,6 +140,12 @@ vi.mock('framer-motion', () => ({
         li: 'li',
     },
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+    // Renders a real DOM marker (rather than a no-op passthrough) so tests can
+    // assert the app root is actually wrapped in MotionConfig and inspect the
+    // `reducedMotion` prop it was given (see src/App.tsx, spec 028). Uses
+    // createElement, not JSX, because this file has a .ts (not .tsx) extension.
+    MotionConfig: ({ children, reducedMotion }: { children: React.ReactNode; reducedMotion?: string }) =>
+        createElement('div', { 'data-testid': 'motion-config', 'data-reduced-motion': reducedMotion }, children),
 }));
 
 // Mock react-router-dom

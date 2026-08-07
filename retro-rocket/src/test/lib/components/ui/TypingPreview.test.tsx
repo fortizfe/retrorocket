@@ -3,13 +3,17 @@ import { render, screen } from '@testing-library/react';
 import TypingPreview from '@/lib/components/ui/TypingPreview';
 import { TypingIndicator } from '@/features/boards/types/typing';
 
-// Mock framer-motion — its animation behavior is irrelevant to the accessible live
-// region under test here (feature 026, FR-009).
+// Mock framer-motion. AnimatePresence renders a detectable marker (not a bare
+// passthrough) so tests can assert it stays mounted across the typingUsers ->
+// empty transition — required for the typing card to exit-animate instead of
+// vanishing instantly (design audit finding, spec 028: same AnimatePresence-
+// boundary bug class as DAF-001, here caused by the early `return liveRegion`
+// above the AnimatePresence tree).
 vi.mock('framer-motion', () => ({
     motion: {
         div: vi.fn(({ children, ...props }) => <div {...props}>{children}</div>),
     },
-    AnimatePresence: vi.fn(({ children }) => children),
+    AnimatePresence: vi.fn(({ children }) => <div data-testid="animate-presence">{children}</div>),
 }));
 
 function indicator(userId: string, username: string): TypingIndicator {
@@ -54,5 +58,24 @@ describe('TypingPreview accessible live region', () => {
 
         expect(liveRegionAfterStop).toBe(liveRegionWhileTyping);
         expect(liveRegionAfterStop).toHaveTextContent('');
+    });
+});
+
+describe('TypingPreview AnimatePresence boundary', () => {
+    it('keeps AnimatePresence mounted even with nobody typing, so the card can exit-animate', () => {
+        // Previously the component early-returned before ever reaching
+        // AnimatePresence when typingUsers was empty, so it was never mounted
+        // at all — exit animations were dead code.
+        render(<TypingPreview typingUsers={[]} />);
+
+        expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+    });
+
+    it('keeps a single AnimatePresence boundary mounted across a typing-to-empty transition', () => {
+        const { rerender } = render(<TypingPreview typingUsers={[indicator('u1', 'Ana')]} />);
+        expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+
+        rerender(<TypingPreview typingUsers={[]} />);
+        expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
     });
 });

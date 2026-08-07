@@ -76,10 +76,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
         <div className="w-96 max-w-[90vw] bg-surface-raised border border-border-default rounded-xl shadow-xl overflow-hidden">
             {/* Header con tabs */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-border-default">
-                <div className="flex items-center justify-between p-4 pb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-hidden />
-                    </div>
+                <div className="flex items-center justify-end p-4 pb-2">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onClose}
@@ -117,8 +114,8 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                                     {/* Badge sobre el icono */}
                                     {tab.badge && (
                                         <motion.span
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
+                                            initial={{ scale: 0.9, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
                                             className={`
                                                 absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center
                                                 ${isActive

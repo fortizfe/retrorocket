@@ -38,14 +38,16 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
         </span>
     );
 
-    if (typingUsers.length === 0) {
-        return liveRegion;
-    }
-
+    // AnimatePresence must stay mounted across the typingUsers -> empty transition —
+    // an early `if (typingUsers.length === 0) return liveRegion` (previously above)
+    // skipped this whole tree in one step, so the card's exit animation was dead code
+    // (design audit finding, spec 028; same class as DAF-001). typingUsers.length
+    // now gates only the content inside AnimatePresence.
     return (
         <>
             {liveRegion}
             <AnimatePresence>
+                {typingUsers.length > 0 && (
                 <motion.div
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -59,7 +61,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                 className={`
           bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-950/50 dark:to-blue-950/50
           border border-info-fg/40
-          rounded-xl p-3 
+          rounded-xl p-3
           shadow-soft shadow-primary-100/50 dark:shadow-primary-900/20
           backdrop-blur-sm
           ${className}
@@ -75,11 +77,11 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: index * 0.1 }}
                                 className="
-                  relative inline-flex items-center justify-center 
-                  w-6 h-6 
+                  relative inline-flex items-center justify-center
+                  w-6 h-6
                   bg-gradient-to-br from-primary-400 to-blue-500
-                  text-white text-xs font-medium 
-                  rounded-full 
+                  text-white text-xs font-medium
+                  rounded-full
                   ring-2 ring-surface
                   shadow-sm
                 "
@@ -94,11 +96,11 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.3 }}
                                 className="
-                  relative inline-flex items-center justify-center 
-                  w-6 h-6 
+                  relative inline-flex items-center justify-center
+                  w-6 h-6
                   bg-gradient-to-br from-slate-400 to-slate-500
-                  text-white text-xs font-medium 
-                  rounded-full 
+                  text-white text-xs font-medium
+                  rounded-full
                   ring-2 ring-surface
                   shadow-sm
                 "
@@ -118,6 +120,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                     </div>
                 </div>
                 </motion.div>
+                )}
             </AnimatePresence>
         </>
     );

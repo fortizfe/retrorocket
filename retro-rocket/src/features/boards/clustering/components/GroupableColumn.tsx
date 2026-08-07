@@ -335,32 +335,36 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     className="mb-3"
                 />
 
-                {/* Groups */}
-                {columnGroups.map(group => {
-                    const groupCards = cards.filter(card =>
-                        card.id === group.headCardId || group.memberCardIds.includes(card.id)
-                    );
+                {/* Groups — AnimatePresence must directly parent this list for a disbanded
+                    group to exit-animate (design audit finding, spec 028; same class as
+                    DAF-001). */}
+                <AnimatePresence>
+                    {columnGroups.map(group => {
+                        const groupCards = cards.filter(card =>
+                            card.id === group.headCardId || group.memberCardIds.includes(card.id)
+                        );
 
-                    return (
-                        <div key={group.id} className="mb-3">
-                            <GroupCard
-                                group={group}
-                                cards={groupCards}
-                                onToggleCollapse={onGroupToggleCollapse}
-                                onDisbandGroup={onGroupDisband}
-                                onRemoveCardFromGroup={onCardRemoveFromGroup}
-                                onCardUpdate={onCardUpdate}
-                                onCardDelete={onCardDelete}
-                                onCardVote={onCardVote}
-                                onCardLike={onCardLike}
-                                onCardReaction={onCardReaction}
-                                onCardReactionRemove={onCardReactionRemove}
-                                currentUserId={currentUser}
-                                isReadOnly={false}
-                            />
-                        </div>
-                    );
-                })}
+                        return (
+                            <div key={group.id} className="mb-3">
+                                <GroupCard
+                                    group={group}
+                                    cards={groupCards}
+                                    onToggleCollapse={onGroupToggleCollapse}
+                                    onDisbandGroup={onGroupDisband}
+                                    onRemoveCardFromGroup={onCardRemoveFromGroup}
+                                    onCardUpdate={onCardUpdate}
+                                    onCardDelete={onCardDelete}
+                                    onCardVote={onCardVote}
+                                    onCardLike={onCardLike}
+                                    onCardReaction={onCardReaction}
+                                    onCardReactionRemove={onCardReactionRemove}
+                                    currentUserId={currentUser}
+                                    isReadOnly={false}
+                                />
+                            </div>
+                        );
+                    })}
+                </AnimatePresence>
 
                 {/* Ungrouped Cards with New Grouping */}
                 <GroupedCardList

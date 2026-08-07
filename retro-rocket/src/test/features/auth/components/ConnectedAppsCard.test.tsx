@@ -8,6 +8,17 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'es' } }),
 }));
 
+// A detectable marker (not the global setup.ts passthrough) so this file can assert
+// the revocable app list is wrapped in AnimatePresence — required for a revoked app
+// to exit-animate instead of vanishing instantly (design audit finding, spec 028).
+vi.mock('framer-motion', () => ({
+    motion: {
+        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    },
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
+}));
+
 vi.mock('@/features/auth/hooks/useConnectedApps', () => ({
     useConnectedApps: vi.fn(),
 }));
@@ -82,5 +93,20 @@ describe('ConnectedAppsCard', () => {
 
         expect(screen.getByText('mcpConnector.connectedApps.lastUsedOn')).toBeInTheDocument();
         expect(screen.queryByText('mcpConnector.connectedApps.neverUsedYet')).not.toBeInTheDocument();
+    });
+
+    it('wraps the connected-app list in AnimatePresence, so a revoked app can exit-animate instead of vanishing instantly (design audit finding, spec 028)', () => {
+        mockUseConnectedApps.mockReturnValue({
+            connectedApps: [app({ id: 'c1' }), app({ id: 'c2' })],
+            isLoading: false,
+            error: null,
+            revokingIds: [],
+            refresh: vi.fn(),
+            revoke: vi.fn(),
+        });
+
+        render(<ConnectedAppsCard />);
+
+        expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
     });
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { GripVertical } from 'lucide-react';
 import Card from '@/lib/components/ui/Card';
 import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
@@ -178,22 +178,24 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     }, [sentimentResult?.sentiment, sentimentResult?.confidence, card.column, shouldShowBadge, isFacilitator, overrideSentiment]);
 
     return (
-        <AnimatePresence>
-            <motion.div
-                layout
-                data-testid="draggable-card"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.18 }}
-                className={`group relative min-w-0 transition-all duration-200 ${isDragging ? 'rotate-2 shadow-xl border-info-fg' : 'mb-2'} ${cardStyling}`}
+        // AnimatePresence lives at the list boundary (DragDropColumn.tsx), not here —
+        // wrapping a single always-present child does nothing, and misleadingly implies
+        // this component owns the exit-animation boundary when it doesn't (spec 028 audit).
+        <motion.div
+            layout
+            data-testid="draggable-card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.18 }}
+            className={`group relative min-w-0 transition-[transform,box-shadow,border-color] duration-200 ${isDragging ? 'rotate-2 shadow-xl border-info-fg' : 'mb-2'} ${cardStyling}`}
+        >
+            <Card
+                variant="elevated"
+                hover={!isEditing && !isDragging}
+                customBackground={true}
+                className={`p-2 group relative transition-[box-shadow,border-color] duration-200 ${isDragging ? 'shadow-lg border-info-fg' : ''} ${cardStyling}`}
             >
-                <Card
-                    variant="elevated"
-                    hover={!isEditing && !isDragging}
-                    customBackground={true}
-                    className={`p-2 group relative transition-all duration-200 ${isDragging ? 'shadow-lg border-info-fg' : ''} ${cardStyling}`}
-                >
                     {/* Drag handle y Color picker compactos. The drag activator is a
                         dedicated, keyboard-focusable handle (not the whole card) — see
                         DragHandleProps. `focus-within` reveals it for keyboard users. */}
@@ -300,9 +302,8 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                             </div>
                         ) : undefined}
                     />
-                </Card>
-            </motion.div>
-        </AnimatePresence>
+            </Card>
+        </motion.div>
     );
 };
 

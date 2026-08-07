@@ -72,6 +72,13 @@ vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     },
+    // A detectable marker (not a bare passthrough) so tests can assert AnimatePresence
+    // stays mounted across the isOpen transition — required for the modal to
+    // exit-animate instead of vanishing instantly (design audit finding, spec 028:
+    // same AnimatePresence-boundary bug class as DAF-001; `if (!isOpen) return null`
+    // previously sat before any AnimatePresence existed in this file at all, so the
+    // declared `exit` props had no mechanism to ever fire).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
 }));
 
 describe('JoinRetrospectiveModal', () => {
@@ -99,6 +106,20 @@ describe('JoinRetrospectiveModal', () => {
         it('should not render when isOpen is false', () => {
             renderModal(false);
             expect(screen.queryByText('Join Retrospective')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Exit animation boundary (design audit finding, spec 028)', () => {
+        it('keeps AnimatePresence mounted even when closed, so the modal can exit-animate instead of being removed via an early return', () => {
+            const { rerender } = renderModal(false);
+
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+            expect(screen.queryByText('Join Retrospective')).not.toBeInTheDocument();
+
+            rerender(<JoinRetrospectiveModal isOpen={true} onClose={mockOnClose} />);
+
+            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+            expect(screen.getByText('Join Retrospective')).toBeInTheDocument();
         });
     });
 

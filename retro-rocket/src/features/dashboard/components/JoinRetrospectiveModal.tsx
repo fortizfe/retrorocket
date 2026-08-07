@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Users, X, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import Button from '@/lib/components/ui/Button';
@@ -48,9 +48,14 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
+        // AnimatePresence must stay mounted across the isOpen transition — an early
+        // `if (!isOpen) return null` (previously above) removed the whole tree before
+        // any AnimatePresence ever existed to intercept it, so the exit animations
+        // below were dead code (design audit finding, spec 028; same class as
+        // DAF-001).
+        <AnimatePresence>
+        {isOpen && (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -159,6 +164,8 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                 </div>
             </motion.div>
         </motion.div>
+        )}
+        </AnimatePresence>
     );
 };
 

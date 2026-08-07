@@ -147,7 +147,7 @@ export const borderRadius = {
  */
 export const animations = {
     // Standard transitions
-    default: 'transition-all duration-200 ease-out',
+    default: 'transition-[background-color,border-color,box-shadow,transform,color] duration-200 ease-out',
     fast: 'transition-all duration-100 ease-out',
     slow: 'transition-all duration-300 ease-out',
 
@@ -193,7 +193,7 @@ export const interactiveStates = {
     buttonDisabled: 'opacity-50 cursor-not-allowed',
 
     // Card states  
-    cardHover: 'hover:shadow-md hover:scale-[1.01] transition-all duration-200',
+    cardHover: 'hover:shadow-md hover:scale-[1.01] transition-[box-shadow,transform] duration-200',
     cardActive: 'ring-2 ring-blue-500 ring-offset-2',
 
     // Input states

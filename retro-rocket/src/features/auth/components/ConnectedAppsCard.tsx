@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Bot, ShieldOff, Monitor, Smartphone, Globe, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -69,6 +69,9 @@ const ConnectedAppsCard: React.FC<ConnectedAppsCardProps> = ({ className = '' })
                 <p className="text-sm text-text-muted">{t('mcpConnector.connectedApps.empty')}</p>
             ) : (
                 <div className="space-y-3">
+                    {/* AnimatePresence must directly parent this list for a revoked app to
+                        exit-animate (design audit finding, spec 028; same class as DAF-001). */}
+                    <AnimatePresence>
                     {connectedApps.map((app) => {
                         const isRevoking = revokingIds.includes(app.id);
                         const OriginIcon = ORIGIN_ICONS[app.origin];
@@ -77,6 +80,7 @@ const ConnectedAppsCard: React.FC<ConnectedAppsCardProps> = ({ className = '' })
                                 key={app.id}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
                                 className="flex items-center justify-between p-3 bg-surface/50 rounded-lg border border-border-default"
                             >
                                 <div className="flex items-center gap-3">
@@ -113,6 +117,7 @@ const ConnectedAppsCard: React.FC<ConnectedAppsCardProps> = ({ className = '' })
                             </motion.div>
                         );
                     })}
+                    </AnimatePresence>
                 </div>
             )}
         </Card>

@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n/config';
 import DashboardPage from '@/pages/Dashboard';
+import * as backendBoardsClient from '@/features/dashboard/services/backendBoardsClient';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -11,7 +12,11 @@ vi.mock('framer-motion', () => ({
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
         button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
     },
-    AnimatePresence: ({ children }: any) => children,
+    // A detectable marker (not a bare passthrough) so tests can assert the board
+    // list is actually wrapped in AnimatePresence — required for a removed board to
+    // exit-animate instead of vanishing instantly (design audit finding, spec 028:
+    // same AnimatePresence-boundary bug class as DAF-001).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
 }));
 
 // Mock useNavigate
@@ -252,6 +257,44 @@ describe('DashboardPage', () => {
 
         await waitFor(() => {
             expect(screen.getByText('dashboard.createFirst_button')).toBeInTheDocument();
+        });
+    });
+
+    describe('Exit animation boundary (design audit finding, spec 028)', () => {
+        it('wraps the board grid in AnimatePresence, so a removed board can exit-animate instead of vanishing instantly', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce([
+                {
+                    id: 'board-1',
+                    title: 'First board',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    participantCount: 1,
+                    isActive: true,
+                    createdBy: 'test-user-id',
+                    isCreator: true,
+                },
+                {
+                    id: 'board-2',
+                    title: 'Second board',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    participantCount: 2,
+                    isActive: true,
+                    createdBy: 'test-user-id',
+                    isCreator: true,
+                },
+            ] as any);
+
+            renderWithProviders(<DashboardPage />);
+
+            const boardCards = await screen.findAllByTestId('board-card');
+            expect(boardCards).toHaveLength(2);
+
+            const animatePresenceInstances = screen.getAllByTestId('animate-presence');
+            const gridPresence = animatePresenceInstances.find((el) =>
+                el.contains(boardCards[0]) && el.contains(boardCards[1])
+            );
+            expect(gridPresence).toBeTruthy();
         });
     });
 });

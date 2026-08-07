@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -310,7 +310,10 @@ const DashboardPage: React.FC = () => {
                             </motion.div>
                         ) : (
                             <>
-                                {/* Grid View */}
+                                {/* Grid View — AnimatePresence must directly parent this list for a
+                                    removed board to exit-animate (design audit finding, spec 028;
+                                    same class as DAF-001). Stagger capped at 50ms/item, was
+                                    uncapped 100ms/item (up to 900ms across a 10-item page). */}
                                 {viewMode === 'grid' ? (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
@@ -318,53 +321,59 @@ const DashboardPage: React.FC = () => {
                                         transition={{ delay: 0.1 }}
                                         className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
                                     >
-                                        {paginatedBoards.map((board, index) => (
-                                            <motion.div
-                                                key={board.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.1 }}
-                                            >
-                                                <BoardCard
-                                                    board={{
-                                                        ...board,
-                                                        createdBy: board.createdBy ?? user?.uid ?? ''
-                                                    }}
-                                                    currentUserId={user?.uid ?? ''}
-                                                    onBoardDeleted={handleBoardDeleted}
-                                                    onDelete={handleHardDelete}
-                                                    onBoardUpdated={handleBoardUpdated}
-                                                />
-                                            </motion.div>
-                                        ))}
+                                        <AnimatePresence>
+                                            {paginatedBoards.map((board, index) => (
+                                                <motion.div
+                                                    key={board.id}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -20 }}
+                                                    transition={{ delay: Math.min(index * 0.05, 0.3) }}
+                                                >
+                                                    <BoardCard
+                                                        board={{
+                                                            ...board,
+                                                            createdBy: board.createdBy ?? user?.uid ?? ''
+                                                        }}
+                                                        currentUserId={user?.uid ?? ''}
+                                                        onBoardDeleted={handleBoardDeleted}
+                                                        onDelete={handleHardDelete}
+                                                        onBoardUpdated={handleBoardUpdated}
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
                                     </motion.div>
                                 ) : (
-                                    /* List View */
+                                    /* List View — same AnimatePresence fix as the grid above. */
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.1 }}
                                         className="space-y-4"
                                     >
-                                        {paginatedBoards.map((board, index) => (
-                                            <motion.div
-                                                key={board.id}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.05 }}
-                                            >
-                                                <BoardListItem
-                                                    board={{
-                                                        ...board,
-                                                        createdBy: board.createdBy ?? user?.uid ?? ''
-                                                    }}
-                                                    currentUserId={user?.uid ?? ''}
-                                                    onBoardDeleted={handleBoardDeleted}
-                                                    onDelete={handleHardDelete}
-                                                    onBoardUpdated={handleBoardUpdated}
-                                                />
-                                            </motion.div>
-                                        ))}
+                                        <AnimatePresence>
+                                            {paginatedBoards.map((board, index) => (
+                                                <motion.div
+                                                    key={board.id}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    exit={{ opacity: 0, x: 20 }}
+                                                    transition={{ delay: index * 0.05 }}
+                                                >
+                                                    <BoardListItem
+                                                        board={{
+                                                            ...board,
+                                                            createdBy: board.createdBy ?? user?.uid ?? ''
+                                                        }}
+                                                        currentUserId={user?.uid ?? ''}
+                                                        onBoardDeleted={handleBoardDeleted}
+                                                        onDelete={handleHardDelete}
+                                                        onBoardUpdated={handleBoardUpdated}
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
                                     </motion.div>
                                 )}
 

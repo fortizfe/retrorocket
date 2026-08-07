@@ -8,7 +8,11 @@ vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    // A detectable marker (not a bare fragment passthrough) so tests can assert the
+    // member-card list is actually wrapped in AnimatePresence — required for a removed
+    // member card to exit-animate instead of vanishing instantly (design audit finding,
+    // spec 028: same AnimatePresence-boundary bug class as DAF-001).
+    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
 }));
 
 vi.mock('@/lib/hooks/useLanguage', () => ({
@@ -440,6 +444,23 @@ describe('GroupCard', () => {
             render(<GroupCard {...defaultProps} group={groupWithoutLikes} />);
 
             expect(screen.queryByText('0 likes')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Exit animation boundary (design audit finding, spec 028)', () => {
+        it('wraps the member-card list in its own AnimatePresence (distinct from the collapse/expand one), so a removed member card can exit-animate instead of vanishing instantly', () => {
+            render(<GroupCard {...defaultProps} />);
+
+            // One AnimatePresence already exists for collapse/expand (group-content
+            // toggle). A correct fix adds a second, dedicated one directly around the
+            // member-card list — its absence is exactly the bug: without it, both
+            // member cards are still structurally nested inside the outer
+            // AnimatePresence (so a weaker "is some AnimatePresence an ancestor?"
+            // check would pass even with the bug present), but the outer one's
+            // children array doesn't change shape when a single member card is
+            // removed from the interior list — only a list-scoped AnimatePresence
+            // sees that removal directly.
+            expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(2);
         });
     });
 

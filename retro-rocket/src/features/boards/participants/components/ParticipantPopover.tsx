@@ -139,6 +139,22 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
         }
     };
 
+    // The popover scales from the side nearest its trigger, not its center (design
+    // audit finding, spec 028) — opposite of the direction it visually appears from.
+    const getOriginClass = () => {
+        switch (popoverPosition) {
+            case 'top':
+                return 'origin-bottom';
+            case 'left':
+                return 'origin-right';
+            case 'right':
+                return 'origin-left';
+            case 'bottom':
+            default:
+                return 'origin-top';
+        }
+    };
+
     const getArrowClasses = () => {
         switch (popoverPosition) {
             case 'top':
@@ -160,59 +176,68 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
                 {children}
             </div>
 
-            {/* Popover */}
-            {isOpen && createPortal(
+            {/* Popover — AnimatePresence must stay mounted across the isOpen transition;
+                `isOpen &&` previously gated the whole portal (including AnimatePresence
+                itself), removing it in one render pass before the exit animation could
+                run (design audit finding, spec 028; same class as DAF-001). createPortal
+                is now called unconditionally, and `isOpen` gates only the inner content.
+                transform-origin is derived from popoverPosition — the popover already
+                computes its anchor side for positioning and the arrow; the scale
+                animation now anchors there too instead of the default center. */}
+            {createPortal(
                 <AnimatePresence>
-                    <div
-                        className="fixed z-[99999]"
-                        style={triggerRect ? getPositionStyles() : {}}
-                    >
-                        {/* Arrow */}
+                    {isOpen && (
                         <div
-                            className={`absolute w-0 h-0 border-4 ${getArrowClasses()}`}
-                        />
-
-                        {/* Popover Content */}
-                        <motion.div
-                            ref={popoverRef}
-                            initial={{ opacity: 0, scale: 0.95, y: popoverPosition === 'top' ? 10 : -10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: popoverPosition === 'top' ? 10 : -10 }}
-                            transition={{ duration: 0.15 }}
-                            className="w-80 max-w-[90vw] bg-surface-raised border border-border-default rounded-lg shadow-lg"
+                            className="fixed z-[99999]"
+                            style={triggerRect ? getPositionStyles() : {}}
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-border-default">
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-text-secondary" />
-                                    <h3 className="font-semibold text-text-primary">
-                                        {t('participants.title')}
-                                    </h3>
-                                    <span className="text-xs font-medium text-text-secondary bg-surface px-2 py-1 rounded-md">
-                                        {participants.length}
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={onClose}
-                                    className="p-1 rounded-lg hover:bg-surface-raised text-text-muted hover:text-text-secondary transition-colors"
-                                    title={t('participants.close')}
-                                    aria-label={t('participants.closeList')}
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {/* Arrow */}
+                            <div
+                                className={`absolute w-0 h-0 border-4 ${getArrowClasses()}`}
+                            />
 
-                            {/* Content */}
-                            <div className="p-4">
-                                <ParticipantList
-                                    participants={participants}
-                                    maxHeight="max-h-60"
-                                    preventBackgroundScroll={true}
-                                    showCount={false}
-                                />
-                            </div>
-                        </motion.div>
-                    </div>
+                            {/* Popover Content */}
+                            <motion.div
+                                ref={popoverRef}
+                                initial={{ opacity: 0, scale: 0.95, y: popoverPosition === 'top' ? 10 : -10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: popoverPosition === 'top' ? 10 : -10 }}
+                                transition={{ duration: 0.15 }}
+                                className={`w-80 max-w-[90vw] bg-surface-raised border border-border-default rounded-lg shadow-lg ${getOriginClass()}`}
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-4 border-b border-border-default">
+                                    <div className="flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-text-secondary" />
+                                        <h3 className="font-semibold text-text-primary">
+                                            {t('participants.title')}
+                                        </h3>
+                                        <span className="text-xs font-medium text-text-secondary bg-surface px-2 py-1 rounded-md">
+                                            {participants.length}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={onClose}
+                                        className="p-1 rounded-lg hover:bg-surface-raised text-text-muted hover:text-text-secondary transition-colors"
+                                        title={t('participants.close')}
+                                        aria-label={t('participants.closeList')}
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-4">
+                                    <ParticipantList
+                                        participants={participants}
+                                        maxHeight="max-h-60"
+                                        preventBackgroundScroll={true}
+                                        showCount={false}
+                                    />
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
                 </AnimatePresence>,
                 document.body
             )}

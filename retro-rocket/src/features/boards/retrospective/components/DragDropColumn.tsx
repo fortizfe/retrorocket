@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatePresence } from 'framer-motion';
 import {
     DndContext,
     DragEndEvent,
@@ -153,28 +154,35 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
             >
                 <div className="space-y-3">
                     {children}
-                    {React.useMemo(() => sortedCards.map((card) => {
-                        return (
-                            <SortableCard
-                                key={card.id}
-                                card={card}
-                                onUpdate={onCardUpdate}
-                                onDelete={onCardDelete}
-                                onVote={onCardVote}
-                                onLike={onCardLike}
-                                onReaction={onCardReaction}
-                                onReactionRemove={onCardReactionRemove}
-                                currentUser={currentUser}
-                                canEdit={canEdit}
-                                isGroupingMode={isGroupingMode}
-                                isSelected={selectedCards.has(card.id)}
-                                onSelect={onCardSelect}
-                                participants={participants}
-                                canConvertToAction={canConvertToAction}
-                                onConvertToAction={onConvertToAction}
-                            />
-                        );
-                    }), [sortedCards, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
+                    {/* AnimatePresence must directly parent the list whose members mount/
+                        unmount for a card's exit animation to run at all — it was previously
+                        nested one level too deep, inside DraggableCard itself, where React
+                        unmounts the whole subtree (including that inner AnimatePresence)
+                        before it ever sees the real removal (design audit finding, spec 028). */}
+                    <AnimatePresence>
+                        {React.useMemo(() => sortedCards.map((card) => {
+                            return (
+                                <SortableCard
+                                    key={card.id}
+                                    card={card}
+                                    onUpdate={onCardUpdate}
+                                    onDelete={onCardDelete}
+                                    onVote={onCardVote}
+                                    onLike={onCardLike}
+                                    onReaction={onCardReaction}
+                                    onReactionRemove={onCardReactionRemove}
+                                    currentUser={currentUser}
+                                    canEdit={canEdit}
+                                    isGroupingMode={isGroupingMode}
+                                    isSelected={selectedCards.has(card.id)}
+                                    onSelect={onCardSelect}
+                                    participants={participants}
+                                    canConvertToAction={canConvertToAction}
+                                    onConvertToAction={onConvertToAction}
+                                />
+                            );
+                        }), [sortedCards, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
+                    </AnimatePresence>
                 </div>
             </SortableContext>
 
