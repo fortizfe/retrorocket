@@ -656,46 +656,34 @@
         "noLimits": "Sin límites"
       }
     },
-    "features": {
-      "connectTeams": {
-        "title": "Conecta equipos",
-        "description": "Une a tu equipo desde cualquier lugar para crear mejores soluciones juntos"
-      },
-      "immediateResults": {
-        "title": "Resultados inmediatos",
-        "description": "Obtén insights valiosos y planes de acción en tiempo récord"
-      },
-      "easyToAdopt": {
-        "title": "Fácil de adoptar",
-        "description": "Tu equipo se sentirá cómodo desde el primer minuto, sin curva de aprendizaje"
-      }
-    },
-    "mainFeatures": {
+    "capabilities": {
       "title": "Todo lo que necesitas para retrospectivas exitosas",
-      "subtitle": "Una plataforma completa diseñada por y para equipos ágiles que buscan mejorar continuamente",
-      "advancedAuth": {
-        "title": "Autenticación Avanzada",
-        "description": "Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder."
-      },
-      "realTimeCollab": {
-        "title": "Colaboración en Tiempo Real",
-        "description": "Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones."
-      },
-      "cardSystem": {
-        "title": "Sistema Completo de Tarjetas",
-        "description": "Tres columnas estructuradas con votación, reacciones y colores personalizables."
-      },
-      "smartGrouping": {
-        "title": "Agrupación Inteligente",
-        "description": "Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas."
-      },
-      "professionalExport": {
-        "title": "Exportación Profesional",
-        "description": "PDF y DOCX optimizados para compartir con stakeholders y archivar resultados."
-      },
-      "modernUI": {
-        "title": "Experiencia Moderna",
-        "description": "Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo."
+      "subtitle": "Una plataforma completa creada para equipos ágiles — une a todos desde cualquier lugar, obtén insights valiosos en tiempo récord, y siéntete como en casa desde el primer minuto.",
+      "items": {
+        "auth": {
+          "title": "Autenticación Avanzada",
+          "description": "Múltiples proveedores con vinculación automática. Un perfil, múltiples formas de acceder."
+        },
+        "realTimeCollab": {
+          "title": "Colaboración en Tiempo Real",
+          "description": "Ve los cambios de tu equipo al instante. Trabaja junto sin interrupciones."
+        },
+        "cardSystem": {
+          "title": "Sistema Completo de Tarjetas",
+          "description": "Tres columnas estructuradas con votación, reacciones y colores personalizables."
+        },
+        "smartGrouping": {
+          "title": "Agrupación Inteligente",
+          "description": "Arrastra y suelta para organizar ideas. Jerarquía visual clara y estadísticas automáticas."
+        },
+        "export": {
+          "title": "Exportación Profesional",
+          "description": "PDF y DOCX optimizados para compartir con stakeholders y archivar resultados."
+        },
+        "modernUI": {
+          "title": "Experiencia Moderna",
+          "description": "Diseño responsive, animaciones fluidas y modo oscuro. Funciona en cualquier dispositivo."
+        }
       }
     },
     "howItWorks": {
@@ -704,20 +692,17 @@
       "step1": {
         "title": "Inicia sesión y crea",
         "description": "Accede con Google o GitHub en segundos. Crea una nueva retrospectiva con título y descripción.",
-        "time": "Menos de 30 segundos para empezar",
-        "sharing": "Comparte el enlace con tu equipo y ¡listo!"
+        "time": "Menos de 30 segundos para empezar"
       },
       "step2": {
         "title": "Colabora en tiempo real",
         "description": "Añade tarjetas en las tres columnas, vota ideas favoritas y agrupa conceptos similares.",
-        "tip": "Edita solo tus propias tarjetas",
-        "actions": "Vota, reacciona y organiza ideas de forma visual"
+        "tip": "Edita solo tus propias tarjetas"
       },
       "step3": {
         "title": "Exporta y actúa",
         "description": "Genera reportes profesionales en PDF o Word con estadísticas completas y plan de acción.",
-        "tip": "Configuración avanzada de exportación",
-        "sharing": "Comparte resultados con stakeholders"
+        "tip": "Configuración avanzada de exportación"
       }
     },
     "technology": {

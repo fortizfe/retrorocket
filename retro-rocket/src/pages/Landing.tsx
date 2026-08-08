@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-    Rocket, Users, Zap, Heart, Shield,
+    Rocket, Users, Zap, Shield,
     MessageSquare, Vote, Group, FileText,
-    Palette, Smartphone, Github, Globe,
-    Play, Edit3, ArrowRight, Star,
-    Download, Settings, CheckCircle
+    Palette, Smartphone, Github,
+    Play, ArrowRight,
+    Download, CheckCircle
 } from 'lucide-react';
 import { useUser } from '@/lib/contexts/UserContext';
 import { useLanguage } from '@/lib/hooks/useLanguage';
@@ -70,7 +70,10 @@ const LandingPage: React.FC = () => {
 
     if (showProfileForm && user && userProfile) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-primary-50 dark:from-slate-900 dark:via-blue-950 dark:to-primary-950 flex items-center justify-center p-4 transition-colors duration-300">
+            <div className="min-h-screen bg-surface flex items-center justify-center p-4 transition-colors duration-300">
+                <div className="fixed top-6 right-6 z-50">
+                    <ThemeToggle />
+                </div>
                 <div className="max-w-md w-full">
                     <UserProfileForm
                         userProfile={userProfile}
@@ -83,409 +86,243 @@ const LandingPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-primary-50 dark:from-slate-900 dark:via-blue-950 dark:to-primary-950 transition-colors duration-300">
-            {/* Theme Toggle - Fixed position */}
+        <div className="min-h-screen bg-surface text-text-primary transition-colors duration-300">
+            {/* Theme Toggle - Fixed position (FR-002: retained through the redesign) */}
             <div className="fixed top-6 right-6 z-50">
                 <ThemeToggle />
             </div>
 
-            {/* Hero Section */}
-            <div className="container mx-auto px-2 py-16">
-                <div className="text-center max-w-4xl mx-auto">
-                    {/* Logo and Title */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="mb-8"
-                    >
-                        <div className="flex items-center justify-center gap-3 mb-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-blue-600 rounded-xl flex items-center justify-center shadow-soft">
-                                <Rocket className="w-6 h-6 text-white" />
-                            </div>
-                            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary-600 to-blue-600 bg-clip-text text-transparent">
-                                {APP_NAME}
-                            </h1>
-                        </div>
-                        <p className="text-xl text-text-secondary mb-2">
-                            {t('landing.hero.description')}
+            <header className="mx-auto flex max-w-6xl items-center gap-2 px-6 pt-8">
+                <Rocket className="h-5 w-5 text-action" aria-hidden="true" />
+                <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
+            </header>
+
+            {/* Hero — Direction B (Editorial Grid), selected 2026-08-08. `hero-fade`
+                loading pattern: plain mount-time opacity fade, not whileInView (the hero
+                is always in the initial viewport), no skeleton/blank hold (FR-011). */}
+            <main className="mx-auto grid min-h-[85vh] max-w-6xl grid-cols-1 items-center gap-12 px-6 py-12 lg:grid-cols-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="lg:col-span-7"
+                >
+                    <h1 className="text-5xl font-bold leading-[1.08] tracking-[-0.02em] md:text-6xl">
+                        {t('landing.hero.tagline')}
+                    </h1>
+                    <p className="mt-6 max-w-lg text-lg leading-relaxed text-text-secondary">
+                        {t('landing.hero.description')}
+                    </p>
+
+                    <div className="mt-10 max-w-sm border-t border-border-default pt-6">
+                        <h2 className="mb-1 text-base font-semibold">
+                            {t('landing.hero.cta.title')}
+                        </h2>
+                        <p className="mb-4 text-sm text-text-secondary">
+                            {t('landing.hero.cta.subtitle')}
                         </p>
-                        <p className="text-lg text-text-muted">
-                            {t('landing.hero.tagline')}
-                        </p>
-                    </motion.div>
 
-                    {/* Quick Access Auth Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="max-w-md mx-auto mb-16"
-                    >
-                        <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50">
-                            <h2 className="text-2xl font-bold text-text-primary mb-2 text-center">
-                                {t('landing.hero.cta.title')}
-                            </h2>
-                            <p className="text-text-secondary mb-6 text-center">
-                                {t('landing.hero.cta.subtitle')}
-                            </p>
+                        <AuthButtonGroup
+                            onProviderSignIn={handleProviderSignIn}
+                            loading={loading}
+                        />
 
-                            <AuthButtonGroup
-                                onProviderSignIn={handleProviderSignIn}
-                                loading={loading}
-                            />
-
-                            <div className="flex items-center justify-center gap-2 text-sm text-text-muted mt-4">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>{t('landing.hero.cta.freeForever')}</span>
-                                <span className="mx-2">•</span>
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span>{t('landing.hero.cta.noLimits')}</span>
-                            </div>
+                        <div className="mt-4 flex items-center gap-2 text-sm text-text-muted">
+                            <CheckCircle className="h-4 w-4 text-success-fg" />
+                            <span>{t('landing.hero.cta.freeForever')}</span>
+                            <span aria-hidden="true">&middot;</span>
+                            <CheckCircle className="h-4 w-4 text-success-fg" />
+                            <span>{t('landing.hero.cta.noLimits')}</span>
                         </div>
-                    </motion.div>
+                    </div>
+                </motion.div>
 
-                    {/* Features Grid */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="grid md:grid-cols-3 gap-6 mb-12"
-                    >
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
-                            <Users className="w-8 h-8 text-primary-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.connectTeams.title')}</h3>
-                            <p className="text-text-secondary text-sm">
-                                {t('landing.features.connectTeams.description')}
-                            </p>
-                        </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
-                            <Zap className="w-8 h-8 text-blue-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.immediateResults.title')}</h3>
-                            <p className="text-text-secondary text-sm">
-                                {t('landing.features.immediateResults.description')}
-                            </p>
-                        </div>
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300">
-                            <Heart className="w-8 h-8 text-sky-500 mx-auto mb-3" />
-                            <h3 className="text-lg font-semibold text-text-primary mb-2">{t('landing.features.easyToAdopt.title')}</h3>
-                            <p className="text-text-secondary text-sm">
-                                {t('landing.features.easyToAdopt.description')}
-                            </p>
-                        </div>
-                    </motion.div>
+                {/* Hero capability preview — a quick-glance teaser of 4 of the 6
+                    capabilities detailed in the section below (icon + short label
+                    only, still no product screenshots/mockups, FR-001). Replaces
+                    an earlier purely-decorative empty version: seen live, empty
+                    color blocks read as unfinished rather than intentional. */}
+                <motion.ul
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="grid grid-cols-2 gap-3 lg:col-span-5"
+                >
+                    {[
+                        { Icon: Users, key: 'realTimeCollab' },
+                        { Icon: MessageSquare, key: 'cardSystem' },
+                        { Icon: Group, key: 'smartGrouping' },
+                        { Icon: FileText, key: 'export' },
+                    ].map(({ Icon, key }, i) => (
+                        <motion.li
+                            key={key}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35, delay: Math.min(i * 0.06, 0.24) }}
+                            className={`flex aspect-square flex-col justify-between rounded-xl border border-border-default p-4 ${i === 0 ? 'bg-action text-text-inverse' : 'bg-surface text-text-primary'}`}
+                        >
+                            <Icon className="h-5 w-5" aria-hidden="true" />
+                            <span className="text-sm font-semibold leading-tight">
+                                {t(`landing.capabilities.items.${key}.title`)}
+                            </span>
+                        </motion.li>
+                    ))}
+                </motion.ul>
+            </main>
 
-                    {/* Main Features Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="mt-16 mb-16"
-                    >
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                                {t('landing.mainFeatures.title')}
-                            </h2>
-                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                                {t('landing.mainFeatures.subtitle')}
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            {/* Authentication */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <Shield className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.advancedAuth.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.advancedAuth.description')}
-                                </p>
-                            </div>
-
-                            {/* Real-time Collaboration */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <Users className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.realTimeCollab.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.realTimeCollab.description')}
-                                </p>
-                            </div>
-
-                            {/* Card System */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <MessageSquare className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.cardSystem.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.cardSystem.description')}
-                                </p>
-                            </div>
-
-                            {/* Smart Grouping */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <Group className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.smartGrouping.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.smartGrouping.description')}
-                                </p>
-                            </div>
-
-                            {/* Professional Export */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <FileText className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.professionalExport.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.professionalExport.description')}
-                                </p>
-                            </div>
-
-                            {/* Modern UI */}
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 hover:shadow-medium transition-shadow duration-300 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                                    <Palette className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                                    {t('landing.mainFeatures.modernUI.title')}
-                                </h3>
-                                <p className="text-text-secondary text-sm">
-                                    {t('landing.mainFeatures.modernUI.description')}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* How It Works Section */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="mt-16 mb-16"
-                    >
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                                {t('landing.howItWorks.title')}
-                            </h2>
-                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                                {t('landing.howItWorks.subtitle')}
-                            </p>
-                        </div>
-
-                        <div className="max-w-4xl mx-auto">
-                            {/* Step 1 */}
-                            <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                                1
-                                            </div>
-                                            <h3 className="text-xl font-semibold text-text-primary">
-                                                {t('landing.howItWorks.step1.title')}
-                                            </h3>
-                                        </div>
-                                        <p className="text-text-secondary mb-4">
-                                            {t('landing.howItWorks.step1.description')}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm text-text-muted">
-                                            <Play className="w-4 h-4" />
-                                            <span>{t('landing.howItWorks.step1.time')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
-                                        <Globe className="w-16 h-16 text-primary-500 mx-auto mb-4" />
-                                        <p className="text-text-secondary">
-                                            {t('landing.howItWorks.step1.sharing')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Step 2 */}
-                            <div className="flex flex-col md:flex-row-reverse items-center gap-8 mb-12">
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                                2
-                                            </div>
-                                            <h3 className="text-xl font-semibold text-text-primary">
-                                                {t('landing.howItWorks.step2.title')}
-                                            </h3>
-                                        </div>
-                                        <p className="text-text-secondary mb-4">
-                                            {t('landing.howItWorks.step2.description')}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm text-text-muted">
-                                            <Edit3 className="w-4 h-4" />
-                                            <span>{t('landing.howItWorks.step2.tip')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
-                                        <div className="flex justify-center gap-4 mb-4">
-                                            <Vote className="w-12 h-12 text-green-500" />
-                                            <Star className="w-12 h-12 text-yellow-500" />
-                                            <Heart className="w-12 h-12 text-red-500" />
-                                        </div>
-                                        <p className="text-text-secondary">
-                                            {t('landing.howItWorks.step2.actions')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Step 3 */}
-                            <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                                3
-                                            </div>
-                                            <h3 className="text-xl font-semibold text-text-primary">
-                                                {t('landing.howItWorks.step3.title')}
-                                            </h3>
-                                        </div>
-                                        <p className="text-text-secondary mb-4">
-                                            {t('landing.howItWorks.step3.description')}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm text-text-muted">
-                                            <Settings className="w-4 h-4" />
-                                            <span>{t('landing.howItWorks.step3.tip')}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="w-full md:w-1/2">
-                                    <div className="glass-strong rounded-xl p-8 shadow-medium border border-border-default/50 text-center">
-                                        <Download className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                                        <p className="text-text-secondary">
-                                            {t('landing.howItWorks.step3.sharing')}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Technology Stack */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="mt-16 mb-16"
-                    >
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                                {t('landing.technology.title')}
-                            </h2>
-                            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-                                {t('landing.technology.subtitle')}
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                    <Zap className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.reactTypeScript')}</h4>
-                                <p className="text-sm text-text-secondary">{t('landing.technology.reactTypeScript_desc')}</p>
-                            </div>
-
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                    <Shield className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.firebase')}</h4>
-                                <p className="text-sm text-text-secondary">{t('landing.technology.firebase_desc')}</p>
-                            </div>
-
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                    <Palette className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.tailwind')}</h4>
-                                <p className="text-sm text-text-secondary">{t('landing.technology.tailwind_desc')}</p>
-                            </div>
-
-                            <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 text-center">
-                                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                    <Smartphone className="w-6 h-6 text-white" />
-                                </div>
-                                <h4 className="font-semibold text-text-primary mb-2">{t('landing.technology.mobileFirst')}</h4>
-                                <p className="text-sm text-text-secondary">{t('landing.technology.mobileFirst_desc')}</p>
-                            </div>
-                        </div>
-
-                        <div className="text-center mt-8">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success-bg text-success-fg">
-                                <CheckCircle className="w-4 h-4" />
-                                <span className="text-sm font-medium">{t('landing.technology.openSource')}</span>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Final Message */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.5 }}
-                        className="text-center mb-16"
-                    >
-                        <div className="glass rounded-xl p-6 shadow-soft border border-border-default/40 max-w-xl mx-auto">
-                            <h2 className="text-xl font-bold text-text-primary mb-3">
-                                {t('landing.finalMessage.title')}
-                            </h2>
-                            <p className="text-text-secondary mb-4">
-                                {t('landing.finalMessage.subtitle')}
-                            </p>
-
-                            <div className="flex items-center justify-center gap-1 text-xs text-text-muted">
-                                <Github className="w-3 h-3" />
-                                <span>{t('landing.finalMessage.githubLink')}</span>
-                                <ArrowRight className="w-3 h-3 ml-1" />
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
+            <div className="mx-auto max-w-6xl px-6">
+                <div className="border-t border-border-default" />
             </div>
 
-            {/* Footer */}
-            <div className="border-t border-border-default/40 bg-surface-raised/10 backdrop-blur-sm">
-                <div className="container mx-auto px-2 py-8">
-                    <div className="text-center text-text-secondary">
-                        <p className="text-sm">
-                            {t('landing.footer.copyright', { appName: APP_NAME })}
+            {/* Capabilities — merges the former "quick features" + "main features"
+                sections into one editorial grid (content-inventory-contract.md
+                categories 2-3; i18n-key-migration-contract.md). */}
+            <section className="border-t border-border-default">
+                <div className="mx-auto max-w-6xl px-6 py-16">
+                    <div className="max-w-2xl">
+                        <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">
+                            {t('landing.capabilities.title')}
+                        </h2>
+                        <p className="mt-4 text-lg text-text-secondary">
+                            {t('landing.capabilities.subtitle')}
                         </p>
                     </div>
+
+                    <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border-default bg-border-default sm:grid-cols-2 lg:grid-cols-3">
+                        {[
+                            { Icon: Shield, key: 'auth' },
+                            { Icon: Users, key: 'realTimeCollab' },
+                            { Icon: MessageSquare, key: 'cardSystem' },
+                            { Icon: Group, key: 'smartGrouping' },
+                            { Icon: FileText, key: 'export' },
+                            { Icon: Palette, key: 'modernUI' },
+                        ].map(({ Icon, key }, i) => (
+                            <motion.div
+                                key={key}
+                                initial={{ opacity: 0, y: 16 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: '-100px' }}
+                                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.25) }}
+                                className="bg-surface p-6"
+                            >
+                                <div className="mb-4 flex items-center justify-between">
+                                    <Icon className="h-5 w-5 text-action" aria-hidden="true" />
+                                    <span className="text-xs font-medium text-text-muted">{`0${i + 1}`}</span>
+                                </div>
+                                <h3 className="mb-1 font-semibold text-text-primary">
+                                    {t(`landing.capabilities.items.${key}.title`)}
+                                </h3>
+                                <p className="text-sm text-text-secondary">
+                                    {t(`landing.capabilities.items.${key}.description`)}
+                                </p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* How it works */}
+            <section className="border-t border-border-default">
+                <div className="mx-auto max-w-6xl px-6 py-16">
+                    <div className="max-w-2xl">
+                        <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">
+                            {t('landing.howItWorks.title')}
+                        </h2>
+                        <p className="mt-4 text-lg text-text-secondary">
+                            {t('landing.howItWorks.subtitle')}
+                        </p>
+                    </div>
+
+                    <div className="mt-12 grid gap-10 md:grid-cols-3">
+                        {[
+                            { step: 'step1', Icon: Play, meta: t('landing.howItWorks.step1.time') },
+                            { step: 'step2', Icon: Vote, meta: t('landing.howItWorks.step2.tip') },
+                            { step: 'step3', Icon: Download, meta: t('landing.howItWorks.step3.tip') },
+                        ].map(({ step, Icon, meta }, i) => (
+                            <motion.div
+                                key={step}
+                                initial={{ opacity: 0, y: 16 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: '-100px' }}
+                                transition={{ duration: 0.4, delay: Math.min(i * 0.06, 0.24) }}
+                            >
+                                <div className="mb-3 flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-text-secondary">{`0${i + 1}`}</span>
+                                    <ArrowRight className="h-3 w-3 text-action" aria-hidden="true" />
+                                </div>
+                                <h3 className="mb-2 text-lg font-semibold">{t(`landing.howItWorks.${step}.title`)}</h3>
+                                <p className="text-sm text-text-secondary">{t(`landing.howItWorks.${step}.description`)}</p>
+                                <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
+                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                                    <span>{meta}</span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Trust signals — technology stack, slim strip (not heavy cards) */}
+            <section className="border-t border-border-default">
+                <div className="mx-auto max-w-6xl px-6 py-16">
+                    <div className="max-w-2xl">
+                        <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">
+                            {t('landing.technology.title')}
+                        </h2>
+                        <p className="mt-4 text-lg text-text-secondary">
+                            {t('landing.technology.subtitle')}
+                        </p>
+                    </div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 0.4 }}
+                        className="mt-10 grid gap-8 border-t border-border-default pt-8 sm:grid-cols-2 lg:grid-cols-4"
+                    >
+                        {[
+                            { Icon: Zap, key: 'reactTypeScript' },
+                            { Icon: Shield, key: 'firebase' },
+                            { Icon: Palette, key: 'tailwind' },
+                            { Icon: Smartphone, key: 'mobileFirst' },
+                        ].map(({ Icon, key }) => (
+                            <div key={key}>
+                                <Icon className="mb-2 h-5 w-5 text-action" aria-hidden="true" />
+                                <h4 className="font-semibold text-text-primary">{t(`landing.technology.${key}`)}</h4>
+                                <p className="text-sm text-text-secondary">{t(`landing.technology.${key}_desc`)}</p>
+                            </div>
+                        ))}
+                    </motion.div>
+
+                    <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-success-bg px-4 py-2 text-success-fg">
+                        <CheckCircle className="h-4 w-4" aria-hidden="true" />
+                        <span className="text-sm font-medium">{t('landing.technology.openSource')}</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* Closing message + footer */}
+            <section className="border-t border-border-default">
+                <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+                    <h2 className="text-xl font-bold text-text-primary">
+                        {t('landing.finalMessage.title')}
+                    </h2>
+                    <p className="mt-2 text-text-secondary">
+                        {t('landing.finalMessage.subtitle')}
+                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-1 text-xs text-text-muted">
+                        <Github className="h-3 w-3" aria-hidden="true" />
+                        <span>{t('landing.finalMessage.githubLink')}</span>
+                    </div>
+                </div>
+            </section>
+
+            <div className="border-t border-border-default/40 bg-surface-raised/10">
+                <div className="mx-auto max-w-6xl px-6 py-8 text-center text-text-secondary">
+                    <p className="text-sm">
+                        {t('landing.footer.copyright', { appName: APP_NAME })}
+                    </p>
                 </div>
             </div>
         </div>
