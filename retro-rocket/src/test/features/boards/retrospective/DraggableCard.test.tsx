@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
-import { Card as CardType, CardColor, EmojiReaction, Like } from '@/features/boards/types/card';
+import { Card as CardType, CardColor, EmojiReaction } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
 
 // Mock framer-motion
@@ -57,19 +57,24 @@ vi.mock('@/lib/components/ui/Button', () => ({
 }));
 
 vi.mock('@/lib/components/ui/TextareaWithEmoji', () => ({
-    default: ({ value, onChange, placeholder, ...props }: any) => (
-        <textarea
-            data-testid="textarea-with-emoji"
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            {...props}
-        />
+    // forwardRef (matching the real component) so DraggableCard's ref-based focus
+    // fix has a real DOM node to call .focus() on in tests.
+    default: React.forwardRef<HTMLTextAreaElement, any>(
+        ({ value, onChange, placeholder, ...props }, ref) => (
+            <textarea
+                ref={ref}
+                data-testid="textarea-with-emoji"
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                {...props}
+            />
+        )
     ),
 }));
 
 vi.mock('@/lib/components/ui/ColorPicker', () => ({
-    default: ({ selectedColor, onColorChange, ...props }: any) => (
+    default: ({ selectedColor: _selectedColor, onColorChange, ...props }: any) => (
         <div data-testid="color-picker" {...props}>
             <button onClick={() => onColorChange?.('blue' as CardColor)}>
                 Change Color
@@ -99,7 +104,7 @@ vi.mock('@/features/boards/retrospective/components/LikeButton', () => ({
 }));
 
 vi.mock('@/features/boards/retrospective/components/EmojiReactions', () => ({
-    default: ({ onReaction, onRemoveReaction, currentUserId, ...props }: any) => (
+    default: ({ onReaction, onRemoveReaction, currentUserId: _currentUserId, ...props }: any) => (
         <div data-testid="emoji-reactions" {...props}>
             <button data-testid="add-reaction" onClick={() => onReaction?.('👍' as EmojiReaction)}>
                 Add Reaction
@@ -112,7 +117,7 @@ vi.mock('@/features/boards/retrospective/components/EmojiReactions', () => ({
 }));
 
 vi.mock('@/features/boards/retrospective/components/CardMenu', () => ({
-    default: ({ card, participants, onConvertToAction, canConvertToAction, ...props }: any) => (
+    default: ({ card: _card, participants: _participants, onConvertToAction, canConvertToAction, ...props }: any) => (
         <div data-testid="card-menu" {...props}>
             {canConvertToAction && (
                 <button

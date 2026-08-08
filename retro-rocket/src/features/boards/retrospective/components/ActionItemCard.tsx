@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit3, Trash2, Check, X, User, Calendar } from 'lucide-react';
 import { ActionItem } from '@/features/boards/types/actionItem';
@@ -32,6 +32,15 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
     const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(actionItem.dueDate || null);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Focus the textarea when it mounts in response to an explicit user action
+    // (clicking edit), not via the autoFocus prop (jsx-a11y/no-autofocus).
+    useEffect(() => {
+        if (isEditing) {
+            editTextareaRef.current?.focus();
+        }
+    }, [isEditing]);
 
     const handleSave = () => {
         if (!editContent.trim()) return;
@@ -126,12 +135,12 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                         className="space-y-2"
                     >
                         <textarea
+                            ref={editTextareaRef}
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             className="w-full p-2 text-xs border border-warning-fg rounded resize-none bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                             rows={2}
                             placeholder={t('retrospective.actionItemCard.placeholder')}
-                            autoFocus
                         />
                         <div>
                             <label htmlFor={`assignee-${actionItem.id}`} className="block text-xs font-medium text-warning-fg mb-1">

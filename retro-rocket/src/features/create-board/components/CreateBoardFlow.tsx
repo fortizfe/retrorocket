@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import BoardTemplateSelector from '@/features/create-board/components/BoardTemplateSelector';
 import { createBoard } from '@/features/dashboard/services/backendBoardsClient';
 import { TemplateId } from '@/features/create-board/boardTemplates';
@@ -32,6 +32,15 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('default');
     const [boardTitle, setBoardTitle] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const boardTitleInputRef = useRef<HTMLInputElement>(null);
+
+    // Focus the title input when the "details" step mounts, in response to the
+    // explicit "Next" click, not via the autoFocus prop (jsx-a11y/no-autofocus).
+    useEffect(() => {
+        if (currentStep === 'details') {
+            boardTitleInputRef.current?.focus();
+        }
+    }, [currentStep]);
 
     const handleNext = () => {
         if (currentStep === 'template') {
@@ -178,6 +187,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                         {t('dashboard.newBoardTitle')} *
                                     </label>
                                     <Input
+                                        ref={boardTitleInputRef}
                                         id="boardTitle"
                                         type="text"
                                         value={boardTitle}
@@ -185,7 +195,6 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                         placeholder={t('dashboard.placeholder_boardTitle')}
                                         required
                                         className="w-full"
-                                        autoFocus
                                         disabled={isCreating}
                                     />
                                 </div>

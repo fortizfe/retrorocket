@@ -52,19 +52,23 @@ vi.mock('@/lib/components/ui/Button', () => ({
 }));
 
 vi.mock('@/lib/components/ui/Input', () => ({
-    default: ({ value, onChange, placeholder, required, disabled, autoFocus, id, ...props }: any) => (
-        <input
-            id={id}
-            type="text"
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            required={required}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            data-testid="mock-input"
-            {...props}
-        />
+    // forwardRef (matching the real component) so JoinRetrospectiveModal's ref-based
+    // focus fix has a real DOM node to call .focus() on in tests.
+    default: React.forwardRef<HTMLInputElement, any>(
+        ({ value, onChange, placeholder, required, disabled, id, ...props }, ref) => (
+            <input
+                ref={ref}
+                id={id}
+                type="text"
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                required={required}
+                disabled={disabled}
+                data-testid="mock-input"
+                {...props}
+            />
+        )
     ),
 }));
 
