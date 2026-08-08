@@ -43,7 +43,10 @@ export function getColumnRole(columnId: string): ColumnRole {
  */
 export function useRetrospectiveColumns(columns: RetrospectiveColumn[] | undefined) {
     const { t } = useTranslation();
-    const cols = columns ?? [];
+    // Memoized so a stable [] reference is reused across renders when `columns` is
+    // undefined — otherwise `columns ?? []` allocates a new array every render, which
+    // would defeat the memoization of columnConfigs/columnOrder/actionColumn below.
+    const cols = useMemo(() => columns ?? [], [columns]);
 
     // Convert RetrospectiveColumn to DynamicColumnConfig for compatibility with existing components
     const columnConfigs = useMemo((): Record<string, DynamicColumnConfig> => {

@@ -228,8 +228,9 @@ describe('FacilitatorNotes Types', () => {
 
             expect(validateNote(validNote)).toBe(true);
 
-            // Note: We can't validate invalid notes directly due to TypeScript type checking
-            // but this demonstrates the validation logic
+            invalidNotes.forEach((note) => {
+                expect(validateNote(note as FacilitatorNote)).toBe(false);
+            });
         });
     });
 

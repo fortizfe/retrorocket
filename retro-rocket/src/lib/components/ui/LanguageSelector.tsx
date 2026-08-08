@@ -31,7 +31,6 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = '' }) =
 
         const buttonRect = buttonRef.current.getBoundingClientRect();
         const dropdownWidth = 140;
-        const viewportWidth = window.innerWidth;
 
         let left = buttonRect.right - dropdownWidth;
         let origin: 'top right' | 'top left' = 'top right';

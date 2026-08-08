@@ -6,7 +6,7 @@ import { GroupedReaction } from '@/features/boards/types/card';
 
 vi.mock('framer-motion', () => ({
     motion: {
-        button: ({ children, whileHover, whileTap, initial, animate, ...props }: any) => (
+        button: ({ children, whileHover: _whileHover, whileTap: _whileTap, initial: _initial, animate: _animate, ...props }: any) => (
             <button {...props}>{children}</button>
         ),
     },

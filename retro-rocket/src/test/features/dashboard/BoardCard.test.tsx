@@ -123,7 +123,7 @@ describe('BoardCard', () => {
         });
 
         it('should render board card without description when not provided', () => {
-            const { description, ...boardWithoutDescription } = defaultBoard;
+            const { description: _description, ...boardWithoutDescription } = defaultBoard;
             renderBoardCard(boardWithoutDescription as any);
 
             expect(screen.getByText('Test Board')).toBeInTheDocument();

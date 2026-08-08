@@ -392,7 +392,7 @@ describe('ColumnHeaderMenu', () => {
                 { disabled: false, hasCards: true }
             ];
 
-            combinations.forEach((props, index) => {
+            combinations.forEach((props) => {
                 const { unmount } = render(<ColumnHeaderMenu {...defaultProps} {...props} />);
 
                 if (props.disabled || !props.hasCards) {

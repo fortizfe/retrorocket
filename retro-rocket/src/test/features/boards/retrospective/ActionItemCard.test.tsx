@@ -14,7 +14,7 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
-        t: (key: string, params?: any) => {
+        t: (key: string, _params?: any) => {
             if (key === 'retrospective.actionItemCard.confirmDelete') {
                 return 'Are you sure you want to delete this action item?';
             }

@@ -97,7 +97,7 @@ describe('TXT Export Service - Template Support', () => {
         };
 
         // Mock saveAs to capture the content instead of downloading
-        const mockSaveAs = (blob: Blob, filename: string) => {
+        const mockSaveAs = (blob: Blob, _filename: string) => {
             return blob.text().then(text => {
                 capturedContent = text;
             });
@@ -172,7 +172,7 @@ describe('TXT Export Service - Template Support', () => {
             return capturedContent;
         };
 
-        const fallbackMockSaveAs = async (blob: Blob, filename: string) => {
+        const fallbackMockSaveAs = async (blob: Blob, _filename: string) => {
             const text = await blob.text();
             capturedContent = text;
         };

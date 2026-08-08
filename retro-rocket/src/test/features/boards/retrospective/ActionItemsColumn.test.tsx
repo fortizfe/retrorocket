@@ -15,7 +15,7 @@ vi.mock('framer-motion', () => ({
 // Mock useLanguage hook
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
-        t: (key: string, options?: any) => {
+        t: (key: string, _options?: any) => {
             const translations: Record<string, string> = {
                 'retrospective.actionItems.title': 'Action Items',
                 'retrospective.actionItems.description': 'Define specific actions to implement',
@@ -60,7 +60,7 @@ vi.mock('@/lib/components/ui/Button', () => ({
 
 // Mock ActionItemCard component
 vi.mock('@/features/boards/retrospective/components/ActionItemCard', () => ({
-    default: vi.fn(({ actionItem, participants, canEdit, onEdit, onDelete }) => (
+    default: vi.fn(({ actionItem, canEdit, onEdit, onDelete }) => (
         <div data-testid={`action-item-${actionItem.id}`}>
             <div>Content: {actionItem.content}</div>
             <div>Assigned to: {actionItem.assignedToName || 'Unassigned'}</div>
@@ -87,7 +87,7 @@ vi.mock('@/features/boards/retrospective/components/ActionItemCard', () => ({
 
 // Mock DatePicker component
 vi.mock('@/lib/components/ui/DatePicker', () => ({
-    default: vi.fn(({ label, value, onChange, placeholder, minDate, className }) => (
+    default: vi.fn(({ label, value, onChange, placeholder, className }) => (
         <div>
             <label>{label}</label>
             <input
@@ -104,7 +104,7 @@ vi.mock('@/lib/components/ui/DatePicker', () => ({
 // Mock language hook
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
-        t: (key: string, options?: any) => {
+        t: (key: string, _options?: any) => {
             const translations: Record<string, string> = {
                 'retrospective.actionItems.title': 'Action Items',
                 'retrospective.actionItems.description': 'Define specific actions to implement',

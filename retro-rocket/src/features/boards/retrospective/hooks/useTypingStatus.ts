@@ -59,6 +59,32 @@ export function useTypingStatus({
         };
     }, [currentUserId, currentUsername, retrospectiveId]);
 
+    /** Stop typing in a specific column. */
+    const stopTyping = useCallback(
+        (column: string) => {
+            if (!currentUserId || !currentUsername) return;
+
+            const timer = debounceTimers.current.get(column);
+            if (timer) {
+                clearTimeout(timer);
+                debounceTimers.current.delete(column);
+            }
+            lastUpdateTimers.current.delete(column);
+
+            if (activeTypingColumns.current.has(column)) {
+                OptimizedTypingStatusService.setTypingStatusDebounced({
+                    userId: currentUserId,
+                    username: currentUsername,
+                    retrospectiveId,
+                    column: column as ColumnType,
+                    isActive: false,
+                });
+                activeTypingColumns.current.delete(column);
+            }
+        },
+        [currentUserId, currentUsername, retrospectiveId],
+    );
+
     /** Start typing in a specific column. */
     const startTyping = useCallback(
         (column: string) => {
@@ -86,37 +112,13 @@ export function useTypingStatus({
 
             const timer = setTimeout(() => {
                 stopTyping(column);
-                // eslint-disable-next-line react-hooks/exhaustive-deps -- stopTyping is stable within this closure's lifetime
             }, INACTIVITY_TIMEOUT_MS);
             debounceTimers.current.set(column, timer);
         },
-        [currentUserId, currentUsername, retrospectiveId],
-    );
-
-    /** Stop typing in a specific column. */
-    const stopTyping = useCallback(
-        (column: string) => {
-            if (!currentUserId || !currentUsername) return;
-
-            const timer = debounceTimers.current.get(column);
-            if (timer) {
-                clearTimeout(timer);
-                debounceTimers.current.delete(column);
-            }
-            lastUpdateTimers.current.delete(column);
-
-            if (activeTypingColumns.current.has(column)) {
-                OptimizedTypingStatusService.setTypingStatusDebounced({
-                    userId: currentUserId,
-                    username: currentUsername,
-                    retrospectiveId,
-                    column: column as ColumnType,
-                    isActive: false,
-                });
-                activeTypingColumns.current.delete(column);
-            }
-        },
-        [currentUserId, currentUsername, retrospectiveId],
+        // stopTyping is safe to depend on directly: it's memoized with the exact same
+        // deps as startTyping, so its identity only changes in lockstep with these —
+        // adding it here doesn't change startTyping's recreation frequency at all.
+        [currentUserId, currentUsername, retrospectiveId, stopTyping],
     );
 
     const otherUsersTyping = typingStatuses.filter((status) => status.userId !== currentUserId);
