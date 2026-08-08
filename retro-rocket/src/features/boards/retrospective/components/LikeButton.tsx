@@ -7,7 +7,6 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 interface LikeButtonProps {
-    cardId: string;
     likesCount: number;
     isLiked: boolean;
     onToggleLike: () => void;
@@ -17,7 +16,6 @@ interface LikeButtonProps {
 }
 
 const LikeButton: React.FC<LikeButtonProps> = ({
-    cardId,
     likesCount,
     isLiked,
     onToggleLike,

@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Copy, Share2, ArrowLeft } from 'lucide-react';
-import toast from 'react-hot-toast';
 import Button from '@/lib/components/ui/Button';
 import Loading from '@/lib/components/ui/Loading';
 import RetrospectiveBoard from '@/features/boards/retrospective/components/RetrospectiveBoard';
-import ExportButtonGroup from '@/features/boards/export/components/ExportButtonGroup';
-import { ResponsiveParticipantDisplay } from '@/features/boards/participants/components/index';
-import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/components/index';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import { useRetrospectiveRealtimeSync } from '@/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
@@ -46,37 +41,8 @@ const RetrospectivePageContent: React.FC = () => {
         : null;
     const participants = board?.participants ?? [];
 
-    // State for export data
-
-    const [exportCards, setExportCards] = useState<Card[]>([]);
-    const [exportGroups, setExportGroups] = useState<CardGroup[]>([]);
-
-
     // Note: Sentiment analysis is now handled entirely within RetrospectiveBoard
     // to avoid double initialization and model loading
-
-    // Handle data changes from RetrospectiveBoard for export
-    const handleDataChange = (cards: Card[], groups: CardGroup[]) => {
-        setExportCards(cards);
-        setExportGroups(groups);
-    };
-
-    // Copy retrospective ID to clipboard
-    const handleCopyId = () => {
-        if (id) {
-            navigator.clipboard.writeText(id);
-            toast.success('ID copiado al portapapeles');
-        }
-    };
-
-    // Share retrospective
-    const handleShare = () => {
-        if (id) {
-            const url = `${window.location.origin}/retro/${id}`;
-            navigator.clipboard.writeText(url);
-            toast.success('Enlace copiado al portapapeles');
-        }
-    };
 
     // Loading state — covers both the initial board load and the join call, since
     // useRetrospectiveRealtimeSync performs both before resolving (FR-006).
@@ -144,7 +110,6 @@ const RetrospectivePageContent: React.FC = () => {
                     <RetrospectiveBoard
                         retrospective={retrospective}
                         currentUser={fullName}
-                        onDataChange={handleDataChange}
                         participants={participants || []}
                         cards={(board?.cards ?? []) as unknown as Card[]}
                         typingStatuses={typingStatuses}

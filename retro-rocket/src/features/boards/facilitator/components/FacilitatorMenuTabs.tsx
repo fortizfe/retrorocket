@@ -19,7 +19,6 @@ interface FacilitatorMenuTabsProps {
     sentimentBadge?: string;
     teamMoodBadge?: string;
     children: React.ReactNode;
-    extraHeaderControls?: React.ReactNode;
 }
 
 const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
@@ -30,8 +29,7 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
     notesBadge,
     sentimentBadge,
     teamMoodBadge,
-    children,
-    extraHeaderControls
+    children
 }) => {
     const { t } = useLanguage();
 
@@ -39,7 +37,8 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
         {
             id: 'controls',
             label: t('retrospective.facilitator.tabs.controls'),
-            icon: Settings
+            icon: Settings,
+            badge: timerBadge
         },
         {
             id: 'team-mood',

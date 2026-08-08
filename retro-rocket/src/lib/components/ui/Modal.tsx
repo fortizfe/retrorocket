@@ -200,6 +200,7 @@ const Modal: React.FC<ModalProps> = ({
                         `}
                         aria-labelledby={title ? "modal-title" : undefined}
                         aria-describedby={description ? "modal-description" : undefined}
+                        style={getPopoverStyle()}
                     >
                         {/* Header */}
                         {(title || description || Icon || showCloseButton) && (
