@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Calendar, Users, ArrowRight, Crown, UserPlus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import clsx from 'clsx';
+import Button from '@/lib/components/ui/Button';
+import EditRetrospectiveModal from '@/features/dashboard/components/EditRetrospectiveModal';
+import { deleteBoard } from '@/features/dashboard/services/backendBoardsClient';
+import type { BoardSummary } from '@/features/dashboard/services/backendBoardsClient';
+import { formatLocalizedDate } from '@/lib/utils/localeDate';
+
+/**
+ * A single board row in the "Mis Tableros" dashboard's Structured Table
+ * layout (spec 031, selected Direction B). Replaces the pre-redesign
+ * BoardCard.tsx/BoardListItem.tsx pair — Direction B has one single adaptive
+ * layout (no grid/list toggle), so one row component now covers what used
+ * to be two.
+ *
+ * Rename/delete controls for owned boards are a persistent, always-visible
+ * icon-button cluster — never hover-gated (fixes the pre-existing FR-015
+ * defect; see research.md §4).
+ */
+
+export interface BoardRowProps {
+    board: BoardSummary;
+    index: number;
+    currentUserId: string;
+    onUpdated: (boardId: string, updates: { title: string }) => void;
+    onDeleted: (boardId: string) => void;
+}
+
+const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpdated, onDeleted }) => {
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    const isOwner = board.createdBy === currentUserId;
+    const dateLabel = formatLocalizedDate(board.createdAt, i18n.language, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+
+    const handleOpen = () => navigate(`/retro/${board.id}`);
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteBoard(board.id);
+            toast.success(t('dashboard.boardCard.deleteSuccess'));
+            onDeleted(board.id);
+        } catch (error: unknown) {
+            console.error('Error deleting board:', error);
+            const message = error instanceof Error ? error.message : undefined;
+            toast.error(message || t('dashboard.boardCard.deleteError'));
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <motion.li
+            layout
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: Math.min(index * 0.05, 0.3), duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className="px-4 py-3 transition-colors hover:bg-surface focus-within:bg-surface"
+        >
+            {showDeleteConfirm ? (
+                <div className="flex w-full flex-col gap-3 rounded-lg bg-error-bg px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-2 text-sm text-error-fg">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span className="min-w-0">
+                            <strong className="break-words">&ldquo;{board.title}&rdquo;</strong> &mdash;{' '}
+                            {t('dashboard.boardCard.deleteConfirmation')}
+                        </span>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                            {t('common.cancel')}
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={handleDelete} loading={isDeleting}>
+                            <Trash2 className="mr-1.5 h-4 w-4" />
+                            {t('dashboard.boardCard.deleteButton')}
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    {/* Title + description — the primary, keyboard-reachable open action */}
+                    <button
+                        type="button"
+                        onClick={handleOpen}
+                        title={t('dashboard.boardCard.openBoard')}
+                        className="-mx-1 min-w-0 flex-1 rounded-md px-1 py-0.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    >
+                        <span
+                            className="block truncate text-sm font-medium text-text-primary md:text-[0.925rem]"
+                            title={board.title}
+                        >
+                            {board.title}
+                        </span>
+                        {board.description && (
+                            <span className="block truncate text-xs text-text-muted" title={board.description}>
+                                {board.description}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Metadata columns — reflow into one wrapped row on mobile via
+                        `md:contents`: at md+ each child becomes its own flex item in
+                        the row above (real columns); below md they stay grouped under
+                        the title as a single wrapped line. Same markup, CSS-only. */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text-muted md:contents">
+                        <span
+                            data-testid="board-date"
+                            className="inline-flex items-center gap-1.5 md:w-28 md:shrink-0"
+                            title={dateLabel}
+                        >
+                            <Calendar className="h-3.5 w-3.5 shrink-0" />
+                            {dateLabel}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 md:w-24 md:shrink-0">
+                            <Users className="h-3.5 w-3.5 shrink-0" />
+                            {board.participantCount} <span className="md:hidden">{t('dashboard.boardCard.participants')}</span>
+                        </span>
+                        <span
+                            className={clsx(
+                                'inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium md:w-28 md:shrink-0 md:justify-center',
+                                board.isCreator ? 'bg-warning-bg text-warning-fg' : 'bg-info-bg text-info-fg'
+                            )}
+                        >
+                            {board.isCreator ? <Crown className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                            {board.isCreator ? t('dashboard.boardCard.creator') : t('dashboard.boardCard.joined')}
+                        </span>
+                    </div>
+
+                    {/* Always-visible action cluster — never hover-gated (FR-015). */}
+                    <div className="flex shrink-0 items-center justify-end gap-1 md:w-32">
+                        {isOwner && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(true)}
+                                    className="rounded-md p-1.5 text-text-muted hover:bg-info-bg hover:text-info-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    title={t('dashboard.boardCard.editTitle')}
+                                    aria-label={t('dashboard.boardCard.editTitle')}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="rounded-md p-1.5 text-text-muted hover:bg-error-bg hover:text-error-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    title={t('dashboard.boardCard.deleteTitle')}
+                                    aria-label={t('dashboard.boardCard.deleteTitle')}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleOpen}
+                            className="rounded-md p-1.5 text-text-muted hover:bg-action hover:text-text-inverse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            title={t('dashboard.boardCard.openBoard')}
+                            aria-label={t('dashboard.boardCard.openBoard')}
+                        >
+                            <ArrowRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <EditRetrospectiveModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                board={board}
+                onBoardUpdated={(boardId, updates) => {
+                    onUpdated(boardId, updates);
+                    setShowEditModal(false);
+                }}
+            />
+        </motion.li>
+    );
+};
+
+export default BoardRow;

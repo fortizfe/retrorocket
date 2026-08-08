@@ -137,7 +137,9 @@ for (const theme of THEMES) {
 
         await page.goto('/dashboard');
         await applyThemeClass(page, theme);
-        await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 30_000 });
+        // Spec 031: the error copy no longer contains the literal word "error"
+        // (better UX) — assert via the semantic role instead.
+        await expect(page.getByRole('alert')).toBeVisible({ timeout: 30_000 });
         await expectNoViolations(page, `/dashboard error state (${theme})`);
     });
 
@@ -150,6 +152,57 @@ for (const theme of THEMES) {
         await applyThemeClass(page, theme);
         await expect(page.getByText(/error/i).first()).toBeVisible({ timeout: 30_000 });
         await expectNoViolations(page, `/perfil error state (${theme})`);
+    });
+}
+
+// --- Dashboard List State variants (both themes) — spec 031 FR-018/SC-003 ---
+// data-model.md's "List State" entity: loaded (scanned above), loading,
+// empty (zero boards), no-results (search matches nothing), and error
+// (scanned above) are five mutually-exclusive states, each required to
+// independently satisfy WCAG 2.1 AA — not just the happy path.
+
+for (const theme of THEMES) {
+    test(`Dashboard loading state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        // Hold the fetch open so the loading spinner stays visible long enough to scan.
+        await page.route('**/api/boards', async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await route.continue();
+        });
+
+        await page.goto('/dashboard');
+        await applyThemeClass(page, theme);
+        await expect(page.getByText('Cargando tus tableros...')).toBeVisible();
+        await expectNoViolations(page, `/dashboard loading state (${theme})`);
+    });
+
+    test(`Dashboard zero-boards empty state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await page.route('**/api/boards', (route) => route.fulfill({ json: { boards: [] } }));
+
+        await page.goto('/dashboard');
+        await applyThemeClass(page, theme);
+        await expect(page.getByText('Aún no tienes retrospectivas')).toBeVisible({ timeout: 15_000 });
+        await expectNoViolations(page, `/dashboard empty state (${theme})`);
+    });
+
+    test(`Dashboard no-results state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        const createRes = await page.request.post('/api/boards', {
+            data: { templateId: 'default', title: `A11y NoResults Board ${theme}`, locale: 'es' },
+        });
+        expect(createRes.ok()).toBeTruthy();
+
+        await page.goto('/dashboard');
+        await applyThemeClass(page, theme);
+        await page.getByPlaceholder(/buscar|search/i).fill('this matches absolutely nothing at all');
+        await expect(page.getByText('No se encontraron retrospectivas que coincidan con tu búsqueda')).toBeVisible({
+            timeout: 15_000,
+        });
+        await expectNoViolations(page, `/dashboard no-results state (${theme})`);
     });
 }
 

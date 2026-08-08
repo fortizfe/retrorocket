@@ -158,7 +158,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                         <Button
                             type="submit"
                             disabled={!boardId.trim() || isJoining}
-                            className="flex-1 bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
+                            className="flex-1"
                         >
                             {isJoining ? t('dashboard.joinModal.joining') : t('dashboard.joinModal.join')}
                         </Button>

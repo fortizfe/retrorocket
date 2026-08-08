@@ -10,6 +10,7 @@ import * as backendBoardsClient from '@/features/dashboard/services/backendBoard
 vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        header: ({ children, ...props }: any) => <header {...props}>{children}</header>,
         button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
     },
     // A detectable marker (not a bare passthrough) so tests can assert the board
@@ -64,12 +65,15 @@ vi.mock('@/features/auth/components/AuthWrapper', () => ({
     default: ({ children }: any) => <div data-testid="auth-wrapper">{children}</div>,
 }));
 
-vi.mock('@/features/dashboard/components/BoardCard', () => ({
+// BoardRow has its own dedicated unit test (BoardRow.test.tsx); here it's
+// stubbed so Dashboard's own orchestration (search/filter/sort/pagination
+// wiring) is what's under test, not BoardRow's internals.
+vi.mock('@/features/dashboard/components/BoardRow', () => ({
     default: ({ board }: any) => (
-        <div data-testid="board-card">
+        <li data-testid="board-row">
             <h3>{board.title}</h3>
             <p>{board.description}</p>
-        </div>
+        </li>
     ),
 }));
 
@@ -133,6 +137,19 @@ const renderWithProviders = (component: React.ReactElement) => {
         </BrowserRouter>
     );
 };
+
+function makeBoard(overrides: Partial<backendBoardsClient.BoardSummary> & { id: string; title: string }) {
+    return {
+        description: '',
+        createdAt: new Date('2023-01-01'),
+        updatedAt: new Date('2023-01-02'),
+        participantCount: 1,
+        isActive: true,
+        createdBy: 'test-user-id',
+        isCreator: true,
+        ...overrides,
+    } as backendBoardsClient.BoardSummary;
+}
 
 describe('DashboardPage', () => {
     beforeEach(() => {
@@ -280,41 +297,146 @@ describe('DashboardPage', () => {
         });
     });
 
-    describe('Exit animation boundary (design audit finding, spec 028)', () => {
-        it('wraps the board grid in AnimatePresence, so a removed board can exit-animate instead of vanishing instantly', async () => {
-            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce([
-                {
-                    id: 'board-1',
-                    title: 'First board',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    participantCount: 1,
-                    isActive: true,
-                    createdBy: 'test-user-id',
-                    isCreator: true,
-                },
-                {
-                    id: 'board-2',
-                    title: 'Second board',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    participantCount: 2,
-                    isActive: true,
-                    createdBy: 'test-user-id',
-                    isCreator: true,
-                },
-            ] as any);
+    it('displays a visible, non-silent error state when the board list fails to load (FR-014)', async () => {
+        vi.mocked(backendBoardsClient.listBoards).mockRejectedValueOnce(new Error('network down'));
+
+        renderWithProviders(<DashboardPage />);
+
+        await waitFor(() => {
+            expect(screen.getByRole('alert')).toBeInTheDocument();
+            expect(screen.getByText('dashboard.error.title')).toBeInTheDocument();
+        });
+    });
+
+    describe('Reachability regardless of board count (FR-012 — corrects the pre-existing grid-pagination defect)', () => {
+        it('renders pagination — and every board stays reachable through it — whenever there are more boards than fit on one page', async () => {
+            // The pre-redesign defect: pagination only rendered in "list" view
+            // mode, so boards past page 1 were permanently unreachable in the
+            // default "grid" view. Direction B has a single layout with no
+            // view-mode branch at all, so this is structurally impossible to
+            // reintroduce — this test guards that invariant, not a toggle.
+            const manyBoards = Array.from({ length: 25 }, (_, i) =>
+                makeBoard({ id: `board-${i}`, title: `Board ${String(i).padStart(2, '0')}` })
+            );
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(manyBoards);
 
             renderWithProviders(<DashboardPage />);
 
-            const boardCards = await screen.findAllByTestId('board-card');
-            expect(boardCards).toHaveLength(2);
+            await waitFor(() => {
+                expect(screen.getAllByTestId('board-row')).toHaveLength(10); // default page size
+            });
+
+            // The 25th board (index 24) is on page 3 — reach it via pagination,
+            // proving it isn't permanently hidden behind unreachable UI.
+            expect(screen.queryByText('Board 24')).not.toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: '3' }));
+
+            await waitFor(() => {
+                expect(screen.getByText('Board 24')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Search, filter, and sort (FR-009, FR-010, FR-011)', () => {
+        const boards = [
+            makeBoard({ id: '1', title: 'Sprint 12 Retro', description: 'alpha team', isCreator: true, createdAt: new Date('2023-01-03') }),
+            makeBoard({ id: '2', title: 'Q1 Planning', description: 'roadmap', isCreator: true, createdAt: new Date('2023-01-01') }),
+            makeBoard({ id: '3', title: 'Bug Bash Retro', description: 'alpha bugs', isCreator: false, createdAt: new Date('2023-01-02') }),
+        ];
+
+        it('lists every board with live per-scope counts', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+
+            await waitFor(() => {
+                expect(screen.getAllByTestId('board-row')).toHaveLength(3);
+            });
+            expect(screen.getByText('(3)')).toBeInTheDocument(); // all
+            expect(screen.getByText('(2)')).toBeInTheDocument(); // created
+            expect(screen.getByText('(1)')).toBeInTheDocument(); // joined
+        });
+
+        it('narrows the list when searching by title/description substring', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            fireEvent.change(screen.getByLabelText('dashboard.controls.filterPlaceholder'), {
+                target: { value: 'roadmap' },
+            });
+
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows).toHaveLength(1);
+                expect(rows[0]).toHaveTextContent('Q1 Planning');
+            });
+        });
+
+        it('filters by scope when a segmented option is selected', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            fireEvent.click(screen.getByText('(1)')); // "Joined" scope option
+
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows).toHaveLength(1);
+                expect(rows[0]).toHaveTextContent('Bug Bash Retro');
+            });
+        });
+
+        it('shows a distinct no-results state (not the zero-boards empty state) when search matches nothing', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            fireEvent.change(screen.getByLabelText('dashboard.controls.filterPlaceholder'), {
+                target: { value: 'nothing matches this' },
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText('dashboard.controls.noResults')).toBeInTheDocument();
+            });
+            expect(screen.queryByText('dashboard.noBoards')).not.toBeInTheDocument();
+        });
+
+        it('sorts by name and toggles direction on repeat selection', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            fireEvent.click(screen.getByTitle('dashboard.controls.sortByName'));
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows[0]).toHaveTextContent('Bug Bash Retro'); // ascending: B < Q < S
+            });
+
+            fireEvent.click(screen.getByTitle('dashboard.controls.sortByName'));
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows[0]).toHaveTextContent('Sprint 12 Retro'); // descending
+            });
+        });
+    });
+
+    describe('Exit animation boundary (design audit finding, spec 028)', () => {
+        it('wraps the board list in AnimatePresence, so a removed board can exit-animate instead of vanishing instantly', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce([
+                makeBoard({ id: 'board-1', title: 'First board' }),
+                makeBoard({ id: 'board-2', title: 'Second board', participantCount: 2 }),
+            ]);
+
+            renderWithProviders(<DashboardPage />);
+
+            const boardRows = await screen.findAllByTestId('board-row');
+            expect(boardRows).toHaveLength(2);
 
             const animatePresenceInstances = screen.getAllByTestId('animate-presence');
-            const gridPresence = animatePresenceInstances.find((el) =>
-                el.contains(boardCards[0]) && el.contains(boardCards[1])
+            const listPresence = animatePresenceInstances.find((el) =>
+                el.contains(boardRows[0]) && el.contains(boardRows[1])
             );
-            expect(gridPresence).toBeTruthy();
+            expect(listPresence).toBeTruthy();
         });
     });
 });

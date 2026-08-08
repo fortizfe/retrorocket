@@ -1,205 +1,179 @@
-import React from 'react';
-import { Search, SortAsc, SortDesc, Grid, List, X, Calendar, Type } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Search, X, Type, Calendar, SortAsc, SortDesc } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import Button from '@/lib/components/ui/Button';
+import clsx from 'clsx';
+import Input from '@/lib/components/ui/Input';
+import type { ScopeFilter, SortKey, SortDirection, BoardScopeCounts } from '@/features/dashboard/hooks/useBoardListQuery';
 
-export type SortBy = 'name' | 'date';
-export type SortOrder = 'asc' | 'desc';
-export type ViewMode = 'grid' | 'list';
-export type FilterBy = 'all' | 'created' | 'joined';
+/**
+ * Search / scope-filter / sort toolbar for the "Mis Tableros" dashboard
+ * (spec 031, selected Direction B — "Structured Table"). The scope filter
+ * is a real `role="radiogroup"`/`role="radio"` segmented control,
+ * arrow-key navigable, rather than a set of plain buttons — Direction B's
+ * distinguishing choice per data-model.md. There is no grid/list view-mode
+ * toggle: this direction has a single adaptive layout (FR-002-FR-011).
+ */
 
-interface BoardControlsBarProps {
-    sortBy: SortBy;
-    sortOrder: SortOrder;
-    onSortChange: (sortBy: SortBy, sortOrder: SortOrder) => void;
-    filterBy: FilterBy;
-    onFilterChange: (filterBy: FilterBy) => void;
+export interface BoardControlsBarProps {
     searchQuery: string;
     onSearchChange: (query: string) => void;
-    viewMode: ViewMode;
-    onViewModeChange: (mode: ViewMode) => void;
-    totalCount: number;
-    filteredCount: number;
-    createdCount?: number;
-    joinedCount?: number;
+    scopeFilter: ScopeFilter;
+    onScopeFilterChange: (filter: ScopeFilter) => void;
+    sortKey: SortKey;
+    sortDirection: SortDirection;
+    onSortChange: (sortKey: SortKey, sortDirection: SortDirection) => void;
+    counts: BoardScopeCounts;
 }
 
+const SCOPE_OPTIONS: { value: ScopeFilter; labelKey: string }[] = [
+    { value: 'all', labelKey: 'dashboard.controls.showAll' },
+    { value: 'created', labelKey: 'dashboard.controls.showCreated' },
+    { value: 'joined', labelKey: 'dashboard.controls.showJoined' },
+];
+
 const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
-    sortBy,
-    sortOrder,
-    onSortChange,
-    filterBy,
-    onFilterChange,
     searchQuery,
     onSearchChange,
-    viewMode,
-    onViewModeChange,
-    totalCount,
-    filteredCount,
-    createdCount = 0,
-    joinedCount = 0
+    scopeFilter,
+    onScopeFilterChange,
+    sortKey,
+    sortDirection,
+    onSortChange,
+    counts,
 }) => {
     const { t } = useTranslation();
+    const segmentRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-    const handleClearSearch = () => {
-        onSearchChange('');
-    };
-
-    const handleSortClick = (newSortBy: SortBy) => {
-        if (sortBy === newSortBy) {
-            // Si es el mismo campo, cambia el orden
-            const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            onSortChange(newSortBy, newOrder);
+    const handleSortClick = (key: SortKey) => {
+        if (sortKey === key) {
+            onSortChange(key, sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
-            // Si es un campo diferente, comienza con ascendente
-            onSortChange(newSortBy, 'asc');
+            onSortChange(key, 'asc');
         }
     };
 
-    const getSortIcon = (field: SortBy) => {
-        if (sortBy !== field) {
-            return null; // No mostrar icono si no está activo
+    const handleSegmentKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, current: ScopeFilter) => {
+        const idx = SCOPE_OPTIONS.findIndex((o) => o.value === current);
+        let nextIdx = idx;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            nextIdx = (idx + 1) % SCOPE_OPTIONS.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            nextIdx = (idx - 1 + SCOPE_OPTIONS.length) % SCOPE_OPTIONS.length;
+        } else {
+            return;
         }
-        return sortOrder === 'asc' ? (
-            <SortAsc className="h-3 w-3 ml-1" />
-        ) : (
-            <SortDesc className="h-3 w-3 ml-1" />
-        );
+        event.preventDefault();
+        const next = SCOPE_OPTIONS[nextIdx].value;
+        onScopeFilterChange(next);
+        requestAnimationFrame(() => segmentRefs.current[nextIdx]?.focus());
     };
+
+    const countFor = (scope: ScopeFilter) =>
+        scope === 'all' ? counts.all : scope === 'created' ? counts.created : counts.joined;
 
     return (
-        <div className="bg-surface-raised rounded-lg p-4 mb-6 shadow-sm border border-border-default">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                {/* Left side - Search and Sort */}
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-                    {/* Search */}
-                    <div className="relative flex-1 sm:max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
-                        <input
-                            type="text"
-                            placeholder={t('dashboard.controls.filterPlaceholder')}
-                            value={searchQuery}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-10 pr-10 py-2 border border-border-strong rounded-md 
-                                     bg-surface-raised text-text-primary
-                                     placeholder-text-muted
-                                     focus:ring-2 focus:ring-focus focus:border-transparent
-                                     transition-colors duration-200"
-                        />
-                        {searchQuery && (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border-default bg-surface-raised/80 p-3 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <Input
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    placeholder={t('dashboard.controls.filterPlaceholder')}
+                    aria-label={t('dashboard.controls.filterPlaceholder')}
+                    className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                    <button
+                        type="button"
+                        onClick={() => onSearchChange('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                        title={t('dashboard.controls.clearFilter')}
+                        aria-label={t('dashboard.controls.clearFilter')}
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+                {/* Segmented control — real role="radiogroup"/role="radio", arrow-key navigable */}
+                <div
+                    role="radiogroup"
+                    aria-label={t('dashboard.table.scopeFilterLabel')}
+                    className="inline-flex gap-1 rounded-lg border border-border-default bg-surface p-1"
+                >
+                    {SCOPE_OPTIONS.map((opt, idx) => {
+                        const checked = scopeFilter === opt.value;
+                        return (
                             <button
-                                onClick={handleClearSearch}
-                                title={t('dashboard.controls.clearFilter')}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                                key={opt.value}
+                                ref={(el) => {
+                                    segmentRefs.current[idx] = el;
+                                }}
+                                type="button"
+                                role="radio"
+                                aria-checked={checked}
+                                tabIndex={checked ? 0 : -1}
+                                onClick={() => onScopeFilterChange(opt.value)}
+                                onKeyDown={(e) => handleSegmentKeyDown(e, opt.value)}
+                                className={clsx(
+                                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:text-sm',
+                                    checked
+                                        ? 'bg-action text-text-inverse shadow-sm'
+                                        : 'text-text-secondary hover:bg-surface-raised'
+                                )}
                             >
-                                <X className="h-4 w-4" />
+                                {t(opt.labelKey)}{' '}
+                                <span className={clsx('tabular-nums', checked ? 'text-text-inverse/80' : 'text-text-muted')}>
+                                    ({countFor(opt.value)})
+                                </span>
                             </button>
-                        )}
-                    </div>
-
-                    {/* Filter by Type */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-text-secondary whitespace-nowrap">
-                            {t('dashboard.controls.filterBy')}
-                        </span>
-                        <div className="flex bg-surface rounded-md p-1">
-                            <Button
-                                variant={filterBy === 'all' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => onFilterChange('all')}
-                                className="px-3 py-1 text-xs"
-                            >
-                                {t('dashboard.controls.showAll')}
-                                <span className="ml-1 text-xs">({totalCount})</span>
-                            </Button>
-                            <Button
-                                variant={filterBy === 'created' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => onFilterChange('created')}
-                                className="px-3 py-1 text-xs"
-                            >
-                                {t('dashboard.controls.showCreated')}
-                                <span className="ml-1 text-xs">({createdCount})</span>
-                            </Button>
-                            <Button
-                                variant={filterBy === 'joined' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => onFilterChange('joined')}
-                                className="px-3 py-1 text-xs"
-                            >
-                                {t('dashboard.controls.showJoined')}
-                                <span className="ml-1 text-xs">({joinedCount})</span>
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Sort Controls */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-text-secondary whitespace-nowrap">
-                            {t('dashboard.controls.sortBy')}
-                        </span>
-                        <div className="flex bg-surface rounded-md p-1">
-                            <Button
-                                variant={sortBy === 'name' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleSortClick('name')}
-                                className="px-3 py-1 text-xs flex items-center"
-                                title={t('dashboard.controls.sortByName')}
-                            >
-                                <Type className="h-3 w-3 mr-1" />
-                                {t('dashboard.controls.sortByName')}
-                                {getSortIcon('name')}
-                            </Button>
-                            <Button
-                                variant={sortBy === 'date' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => handleSortClick('date')}
-                                className="px-3 py-1 text-xs flex items-center"
-                                title={t('dashboard.controls.sortByDate')}
-                            >
-                                <Calendar className="h-3 w-3 mr-1" />
-                                {t('dashboard.controls.sortByDate')}
-                                {getSortIcon('date')}
-                            </Button>
-                        </div>
-                    </div>
+                        );
+                    })}
                 </div>
 
-                {/* Right side - View Toggle and Results Count */}
-                <div className="flex items-center gap-4">
-                    {/* Results count */}
-                    {searchQuery && (
-                        <span className="text-sm text-text-secondary whitespace-nowrap">
-                            {filteredCount} de {totalCount}
-                        </span>
-                    )}
-
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-text-secondary whitespace-nowrap">
-                            {t('dashboard.controls.viewMode')}
-                        </span>
-                        <div className="flex bg-surface rounded-md p-1">
-                            <Button
-                                variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => onViewModeChange('grid')}
-                                className="px-3 py-1 text-xs"
-                            >
-                                <Grid className="h-3 w-3 mr-1" />
-                                {t('dashboard.controls.gridView')}
-                            </Button>
-                            <Button
-                                variant={viewMode === 'list' ? 'primary' : 'ghost'}
-                                size="sm"
-                                onClick={() => onViewModeChange('list')}
-                                className="px-3 py-1 text-xs"
-                            >
-                                <List className="h-3 w-3 mr-1" />
-                                {t('dashboard.controls.listView')}
-                            </Button>
-                        </div>
-                    </div>
+                {/* Sort controls */}
+                <div className="inline-flex items-center gap-1 rounded-lg border border-border-default bg-surface p-1">
+                    <button
+                        type="button"
+                        onClick={() => handleSortClick('name')}
+                        className={clsx(
+                            'inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:text-sm',
+                            sortKey === 'name'
+                                ? 'bg-action text-text-inverse shadow-sm'
+                                : 'text-text-secondary hover:bg-surface-raised'
+                        )}
+                        title={t('dashboard.controls.sortByName')}
+                    >
+                        <Type className="h-3.5 w-3.5" />
+                        {t('dashboard.controls.sortByName')}
+                        {sortKey === 'name' &&
+                            (sortDirection === 'asc' ? (
+                                <SortAsc className="h-3.5 w-3.5" />
+                            ) : (
+                                <SortDesc className="h-3.5 w-3.5" />
+                            ))}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleSortClick('createdAt')}
+                        className={clsx(
+                            'inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:text-sm',
+                            sortKey === 'createdAt'
+                                ? 'bg-action text-text-inverse shadow-sm'
+                                : 'text-text-secondary hover:bg-surface-raised'
+                        )}
+                        title={t('dashboard.controls.sortByDate')}
+                    >
+                        <Calendar className="h-3.5 w-3.5" />
+                        {t('dashboard.controls.sortByDate')}
+                        {sortKey === 'createdAt' &&
+                            (sortDirection === 'asc' ? (
+                                <SortAsc className="h-3.5 w-3.5" />
+                            ) : (
+                                <SortDesc className="h-3.5 w-3.5" />
+                            ))}
+                    </button>
                 </div>
             </div>
         </div>
