@@ -43,16 +43,21 @@ vi.mock('@/lib/components/ui/Button', () => ({
 }));
 
 vi.mock('@/lib/components/ui/TextareaWithEmoji', () => ({
-    default: ({ value, onChange, onFocus, onBlur, placeholder, ...props }: any) => (
-        <textarea
-            data-testid="textarea-with-emoji"
-            value={value}
-            onChange={onChange}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            placeholder={placeholder}
-            {...props}
-        />
+    // forwardRef (matching the real component) so GroupableColumn's ref-based focus
+    // fix (research.md §4) has a real DOM node to call .focus() on in tests.
+    default: React.forwardRef<HTMLTextAreaElement, any>(
+        ({ value, onChange, onFocus, onBlur, placeholder, ...props }, ref) => (
+            <textarea
+                ref={ref}
+                data-testid="textarea-with-emoji"
+                value={value}
+                onChange={onChange}
+                onFocus={onFocus}
+                onBlur={onBlur}
+                placeholder={placeholder}
+                {...props}
+            />
+        )
     ),
 }));
 
@@ -132,7 +137,7 @@ vi.mock('@/features/boards/clustering/components/GroupedCardList', () => ({
 // Mock contexts and hooks
 const mockGetTypingUsersForColumn = vi.fn<(columnId: string) => any[]>(() => []);
 
-vi.mock('@/features/boards/retrospective/contexts/TypingProvider', () => ({
+vi.mock('@/features/boards/retrospective/contexts/useTypingContext', () => ({
     useTypingContext: () => ({
         startTyping: vi.fn(),
         stopTyping: vi.fn(),
@@ -288,6 +293,19 @@ describe('GroupableColumn', () => {
 
             expect(screen.getByTestId('textarea-with-emoji')).toBeInTheDocument();
             expect(screen.getByTestId('color-picker')).toBeInTheDocument();
+        });
+
+        it('should focus the new-card textarea when entering create mode', async () => {
+            const user = userEvent.setup();
+            render(<GroupableColumn {...defaultProps} />);
+
+            const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
+            await user.click(addButton);
+
+            const textarea = screen.getByTestId('textarea-with-emoji');
+            await waitFor(() => {
+                expect(textarea).toHaveFocus();
+            });
         });
 
         it('should show cancel and submit buttons in create mode', async () => {

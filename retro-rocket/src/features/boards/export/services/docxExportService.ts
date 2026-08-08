@@ -8,13 +8,7 @@ import {
     ShadingType,
     Header,
     Footer,
-    PageNumber,
-    Table,
-    TableRow,
-    TableCell,
-    BorderStyle,
-    WidthType,
-    UnderlineType
+    PageNumber
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { Retrospective } from '@/features/boards/types/retrospective';
@@ -24,7 +18,7 @@ import { ActionItem } from '@/features/boards/types/actionItem';
 import { Participant } from '@/features/boards/types/participant';
 import { SentimentResult } from '@/features/boards/types/sentiment';
 import { TeamMoodReport } from '@/features/boards/types/teamMood';
-import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
+import { getExportColumns, getExportColumnOrder, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
 import { getCardColorHex } from '@/lib/utils/cardColors';
 import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 

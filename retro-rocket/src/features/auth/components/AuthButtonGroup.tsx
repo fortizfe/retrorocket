@@ -32,7 +32,7 @@ const getProviderIcon = (provider: AuthProviderType) => {
     }
 };
 
-const getProviderStyles = (providerId: AuthProviderType) => {
+const getProviderStyles = () => {
     // Todos los proveedores usan los mismos estilos base
     return '!bg-surface-raised !text-text-primary border border-border-strong hover:!bg-surface hover:border-info-fg';
 };
@@ -89,7 +89,7 @@ const AuthButtonGroup: React.FC<AuthButtonGroupProps> = ({
                         className={`
               w-full h-12 text-sm font-medium flex items-center justify-center gap-3
               ${provider.available
-                                ? getProviderStyles(provider.id)
+                                ? getProviderStyles()
                                 : 'bg-surface text-text-muted cursor-not-allowed'
                             }
               ${loading ? 'opacity-50' : ''}

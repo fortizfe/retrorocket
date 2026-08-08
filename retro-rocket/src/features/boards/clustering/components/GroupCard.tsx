@@ -13,7 +13,6 @@ interface GroupCardProps {
     onDisbandGroup: (groupId: string) => void;
     onRemoveCardFromGroup: (cardId: string) => void;
     onCardUpdate: (cardId: string, updates: Partial<Card>) => Promise<void>;
-    onCardDelete: (cardId: string) => Promise<void>;
     onCardVote?: (cardId: string, increment: boolean) => Promise<void>;
     onCardLike?: (cardId: string, userId: string, username: string) => Promise<void>;
     onCardReaction?: (cardId: string, userId: string, username: string, emoji: EmojiReaction) => Promise<void>;
@@ -29,7 +28,6 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     onDisbandGroup,
     onRemoveCardFromGroup,
     onCardUpdate,
-    onCardDelete,
     onCardVote,
     onCardLike,
     onCardReaction,

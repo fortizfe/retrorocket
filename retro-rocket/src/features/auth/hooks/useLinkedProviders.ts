@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useUser } from '@/lib/contexts/useUserContext';
 import { AuthProviderType } from '@/features/auth/types/user';
 
 export interface LinkedProvidersInfo {
@@ -15,7 +15,7 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const refreshLinkedProviders = async (): Promise<void> => {
+    const refreshLinkedProviders = useCallback(async (): Promise<void> => {
         if (!user?.email) return;
 
         setIsLoading(true);
@@ -33,7 +33,7 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user?.email, userProfile?.providers]);
 
     useEffect(() => {
         if (user?.email) {
@@ -42,7 +42,7 @@ export const useLinkedProviders = (): LinkedProvidersInfo => {
             setLinkedProviders([]);
             setError(null);
         }
-    }, [user?.email, userProfile?.providers]);
+    }, [user?.email, userProfile?.providers, refreshLinkedProviders]);
 
     return {
         linkedProviders,
