@@ -1,0 +1,52 @@
+import { createContext, useContext } from 'react';
+import { Card, CardGroup } from '@/features/boards/types/card';
+import { ActionItem } from '@/features/boards/types/actionItem';
+import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
+import { Retrospective } from '@/features/boards/types/retrospective';
+import { Participant } from '@/features/boards/types/participant';
+import type { CountdownTimer, FacilitatorNote } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+
+export interface BoardData {
+    cards: Card[];
+    groups: CardGroup[];
+    actionItems: ActionItem[];
+    columnConfigs: Record<string, DynamicColumnConfig>;
+    isFacilitator: boolean;
+    /** Sourced from RetrospectivePage's useRetrospectiveRealtimeSync (feature 019, US1)
+     * and threaded through here so RetrospectiveTopbar (rendered by the global Header,
+     * a sibling of RetrospectivePage's own component tree) can share the same
+     * backend-mediated data instead of opening its own independent Firestore/WS
+     * subscription for the same board. */
+    retrospective: Retrospective | null;
+    participants: Participant[];
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US5). */
+    timer: CountdownTimer | null;
+    /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US5) —
+     * never another facilitator's notes (FR-013). */
+    myFacilitatorNotes: FacilitatorNote[];
+}
+
+export const EMPTY_BOARD: BoardData = {
+    cards: [],
+    groups: [],
+    actionItems: [],
+    columnConfigs: {},
+    isFacilitator: false,
+    retrospective: null,
+    participants: [],
+    timer: null,
+    myFacilitatorNotes: [],
+};
+
+export const BoardDataContext = createContext<BoardData>(EMPTY_BOARD);
+
+export type BoardDataSetter = (data: BoardData | null) => void;
+export const BoardDataSetterContext = createContext<BoardDataSetter>(() => {});
+
+export function useBoardData(): BoardData {
+    return useContext(BoardDataContext);
+}
+
+export function useBoardDataSetter(): BoardDataSetter {
+    return useContext(BoardDataSetterContext);
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Calendar, LogOut } from 'lucide-react';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import UserProfileForm from '@/features/auth/components/UserProfileForm';

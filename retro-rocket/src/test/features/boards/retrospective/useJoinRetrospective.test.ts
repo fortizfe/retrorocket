@@ -26,7 +26,7 @@ vi.mock('react-hot-toast', () => ({
 const mockUser = { uid: 'uid-1', email: 'test@example.com', displayName: 'Test User' };
 const mockUserProfile = { uid: 'uid-1', displayName: 'Test User', email: 'test@example.com' };
 
-vi.mock('@/lib/contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/useUserContext', () => ({
     useUser: () => ({ user: mockUser, userProfile: mockUserProfile }),
 }));
 

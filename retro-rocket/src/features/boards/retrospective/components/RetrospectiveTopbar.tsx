@@ -11,7 +11,7 @@ import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/com
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useSentimentContext } from '@/features/boards/sentiment';
-import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
+import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
 const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospectiveId }) => {
     const { id: paramId } = useParams<{ id: string }>();

@@ -15,7 +15,9 @@ const SRC = path.join(REPO_ROOT, 'src');
 const PROFILE_FILES = [
     path.join(SRC, 'pages/Profile.tsx'),
     path.join(SRC, 'features/auth'),
-    path.join(SRC, 'lib/contexts/UserContext.tsx'),
+    // Directory, not a single file: covers UserContext.tsx (the Provider) and
+    // useUserContext.ts (the hooks split out of it for react-refresh compliance).
+    path.join(SRC, 'lib/contexts'),
 ];
 
 function profileSourceFiles(): string[] {

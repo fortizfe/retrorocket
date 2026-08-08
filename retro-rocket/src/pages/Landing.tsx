@@ -8,7 +8,7 @@ import {
     Play, ArrowRight,
     Download, CheckCircle
 } from 'lucide-react';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import AuthButtonGroup from '@/features/auth/components/AuthButtonGroup';
 import UserProfileForm from '@/features/auth/components/UserProfileForm';

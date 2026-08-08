@@ -13,7 +13,7 @@ const mockUpdateDisplayName = vi.fn().mockResolvedValue(undefined);
 let mockUser: { uid: string } | null = null;
 let mockUserProfile: { displayName: string } | null = null;
 
-vi.mock('@/lib/contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/useUserContext', () => ({
     useUser: () => ({
         signInWithGoogle: mockSignInWithGoogle,
         signInWithGithub: mockSignInWithGithub,

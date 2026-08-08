@@ -60,7 +60,7 @@ const mockUserProfile = {
     updatedAt: new Date(),
 };
 
-vi.mock('@/lib/contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/useUserContext', () => ({
     useUser: () => ({
         isAuthenticated: true,
         user: mockUser,
@@ -111,7 +111,7 @@ vi.mock('@/lib/components/ui/ThemeMenuToggle', () => ({
 }));
 
 vi.mock('@/lib/components/ui/LanguageMenuList', () => ({
-    default: ({ onClose }: any) => <button data-testid="language-menu">Language</button>
+    default: () => <button data-testid="language-menu">Language</button>
 }));
 
 // Mock framer-motion

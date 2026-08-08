@@ -1,4 +1,4 @@
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 
 /**
  * Hook personalizado que devuelve información completa del usuario actual

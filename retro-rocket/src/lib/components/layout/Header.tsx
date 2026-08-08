@@ -4,9 +4,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, User, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuthContext, useUserProfileContext } from '@/lib/contexts/UserContext';
+import { useAuthContext, useUserProfileContext } from '@/lib/contexts/useUserContext';
 import { APP_NAME } from '@/lib/utils/constants';
-import ThemeToggle from '@/lib/components/ui/ThemeToggle';
 import ThemeMenuToggle from '@/lib/components/ui/ThemeMenuToggle';
 // ...existing imports...
 import LanguageMenuList from '@/lib/components/ui/LanguageMenuList';
