@@ -644,46 +644,34 @@
         "noLimits": "No limits"
       }
     },
-    "features": {
-      "connectTeams": {
-        "title": "Connect teams",
-        "description": "Bring your team together from anywhere to create better solutions together"
-      },
-      "immediateResults": {
-        "title": "Immediate results",
-        "description": "Get valuable insights and action plans in record time"
-      },
-      "easyToAdopt": {
-        "title": "Easy to adopt",
-        "description": "Your team will feel comfortable from the first minute, no learning curve"
-      }
-    },
-    "mainFeatures": {
+    "capabilities": {
       "title": "Everything you need for successful retrospectives",
-      "subtitle": "A complete platform designed by and for agile teams looking to continuously improve",
-      "advancedAuth": {
-        "title": "Advanced Authentication",
-        "description": "Multiple providers with automatic linking. One profile, multiple ways to access."
-      },
-      "realTimeCollab": {
-        "title": "Real-time Collaboration",
-        "description": "See your team's changes instantly. Work together without interruptions."
-      },
-      "cardSystem": {
-        "title": "Complete Card System",
-        "description": "Three structured columns with voting, reactions and customizable colors."
-      },
-      "smartGrouping": {
-        "title": "Smart Grouping",
-        "description": "Drag and drop to organize ideas. Clear visual hierarchy and automatic statistics."
-      },
-      "professionalExport": {
-        "title": "Professional Export",
-        "description": "PDF and DOCX optimized for sharing with stakeholders and archiving results."
-      },
-      "modernUI": {
-        "title": "Modern Experience",
-        "description": "Responsive design, smooth animations and dark mode. Works on any device."
+      "subtitle": "A complete platform built for agile teams — bring everyone together from anywhere, get valuable insights in record time, and feel at home from the first minute.",
+      "items": {
+        "auth": {
+          "title": "Advanced Authentication",
+          "description": "Multiple providers with automatic linking. One profile, multiple ways to access."
+        },
+        "realTimeCollab": {
+          "title": "Real-time Collaboration",
+          "description": "See your team's changes instantly. Work together without interruptions."
+        },
+        "cardSystem": {
+          "title": "Complete Card System",
+          "description": "Three structured columns with voting, reactions and customizable colors."
+        },
+        "smartGrouping": {
+          "title": "Smart Grouping",
+          "description": "Drag and drop to organize ideas. Clear visual hierarchy and automatic statistics."
+        },
+        "export": {
+          "title": "Professional Export",
+          "description": "PDF and DOCX optimized for sharing with stakeholders and archiving results."
+        },
+        "modernUI": {
+          "title": "Modern Experience",
+          "description": "Responsive design, smooth animations and dark mode. Works on any device."
+        }
       }
     },
     "howItWorks": {
@@ -692,20 +680,17 @@
       "step1": {
         "title": "Sign in and create",
         "description": "Access with Google or GitHub in seconds. Create a new retrospective with title and description.",
-        "time": "Less than 30 seconds to start",
-        "sharing": "Share the link with your team and you're ready!"
+        "time": "Less than 30 seconds to start"
       },
       "step2": {
         "title": "Collaborate in real time",
         "description": "Add cards in the three columns, vote on favorite ideas and group similar concepts.",
-        "tip": "Edit only your own cards",
-        "actions": "Vote, react and organize ideas visually"
+        "tip": "Edit only your own cards"
       },
       "step3": {
         "title": "Export and act",
         "description": "Generate professional reports in PDF or Word with complete statistics and action plan.",
-        "tip": "Advanced export configuration",
-        "sharing": "Share results with stakeholders"
+        "tip": "Advanced export configuration"
       }
     },
     "technology": {
