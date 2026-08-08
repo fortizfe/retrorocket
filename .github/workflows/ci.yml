@@ -19,13 +19,13 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:javascript-typescript"
 
@@ -37,9 +37,9 @@ jobs:
       run:
         working-directory: retro-rocket
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -71,9 +71,9 @@ jobs:
       run:
         working-directory: retro-rocket
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -81,7 +81,7 @@ jobs:
 
       # firebase-tools' Firestore Emulator requires a JDK (21+); ubuntu-latest runners
       # don't ship one new enough by default.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -117,9 +117,9 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -175,7 +175,7 @@ jobs:
     env:
       CACHE_KEY: preview-domain-pr-${{ github.event.pull_request.number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Restore previously-authorized domain for this PR
         id: restore
@@ -184,7 +184,7 @@ jobs:
           path: .preview-domain
           key: ${{ env.CACHE_KEY }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -240,7 +240,7 @@ jobs:
     env:
       CACHE_KEY: preview-domain-pr-${{ github.event.pull_request.number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Read-only: a PR closed without ever having a successful preview deploy has no
       # cache entry, and that's a valid no-op (spec Acceptance Scenario 2), not an error.
@@ -251,7 +251,7 @@ jobs:
           path: .preview-domain
           key: ${{ env.CACHE_KEY }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.restore.outputs.cache-hit == 'true'
         with:
           node-version: 22
@@ -290,9 +290,9 @@ jobs:
       group: firebase-staging-authorized-domains
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -337,9 +337,9 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -380,12 +380,12 @@ jobs:
       # GITHUB_TOKEN pushes as the github-actions[bot] app, which the ruleset can't
       # exempt on a personal (non-org) repo — GitHub only allows Integration-type
       # bypass actors when the app is installed at the organization level.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

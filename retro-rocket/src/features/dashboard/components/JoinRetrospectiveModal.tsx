@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, X, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/hooks/useLanguage';
@@ -18,6 +18,15 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
     const { t } = useLanguage();
     const [boardId, setBoardId] = useState('');
     const { isJoining, error, joinByIdAndNavigate, clearError } = useJoinRetrospective();
+    const boardIdInputRef = useRef<HTMLInputElement>(null);
+
+    // Focus the board-id input when the modal mounts its content, not via the
+    // autoFocus prop (jsx-a11y/no-autofocus) — content only mounts when isOpen.
+    useEffect(() => {
+        if (isOpen) {
+            boardIdInputRef.current?.focus();
+        }
+    }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -106,6 +115,7 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             {t('dashboard.joinModal.boardIdLabel')}
                         </label>
                         <Input
+                            ref={boardIdInputRef}
                             id="boardId"
                             type="text"
                             value={boardId}
@@ -113,7 +123,6 @@ const JoinRetrospectiveModal: React.FC<JoinRetrospectiveModalProps> = ({
                             placeholder={t('dashboard.joinModal.boardIdPlaceholder')}
                             required
                             className="w-full"
-                            autoFocus
                             disabled={isJoining}
                         />
                         <p className="text-xs text-text-muted mt-1">

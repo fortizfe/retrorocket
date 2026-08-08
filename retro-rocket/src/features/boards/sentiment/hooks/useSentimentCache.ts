@@ -19,10 +19,11 @@ export function useSentimentCache(): SentimentCacheReturn {
 
     useEffect(() => {
         const timers = debounceTimers.current;
+        const hashCache = contentHashCache.current;
         return () => {
             timers.forEach(clearTimeout);
             timers.clear();
-            contentHashCache.current.clear();
+            hashCache.clear();
         };
     }, []);
 

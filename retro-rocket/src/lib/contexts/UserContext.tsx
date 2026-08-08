@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, ReactNode, useMemo } from 'react';
 import { signOutUser } from '@/lib/services/firebase';
 import { fetchProfile, updateDisplayName as backendUpdateDisplayName } from '@/features/auth/services/backendProfileClient';
 import {
@@ -6,10 +6,13 @@ import {
     logout as backendLogout,
     startLogin,
 } from '@/features/auth/services/backendAuthClient';
-import { User, UserProfile } from '@/features/auth/types/user';
 import toast from 'react-hot-toast';
-
-// ─── Focused context types ────────────────────────────────────────────────────
+import {
+    AuthContext,
+    AuthContextType,
+    UserProfileContext,
+    UserProfileContextType,
+} from '@/lib/contexts/useUserContext';
 
 interface AuthCoreState {
     loading: boolean;
@@ -17,52 +20,10 @@ interface AuthCoreState {
     isAuthenticated: boolean;
 }
 
-interface AuthContextType extends AuthCoreState {
-    signInWithGoogle: (returnTo?: string) => Promise<void>;
-    signInWithGithub: (returnTo?: string) => Promise<void>;
-    signOut: () => Promise<void>;
-}
-
 interface UserDataState {
-    user: User | null;
-    userProfile: UserProfile | null;
+    user: UserProfileContextType['user'];
+    userProfile: UserProfileContextType['userProfile'];
 }
-
-interface UserProfileContextType extends UserDataState {
-    updateDisplayName: (displayName: string) => Promise<void>;
-    refreshUserProfile: () => Promise<void>;
-}
-
-// Backward-compat merged type (keeps all existing consumers working)
-interface UserContextType extends AuthContextType, UserProfileContextType {}
-
-// ─── Contexts ─────────────────────────────────────────────────────────────────
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
-
-// ─── Focused hooks ────────────────────────────────────────────────────────────
-
-export const useAuthContext = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error('useAuthContext must be used within a UserProvider');
-    return context;
-};
-
-export const useUserProfileContext = (): UserProfileContextType => {
-    const context = useContext(UserProfileContext);
-    if (!context) throw new Error('useUserProfileContext must be used within a UserProvider');
-    return context;
-};
-
-// Backward-compat hook — existing consumers need zero changes
-export const useUser = (): UserContextType => {
-    const auth = useAuthContext();
-    const profile = useUserProfileContext();
-    return useMemo(() => ({ ...auth, ...profile }), [auth, profile]);
-};
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 interface UserProviderProps {
     children: ReactNode;

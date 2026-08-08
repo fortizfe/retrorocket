@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { GripVertical } from 'lucide-react';
 import Card from '@/lib/components/ui/Card';
@@ -16,7 +16,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
 
-import { useBoardData } from '@/features/boards/retrospective/contexts/BoardDataContext';
+import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 import { groupReactions, hasUserLiked, resolveDisplayName } from '@/lib/utils/cardHelpers';
 import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
 import type { DraggableAttributes } from '@dnd-kit/core';
@@ -68,6 +68,15 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
     const [isDeleting, setIsDeleting] = useState(false);
+    const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Focus the textarea when it mounts in response to an explicit user action
+    // (clicking edit), not via the autoFocus prop (jsx-a11y/no-autofocus).
+    useEffect(() => {
+        if (isEditing) {
+            editTextareaRef.current?.focus();
+        }
+    }, [isEditing]);
     const { enabled, ready, getSentiment, shouldShowBadge, overrideSentiment } = useSentimentContext();
     const { isFacilitator } = useBoardData();
     const sentimentResult = (enabled && ready) ? getSentiment(card.id) : undefined;
@@ -244,11 +253,11 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     <div className="mb-1">
                         {isEditing ? (
                             <TextareaWithEmoji
+                                ref={editTextareaRef}
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
                                 placeholder={t('retrospective.card.editPlaceholder')}
                                 rows={2}
-                                autoFocus
                                 className="w-full text-sm"
                                 showEmojiPicker={true}
                             />
@@ -261,7 +270,6 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2 flex-wrap">
                             <LikeButton
-                                cardId={card.id}
                                 likesCount={likesCount}
                                 isLiked={isLiked}
                                 onToggleLike={handleToggleLike}

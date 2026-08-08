@@ -136,7 +136,7 @@ export const useColumnGrouping = (retrospectiveId?: string, initialState?: Colum
             }));
             // Clean up the previous state after restoration
             setPreviousStates(prev => {
-                const { [columnId]: removed, ...rest } = prev;
+                const { [columnId]: _removed, ...rest } = prev;
                 return rest;
             });
         } else {

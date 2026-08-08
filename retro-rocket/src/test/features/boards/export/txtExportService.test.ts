@@ -8,7 +8,7 @@ vi.mock('file-saver', () => ({
 }));
 
 // Mock console methods
-const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => { });
+vi.spyOn(console, 'log').mockImplementation(() => { });
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => { });
 
 describe('TxtExportService', () => {

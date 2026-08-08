@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuthContext } from '@/lib/contexts/UserContext';
+import { useAuthContext } from '@/lib/contexts/useUserContext';
 import Loading from '@/lib/components/ui/Loading';
 
 interface AuthWrapperProps {

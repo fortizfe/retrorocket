@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Target, AlertCircle } from 'lucide-react';
 import ActionItemCard from '@/features/boards/retrospective/components/ActionItemCard';
@@ -37,6 +37,15 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     const [newContent, setNewContent] = useState('');
     const [selectedAssignee, setSelectedAssignee] = useState('');
     const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(null);
+    const newActionTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Focus the textarea when it mounts in response to an explicit user action
+    // (clicking add), not via the autoFocus prop (jsx-a11y/no-autofocus).
+    useEffect(() => {
+        if (isCreating) {
+            newActionTextareaRef.current?.focus();
+        }
+    }, [isCreating]);
 
     // Get language context
     const { t } = useLanguage();
@@ -122,12 +131,12 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                 className="space-y-2"
                             >
                                 <textarea
+                                    ref={newActionTextareaRef}
                                     value={newContent}
                                     onChange={(e) => setNewContent(e.target.value)}
                                     placeholder={t('retrospective.actionItems.newAction')}
                                     className="w-full p-2 text-sm border border-warning-fg rounded resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-focus focus:border-transparent"
                                     rows={2}
-                                    autoFocus
                                 />
                                 <div>
                                     <label htmlFor="new-action-assignee" className="block text-xs font-medium text-warning-fg mb-1">

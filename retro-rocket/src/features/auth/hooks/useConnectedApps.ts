@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import { fetchConnectedApps, revokeConnectedApp, type ConnectedApp } from '@/features/auth/services/connectedAppsService';
 
 export interface ConnectedAppsInfo {

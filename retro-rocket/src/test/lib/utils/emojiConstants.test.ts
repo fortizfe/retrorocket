@@ -63,7 +63,7 @@ describe('emojiConstants', () => {
         });
 
         it('should not have excessive duplicate emojis within categories', () => {
-            Object.entries(EMOJI_CATEGORIES).forEach(([categoryName, emojis]) => {
+            Object.entries(EMOJI_CATEGORIES).forEach(([, emojis]) => {
                 const uniqueEmojis = new Set(emojis);
                 // Allow some duplicates but they shouldn't be excessive
                 expect(uniqueEmojis.size).toBeGreaterThanOrEqual(emojis.length * 0.8);

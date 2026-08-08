@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Modal from '@/lib/components/ui/Modal';
@@ -29,11 +29,15 @@ const EditRetrospectiveModal: React.FC<EditRetrospectiveModalProps> = ({
     const [title, setTitle] = useState(board.title);
     const [titleError, setTitleError] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const titleInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             setTitle(board.title);
             setTitleError('');
+            // Focus the title input on open, not via the autoFocus prop
+            // (jsx-a11y/no-autofocus) — the modal only mounts its content when open.
+            titleInputRef.current?.focus();
         }
     }, [isOpen, board]);
 
@@ -75,13 +79,13 @@ const EditRetrospectiveModal: React.FC<EditRetrospectiveModalProps> = ({
         >
             <div className="p-6 space-y-4">
                 <Input
+                    ref={titleInputRef}
                     label={t('dashboard.boardCard.titleLabel')}
                     value={title}
                     onChange={handleTitleChange}
                     placeholder={t('dashboard.boardCard.titlePlaceholder')}
                     error={titleError}
                     disabled={isSaving}
-                    autoFocus
                 />
                 <div className="flex gap-2 justify-end pt-2">
                     <Button variant="outline" size="sm" onClick={onClose} disabled={isSaving}>

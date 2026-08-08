@@ -5,13 +5,13 @@
  */
 
 // ── Providers & context ──────────────────────────────────────────────────────
+export { SentimentStoreProvider } from '@/features/boards/sentiment/contexts/SentimentContext';
 export {
-    SentimentStoreProvider,
     useSentimentContext,
     useSentimentSetter,
     SentimentContext,
     type SentimentContextValue,
-} from '@/features/boards/sentiment/contexts/SentimentContext';
+} from '@/features/boards/sentiment/contexts/useSentimentContext';
 
 // ── Orchestration hooks ──────────────────────────────────────────────────────
 export { useSentiment } from '@/features/boards/sentiment/hooks/useSentiment';

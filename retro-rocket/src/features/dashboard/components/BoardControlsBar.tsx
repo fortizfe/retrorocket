@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, SortAsc, SortDesc, Grid, List, X, Calendar, Type, Filter } from 'lucide-react';
+import { Search, SortAsc, SortDesc, Grid, List, X, Calendar, Type } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/lib/components/ui/Button';
 

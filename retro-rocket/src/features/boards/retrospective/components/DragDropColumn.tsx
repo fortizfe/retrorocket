@@ -48,7 +48,7 @@ interface DragDropColumnProps {
 
 const DragDropColumn: React.FC<DragDropColumnProps> = ({
     cards,
-    column,
+    column: _column,
     onCardUpdate,
     onCardDelete,
     onCardVote,
@@ -97,7 +97,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
         setActiveCard(card || null);
     };
 
-    const handleDragOver = (event: DragOverEvent) => {
+    const handleDragOver = (_event: DragOverEvent) => {
         // Handle dragging between columns if needed
         // For now, we'll focus on reordering within the same column
     };

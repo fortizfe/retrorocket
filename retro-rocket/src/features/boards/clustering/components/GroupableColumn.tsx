@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
@@ -13,7 +13,7 @@ import { GroupCard } from '@/features/boards/clustering/components/GroupCard';
 import { GroupSuggestionModal } from '@/features/boards/clustering/components/GroupSuggestionModal';
 import ColumnHeaderMenu from '@/features/boards/clustering/components/ColumnHeaderMenu';
 import GroupedCardList from '@/features/boards/clustering/components/GroupedCardList';
-import { useTypingContext } from '@/features/boards/retrospective/contexts/TypingProvider';
+import { useTypingContext } from '@/features/boards/retrospective/contexts/useTypingContext';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
@@ -80,6 +80,16 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+    const newCardTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Focus the new-card textarea when the form is mounted in response to an explicit
+    // user action (clicking "Add") — imperative, not the `autoFocus` prop, so it's not
+    // flagged by jsx-a11y/no-autofocus while preserving the same UX (research.md §4).
+    useEffect(() => {
+        if (isCreating) {
+            newCardTextareaRef.current?.focus();
+        }
+    }, [isCreating]);
 
     // Get typing context
     const { startTyping, stopTyping, getTypingUsersForColumn } = useTypingContext();
@@ -104,7 +114,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     // Process ungrouped cards with grouping - using useMemo to trigger re-render when state changes
     const processedUngroupedCards = React.useMemo(() => {
         return processCards(ungroupedCards, column.id, participants);
-    }, [processCards, ungroupedCards, columnState.criteria, column.id, participants]);
+    }, [processCards, ungroupedCards, column.id, participants]);
 
     const handleCreateCard = async () => {
         if (!newCardContent.trim() || !currentUser) {
@@ -290,6 +300,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                 </div>
 
                                 <TextareaWithEmoji
+                                    ref={newCardTextareaRef}
                                     value={newCardContent}
                                     onChange={handleTextareaChange}
                                     onBlur={handleTextareaBlur}
@@ -297,7 +308,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                         defaultValue: t('retrospective.columns.placeholder', { columnTitle: column.title.toLowerCase() })
                                     })}
                                     rows={3}
-                                    autoFocus
                                     className="mb-3 bg-transparent border-none focus:ring-0 resize-none"
                                     showEmojiPicker={true}
                                 />
@@ -353,7 +363,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                     onDisbandGroup={onGroupDisband}
                                     onRemoveCardFromGroup={onCardRemoveFromGroup}
                                     onCardUpdate={onCardUpdate}
-                                    onCardDelete={onCardDelete}
                                     onCardVote={onCardVote}
                                     onCardLike={onCardLike}
                                     onCardReaction={onCardReaction}

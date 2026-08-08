@@ -43,7 +43,7 @@ const mockUserProfile = {
     createdAt: new Date(),
 };
 
-vi.mock('@/lib/contexts/UserContext', () => ({
+vi.mock('@/lib/contexts/useUserContext', () => ({
     useUser: () => ({
         user: mockUser,
         userProfile: mockUserProfile,
@@ -215,6 +215,26 @@ describe('DashboardPage', () => {
         await waitFor(() => {
             expect(listBoards).toHaveBeenCalled();
         });
+    });
+
+    it('loads user boards exactly once on mount, not repeatedly on unrelated re-renders', async () => {
+        // Characterizes the effect's [user] dependency (Dashboard.tsx's loadUserBoards
+        // useEffect) — a naive react-hooks/exhaustive-deps fix that adds the unmemoized
+        // loadUserBoards function itself to the deps array would make it re-run on every
+        // render, since that function gets a new identity each time. This test would fail
+        // on that naive fix (repeated calls) and must keep passing after the real fix
+        // (wrapping loadUserBoards in useCallback([user])).
+        const { listBoards } = await import('@/features/dashboard/services/backendBoardsClient');
+
+        renderWithProviders(<DashboardPage />);
+
+        await waitFor(() => {
+            expect(listBoards).toHaveBeenCalledTimes(1);
+        });
+
+        // Give any spurious extra effect run a chance to fire before asserting it stayed at 1.
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(listBoards).toHaveBeenCalledTimes(1);
     });
 
     it('handles create board form submission', async () => {

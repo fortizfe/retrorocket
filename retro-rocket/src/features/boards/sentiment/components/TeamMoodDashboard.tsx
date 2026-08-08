@@ -27,14 +27,12 @@ interface TeamMoodDashboardProps {
     report: TeamMoodReport;
     hasEnoughData: boolean;
     isAnalyzing: boolean;
-    onRefresh?: () => void;
 }
 
 const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
     report,
     hasEnoughData,
-    isAnalyzing,
-    onRefresh
+    isAnalyzing
 }) => {
     const { t } = useTranslation();
 

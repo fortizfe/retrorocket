@@ -52,7 +52,7 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
 }));
 
 vi.mock('@/features/boards/facilitator/components/FacilitatorMenuTabs', () => ({
-    default: ({ children, onClose, activeTab, onTabChange }: any) => (
+    default: ({ children, onClose, onTabChange }: any) => (
         <div data-testid="facilitator-menu-tabs">
             <button onClick={onClose} data-testid="close-menu">Close</button>
             <button onClick={() => onTabChange?.('controls')} data-testid="controls-tab-button">Controls</button>

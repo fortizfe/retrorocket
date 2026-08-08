@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { joinBoard } from '@/features/dashboard/services/backendBoardsClient';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import toast from 'react-hot-toast';
 
 interface UseJoinRetrospectiveReturn {

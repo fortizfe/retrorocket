@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     StickyNote,
@@ -40,6 +40,22 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
     const [newNoteContent, setNewNoteContent] = useState('');
     const [editingNote, setEditingNote] = useState<EditingNote | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Focus the relevant textarea when it mounts in response to an explicit user
+    // action (clicking "add"/"edit"), not via the autoFocus prop (jsx-a11y/no-autofocus).
+    useEffect(() => {
+        if (isCreating) {
+            newNoteTextareaRef.current?.focus();
+        }
+    }, [isCreating]);
+
+    useEffect(() => {
+        if (editingNote?.id) {
+            editNoteTextareaRef.current?.focus();
+        }
+    }, [editingNote?.id]);
 
     const handleCreateNote = async () => {
         if (!newNoteContent.trim()) return;
@@ -155,12 +171,12 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                                 <span className="text-sm font-medium">{t('notes.creating')}</span>
                             </div>
                             <textarea
+                                ref={newNoteTextareaRef}
                                 value={newNoteContent}
                                 onChange={(e) => setNewNoteContent(e.target.value)}
                                 placeholder={t('retrospective.facilitator.notes.placeholder')}
                                 className="w-full p-3 text-sm border border-warning-fg rounded-lg resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-yellow-500 focus:border-transparent min-h-[80px]"
                                 rows={3}
-                                autoFocus
                             />
                             <div className="flex gap-2">
                                 <Button
@@ -210,12 +226,12 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                                         <span className="text-sm font-medium">{t('notes.editing')}</span>
                                     </div>
                                     <textarea
+                                        ref={editNoteTextareaRef}
                                         value={editingNote.content}
                                         onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
                                         placeholder={t('retrospective.facilitator.notes.editPlaceholder')}
                                         className="w-full p-3 text-sm border border-info-fg rounded-lg resize-none bg-info-bg text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent min-h-[80px]"
                                         rows={3}
-                                        autoFocus
                                     />
                                     <div className="flex gap-2">
                                         <Button

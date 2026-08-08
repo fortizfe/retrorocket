@@ -69,21 +69,23 @@ const MobileColumnNavigation: React.FC<MobileColumnNavigationProps> = ({
         }
     };
 
-    // Keyboard navigation
+    // Keyboard navigation — inlined (rather than depending on goToPrevious/goToNext
+    // directly) so the effect's dependency array only needs the values it actually
+    // reads, matching the same activeIndex/columns.length-driven re-run semantics.
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'ArrowLeft' && activeIndex > 0) {
                 event.preventDefault();
-                goToPrevious();
+                onColumnChange(columns[activeIndex - 1].id);
             } else if (event.key === 'ArrowRight' && activeIndex < columns.length - 1) {
                 event.preventDefault();
-                goToNext();
+                onColumnChange(columns[activeIndex + 1].id);
             }
         };
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [activeIndex, columns.length]);
+    }, [activeIndex, columns, onColumnChange]);
 
     return (
         <div className={`lg:hidden ${className}`}>
@@ -106,7 +108,7 @@ const MobileColumnNavigation: React.FC<MobileColumnNavigationProps> = ({
                     {/* Tab Pills */}
                     <div className="flex-1 flex justify-center">
                         <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 max-w-sm overflow-x-auto">
-                            {columns.map((column, index) => {
+                            {columns.map((column) => {
                                 const isActive = column.id === activeColumnId;
                                 return (
                                     <button

@@ -42,6 +42,11 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('@/lib/contexts/UserContext', () => ({
     UserProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="user-provider">{children}</div>,
+}));
+
+// useUser/useAuthContext/useUserProfileContext now live in a sibling file, split out of
+// UserContext.tsx for react-refresh compliance (fix-github-ci-warnings, 2026-08-08).
+vi.mock('@/lib/contexts/useUserContext', () => ({
     useUser: () => ({
         user: null,
         userProfile: null,

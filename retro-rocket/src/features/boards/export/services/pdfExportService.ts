@@ -16,7 +16,6 @@ import { Participant } from '@/features/boards/types/participant';
 import { SentimentResult } from '@/features/boards/types/sentiment';
 import { TeamMoodReport } from '@/features/boards/types/teamMood';
 import { getExportColumns, getExportColumnOrder, getTemplateName, validateCardsForTemplate } from '@/features/boards/export/utils/exportColumns';
-import { getCardColorHex } from '@/lib/utils/cardColors';
 import { resolveDisplayName } from '@/lib/utils/cardHelpers';
 
 /**

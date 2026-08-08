@@ -32,19 +32,6 @@ vi.mock('@/features/auth/components/AuthWrapper', () => ({
     default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/features/boards/export/components/ExportButtonGroup', () => ({
-    default: () => null,
-}));
-
-vi.mock('@/features/boards/participants/components/index', () => ({
-    ResponsiveParticipantDisplay: () => null,
-}));
-
-vi.mock('@/features/boards/countdown/components/index', () => ({
-    CountdownTimer: () => null,
-    FacilitatorMenu: () => null,
-}));
-
 vi.mock('framer-motion', () => ({
     motion: new Proxy({}, {
         get: (_target, tag: string) =>

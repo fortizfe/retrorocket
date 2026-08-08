@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutGrid, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useUser } from '@/lib/contexts/UserContext';
+import { useUser } from '@/lib/contexts/useUserContext';
 import * as backendBoardsClient from '@/features/dashboard/services/backendBoardsClient';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
 import BoardCard from '@/features/dashboard/components/BoardCard';
@@ -47,9 +47,24 @@ const DashboardPage: React.FC = () => {
 
     const navigate = useNavigate();
 
+    const loadUserBoards = useCallback(async () => {
+        if (!user) return;
+
+        try {
+            setLoading(true);
+            const userBoards = await backendBoardsClient.listBoards();
+            setBoards(userBoards);
+        } catch (error) {
+            console.error('Error loading user boards:', error);
+            toast.error('Error al cargar los tableros');
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         loadUserBoards();
-    }, [user]);
+    }, [loadUserBoards]);
 
     // Reset pagination when search, sort or filter changes
     useEffect(() => {
@@ -122,21 +137,6 @@ const DashboardPage: React.FC = () => {
         const endIndex = startIndex + itemsPerPage;
         return filteredAndSortedBoards.slice(startIndex, endIndex);
     }, [filteredAndSortedBoards, currentPage, itemsPerPage]);
-
-    const loadUserBoards = async () => {
-        if (!user) return;
-
-        try {
-            setLoading(true);
-            const userBoards = await backendBoardsClient.listBoards();
-            setBoards(userBoards);
-        } catch (error) {
-            console.error('Error loading user boards:', error);
-            toast.error('Error al cargar los tableros');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleBoardCreated = (boardId: string) => {
         // Refresh boards list

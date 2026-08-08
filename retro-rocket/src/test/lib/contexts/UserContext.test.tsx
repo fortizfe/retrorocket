@@ -1,12 +1,12 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { UserProvider } from '@/lib/contexts/UserContext';
 import {
-    UserProvider,
     useAuthContext,
     useUserProfileContext,
     useUser,
-} from '@/lib/contexts/UserContext';
+} from '@/lib/contexts/useUserContext';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

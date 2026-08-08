@@ -13,7 +13,7 @@ import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useRetrospectiveColumns, DynamicColumnConfig, type RetrospectiveColumn } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { useBoardGridColumns } from '@/lib/hooks/useBoardGridColumns';
 import { useSentiment, useSentimentSetter } from '@/features/boards/sentiment';
-import { useBoardDataSetter } from '@/features/boards/retrospective/contexts/BoardDataContext';
+import { useBoardDataSetter } from '@/features/boards/retrospective/contexts/useBoardData';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardGroup } from '@/features/boards/types/card';
 import { ActionItem, CreateActionItemInput } from '@/features/boards/types/actionItem';
@@ -72,7 +72,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
     sentimentResults = [],
 }) => {
     // Get language context to trigger re-render when language changes
-    const { t } = useLanguage();
+    const { t: _t } = useLanguage();
 
     // Dynamic columns, derived synchronously from the board state already fetched by
     // RetrospectivePage (021, research.md §2) — falls back to the default column set below.

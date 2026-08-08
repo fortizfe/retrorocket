@@ -73,7 +73,7 @@ vi.mock('@/features/boards/clustering/components/GroupedCardList', () => ({
         return <div data-testid="grouped-card-list">No cards</div>;
     })
 }));// Mock the TypingProvider and hook
-vi.mock('@/features/boards/retrospective/contexts/TypingProvider', () => ({
+vi.mock('@/features/boards/retrospective/contexts/useTypingContext', () => ({
     TypingProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useTypingContext: () => ({
         startTyping: vi.fn(),
@@ -84,7 +84,7 @@ vi.mock('@/features/boards/retrospective/contexts/TypingProvider', () => ({
 }));
 
 // Mock the typing hook separately
-vi.mock('@/features/boards/retrospective/contexts/TypingProvider', () => ({
+vi.mock('@/features/boards/retrospective/contexts/useTypingContext', () => ({
     useTypingContext: () => ({
         startTyping: vi.fn(),
         stopTyping: vi.fn(),

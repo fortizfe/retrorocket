@@ -41,7 +41,7 @@ const ThemeMenuToggle: React.FC<ThemeMenuToggleProps> = ({ className = '' }) => 
         <button
             onClick={toggle}
             aria-pressed={isDark}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
+            className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors ${className}`}
         >
             <div className="w-5 h-5 flex items-center justify-center text-text-muted">
                 {isDark ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-amber-400" />}
