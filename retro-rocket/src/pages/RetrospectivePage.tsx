@@ -48,7 +48,7 @@ const RetrospectivePageContent: React.FC = () => {
     // useRetrospectiveRealtimeSync performs both before resolving (FR-006).
     if (retroLoading || !isReady) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
                 <Loading />
             </div>
         );
@@ -58,7 +58,7 @@ const RetrospectivePageContent: React.FC = () => {
     // transient load error so the copy is accurate about what happened.
     if (notFound) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
                 <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
                     <h2 className="text-xl font-semibold text-text-primary mb-4">
                         {t('retrospectivePage.boardDeleted.title')}
@@ -77,13 +77,13 @@ const RetrospectivePageContent: React.FC = () => {
     // Error state (load failure)
     if (retroError || !retrospective) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
                 <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
                     <h2 className="text-xl font-semibold text-text-primary mb-4">
-                        Retrospectiva no encontrada
+                        {t('retrospectivePage.notFound.title')}
                     </h2>
                     <p className="text-text-secondary mb-6">
-                        No se pudo encontrar la retrospectiva solicitada.
+                        {t('retrospectivePage.notFound.message')}
                     </p>
                     <Button onClick={() => navigate('/dashboard')}>
                         {t('retrospectivePage.backToDashboard')}

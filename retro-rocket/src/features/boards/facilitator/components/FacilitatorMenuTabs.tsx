@@ -60,26 +60,15 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
         }
     ];
 
-    // Crear labels compactos para mejor distribución
-    const getCompactLabel = (label: string) => {
-        const compactLabels: Record<string, string> = {
-            'Timer': 'Timer',
-            'IA': 'IA',
-            'Estado del Equipo': 'Equipo',
-            'Notas': 'Notas'
-        };
-        return compactLabels[label] || label;
-    };
-
     return (
-        <div className="w-96 max-w-[90vw] bg-surface-raised border border-border-default rounded-xl shadow-xl overflow-hidden">
-            {/* Header con tabs */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-b border-border-default">
+        <div className="w-96 max-w-[90vw] bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 overflow-hidden">
+            {/* Header with tabs */}
+            <div className="border-b border-border-default/60">
                 <div className="flex items-center justify-end p-4 pb-2">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-lg hover:bg-surface-raised/50 text-text-muted hover:text-text-secondary transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-surface text-text-muted hover:text-text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                             title={t('common.close')}
                             aria-label={t('common.close')}
                         >
@@ -88,60 +77,70 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
                     </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex px-4 pb-3 gap-1">
-                    {tabs.map((tab) => {
+                {/* Tab Navigation — real ARIA tabs pattern (role="tablist"/"tab", aria-selected,
+                    aria-controls linking each tab to its panel below), replacing the previous
+                    plain-button row with no tab semantics at all (contracts/
+                    accessibility-interaction-contract.md). Arrow-key navigation between tabs
+                    per the WAI-ARIA tabs pattern. */}
+                <div role="tablist" aria-label={t('retrospective.facilitator.controls')} className="flex px-4 pb-3 gap-1">
+                    {tabs.map((tab, index) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
 
                         return (
                             <button
                                 key={tab.id}
+                                id={`facilitator-tab-${tab.id}`}
+                                role="tab"
+                                aria-selected={isActive}
+                                aria-controls={`facilitator-tabpanel-${tab.id}`}
+                                tabIndex={isActive ? 0 : -1}
                                 onClick={() => onTabChange(tab.id)}
+                                onKeyDown={(e) => {
+                                    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                                    e.preventDefault();
+                                    const nextIndex = e.key === 'ArrowRight'
+                                        ? (index + 1) % tabs.length
+                                        : (index - 1 + tabs.length) % tabs.length;
+                                    onTabChange(tabs[nextIndex].id);
+                                    document.getElementById(`facilitator-tab-${tabs[nextIndex].id}`)?.focus();
+                                }}
                                 className={`
-                                    group relative flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 min-w-[70px] flex-1
+                                    group relative flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg text-xs font-medium transition-[background-color,color,box-shadow] duration-200 min-w-[70px] flex-1 focus-visible:ring-2 focus-visible:ring-focus
                                     ${isActive
-                                        ? 'bg-surface-raised text-info-fg shadow-sm scale-105'
-                                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised/30 hover:scale-102'
+                                        ? 'bg-surface text-info-fg shadow-sm'
+                                        : 'text-text-secondary hover:text-text-primary hover:bg-surface/60'
                                     }
                                 `}
-                                title={tab.label} // Tooltip para accesibilidad
+                                title={tab.label}
                             >
                                 <div className="relative">
                                     <Icon className="w-4 h-4" />
 
-                                    {/* Badge sobre el icono */}
                                     {tab.badge && (
                                         <motion.span
                                             initial={{ scale: 0.9, opacity: 0 }}
                                             animate={{ scale: 1, opacity: 1 }}
-                                            className={`
-                                                absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center
-                                                ${isActive
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-red-500 text-white'
-                                                }
-                                            `}
+                                            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                                            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center bg-action text-text-inverse"
                                         >
                                             {tab.badge}
                                         </motion.span>
                                     )}
                                 </div>
 
-                                {/* Label compacto - Siempre visible pero truncado si es necesario */}
                                 <span className={`
                                     leading-tight text-center max-w-full truncate
                                     ${isActive ? 'text-[10px] font-semibold' : 'text-[10px]'}
                                 `}>
-                                    {getCompactLabel(tab.label)}
+                                    {tab.label}
                                 </span>
 
-                                {/* Indicador activo */}
                                 {isActive && (
                                     <motion.div
                                         layoutId="activeTab"
-                                        className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-blue-500 rounded-full"
-                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-info-fg rounded-full"
+                                        transition={{ type: "spring", bounce: 0.15, duration: 0.35 }}
                                     />
                                 )}
                             </button>
@@ -151,23 +150,24 @@ const FacilitatorMenuTabs: React.FC<FacilitatorMenuTabsProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className="max-h-[65vh] overflow-y-auto bg-surface-raised">
+            <div className="max-h-[65vh] overflow-y-auto">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeTab}
+                        id={`facilitator-tabpanel-${activeTab}`}
+                        role="tabpanel"
+                        aria-labelledby={`facilitator-tab-${activeTab}`}
+                        tabIndex={0}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                         className="p-6"
                     >
                         {children}
                     </motion.div>
                 </AnimatePresence>
             </div>
-
-            {/* Footer (text removed per request) */}
-            <div className="bg-surface px-6 py-3 border-t border-border-default" />
         </div>
     );
 };

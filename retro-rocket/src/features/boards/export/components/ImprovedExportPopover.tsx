@@ -217,11 +217,15 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                         {/* Popover Content */}
                         <motion.div
                             ref={popoverRef}
+                            tabIndex={-1}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="export-dialog-title"
                             initial={{ opacity: 0, scale: 0.95, y: -10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            transition={{ duration: 0.15 }}
-                            className="relative w-96 max-w-[95vw] bg-surface-raised border border-border-default rounded-lg shadow-xl max-h-[80vh] overflow-y-auto"
+                            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                            className="relative w-96 max-w-[95vw] bg-surface-raised/95 backdrop-blur-xl border border-border-default/40 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto"
                         >
                             {/* Arrow/pointer */}
                             <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-surface-overlay"></div>
@@ -240,7 +244,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="p-1 rounded-lg hover:bg-surface-raised text-text-muted hover:text-text-secondary transition-colors"
+                                    className="p-1 rounded-lg hover:bg-surface text-text-muted hover:text-text-secondary transition-colors"
                                     title={t('common.close')}
                                     aria-label={t('common.close')}
                                 >
@@ -267,8 +271,9 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                                 <button
                                                     key={format}
                                                     onClick={() => updateFormat(format)}
+                                                    aria-pressed={exportOptions.format === format}
                                                     className={`flex flex-col items-start gap-2 p-3 rounded-lg border transition-colors text-left ${exportOptions.format === format
-                                                        ? 'border-blue-500 bg-info-bg'
+                                                        ? 'border-info-fg bg-info-bg'
                                                         : 'border-border-default hover:border-border-strong'
                                                         }`}
                                                 >
@@ -430,9 +435,10 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                         {t('retrospective.export.cancel')}
                                     </Button>
                                     <Button
+                                        variant="primary"
                                         onClick={handleExport}
                                         disabled={isExporting}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                                        className="flex-1"
                                     >
                                         {isExporting ? (
                                             <>
@@ -458,6 +464,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: 10 }}
+                                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                         className="flex items-center gap-2 p-3 bg-error-bg border border-error-fg rounded-lg"
                                     >
                                         <AlertCircle className="w-4 h-4 text-error-fg" />
@@ -473,6 +480,7 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: 10 }}
+                                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                         className="flex items-center gap-2 p-3 bg-success-bg border border-success-fg rounded-lg"
                                     >
                                         <CheckCircle className="w-4 h-4 text-success-fg" />

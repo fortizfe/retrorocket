@@ -72,4 +72,17 @@ describe('CardFooter', () => {
         render(<CardFooter {...baseProps} canEdit={false} />);
         expect(screen.queryByLabelText('retrospective.card.editCard')).toBeNull();
     });
+
+    it('keeps edit/delete actions always visible — never hover-only (research.md §3, FR-012)', () => {
+        render(<CardFooter {...baseProps} />);
+        const editButton = screen.getByLabelText('retrospective.card.editCard');
+        // The action row itself, and every ancestor up to the component root, must
+        // never carry an `opacity-0` class — that pattern would render the controls
+        // invisible at rest on touch/keyboard-only devices with no hover.
+        let node: HTMLElement | null = editButton;
+        while (node) {
+            expect(node.className).not.toMatch(/\bopacity-0\b/);
+            node = node.parentElement;
+        }
+    });
 });

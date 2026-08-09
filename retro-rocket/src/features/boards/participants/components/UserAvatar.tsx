@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from 'lucide-react';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface UserAvatarProps {
     user: {
@@ -35,6 +36,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     showName = false,
     className = ''
 }) => {
+    const { t } = useLanguage();
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -47,14 +49,14 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     const renderImageAvatar = () => (
         <img
             src={user.photoURL!}
-            alt={`Avatar de ${user.name}`}
+            alt={t('participants.avatarOf', { name: user.name })}
             className={`${sizeClasses[size]} rounded-full border-2 border-border-default shadow-sm object-cover ${className}`}
         />
     );
 
     const renderInitialsAvatar = () => (
         <div
-            className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm border-2 border-border-default text-white font-medium ${className}`}
+            className={`${sizeClasses[size]} bg-action rounded-full flex items-center justify-center shadow-sm border-2 border-border-default text-text-inverse font-medium ${className}`}
             title={user.name}
         >
             {user.name.length > 0 ? (

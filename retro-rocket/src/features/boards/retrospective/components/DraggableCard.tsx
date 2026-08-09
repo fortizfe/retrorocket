@@ -196,14 +196,17 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.18 }}
-            className={`group relative min-w-0 transition-[transform,box-shadow,border-color] duration-200 ${isDragging ? 'rotate-2 shadow-xl border-info-fg' : 'mb-2'} ${cardStyling}`}
+            // Strong ease-out (research.md §4): a card arriving — whether just
+            // submitted by this participant or synced in live from another —
+            // should read as settling into place, not the weak default tween.
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className={`group relative min-w-0 rounded-2xl transition-[transform,box-shadow,border-color] duration-200 ${isDragging ? 'rotate-2 shadow-2xl border-info-fg' : 'mb-2 shadow-md hover:shadow-lg'} ${cardStyling}`}
         >
             <Card
                 variant="elevated"
                 hover={!isEditing && !isDragging}
                 customBackground={true}
-                className={`p-2 group relative transition-[box-shadow,border-color] duration-200 ${isDragging ? 'shadow-lg border-info-fg' : ''} ${cardStyling}`}
+                className={`p-2 group relative rounded-2xl transition-[box-shadow,border-color] duration-200 ${isDragging ? 'shadow-2xl border-info-fg' : ''} ${cardStyling}`}
             >
                     {/* Drag handle y Color picker compactos. The drag activator is a
                         dedicated, keyboard-focusable handle (not the whole card) — see
@@ -300,7 +303,9 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
                         actions={canConvertToAction && onConvertToAction && !isEditing ? (
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            // Always visible — never hover-only (research.md §3, FR-012),
+                            // same defect class already fixed in CardFooter's edit/delete row.
+                            <div>
                                 <CardMenu
                                     card={card}
                                     participants={participants}

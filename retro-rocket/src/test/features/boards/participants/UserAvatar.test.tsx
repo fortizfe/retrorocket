@@ -18,10 +18,12 @@ describe('UserAvatar', () => {
         it('should render with user photo when photoURL is provided', () => {
             render(<UserAvatar user={mockUser} />);
 
-            const img = screen.getByRole('img', { name: /avatar de john doe/i });
+            const img = screen.getByRole('img');
             expect(img).toBeInTheDocument();
             expect(img).toHaveAttribute('src', 'https://example.com/avatar.jpg');
-            expect(img).toHaveAttribute('alt', 'Avatar de John Doe');
+            // The test-suite-wide react-i18next mock (setup.ts) returns the raw key,
+            // not interpolated text — real i18next interpolates {{name}} in production.
+            expect(img).toHaveAttribute('alt', 'participants.avatarOf');
         });
 
         it('should render initials when no photoURL is provided', () => {
@@ -205,10 +207,10 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={mockUserNoPhoto} />);
 
             const avatarDiv = screen.getByTitle('Jane Smith');
+            // Semantic `action` token (Constitution: no hardcoded palette classes),
+            // not the legacy primary-500/blue-600 gradient (feature 033 rebuild).
             expect(avatarDiv).toHaveClass(
-                'bg-gradient-to-br',
-                'from-primary-500',
-                'to-blue-600',
+                'bg-action',
                 'rounded-full',
                 'flex',
                 'items-center',
@@ -216,7 +218,7 @@ describe('UserAvatar', () => {
                 'shadow-sm',
                 'border-2',
                 'border-border-default',
-                'text-white',
+                'text-text-inverse',
                 'font-medium'
             );
         });
@@ -258,8 +260,8 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={spacesOnlyUser} />);
 
             // Names with spaces still have length > 0, so it will try to generate initials
-            // Find the div with gradient background classes (the avatar container)
-            const avatarDiv = document.querySelector('.bg-gradient-to-br');
+            // Find the initials-avatar container by its semantic-token background class
+            const avatarDiv = document.querySelector('.bg-action');
             expect(avatarDiv).toBeInTheDocument();
             expect(avatarDiv).toHaveAttribute('title', '   ');
 
@@ -308,7 +310,7 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={mockUser} />);
 
             const img = screen.getByRole('img');
-            expect(img).toHaveAttribute('alt', 'Avatar de John Doe');
+            expect(img).toHaveAttribute('alt', 'participants.avatarOf');
         });
 
         it('should provide title attribute for initials avatar', () => {
@@ -323,7 +325,7 @@ describe('UserAvatar', () => {
             render(<UserAvatar user={specialUser} />);
 
             const img = screen.getByRole('img');
-            expect(img).toHaveAttribute('alt', 'Avatar de José María Ñoño');
+            expect(img).toHaveAttribute('alt', 'participants.avatarOf');
         });
 
         it('should provide empty title for empty name', () => {

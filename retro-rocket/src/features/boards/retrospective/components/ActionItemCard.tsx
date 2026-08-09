@@ -91,7 +91,7 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className={`group relative bg-warning-bg border border-warning-fg rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-150 ${className}`}
+            className={`relative bg-warning-bg border border-warning-fg/50 rounded-2xl p-2 shadow-sm hover:shadow-md transition-shadow duration-150 ${className}`}
         >
             {/* Header con indicador de elemento de acción */}
             <div className="flex items-start justify-between mb-2">
@@ -103,20 +103,24 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                 </div>
 
                 {canEdit && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    // Always visible — never hover-only (research.md §3, FR-012),
+                    // same defect class already fixed elsewhere in this feature.
+                    <div className="flex gap-1">
                         <button
                             onClick={() => setIsEditing(true)}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-warning-bg text-warning-fg transition-colors"
+                            className="p-1 rounded hover:bg-surface-raised text-warning-fg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                             title={t('retrospective.actionItemCard.editAction')}
+                            aria-label={t('retrospective.actionItemCard.editAction')}
                         >
                             <Edit3 className="w-3 h-3" />
                         </button>
                         <button
                             onClick={handleDelete}
                             disabled={isEditing || isDeleting}
-                            className="p-1 rounded hover:bg-error-bg text-error-fg transition-colors"
+                            className="p-1 rounded hover:bg-error-bg text-error-fg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                             title={t('retrospective.actionItemCard.deleteAction')}
+                            aria-label={t('retrospective.actionItemCard.deleteAction')}
                         >
                             <Trash2 className="w-3 h-3" />
                         </button>
@@ -176,8 +180,9 @@ const ActionItemCard: React.FC<ActionItemCardProps> = ({
                                 onClick={handleSave}
                                 disabled={!editContent.trim() || isSaving}
                                 loading={isSaving}
+                                variant="primary"
                                 size="sm"
-                                className="px-2 py-1 text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                                className="px-2 py-1 text-xs"
                             >
                                 <Check className="w-3 h-3 mr-1" />
                                 {t('retrospective.actionItemCard.save')}

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 import type { CountdownTimer as CountdownTimerData } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 interface CountdownTimerProps {
@@ -12,6 +13,7 @@ interface CountdownTimerProps {
 }
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({ retrospectiveId, timer }) => {
+    const { t } = useLanguage();
     const { countdownState, formatTime } = useCountdown(retrospectiveId, timer);
 
     if (countdownState.totalDuration === 0) {
@@ -27,23 +29,19 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ retrospectiveId, timer 
         return 'text-text-muted';
     };
 
-    const getStatusBg = () => {
-        if (isFinished) return 'bg-error-bg border-error-fg';
-        if (isPaused) return 'bg-warning-bg border-warning-fg';
-        if (isRunning) return 'bg-success-bg border-success-fg';
-        return 'bg-surface border-border-default';
-    };
-
     const getStatusIcon = () => {
         if (isFinished) return <AlertCircle className="w-4 h-4" />;
         return <Clock className="w-4 h-4" />;
     };
 
     const getStatusText = () => {
-        if (isFinished) return 'Tiempo terminado';
-        if (isPaused) return 'Pausado';
-        if (isRunning) return 'En curso';
-        return 'Detenido';
+        // Existing keys (retrospective.facilitator.countdown.status.*) — this
+        // component previously hardcoded the Spanish literals directly instead
+        // of using them (FR-013 gap).
+        if (isFinished) return t('retrospective.facilitator.countdown.status.finished');
+        if (isPaused) return t('retrospective.facilitator.countdown.status.paused');
+        if (isRunning) return t('retrospective.facilitator.countdown.status.running');
+        return t('retrospective.facilitator.countdown.status.stopped');
     };
 
     return (
@@ -52,12 +50,8 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ retrospectiveId, timer 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className={`
-          inline-flex items-center gap-3 px-4 py-2 rounded-lg border-2
-          transition-all duration-300
-          ${getStatusBg()}
-        `}
+                transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-surface-raised/80 backdrop-blur-sm shadow-sm transition-shadow duration-300"
             >
                 {/* Status Icon */}
                 <div className={`flex items-center ${getStatusColor()}`}>
@@ -65,20 +59,20 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ retrospectiveId, timer 
                 </div>
 
                 {/* Timer Display */}
-                <div className="flex flex-col items-center min-w-[80px]">
-                    <div
+                <div className="flex items-baseline gap-1.5">
+                    <span
                         className={`
-              text-xl font-mono font-bold
+              text-sm font-mono font-semibold tabular-nums
               ${getStatusColor()}
               ${isFinished ? 'animate-pulse' : ''}
             `}
                     >
                         {formatTime(timeRemaining)}
-                    </div>
+                    </span>
 
-                    <div className={`text-xs font-medium ${getStatusColor()}`}>
+                    <span className={`text-xs font-medium ${getStatusColor()}`}>
                         {getStatusText()}
-                    </div>
+                    </span>
                 </div>
             </motion.div>
         </AnimatePresence>

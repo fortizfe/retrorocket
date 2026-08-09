@@ -174,21 +174,21 @@ export const DEFAULT_SENTIMENT_CONFIG: SentimentConfiguration = {
 // Colors for sentiment display
 export const SENTIMENT_COLORS = {
     positive: {
-        bg: 'bg-green-100 dark:bg-green-900/20',
-        text: 'text-green-800 dark:text-green-300',
-        border: 'border-green-200 dark:border-green-700',
+        bg: 'bg-success-bg',
+        text: 'text-success-fg',
+        border: 'border-success-fg/30',
         icon: '😊'
     },
     negative: {
-        bg: 'bg-red-100 dark:bg-red-900/20',
-        text: 'text-red-800 dark:text-red-300',
-        border: 'border-red-200 dark:border-red-700',
+        bg: 'bg-error-bg',
+        text: 'text-error-fg',
+        border: 'border-error-fg/30',
         icon: '😞'
     },
     neutral: {
-        bg: 'bg-slate-100 dark:bg-slate-700/40',
-        text: 'text-slate-700 dark:text-slate-300',
-        border: 'border-slate-300 dark:border-slate-600',
+        bg: 'bg-surface-raised',
+        text: 'text-text-secondary',
+        border: 'border-border-default',
         icon: '😐'
     }
 } as const;

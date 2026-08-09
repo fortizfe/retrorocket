@@ -1094,7 +1094,7 @@ test("a facilitator note is never visible to another participant's session", asy
 
     // A (the facilitator) writes its own note via the real UI.
     await pageA.getByRole('button', { name: 'Controles de Facilitador' }).click();
-    await pageA.getByRole('button', { name: 'Notas' }).click();
+    await pageA.getByRole('tab', { name: 'Notas' }).click();
     await pageA.getByRole('button', { name: 'Nueva' }).click();
     await pageA.getByPlaceholder('Escribe tu nota aquí...').fill("A's private note");
     await pageA.getByRole('button', { name: 'Guardar' }).click();

@@ -3,18 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, ChevronDown } from 'lucide-react';
 import { SentimentFilterProps, SENTIMENT_COLORS } from '@/features/boards/types/sentiment';
 import Button from '@/lib/components/ui/Button';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 const SentimentFilter: React.FC<SentimentFilterProps> = ({
     currentFilter,
     onFilterChange,
     counts
 }) => {
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isOpen) return;
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsOpen(false);
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isOpen]);
 
     const filterOptions = [
         {
             value: 'all' as const,
-            label: 'Todos',
+            label: t('sentiment.filter.all'),
             count: counts.total,
             icon: '📊',
             colors: {
@@ -25,21 +36,21 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
         },
         {
             value: 'positive' as const,
-            label: 'Positivos',
+            label: t('sentiment.positive'),
             count: counts.positive,
             icon: SENTIMENT_COLORS.positive.icon,
             colors: SENTIMENT_COLORS.positive
         },
         {
             value: 'neutral' as const,
-            label: 'Neutrales',
+            label: t('sentiment.neutral'),
             count: counts.neutral,
             icon: SENTIMENT_COLORS.neutral.icon,
             colors: SENTIMENT_COLORS.neutral
         },
         {
             value: 'negative' as const,
-            label: 'Negativos',
+            label: t('sentiment.negative'),
             count: counts.negative,
             icon: SENTIMENT_COLORS.negative.icon,
             colors: SENTIMENT_COLORS.negative
@@ -68,7 +79,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                 `}
                 aria-expanded={isOpen}
                 aria-haspopup="true"
-                title="Filtrar por sentimiento"
+                title={t('sentiment.filter.filterBySentiment')}
             >
                 <Filter className="w-3 h-3" />
                 <span>{currentOption?.icon}</span>
@@ -89,12 +100,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                             type="button"
                             className="fixed inset-0 z-40 bg-transparent"
                             onClick={() => setIsOpen(false)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Escape') {
-                                    setIsOpen(false);
-                                }
-                            }}
-                            aria-label="Close filter menu"
+                            aria-label={t('common.close')}
                         />
 
                         {/* Dropdown */}
@@ -102,9 +108,9 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                             initial={{ opacity: 0, y: -8, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute top-full right-0 mt-1 bg-surface-raised 
-                                     rounded-lg shadow-lg border border-border-default 
+                            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                            className="absolute top-full right-0 mt-1 bg-surface-raised
+                                     rounded-lg shadow-lg border border-border-default
                                      py-1 z-50 min-w-[160px]"
                         >
                             {filterOptions.map((option) => (
@@ -113,7 +119,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                                     onClick={() => handleFilterSelect(option.value)}
                                     className={`
                                         w-full flex items-center justify-between px-3 py-2 text-xs
-                                        transition-colors hover:bg-surface-raised
+                                        transition-colors hover:bg-surface
                                         ${currentFilter === option.value
                                             ? `${option.colors.bg} ${option.colors.text}`
                                             : 'text-text-secondary'
@@ -137,7 +143,7 @@ const SentimentFilter: React.FC<SentimentFilterProps> = ({
                                         </span>
 
                                         {currentFilter === option.value && (
-                                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                            <div className="w-2 h-2 bg-info-fg rounded-full" />
                                         )}
                                     </div>
                                 </button>

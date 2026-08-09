@@ -200,26 +200,20 @@ describe('GroupCard', () => {
             expect(collapseButton).toBeInTheDocument();
         });
 
-        it('shows ungroup button on hover when not read-only', () => {
+        it('shows the ungroup button at rest, with no hover required, when not read-only (research.md §3, FR-012)', () => {
             render(<GroupCard {...defaultProps} />);
 
-            const groupContainer = screen.getByText('Test Group').closest('div')?.closest('div')?.closest('div');
-
-            if (groupContainer) {
-                fireEvent.mouseEnter(groupContainer);
-                expect(screen.getByTitle('Ungroup cards')).toBeInTheDocument();
-            }
+            // No fireEvent.mouseEnter here: the previous `isHovered &&` guard kept
+            // this control out of the DOM entirely until a mouse hovered it, making
+            // it unreachable via keyboard/touch — a stricter defect than opacity-0
+            // alone. It must now be present unconditionally.
+            expect(screen.getByTitle('Ungroup cards')).toBeInTheDocument();
         });
 
         it('does not show ungroup button when read-only', () => {
             render(<GroupCard {...defaultProps} isReadOnly={true} />);
 
-            const groupContainer = screen.getByText('Test Group').closest('div')?.closest('div')?.closest('div');
-
-            if (groupContainer) {
-                fireEvent.mouseEnter(groupContainer);
-                expect(screen.queryByTitle('Ungroup cards')).not.toBeInTheDocument();
-            }
+            expect(screen.queryByTitle('Ungroup cards')).not.toBeInTheDocument();
         });
 
         it('displays default title when no custom title', () => {
@@ -288,32 +282,22 @@ describe('GroupCard', () => {
         it('calls onDisbandGroup when ungroup button is clicked with confirmation', () => {
             render(<GroupCard {...defaultProps} />);
 
-            const groupContainer = screen.getByText('Test Group').closest('div')?.closest('div')?.closest('div');
+            const ungroupButton = screen.getByTitle('Ungroup cards');
+            fireEvent.click(ungroupButton);
 
-            if (groupContainer) {
-                fireEvent.mouseEnter(groupContainer);
-                const ungroupButton = screen.getByTitle('Ungroup cards');
-                fireEvent.click(ungroupButton);
-
-                expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to ungroup 3 cards?');
-                expect(defaultProps.onDisbandGroup).toHaveBeenCalledWith('group-1');
-            }
+            expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to ungroup 3 cards?');
+            expect(defaultProps.onDisbandGroup).toHaveBeenCalledWith('group-1');
         });
 
         it('does not disband group when confirmation is cancelled', () => {
             (window.confirm as any).mockReturnValue(false);
             render(<GroupCard {...defaultProps} />);
 
-            const groupContainer = screen.getByText('Test Group').closest('div')?.closest('div')?.closest('div');
+            const ungroupButton = screen.getByTitle('Ungroup cards');
+            fireEvent.click(ungroupButton);
 
-            if (groupContainer) {
-                fireEvent.mouseEnter(groupContainer);
-                const ungroupButton = screen.getByTitle('Ungroup cards');
-                fireEvent.click(ungroupButton);
-
-                expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to ungroup 3 cards?');
-                expect(defaultProps.onDisbandGroup).not.toHaveBeenCalled();
-            }
+            expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to ungroup 3 cards?');
+            expect(defaultProps.onDisbandGroup).not.toHaveBeenCalled();
         });
 
         it('disbands group when head card is deleted', async () => {

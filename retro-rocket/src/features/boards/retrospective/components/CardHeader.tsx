@@ -1,5 +1,4 @@
 import React from 'react';
-import { User } from 'lucide-react';
 
 interface CardHeaderProps {
     /** Display name of the card author. */
@@ -8,10 +7,14 @@ interface CardHeaderProps {
     badge?: React.ReactNode;
 }
 
-/** Card author identity, with an optional adjacent badge. Colors are semantic tokens. */
+/**
+ * Card author identity, with an optional adjacent badge. Colors are semantic
+ * tokens. Renders as a quiet metadata line (no icon) — the "Layered Depth"
+ * direction (feature 033) reserves visual weight for the card surface itself
+ * rather than per-field iconography.
+ */
 const CardHeader: React.FC<CardHeaderProps> = ({ author, badge }) => (
-    <div className="flex items-center gap-1 text-xs text-text-muted min-w-0">
-        <User size={12} className="shrink-0" />
+    <div className="flex items-center gap-1.5 text-xs text-text-muted min-w-0">
         <span className="truncate">{author}</span>
         {badge}
     </div>

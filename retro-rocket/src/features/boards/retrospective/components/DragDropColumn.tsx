@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     DndContext,
     DragEndEvent,
@@ -188,10 +188,20 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
 
             <DragOverlay>
                 {activeCard ? (
-                    <DraggableCard
-                        card={activeCard}
-                        isDragging={true}
-                    />
+                    // Tactile lift (feedback + spatial consistency, research.md §4,
+                    // Direction C's "shadow intensifies while dragging" choice): a
+                    // spring, not a tween — this is gesture motion, and a spring
+                    // carries the grab's felt weight instead of a mechanical ease.
+                    <motion.div
+                        initial={{ transform: 'scale(1) translateY(0px)' }}
+                        animate={{ transform: 'scale(1.03) translateY(-4px)' }}
+                        transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
+                    >
+                        <DraggableCard
+                            card={activeCard}
+                            isDragging={true}
+                        />
+                    </motion.div>
                 ) : null}
             </DragOverlay>
         </DndContext>

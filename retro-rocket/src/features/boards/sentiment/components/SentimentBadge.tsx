@@ -39,7 +39,7 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = React.memo(({
 
     const colors = SENTIMENT_COLORS[sentiment];
     const tooltip = showTooltip ? buildTooltip(t, sentiment, confidence, isOverride) : undefined;
-    const badgeClass = `inline-flex items-center gap-1 rounded-full font-medium border ${colors.bg} ${colors.text} ${colors.border} ${SIZE_CLASSES[size]} transition-all duration-200`;
+    const badgeClass = `inline-flex items-center gap-1 rounded-full font-medium border ${colors.bg} ${colors.text} ${colors.border} ${SIZE_CLASSES[size]} transition-opacity duration-150 ease`;
 
     const content = (
         <>
@@ -54,7 +54,7 @@ const SentimentBadge: React.FC<SentimentBadgeProps> = React.memo(({
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onOverride(nextSentiment(sentiment)); }}
-                className={`${badgeClass} cursor-pointer hover:opacity-80`}
+                className={`${badgeClass} cursor-pointer hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus`}
                 title={tooltip}
             >
                 {content}

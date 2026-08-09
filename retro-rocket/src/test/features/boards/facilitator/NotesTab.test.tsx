@@ -96,4 +96,18 @@ describe('NotesTab', () => {
         resolveUpdate();
         await waitFor(() => expect(updateNoteMock).toHaveBeenCalledTimes(1));
     });
+
+    it('keeps a note\'s edit/delete controls always visible — never hover-only (research.md §3, FR-012)', () => {
+        const notes = [
+            { id: 'n1', content: 'A note', retrospectiveId: 'retro-1', facilitatorId: 'fac-1', timestamp: new Date() },
+        ];
+        render(<NotesTab retrospectiveId="retro-1" facilitatorId="fac-1" notes={notes} />);
+
+        const editButton = screen.getByTitle('retrospective.facilitator.notes.editTitle');
+        let node: HTMLElement | null = editButton;
+        while (node) {
+            expect(node.className).not.toMatch(/\bopacity-0\b/);
+            node = node.parentElement;
+        }
+    });
 });

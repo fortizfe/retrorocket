@@ -278,7 +278,7 @@ describe('DraggableCard', () => {
         it('applies dragging styles when isDragging is true', () => {
             const { container } = render(<DraggableCard {...defaultProps} isDragging={true} />);
 
-            const cardElement = container.querySelector('.rotate-2.shadow-xl');
+            const cardElement = container.querySelector('.rotate-2.shadow-2xl');
             expect(cardElement).toBeInTheDocument();
         });
     });
@@ -466,6 +466,17 @@ describe('DraggableCard', () => {
             render(<DraggableCard {...defaultProps} canConvertToAction={false} />);
 
             expect(screen.queryByTestId('card-menu')).not.toBeInTheDocument();
+        });
+
+        it('keeps the convert-to-action menu always visible — never hover-only (research.md §3, FR-012)', () => {
+            render(<DraggableCard {...defaultProps} />);
+
+            const cardMenu = screen.getByTestId('card-menu');
+            let node: HTMLElement | null = cardMenu;
+            while (node) {
+                expect(node.className).not.toMatch(/\bopacity-0\b/);
+                node = node.parentElement;
+            }
         });
     });
 

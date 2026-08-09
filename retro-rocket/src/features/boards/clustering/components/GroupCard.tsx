@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Users, Sparkles, X } from 'lucide-react';
 import { CardGroup, Card, EmojiReaction } from '@/features/boards/types/card';
@@ -36,7 +36,6 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     isReadOnly = false,
 }) => {
     const { t } = useLanguage();
-    const [isHovered, setIsHovered] = useState(false);
 
     // Find head card and member cards
     const headCard = cards.find(card => card.id === group.headCardId);
@@ -76,9 +75,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`relative rounded-xl border-2 border-dashed border-border-strong bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden shadow-sm`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className={`relative rounded-2xl border-2 border-dashed border-border-strong bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden shadow-sm`}
         >
             {/* Group Header */}
             <div className="p-3 border-b border-border-default bg-surface-raised/80 backdrop-blur-sm">
@@ -128,21 +126,22 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    {!isReadOnly && isHovered && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex items-center space-x-1"
-                        >
+                    {/* Actions — always rendered, never hover-gated: a hover-only mount
+                        (the previous `isHovered &&` guard) put this control outside the
+                        DOM entirely for keyboard/touch users, unreachable no matter how
+                        they tabbed (a stricter violation than opacity-0 alone; research.md
+                        §3, FR-012). */}
+                    {!isReadOnly && (
+                        <div className="flex items-center space-x-1">
                             <button
                                 onClick={handleDisbandGroup}
-                                className="p-1.5 rounded-lg bg-error-bg text-error-fg hover:bg-error-bg transition-colors"
+                                className="p-1.5 rounded-lg bg-error-bg text-error-fg hover:bg-error-bg/80 transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                                 title={t('retrospective.groupCard.ungroupCards')}
+                                aria-label={t('retrospective.groupCard.ungroupCards')}
                             >
                                 <X className="w-4 h-4" />
                             </button>
-                        </motion.div>
+                        </div>
                     )}
                 </div>
             </div>
@@ -155,7 +154,11 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        // Strong ease-out (animate skill, research.md §4): member cards
+                        // entering/exiting view on expand/collapse, not a weak default tween.
+                        // `height` is the sanctioned accordion exception (no transform
+                        // equivalent exists for this reveal).
+                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                         className="overflow-hidden"
                     >
                         <div className="p-4 space-y-3">
@@ -163,7 +166,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                             <div className="relative">
                                 {totalCards > 1 && (
                                     <div className="absolute -top-2 -left-2 z-10">
-                                        <div className="bg-action text-white text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
+                                        <div className="bg-action text-text-inverse text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
                                             <Sparkles className="w-3 h-3" />
                                             <span>{t('retrospective.groupCard.primaryCard')}</span>
                                         </div>
@@ -195,7 +198,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
-                                        transition={{ delay: Math.min(index * 0.06, 0.3) }}
+                                        transition={{ delay: Math.min(index * 0.06, 0.3), duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                         className="ml-4 relative"
                                     >
                                         {/* Connection line */}

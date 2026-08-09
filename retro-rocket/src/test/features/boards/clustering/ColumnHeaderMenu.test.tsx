@@ -92,10 +92,12 @@ describe('ColumnHeaderMenu', () => {
         it('should render the menu button when not disabled and has cards', () => {
             render(<ColumnHeaderMenu {...defaultProps} />);
 
-            const button = screen.getByRole('button', { name: /grouping options/i });
+            const button = screen.getByRole('button', { name: 'retrospective.grouping.menuLabel' });
             expect(button).toBeInTheDocument();
             expect(button).toHaveAttribute('aria-expanded', 'false');
-            expect(button).toHaveAttribute('aria-haspopup', 'true');
+            // Floating UI's useRole({ role: 'menu' }) sets the semantically precise
+            // aria-haspopup="menu" rather than the previous hand-rolled "true".
+            expect(button).toHaveAttribute('aria-haspopup', 'menu');
         });
 
         it('should display the correct icons in the button', () => {
@@ -254,10 +256,12 @@ describe('ColumnHeaderMenu', () => {
             render(<ColumnHeaderMenu {...defaultProps} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveAttribute('aria-label', 'Grouping options');
+            // These now go through i18next (research.md/FR-013 — previously hardcoded
+            // English literals); the test-suite-wide t() mock returns the raw key.
+            expect(button).toHaveAttribute('aria-label', 'retrospective.grouping.menuLabel');
             expect(button).toHaveAttribute('aria-expanded', 'false');
-            expect(button).toHaveAttribute('aria-haspopup', 'true');
-            expect(button).toHaveAttribute('title', 'Group cards');
+            expect(button).toHaveAttribute('aria-haspopup', 'menu');
+            expect(button).toHaveAttribute('title', 'retrospective.grouping.menuTrigger');
         });
 
         it('should have proper ARIA labels for menu options', async () => {
@@ -301,8 +305,9 @@ describe('ColumnHeaderMenu', () => {
             fireEvent.click(button);
             expect(button).toHaveAttribute('aria-expanded', 'true');
 
-            // Click outside
-            fireEvent.mouseDown(outsideElement);
+            // Click outside — Floating UI's useDismiss listens for `pointerdown` by
+            // default (not `mousedown`), matching real click/tap behavior.
+            fireEvent.pointerDown(outsideElement);
             await waitFor(() => {
                 expect(button).toHaveAttribute('aria-expanded', 'false');
             });

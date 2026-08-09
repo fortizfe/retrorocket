@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import RetrospectiveBoard from '@/features/boards/retrospective/components/RetrospectiveBoard';
 import { Retrospective } from '@/features/boards/types/retrospective';
+import uiPreferencesStore from '@/lib/uiPreferencesStore';
 
 // Mock all the complex dependencies with simple implementations
 vi.mock('framer-motion', () => ({
@@ -175,6 +176,10 @@ describe('RetrospectiveBoard', () => {
         { uid: 'user-1', displayName: 'User 1' },
         { uid: 'user-2', displayName: 'User 2' }
     ];
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     describe('Basic Rendering', () => {
         it('should render the retrospective board', () => {
@@ -358,6 +363,39 @@ describe('RetrospectiveBoard', () => {
             expect(hindered).toBeInTheDocument();
             expect(improve).toBeInTheDocument();
             expect(actions).toBeInTheDocument();
+        });
+
+        it('sizes the grid for 4 visible columns when the action column is shown, sharing width without a hard per-column minimum (FR-006)', () => {
+            render(
+                <RetrospectiveBoard
+                    retrospective={mockRetrospective}
+                    currentUser="user-123"
+                />
+            );
+
+            // useBoardGridColumns emits these as literal, non-purgeable strings (not an
+            // interpolated `lg:grid-cols-${n}`) specifically so Tailwind's JIT keeps them —
+            // asserting the literal class here is a real regression guard for that fix.
+            const grid = screen.getByTestId('board-grid');
+            expect(grid.className).toContain('grid-cols-1');
+            expect(grid.className).toContain('lg:grid-cols-4');
+        });
+
+        it('sizes the grid for 3 visible columns when the action column is hidden (FR-006)', () => {
+            vi.spyOn(uiPreferencesStore, 'getShowActionColumn').mockReturnValue(false);
+
+            render(
+                <RetrospectiveBoard
+                    retrospective={mockRetrospective}
+                    currentUser="user-123"
+                />
+            );
+
+            const grid = screen.getByTestId('board-grid');
+            expect(grid.className).toContain('grid-cols-1');
+            expect(grid.className).toContain('lg:grid-cols-3');
+            expect(grid.className).not.toContain('lg:grid-cols-4');
+            expect(screen.queryByTestId('action-items-column')).not.toBeInTheDocument();
         });
     });
 });

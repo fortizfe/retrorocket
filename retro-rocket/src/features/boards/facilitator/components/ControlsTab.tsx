@@ -110,10 +110,10 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
     };
 
     const getProgressBarColor = () => {
-        if (!countdownState) return 'bg-blue-500';
-        if (countdownState.isFinished) return 'bg-red-500';
-        if (countdownState.isRunning) return 'bg-green-500';
-        return 'bg-blue-500';
+        if (!countdownState) return 'bg-info-fg';
+        if (countdownState.isFinished) return 'bg-error-fg';
+        if (countdownState.isRunning) return 'bg-success-fg';
+        return 'bg-info-fg';
     };
 
     const status = getTimerStatus();
@@ -156,7 +156,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     initial={{ opacity: 0, y: -6 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -6 }}
-                                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg p-4 border border-border-default"
+                                    className="bg-surface-raised/70 backdrop-blur-sm rounded-2xl p-4 border border-border-default/40"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                                         <div className="md:col-span-1 flex items-center gap-3">
@@ -224,7 +224,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                                         className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                                         placeholder="0"
                                                     />
-                                                    <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
+                                                    <Clock className="absolute right-3 top-2.5 w-4 h-4 text-text-muted" />
                                                 </div>
                                             </div>
                                             <div>
@@ -241,7 +241,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                                         className="w-full px-3 py-2 text-center border border-border-default rounded-lg bg-surface-raised text-text-primary focus:ring-2 focus:ring-focus focus:border-transparent"
                                                         placeholder="0"
                                                     />
-                                                    <Clock className="absolute right-3 top-2.5 w-4 h-4 text-slate-400" />
+                                                    <Clock className="absolute right-3 top-2.5 w-4 h-4 text-text-muted" />
                                                 </div>
                                             </div>
                                         </div>
@@ -296,7 +296,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                                 onClick={startTimer}
                                                 disabled={loading}
                                                 variant="primary"
-                                                className="h-12 bg-green-600 hover:bg-green-700 border-green-600 text-white"
+                                                className="h-12"
                                             >
                                                 <Play className="w-4 h-4 mr-2" />
                                                 {t('retrospective.facilitator.countdown.start')}
@@ -308,7 +308,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                                 onClick={pauseTimer}
                                                 disabled={loading}
                                                 variant="secondary"
-                                                className="h-12 bg-yellow-500 hover:bg-yellow-700 border-yellow-500 text-white"
+                                                className="h-12"
                                             >
                                                 <Pause className="w-4 h-4 mr-2" />
                                                 {t('retrospective.facilitator.countdown.pause')}
@@ -365,7 +365,7 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                             <button
                                                 key={preset.minutes}
                                                 onClick={() => setInputs({ minutes: preset.minutes, seconds: 0 })}
-                                                className="px-3 py-2 text-sm font-medium text-info-fg bg-info-bg border border-info-fg rounded-lg hover:bg-info-bg transition-colors"
+                                                className="px-3 py-2 text-sm font-medium text-info-fg bg-info-bg border border-info-fg/40 rounded-lg hover:border-info-fg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                                             >
                                                 {preset.label}
                                             </button>

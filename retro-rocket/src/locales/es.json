@@ -324,7 +324,9 @@
       "groupCardsByCreator": "Agrupar tarjetas por creador",
       "suggestedGroupings": "Agrupaciones sugeridas",
       "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud",
-      "unknownAuthor": "Sin autor"
+      "unknownAuthor": "Sin autor",
+      "menuTrigger": "Agrupar tarjetas",
+      "menuLabel": "Opciones de agrupación"
     },
     "facilitator": {
       "menu": "Facilitador",
@@ -483,7 +485,6 @@
       },
       "hideActionItems": "Ocultar elementos de acción"
     },
-    "progress": "Progreso",
     "errors": {
       "loadCards": "Error al cargar las tarjetas"
     },
@@ -507,7 +508,21 @@
     "cardsInGroup": "{{count}} tarjetas",
     "analyzing": "Analizando similitudes...",
     "suggestedHeadCard": "Tarjeta principal sugerida",
-    "createGroup": "Crear Grupo"
+    "createGroup": "Crear Grupo",
+    "title": "Sugerencias de Agrupación",
+    "subtitle": "{{count}} sugerencias encontradas automáticamente",
+    "noSuggestionsTitle": "No se encontraron sugerencias",
+    "noSuggestionsBody": "No hay suficientes tarjetas similares para crear grupos automáticamente.",
+    "hideCards": "Ocultar tarjetas",
+    "showCards": "Mostrar tarjetas",
+    "reason": "Razón",
+    "algorithm": "Algoritmo",
+    "keywords": "Palabras clave",
+    "discard": "Descartar",
+    "footerHint": "Puedes aceptar múltiples sugerencias o crear grupos manualmente.",
+    "similarityHigh": "Alta",
+    "similarityMedium": "Media",
+    "similarityLow": "Baja"
   },
   "datePicker": {
     "placeholder": "Seleccionar fecha",
@@ -520,7 +535,9 @@
     "closeList": "Cerrar lista de participantes",
     "totalParticipants": "Total de participantes",
     "emptyTitle": "No hay participantes",
-    "emptySubtitle": "La sesión está esperando participantes"
+    "emptySubtitle": "La sesión está esperando participantes",
+    "viewAll": "Ver todos los participantes ({{count}})",
+    "avatarOf": "Avatar de {{name}}"
   },
   "typing": {
     "single": "{{username}} está escribiendo",
@@ -841,6 +858,10 @@
     "boardDeleted": {
       "title": "Este tablero ya no existe",
       "message": "El tablero de retrospectiva que estabas viendo ha sido eliminado."
+    },
+    "notFound": {
+      "title": "Retrospectiva no encontrada",
+      "message": "No se pudo encontrar la retrospectiva solicitada."
     }
   },
   "sentiment": {
@@ -854,6 +875,10 @@
     "confidenceThreshold": "Umbral de confianza",
     "batchSize": "Tamaño de lote",
     "advancedSettings": "Configuración avanzada",
+    "filter": {
+      "all": "Todos",
+      "filterBySentiment": "Filtrar por sentimiento"
+    },
     "status": {
       "initializing": "Inicializando...",
       "connectionError": "Error de conexión",

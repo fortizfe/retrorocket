@@ -2,6 +2,7 @@ import React from 'react';
 import { Users } from 'lucide-react';
 import UserAvatar from '@/features/boards/participants/components/UserAvatar';
 import { Participant } from '@/features/boards/types/participant';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface CompactAvatarGroupProps {
     participants: Participant[];
@@ -38,6 +39,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
     onShowAll,
     className = ''
 }) => {
+    const { t } = useLanguage();
     const visibleParticipants = participants.slice(0, maxVisible);
     const remainingCount = Math.max(0, participants.length - maxVisible);
     const totalCount = participants.length;
@@ -96,7 +98,7 @@ const CompactAvatarGroup: React.FC<CompactAvatarGroupProps> = ({
             <button
                 onClick={handleClick}
                 className="transition-[background-color] duration-200 hover:bg-surface-raised rounded-lg p-1 -m-1"
-                title={`Ver todos los participantes (${totalCount})`}
+                title={t('participants.viewAll', { count: totalCount })}
             >
                 {groupElement}
             </button>

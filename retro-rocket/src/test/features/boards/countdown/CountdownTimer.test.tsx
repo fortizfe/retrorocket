@@ -62,7 +62,7 @@ describe('CountdownTimer', () => {
         render(<CountdownTimer {...defaultProps} />);
 
         expect(screen.getByText('5:00')).toBeInTheDocument();
-        expect(screen.getByText('Detenido')).toBeInTheDocument();
+        expect(screen.getByText('retrospective.facilitator.countdown.status.stopped')).toBeInTheDocument();
         expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
     });
 
@@ -74,7 +74,7 @@ describe('CountdownTimer', () => {
 
         render(<CountdownTimer {...defaultProps} />);
 
-        expect(screen.getByText('En curso')).toBeInTheDocument();
+        expect(screen.getByText('retrospective.facilitator.countdown.status.running')).toBeInTheDocument();
         expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
     });
 
@@ -86,7 +86,7 @@ describe('CountdownTimer', () => {
 
         render(<CountdownTimer {...defaultProps} />);
 
-        expect(screen.getByText('Pausado')).toBeInTheDocument();
+        expect(screen.getByText('retrospective.facilitator.countdown.status.paused')).toBeInTheDocument();
         expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
     });
 
@@ -98,7 +98,7 @@ describe('CountdownTimer', () => {
 
         render(<CountdownTimer {...defaultProps} />);
 
-        expect(screen.getByText('Tiempo terminado')).toBeInTheDocument();
+        expect(screen.getByText('retrospective.facilitator.countdown.status.finished')).toBeInTheDocument();
         expect(screen.getByTestId('alert-circle-icon')).toBeInTheDocument();
     });
 
@@ -118,7 +118,7 @@ describe('CountdownTimer', () => {
         render(<CountdownTimer {...defaultProps} />);
 
         const timeDisplay = screen.getByText('5:00');
-        expect(timeDisplay).toHaveClass('text-xl', 'font-mono', 'font-bold');
+        expect(timeDisplay).toHaveClass('font-mono', 'tabular-nums');
     });
 
     it('shows pulse animation when finished', () => {

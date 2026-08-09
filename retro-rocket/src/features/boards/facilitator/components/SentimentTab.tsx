@@ -45,37 +45,40 @@ const SentimentTab: React.FC<SentimentTabProps> = ({
     const thresholdId = React.useId();
     const batchSizeId = React.useId();
 
+    // Each status icon previously hardcoded its own palette color (text-blue-500,
+    // text-red-500, ...) instead of the matching semantic token already sitting
+    // right next to it in this same object (`color`) — fixed to use it directly.
     const getStatusInfo = () => {
         if (loading) return {
-            icon: <Loader className="w-5 h-5 animate-spin text-blue-500" />,
+            icon: <Loader className="w-5 h-5 animate-spin text-info-fg" />,
             text: t('sentiment.status.initializing'),
             color: 'text-info-fg',
             bg: 'bg-info-bg',
             border: 'border-info-fg'
         };
         if (error) return {
-            icon: <AlertCircle className="w-5 h-5 text-red-500" />,
+            icon: <AlertCircle className="w-5 h-5 text-error-fg" />,
             text: t('sentiment.status.connectionError'),
             color: 'text-error-fg',
             bg: 'bg-error-bg',
             border: 'border-error-fg'
         };
         if (!enabled) return {
-            icon: <Brain className="w-5 h-5 text-slate-400" />,
+            icon: <Brain className="w-5 h-5 text-text-muted" />,
             text: t('sentiment.status.disabled'),
             color: 'text-text-secondary',
             bg: 'bg-surface',
             border: 'border-border-default'
         };
         if (ready) return {
-            icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+            icon: <CheckCircle className="w-5 h-5 text-success-fg" />,
             text: t('sentiment.status.ready'),
             color: 'text-success-fg',
             bg: 'bg-success-bg',
             border: 'border-success-fg'
         };
         return {
-            icon: <Brain className="w-5 h-5 text-yellow-500" />,
+            icon: <Brain className="w-5 h-5 text-warning-fg" />,
             text: t('sentiment.status.configuring'),
             color: 'text-warning-fg',
             bg: 'bg-warning-bg',
@@ -212,7 +215,8 @@ const SentimentTab: React.FC<SentimentTabProps> = ({
                     {/* Advanced Settings Toggle */}
                     <button
                         onClick={() => setShowAdvanced(!showAdvanced)}
-                        className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-text-secondary bg-surface-raised border border-border-default rounded-lg hover:bg-surface-raised transition-colors"
+                        aria-expanded={showAdvanced}
+                        className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-text-secondary bg-surface-raised border border-border-default rounded-lg hover:bg-surface hover:border-border-strong transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                     >
                         <div className="flex items-center gap-2">
                             <Settings className="w-4 h-4" />
@@ -295,10 +299,13 @@ const SentimentTab: React.FC<SentimentTabProps> = ({
                                     <button
                                         onClick={() => onConfigUpdate({ enabled: !config.enabled })}
                                         disabled={loading}
-                                        title="Activar/desactivar análisis automático"
+                                        role="switch"
+                                        aria-checked={config.enabled}
+                                        title={t('sentiment.settings.autoAnalysis')}
+                                        aria-label={t('sentiment.settings.autoAnalysis')}
                                         className={`
-                                            relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out
-                                            ${config.enabled ? 'bg-blue-600' : 'bg-border-default'}
+                                            relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2
+                                            ${config.enabled ? 'bg-success-fg' : 'bg-border-default'}
                                         `}
                                     >
                                         <span

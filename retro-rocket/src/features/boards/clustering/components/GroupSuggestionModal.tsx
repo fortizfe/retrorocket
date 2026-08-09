@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -44,13 +44,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
     const getSimilarityColor = (similarity: number) => {
         if (similarity >= 0.8) return 'text-success-fg bg-success-bg';
         if (similarity >= 0.6) return 'text-info-fg bg-info-bg';
-        return 'text-yellow-600 bg-yellow-50';
+        return 'text-warning-fg bg-warning-bg';
     };
 
     const getSimilarityLabel = (similarity: number) => {
-        if (similarity >= 0.8) return 'Alta';
-        if (similarity >= 0.6) return 'Media';
-        return 'Baja';
+        if (similarity >= 0.8) return t('groupSuggestion.similarityHigh');
+        if (similarity >= 0.6) return t('groupSuggestion.similarityMedium');
+        return t('groupSuggestion.similarityLow');
     };
 
     const togglePreview = (suggestionId: string) => {
@@ -70,6 +70,17 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
         setSelectedSuggestion(null);
     };
 
+    // Escape-key dismissal — the previous version only closed on backdrop click,
+    // a real gap against FR-012's "dismissible via Escape and outside-click".
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isOpen, onClose]);
+
     return (
         // AnimatePresence must stay mounted across the isOpen transition — an early
         // `if (!isOpen) return null` (previously above) removed it along with
@@ -81,18 +92,21 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
                 onClick={onClose}
             >
                 <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
-                    className="bg-surface-raised rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t('groupSuggestion.title')}
+                    className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 max-w-4xl w-full max-h-[90vh] overflow-hidden"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-border-default bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20">
+                    <div className="px-6 py-4 border-b border-border-default">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                                 <div className="p-2 bg-info-bg rounded-lg">
@@ -100,17 +114,18 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-semibold text-text-primary">
-                                        Sugerencias de Agrupación
+                                        {t('groupSuggestion.title')}
                                     </h2>
                                     <p className="text-sm text-text-secondary">
-                                        {suggestions.length} sugerencias encontradas automáticamente
+                                        {t('groupSuggestion.subtitle', { count: suggestions.length })}
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-surface-raised rounded-lg transition-colors"
-                                title="Cerrar modal"
+                                className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
+                                title={t('common.close')}
+                                aria-label={t('common.close')}
                             >
                                 <X className="w-5 h-5 text-text-muted" />
                             </button>
@@ -128,10 +143,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                             <div className="text-center py-12">
                                 <Info className="w-12 h-12 text-text-muted mx-auto mb-4" />
                                 <h3 className="text-lg font-medium text-text-primary mb-2">
-                                    No se encontraron sugerencias
+                                    {t('groupSuggestion.noSuggestionsTitle')}
                                 </h3>
                                 <p className="text-text-muted">
-                                    No hay suficientes tarjetas similares para crear grupos automáticamente.
+                                    {t('groupSuggestion.noSuggestionsBody')}
                                 </p>
                             </div>
                         ) : (
@@ -175,8 +190,9 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                     <div className="flex items-center space-x-2">
                                                         <button
                                                             onClick={() => togglePreview(suggestion.id)}
-                                                            className="p-2 hover:bg-surface-raised rounded-lg transition-colors"
-                                                            title={isPreviewMode ? 'Ocultar tarjetas' : 'Mostrar tarjetas'}
+                                                            className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
+                                                            title={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
+                                                            aria-label={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
                                                         >
                                                             {isPreviewMode ? (
                                                                 <EyeOff className="w-4 h-4 text-text-muted" />
@@ -190,13 +206,13 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                 {/* Suggestion Details */}
                                                 <div className="mt-3">
                                                     <p className="text-sm text-text-secondary mb-2">
-                                                        <span className="font-medium">Razón:</span> {suggestion.reason}
+                                                        <span className="font-medium">{t('groupSuggestion.reason')}:</span> {suggestion.reason}
                                                     </p>
                                                     <div className="flex items-center space-x-4 text-xs text-text-muted">
-                                                        <span>Algoritmo: {suggestion.algorithm}</span>
+                                                        <span>{t('groupSuggestion.algorithm')}: {suggestion.algorithm}</span>
                                                         {suggestion.keywords && suggestion.keywords.length > 0 && (
                                                             <span>
-                                                                Palabras clave: {suggestion.keywords.join(', ')}
+                                                                {t('groupSuggestion.keywords')}: {suggestion.keywords.join(', ')}
                                                             </span>
                                                         )}
                                                     </div>
@@ -217,7 +233,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                             {suggestionCards.map((card, cardIndex) => (
                                                                 <div
                                                                     key={card.id}
-                                                                    className={`${cardIndex === 0 ? 'ring-2 ring-blue-200' : ''}`}
+                                                                    className={`${cardIndex === 0 ? 'ring-2 ring-info-fg/40' : ''}`}
                                                                 >
                                                                     {cardIndex === 0 && (
                                                                         <div className="mb-2">
@@ -249,7 +265,7 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                         onClick={() => handleReject(suggestion.id)}
                                                         className="text-text-secondary hover:text-text-primary"
                                                     >
-                                                        Descartar
+                                                        {t('groupSuggestion.discard')}
                                                     </Button>
 
                                                     <Button
@@ -275,10 +291,10 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                         <div className="px-6 py-4 border-t border-border-default bg-surface">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm text-text-secondary">
-                                    Puedes aceptar múltiples sugerencias o crear grupos manualmente.
+                                    {t('groupSuggestion.footerHint')}
                                 </p>
                                 <Button variant="ghost" onClick={onClose}>
-                                    Cerrar
+                                    {t('common.close')}
                                 </Button>
                             </div>
                         </div>

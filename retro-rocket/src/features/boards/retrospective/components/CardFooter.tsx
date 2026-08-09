@@ -51,7 +51,10 @@ const CardFooter: React.FC<CardFooterProps> = ({
             <div className="text-xs text-text-muted">{formattedDate}</div>
             <div className="flex items-center gap-1">
                 {canEdit && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    // Always visible — never hover-only (research.md §3, FR-012):
+                    // this board is used live, often on shared screens/tablets with
+                    // no hover input, so edit/delete must be reachable at rest.
+                    <div className="flex items-center gap-1">
                         {isEditing ? (
                             <>
                                 <Button size="sm" variant="primary" onClick={onSave} disabled={!canSave}>
