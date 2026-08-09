@@ -2,6 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import toast from 'react-hot-toast';
 import BoardRow from '@/features/dashboard/components/BoardRow';
 import type { BoardSummary } from '@/features/dashboard/services/backendBoardsClient';
@@ -57,10 +59,18 @@ vi.mock('@/features/dashboard/components/EditRetrospectiveModal', () => ({
     default: ({ isOpen }: any) => (isOpen ? <div data-testid="edit-modal" /> : null),
 }));
 
+// Captures the animation-relevant props BoardRow passes to motion.li on each
+// render — spreading them onto the real DOM <li> (as the old mock did) would
+// both warn ("unknown prop") and make them un-assertable. `mock`-prefixed
+// per Vitest's vi.mock hoisting rule (see mockNavigate below).
+const mockBoardRowMotionProps = vi.fn();
 vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        li: ({ children, ...props }: any) => <li {...props}>{children}</li>,
+        li: ({ children, initial, animate, exit, transition, layout, ...domProps }: any) => {
+            mockBoardRowMotionProps({ initial, animate, exit, transition, layout });
+            return <li {...domProps}>{children}</li>;
+        },
     },
     AnimatePresence: ({ children }: any) => children,
 }));
@@ -97,6 +107,8 @@ describe('BoardRow', () => {
         vi.clearAllMocks();
         mockLanguage = 'es';
     });
+
+    const lastMotionProps = () => mockBoardRowMotionProps.mock.calls.at(-1)![0];
 
     const renderRow = (board = defaultBoard, userId = currentUserId, index = 0) =>
         render(
@@ -280,6 +292,94 @@ describe('BoardRow', () => {
             };
             renderRow(minimalBoard);
             expect(screen.getByText('Minimal Board')).toBeInTheDocument();
+        });
+    });
+
+    // research.md R1/R2 (spec 032): the pre-fix code applied one shared
+    // `transition` object to mount, `layout` reflow, and `exit` alike, so
+    // rows leaving the table (filter/sort/page changes) inherited an
+    // entrance-shaped stagger delay before they even started fading, and
+    // reflowing rows replayed that same delay instead of moving together as
+    // one update. These tests pin the fix: layout/exit must never carry the
+    // index-based entrance delay, while the true mount entrance keeps it.
+    describe('Row transition split by purpose (research.md R1/R2, FR-001–FR-005, FR-010)', () => {
+        it('gives the layout reflow transition no entrance delay, regardless of row index', () => {
+            renderRow(defaultBoard, currentUserId, 6); // index 6 → 0.3s if the entrance delay leaked in
+            const { transition } = lastMotionProps();
+            expect(transition?.layout).toBeDefined();
+            expect(transition.layout.delay ?? 0).toBe(0);
+        });
+
+        it("gives the exit transition its own config with no inherited entrance delay", () => {
+            renderRow(defaultBoard, currentUserId, 6);
+            const { exit } = lastMotionProps();
+            expect(exit?.transition).toBeDefined();
+            expect(exit.transition.delay ?? 0).toBe(0);
+        });
+
+        it('keeps the exit transition faster than the mount entrance duration', () => {
+            renderRow();
+            const { exit, transition } = lastMotionProps();
+            const entranceDuration = transition.default?.duration ?? transition.duration;
+            expect(exit.transition.duration).toBeLessThan(entranceDuration);
+        });
+
+        it('still applies the existing index-based stagger delay to the true mount entrance', () => {
+            renderRow(defaultBoard, currentUserId, 4); // 4 * 0.05 = 0.2
+            const { transition } = lastMotionProps();
+            const entranceDelay = transition.default?.delay ?? transition.delay;
+            expect(entranceDelay).toBeCloseTo(0.2);
+        });
+
+        it('caps the mount entrance stagger delay at 0.3s for high indices, unchanged from before', () => {
+            renderRow(defaultBoard, currentUserId, 50);
+            const { transition } = lastMotionProps();
+            const entranceDelay = transition.default?.delay ?? transition.delay;
+            expect(entranceDelay).toBe(0.3);
+        });
+
+        it('does not change the animated properties, and keeps entrance/exit on the same ease-out curve', () => {
+            renderRow();
+            const { initial, animate, exit, transition } = lastMotionProps();
+            expect(initial).toEqual({ opacity: 0, y: 8 });
+            expect(animate).toEqual({ opacity: 1, y: 0 });
+            expect(exit.opacity).toBe(0);
+            const entranceEase = transition.default?.ease ?? transition.ease;
+            expect(entranceEase).toEqual([0.23, 1, 0.32, 1]);
+            expect(exit.transition.ease).toEqual([0.23, 1, 0.32, 1]);
+        });
+
+        it('gives the layout reflow its own ease-in-out curve — on-screen movement, not an entrance/exit (animate skill decision)', () => {
+            renderRow();
+            const { transition } = lastMotionProps();
+            // Deliberately distinct from the entrance/exit ease-out curve:
+            // a row reflowing to a new slot is "moving on screen," which
+            // the animate skill's easing table scopes to ease-in-out.
+            expect(transition.layout.ease).toEqual([0.77, 0, 0.175, 1]);
+        });
+    });
+
+    // research.md R4: reduced motion is already handled app-wide by
+    // <MotionConfig reducedMotion="user"> in src/App.tsx, which snaps
+    // framer-motion's transform-driven values (this row's `y`/`layout`
+    // shift) instantly while still animating opacity. BoardRow must not
+    // duplicate that with its own prefers-reduced-motion branch — doing so
+    // would risk diverging from the app-root behavior confirmed in R4.
+    describe('Reduced motion delegation (research.md R4 — MotionConfig handles this app-wide)', () => {
+        it('does not read prefers-reduced-motion itself — no local reduced-motion hook is imported', () => {
+            const source = readFileSync(
+                path.resolve(__dirname, '../../../features/dashboard/components/BoardRow.tsx'),
+                'utf-8'
+            );
+            expect(source).not.toMatch(/useReducedMotion/);
+        });
+
+        it('renders the same static transition/exit shape regardless of row index — no conditional branching to diverge from MotionConfig', () => {
+            renderRow(defaultBoard, currentUserId, 1);
+            const first = lastMotionProps();
+            renderRow(defaultBoard, currentUserId, 1);
+            const second = lastMotionProps();
+            expect(second).toEqual(first);
         });
     });
 });
