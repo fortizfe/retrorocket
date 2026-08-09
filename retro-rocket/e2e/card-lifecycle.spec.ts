@@ -40,7 +40,7 @@ test('user adds cards, likes a card, and groups cards by creator', async ({ page
     await expect(page.locator('span', { hasText: 'Card two' })).toBeVisible();
 
     // Group cards by creator
-    await page.locator('[aria-label="Grouping options"]').first().click();
+    await page.getByRole('button', { name: 'Opciones de agrupación' }).first().click();
     await page.getByText('Agrupar por usuario', { exact: true }).click();
     await expect(page.getByText('2 tarjetas')).toBeVisible();
 
