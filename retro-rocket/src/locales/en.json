@@ -42,7 +42,10 @@
       "itemsPerPage": "items per page",
       "showingResults": "Showing {{start}}-{{end}} of {{total}} retrospectives",
       "noResults": "No retrospectives found matching your search",
-      "clearFilter": "Clear filter"
+      "clearFilter": "Clear filter",
+      "loadMore": "Load more boards",
+      "backToTop": "Back to top",
+      "resultsCount": "{{count}} of {{total}} boards"
     },
     "boardCard": {
       "deleteBoard": "Delete board?",
@@ -63,7 +66,8 @@
       "titleLabel": "Title",
       "titlePlaceholder": "Retrospective title",
       "saving": "Saving...",
-      "titleRequired": "Title is required"
+      "titleRequired": "Title is required",
+      "moreActions": "More actions"
     },
     "joinModal": {
       "title": "Join Retrospective",
@@ -76,7 +80,19 @@
       "closeModal": "Close modal",
       "helpText": "Don't have the ID? Ask the retrospective organizer to share it with you."
     },
-    "loadingBoards": "Loading your boards..."
+    "loadingBoards": "Loading your boards...",
+    "error": {
+      "title": "Something went wrong",
+      "loadMessage": "We couldn't load your boards. Please try again."
+    },
+    "table": {
+      "columnTitle": "Board",
+      "columnDate": "Date",
+      "columnParticipants": "Participants",
+      "columnRole": "Role",
+      "columnActions": "Actions",
+      "scopeFilterLabel": "Filter boards by scope"
+    }
   },
   "boardTemplates": {
     "default": {

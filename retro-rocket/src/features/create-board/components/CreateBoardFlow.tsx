@@ -234,7 +234,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                             <Button
                                 type="button"
                                 onClick={handleNext}
-                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white flex items-center gap-2"
+                                className="flex items-center gap-2"
                             >
                                 {t('createBoard.next')}
                                 <ArrowRight className="w-4 h-4" />
@@ -244,7 +244,6 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                 type="button"
                                 onClick={handleCreate}
                                 disabled={!boardTitle.trim() || isCreating}
-                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white"
                             >
                                 {isCreating ? t('dashboard.creating') : t('createBoard.create')}
                             </Button>

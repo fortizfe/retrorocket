@@ -55,15 +55,29 @@ describe('Input Component', () => {
             expect(label).not.toBeInTheDocument();
         });
 
-        it('should associate label with input', () => {
+        it('should associate label with input programmatically via htmlFor/id, not just visually', () => {
+            // Regression guard: a <label> with no htmlFor renders visually next to
+            // the input but is invisible to getByLabelText()/screen readers (the
+            // pre-existing gap this fix closes — spec 031 FR-018).
             const labelText = 'Username';
             render(<Input label={labelText} />);
 
-            // Check that both label and input are present
-            const label = screen.getByText(labelText);
-            const input = screen.getByRole('textbox');
-            expect(label).toBeInTheDocument();
+            const input = screen.getByLabelText(labelText);
             expect(input).toBeInTheDocument();
+            expect(input.tagName).toBe('INPUT');
+        });
+
+        it('should respect an explicitly-passed id instead of overriding it', () => {
+            render(<Input label="Board ID" id="explicit-id" />);
+
+            const input = screen.getByLabelText('Board ID');
+            expect(input).toHaveAttribute('id', 'explicit-id');
+        });
+
+        it('should not add an id to an unlabeled input', () => {
+            render(<Input />);
+            const input = screen.getByRole('textbox');
+            expect(input).not.toHaveAttribute('id');
         });
     });
 

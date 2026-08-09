@@ -43,7 +43,10 @@
       "itemsPerPage": "elementos por página",
       "showingResults": "Mostrando {{start}}-{{end}} de {{total}} retrospectivas",
       "noResults": "No se encontraron retrospectivas que coincidan con tu búsqueda",
-      "clearFilter": "Limpiar filtro"
+      "clearFilter": "Limpiar filtro",
+      "loadMore": "Cargar más tableros",
+      "backToTop": "Volver arriba",
+      "resultsCount": "{{count}} de {{total}} tableros"
     },
     "boardCard": {
       "deleteBoard": "¿Eliminar tablero?",
@@ -64,7 +67,8 @@
       "titleLabel": "Título",
       "titlePlaceholder": "Título de la retrospectiva",
       "saving": "Guardando...",
-      "titleRequired": "El título es obligatorio"
+      "titleRequired": "El título es obligatorio",
+      "moreActions": "Más acciones"
     },
     "joinModal": {
       "title": "Unirse a Retrospectiva",
@@ -77,7 +81,19 @@
       "closeModal": "Cerrar modal",
       "helpText": "¿No tienes el ID? Pídele al organizador de la retrospectiva que lo comparta contigo."
     },
-    "loadingBoards": "Cargando tus tableros..."
+    "loadingBoards": "Cargando tus tableros...",
+    "error": {
+      "title": "Algo salió mal",
+      "loadMessage": "No pudimos cargar tus tableros. Inténtalo de nuevo."
+    },
+    "table": {
+      "columnTitle": "Tablero",
+      "columnDate": "Fecha",
+      "columnParticipants": "Participantes",
+      "columnRole": "Rol",
+      "columnActions": "Acciones",
+      "scopeFilterLabel": "Filtrar tableros por ámbito"
+    }
   },
   "boardTemplates": {
     "default": {

@@ -87,8 +87,10 @@ const Pagination: React.FC<PaginationProps> = ({
                 {t('dashboard.controls.showingResults', { start: startItem, end: endItem, total: totalItems })}
             </div>
 
-            {/* Pagination controls */}
-            <div className="flex items-center gap-2">
+            {/* Pagination controls — wraps rather than overflowing horizontally
+                when there are enough pages that the button row doesn't fit a
+                narrow viewport (spec 031 FR-020). */}
+            <div className="flex flex-wrap items-center justify-center gap-2">
                 {/* Items per page */}
                 <div className="flex items-center gap-2 mr-4">
                     <span className="text-sm text-text-secondary">
@@ -116,6 +118,8 @@ const Pagination: React.FC<PaginationProps> = ({
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="px-3 py-1"
+                    title={t('common.previous')}
+                    aria-label={t('common.previous')}
                 >
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -131,6 +135,7 @@ const Pagination: React.FC<PaginationProps> = ({
                                 size="sm"
                                 onClick={() => onPageChange(page as number)}
                                 className="px-3 py-1 min-w-[2.5rem]"
+                                aria-current={currentPage === page ? 'page' : undefined}
                             >
                                 {page}
                             </Button>
@@ -145,6 +150,8 @@ const Pagination: React.FC<PaginationProps> = ({
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="px-3 py-1"
+                    title={t('common.next')}
+                    aria-label={t('common.next')}
                 >
                     <ChevronRight className="h-4 w-4" />
                 </Button>

@@ -1,173 +1,124 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LayoutGrid, Users } from 'lucide-react';
+import { Plus, Users, Inbox, SearchX, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '@/lib/contexts/useUserContext';
 import * as backendBoardsClient from '@/features/dashboard/services/backendBoardsClient';
+import type { BoardSummary } from '@/features/dashboard/services/backendBoardsClient';
 import AuthWrapper from '@/features/auth/components/AuthWrapper';
-import BoardCard from '@/features/dashboard/components/BoardCard';
-import BoardListItem from '@/features/dashboard/components/BoardListItem';
-import BoardControlsBar, { SortBy, SortOrder, ViewMode, FilterBy } from '@/features/dashboard/components/BoardControlsBar';
+import BoardRow from '@/features/dashboard/components/BoardRow';
+import BoardControlsBar from '@/features/dashboard/components/BoardControlsBar';
 import Pagination from '@/features/dashboard/components/Pagination';
 import JoinRetrospectiveModal from '@/features/dashboard/components/JoinRetrospectiveModal';
 import CreateBoardFlow from '@/features/create-board/components/CreateBoardFlow';
 import Button from '@/lib/components/ui/Button';
 import toast from 'react-hot-toast';
+import { useBoardListQuery, type ScopeFilter, type SortKey, type SortDirection } from '@/features/dashboard/hooks/useBoardListQuery';
 
-interface Board {
-    id: string;
-    title: string;
-    description?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    participantCount: number;
-    isActive: boolean;
-    createdBy: string;
-    isCreator?: boolean;
-    templateId?: string;
-}
+/**
+ * "Mis Tableros" dashboard — spec 031's Apple HIG-inspired redesign,
+ * selected Direction B ("Structured Table"): a single adaptive layout (no
+ * grid/list toggle), a real segmented scope-filter control, and pagination
+ * that is always rendered whenever a board list is shown — fixing the
+ * pre-existing defect (spec 031 FR-012) where page 2+ was unreachable in
+ * the old grid view.
+ */
+
+const ITEMS_PER_PAGE_DEFAULT = 10;
+
+// Strong ease-out (not framer-motion's default tween easing) for entrance
+// motion — occasional-tier (page load, state transitions), per the `animate`
+// skill's easing table.
+const ENTRANCE_TRANSITION = { duration: 0.25, ease: [0.23, 1, 0.32, 1] as const };
 
 const DashboardPage: React.FC = () => {
     const { user } = useUser();
     const { t } = useTranslation();
-    const [boards, setBoards] = useState<Board[]>([]);
+    const navigate = useNavigate();
+
+    const [boards, setBoards] = useState<BoardSummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [showCreateFlow, setShowCreateFlow] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
 
-    // Controls state
-    const [sortBy, setSortBy] = useState<SortBy>('date');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-    const [filterBy, setFilterBy] = useState<FilterBy>('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
+    const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-
-    const navigate = useNavigate();
+    const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
 
     const loadUserBoards = useCallback(async () => {
         if (!user) return;
-
+        setLoading(true);
+        setLoadError(false);
         try {
-            setLoading(true);
             const userBoards = await backendBoardsClient.listBoards();
             setBoards(userBoards);
         } catch (error) {
             console.error('Error loading user boards:', error);
-            toast.error('Error al cargar los tableros');
+            setLoadError(true);
+            // `t` is deliberately excluded from the dependency array below: it is
+            // read at call-time only, and including it re-creates this callback
+            // (and re-fires the effect that calls it) on every render whenever the
+            // active i18next instance doesn't hand back a referentially-stable `t`
+            // — a regression class this component already has a dedicated test
+            // for ("loads user boards exactly once on mount"), per research.md §6.
+            toast.error(t('dashboard.error.loadMessage'));
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
     useEffect(() => {
         loadUserBoards();
     }, [loadUserBoards]);
 
-    // Reset pagination when search, sort or filter changes
+    // Reset to page 1 whenever the view of the data changes shape.
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, sortBy, sortOrder, filterBy]);
+    }, [searchQuery, scopeFilter, sortKey, sortDirection]);
 
-    // Handle sort change
-    const handleSortChange = (newSortBy: SortBy, newSortOrder: SortOrder) => {
-        setSortBy(newSortBy);
-        setSortOrder(newSortOrder);
+    const { boards: sortedBoards, counts, isEmpty, isNoResults } = useBoardListQuery({
+        boards,
+        searchText: searchQuery,
+        scopeFilter,
+        sortKey,
+        sortDirection,
+    });
+
+    const totalPages = Math.max(1, Math.ceil(sortedBoards.length / itemsPerPage));
+    const paginatedBoards = sortedBoards.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const handleSortChange = (newSortKey: SortKey, newSortDirection: SortDirection) => {
+        setSortKey(newSortKey);
+        setSortDirection(newSortDirection);
     };
 
-    // Filter and sort boards
-    const filteredAndSortedBoards = useMemo(() => {
-        let filtered = boards;
-
-        // Apply type filter
-        if (filterBy !== 'all') {
-            filtered = boards.filter(board => {
-                if (filterBy === 'created') {
-                    return board.isCreator === true;
-                } else if (filterBy === 'joined') {
-                    return board.isCreator === false;
-                }
-                return true;
-            });
-        }
-
-        // Apply search filter
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(board =>
-                board.title.toLowerCase().includes(query) ||
-                board.description?.toLowerCase().includes(query)
-            );
-        }
-
-        // Apply sorting
-        const sorted = [...filtered].sort((a, b) => {
-            let comparison = 0;
-
-            switch (sortBy) {
-                case 'name':
-                    comparison = a.title.localeCompare(b.title);
-                    break;
-                case 'date':
-                    comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                    break;
-                default:
-                    return 0;
-            }
-
-            return sortOrder === 'asc' ? comparison : -comparison;
-        });
-
-        return sorted;
-    }, [boards, searchQuery, sortBy, sortOrder, filterBy]);
-
-    // Calculate board counts by type
-    const boardCounts = useMemo(() => {
-        const created = boards.filter(board => board.isCreator === true).length;
-        const joined = boards.filter(board => board.isCreator === false).length;
-        return { created, joined, total: boards.length };
-    }, [boards]);
-
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredAndSortedBoards.length / itemsPerPage);
-    const paginatedBoards = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filteredAndSortedBoards.slice(startIndex, endIndex);
-    }, [filteredAndSortedBoards, currentPage, itemsPerPage]);
-
     const handleBoardCreated = (boardId: string) => {
-        // Refresh boards list
         loadUserBoards();
-        // Navigate to the new board
         navigate(`/retro/${boardId}`);
     };
 
-    const handleBoardDeleted = (boardId: string) => {
-        setBoards(prev => prev.filter(board => board.id !== boardId));
-    };
-
     const handleBoardUpdated = (boardId: string, updates: { title: string }) => {
-        setBoards(prev => prev.map(board =>
-            board.id === boardId ? { ...board, ...updates } : board
-        ));
+        setBoards((prev) => prev.map((board) => (board.id === boardId ? { ...board, ...updates } : board)));
     };
 
-    // Hard delete handler used by the Dashboard view to permanently remove
-    // retrospectives via the backend when a user confirms deletion in "Mis tableros".
-    const handleHardDelete = async (boardId: string, _userId: string) => {
-        try {
-            await backendBoardsClient.deleteBoard(boardId);
-            // Update local state
-            handleBoardDeleted(boardId);
-            toast.success('Board deleted');
-        } catch (error) {
-            console.error('Error deleting board:', error);
-            toast.error('Delete failed');
-            throw error;
-        }
+    const handleBoardDeleted = (boardId: string) => {
+        setBoards((prev) => prev.filter((board) => board.id !== boardId));
+    };
+
+    const handleClearSearchAndFilters = () => {
+        setSearchQuery('');
+        setScopeFilter('all');
+    };
+
+    const handleItemsPerPageChange = (value: number) => {
+        setItemsPerPage(value);
+        setCurrentPage(1);
     };
 
     if (loading) {
@@ -183,211 +134,150 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="min-h-screen">
-            <div className="container mx-auto px-2 py-8">
+            <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
                 {/* Header */}
-                <motion.div
+                <motion.header
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
+                    transition={ENTRANCE_TRANSITION}
+                    className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
                 >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
-                                <LayoutGrid className="w-8 h-8 text-info-fg" />
-                                {t('dashboard.title')}
-                            </h1>
-                            <p className="text-text-secondary mt-2">
-                                {t('dashboard.subtitle')}
-                            </p>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button
-                                onClick={() => setShowJoinModal(true)}
-                                variant="outline"
-                                className="border-info-fg text-info-fg hover:bg-info-bg font-medium px-6 py-3 flex items-center gap-2"
-                            >
-                                <Users className="w-5 h-5" />
-                                {t('dashboard.joinRetro')}
-                            </Button>
-                            <Button
-                                onClick={() => setShowCreateFlow(true)}
-                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 dark:from-primary-600 dark:to-blue-600 dark:hover:from-primary-700 dark:hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
-                            >
-                                <Plus className="w-5 h-5" />
-                                {t('dashboard.newBoard')}
-                            </Button>
-                        </div>
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
+                            {t('dashboard.title')}
+                        </h1>
+                        <p className="mt-1 text-sm text-text-secondary sm:text-base">{t('dashboard.subtitle')}</p>
                     </div>
-                </motion.div>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" onClick={() => setShowJoinModal(true)}>
+                            <Users className="mr-2 h-4 w-4" />
+                            {t('dashboard.joinRetro')}
+                        </Button>
+                        <Button variant="primary" onClick={() => setShowCreateFlow(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            {t('dashboard.newBoard')}
+                        </Button>
+                    </div>
+                </motion.header>
 
-                {/* Create Board Flow */}
                 <CreateBoardFlow
                     isOpen={showCreateFlow}
                     onClose={() => setShowCreateFlow(false)}
                     onSuccess={handleBoardCreated}
                 />
+                <JoinRetrospectiveModal isOpen={showJoinModal} onClose={() => setShowJoinModal(false)} />
 
-                {/* Join Retrospective Modal */}
-                <JoinRetrospectiveModal
-                    isOpen={showJoinModal}
-                    onClose={() => setShowJoinModal(false)}
-                />
-
-                {/* Controls Bar */}
-                {boards.length > 0 && (
-                    <BoardControlsBar
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                        onSortChange={handleSortChange}
-                        filterBy={filterBy}
-                        onFilterChange={setFilterBy}
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                        totalCount={boards.length}
-                        filteredCount={filteredAndSortedBoards.length}
-                        createdCount={boardCounts.created}
-                        joinedCount={boardCounts.joined}
-                    />
-                )}
-
-                {/* Boards Content */}
-                {boards.length === 0 ? (
+                {loadError ? (
+                    <div role="alert" className="rounded-xl border border-error-fg/30 bg-error-bg px-6 py-16 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface-raised">
+                            <AlertTriangle className="h-7 w-7 text-error-fg" />
+                        </div>
+                        <h2 className="text-lg font-semibold text-error-fg">{t('dashboard.error.title')}</h2>
+                        <p className="mt-1 text-sm text-error-fg">{t('dashboard.error.loadMessage')}</p>
+                        <Button variant="outline" className="mt-6" onClick={loadUserBoards}>
+                            {t('common.retry')}
+                        </Button>
+                    </div>
+                ) : isEmpty ? (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-16"
+                        transition={ENTRANCE_TRANSITION}
+                        className="rounded-xl border border-border-default bg-surface-raised px-6 py-16 text-center"
                     >
-                        <div className="w-16 h-16 bg-border-default rounded-full flex items-center justify-center mx-auto mb-4">
-                            <LayoutGrid className="w-8 h-8 text-text-muted" />
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+                            <Inbox className="h-7 w-7 text-text-muted" />
                         </div>
-                        <h3 className="text-xl font-semibold text-text-secondary mb-2">
-                            {t('dashboard.noBoards')}
-                        </h3>
-                        <p className="text-text-muted mb-6">
-                            {t('dashboard.createFirst')}
-                        </p>
-                        <div className="flex gap-3 justify-center">
-                            <Button
-                                onClick={() => setShowJoinModal(true)}
-                                variant="outline"
-                                className="border-info-fg text-info-fg hover:bg-info-bg font-medium px-6 py-3 flex items-center gap-2"
-                            >
-                                <Users className="w-5 h-5" />
+                        <h2 className="text-lg font-semibold text-text-secondary">{t('dashboard.noBoards')}</h2>
+                        <p className="mx-auto mt-1 max-w-md text-text-muted">{t('dashboard.createFirst')}</p>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                            <Button variant="outline" onClick={() => setShowJoinModal(true)}>
+                                <Users className="mr-2 h-4 w-4" />
                                 {t('dashboard.joinRetro')}
                             </Button>
-                            <Button
-                                onClick={() => setShowCreateFlow(true)}
-                                className="bg-gradient-to-r from-primary-500 to-blue-600 hover:from-primary-600 hover:to-blue-700 text-white font-medium px-6 py-3 flex items-center gap-2 shadow-soft"
-                            >
-                                <Plus className="w-5 h-5" />
+                            <Button variant="primary" onClick={() => setShowCreateFlow(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
                                 {t('dashboard.createFirst_button')}
                             </Button>
                         </div>
                     </motion.div>
                 ) : (
                     <>
-                        {filteredAndSortedBoards.length === 0 ? (
+                        <BoardControlsBar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            scopeFilter={scopeFilter}
+                            onScopeFilterChange={setScopeFilter}
+                            sortKey={sortKey}
+                            sortDirection={sortDirection}
+                            onSortChange={handleSortChange}
+                            counts={counts}
+                        />
+
+                        {isNoResults ? (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-center py-16"
+                                transition={ENTRANCE_TRANSITION}
+                                className="rounded-xl border border-border-default bg-surface-raised px-6 py-16 text-center"
                             >
-                                <div className="w-16 h-16 bg-border-default rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <LayoutGrid className="w-8 h-8 text-text-muted" />
+                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+                                    <SearchX className="h-7 w-7 text-text-muted" />
                                 </div>
-                                <h3 className="text-xl font-semibold text-text-secondary mb-2">
-                                    {t('dashboard.controls.noResults')}
-                                </h3>
-                                <Button
-                                    onClick={() => setSearchQuery('')}
-                                    variant="outline"
-                                    className="mt-4"
-                                >
+                                <h2 className="text-lg font-semibold text-text-secondary">{t('dashboard.controls.noResults')}</h2>
+                                <Button variant="outline" className="mt-6" onClick={handleClearSearchAndFilters}>
                                     {t('dashboard.controls.clearFilter')}
                                 </Button>
                             </motion.div>
                         ) : (
                             <>
-                                {/* Grid View — AnimatePresence must directly parent this list for a
-                                    removed board to exit-animate (design audit finding, spec 028;
-                                    same class as DAF-001). Stagger capped at 50ms/item, was
-                                    uncapped 100ms/item (up to 900ms across a 10-item page). */}
-                                {viewMode === 'grid' ? (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                        className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-                                    >
-                                        <AnimatePresence>
-                                            {paginatedBoards.map((board, index) => (
-                                                <motion.div
-                                                    key={board.id}
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: -20 }}
-                                                    transition={{ delay: Math.min(index * 0.05, 0.3) }}
-                                                >
-                                                    <BoardCard
-                                                        board={{
-                                                            ...board,
-                                                            createdBy: board.createdBy ?? user?.uid ?? ''
-                                                        }}
-                                                        currentUserId={user?.uid ?? ''}
-                                                        onBoardDeleted={handleBoardDeleted}
-                                                        onDelete={handleHardDelete}
-                                                        onBoardUpdated={handleBoardUpdated}
-                                                    />
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-                                    </motion.div>
-                                ) : (
-                                    /* List View — same AnimatePresence fix as the grid above. */
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                        className="space-y-4"
-                                    >
-                                        <AnimatePresence>
-                                            {paginatedBoards.map((board, index) => (
-                                                <motion.div
-                                                    key={board.id}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    exit={{ opacity: 0, x: 20 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                >
-                                                    <BoardListItem
-                                                        board={{
-                                                            ...board,
-                                                            createdBy: board.createdBy ?? user?.uid ?? ''
-                                                        }}
-                                                        currentUserId={user?.uid ?? ''}
-                                                        onBoardDeleted={handleBoardDeleted}
-                                                        onDelete={handleHardDelete}
-                                                        onBoardUpdated={handleBoardUpdated}
-                                                    />
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-                                    </motion.div>
-                                )}
+                                <div className="overflow-hidden rounded-xl border border-border-default bg-surface-raised">
+                                    {/* Column header — wide viewports only; the mobile
+                                        stacked layout already labels itself via icons
+                                        + role badge. */}
+                                    <div className="hidden items-center gap-4 border-b border-border-default bg-surface/60 px-4 py-2 text-xs font-medium uppercase tracking-wide text-text-muted backdrop-blur-sm md:flex">
+                                        <span className="min-w-0 flex-1">{t('dashboard.table.columnTitle')}</span>
+                                        <span className="w-28 shrink-0">{t('dashboard.table.columnDate')}</span>
+                                        <span className="w-24 shrink-0">{t('dashboard.table.columnParticipants')}</span>
+                                        <span className="w-28 shrink-0">{t('dashboard.table.columnRole')}</span>
+                                        <span className="w-32 shrink-0 text-right">
+                                            <span className="sr-only">{t('dashboard.table.columnActions')}</span>
+                                        </span>
+                                    </div>
 
-                                {/* Pagination */}
-                                {viewMode === 'list' && (
-                                    <Pagination
-                                        currentPage={currentPage}
-                                        totalPages={totalPages}
-                                        itemsPerPage={itemsPerPage}
-                                        totalItems={filteredAndSortedBoards.length}
-                                        onPageChange={setCurrentPage}
-                                        onItemsPerPageChange={setItemsPerPage}
-                                    />
-                                )}
+                                    {/* AnimatePresence must directly wrap the animated list
+                                        for a removed board to exit-animate instead of
+                                        vanishing instantly (design audit finding, spec
+                                        028: same AnimatePresence-boundary bug class as
+                                        DAF-001). Stagger capped at 50ms/item. */}
+                                    <ul aria-label={t('dashboard.title')} className="divide-y divide-border-default">
+                                        <AnimatePresence initial={false}>
+                                            {paginatedBoards.map((board, index) => (
+                                                <BoardRow
+                                                    key={board.id}
+                                                    board={board}
+                                                    index={index}
+                                                    currentUserId={user?.uid ?? ''}
+                                                    onUpdated={handleBoardUpdated}
+                                                    onDeleted={handleBoardDeleted}
+                                                />
+                                            ))}
+                                        </AnimatePresence>
+                                    </ul>
+                                </div>
+
+                                {/* Pagination — structurally always rendered whenever a
+                                    board list is shown (single layout, no view-mode
+                                    gate), fixing the pre-existing FR-012 defect where it
+                                    only appeared in list view. */}
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    itemsPerPage={itemsPerPage}
+                                    totalItems={sortedBoards.length}
+                                    onPageChange={setCurrentPage}
+                                    onItemsPerPageChange={handleItemsPerPageChange}
+                                />
                             </>
                         )}
                     </>

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import clsx from 'clsx';
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -17,8 +17,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     variant = 'default',
     size = 'md',
     className,
+    id,
     ...props
   }, ref) => {
+    // Auto-generate an id when the caller passes `label` without one, so the
+    // <label>/<input> association below is programmatic (getByLabelText,
+    // screen readers) rather than merely visual (fixes a pre-existing gap —
+    // see spec 031 FR-018/EditRetrospectiveModal).
+    const generatedId = useId();
+    const inputId = id ?? (label ? generatedId : undefined);
     const baseClasses = 'block w-full rounded-lg border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface';
 
     const variants = {
@@ -45,12 +52,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-text-secondary mb-2">
+          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-2">
             {label}
           </label>
         )}
         <input
           ref={ref}
+          id={inputId}
           className={inputClasses}
           {...props}
         />
