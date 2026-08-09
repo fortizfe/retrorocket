@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n/config';
 import Button from '@/lib/components/ui/Button';
+import { motion } from 'framer-motion';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -128,5 +129,25 @@ describe('Button Component', () => {
         renderWithI18n(<Button type="submit">Submit</Button>);
         const button = screen.getByRole('button', { name: /submit/i });
         expect(button).toHaveAttribute('type', 'submit');
+    });
+
+    // spec 032 (Mis Tableros table motion refinement) research.md R6: the
+    // dashboard's pagination controls give press feedback purely by
+    // rendering through this shared Button — no dedicated feedback of their
+    // own. This guards that press feedback stays in place (and within the
+    // project's documented 0.95–0.98 subtle-scale range) so a future change
+    // here can't silently regress FR-009 for every Button consumer at once.
+    it('gives subtle, in-range whileHover/whileTap scale feedback when enabled (FR-009)', () => {
+        renderWithI18n(<Button>Press me</Button>);
+        const props = vi.mocked(motion.button).mock.calls.at(-1)![0] as any;
+        expect(props.whileHover).toEqual({ scale: 1.02 });
+        expect(props.whileTap).toEqual({ scale: 0.98 });
+    });
+
+    it('suppresses the press feedback (scale stays at 1) when disabled or loading', () => {
+        renderWithI18n(<Button disabled>Press me</Button>);
+        const props = vi.mocked(motion.button).mock.calls.at(-1)![0] as any;
+        expect(props.whileHover).toEqual({ scale: 1 });
+        expect(props.whileTap).toEqual({ scale: 1 });
     });
 });

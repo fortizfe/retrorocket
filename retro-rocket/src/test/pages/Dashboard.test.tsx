@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n/config';
 import DashboardPage from '@/pages/Dashboard';
@@ -337,6 +339,59 @@ describe('DashboardPage', () => {
         });
     });
 
+    describe('Pagination transitions (spec 032 US2, FR-002, FR-004, FR-009)', () => {
+        const manyBoards = Array.from({ length: 25 }, (_, i) =>
+            makeBoard({ id: `board-${i}`, title: `Board ${String(i).padStart(2, '0')}` })
+        );
+
+        it('leaves no stray/leftover rows from the previous page after a page-number change', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(manyBoards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(10));
+
+            fireEvent.click(screen.getByRole('button', { name: '2' }));
+
+            await waitFor(() => {
+                expect(screen.getAllByTestId('board-row')).toHaveLength(10);
+                expect(screen.getByText('Board 10')).toBeInTheDocument(); // first row of page 2
+            });
+            // Page 1's rows must not linger after the page change.
+            expect(screen.queryByText('Board 00')).not.toBeInTheDocument();
+        });
+
+        it('transitions the row set through the same shared path when items-per-page changes, not a separate/clashing behavior', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(manyBoards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(10));
+
+            fireEvent.change(screen.getByTitle('dashboard.controls.itemsPerPage'), { target: { value: '20' } });
+
+            await waitFor(() => {
+                expect(screen.getAllByTestId('board-row')).toHaveLength(20);
+            });
+            // Changing items-per-page also resets to page 1 — no residual page-2+ state.
+            expect(screen.getByText('Board 00')).toBeInTheDocument();
+        });
+
+        it('produces no state change or stray side effect when a disabled pagination control is clicked', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(manyBoards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(10));
+
+            // 25 boards / 10 per page = 3 pages; jump to the last page, where "Next" is disabled.
+            fireEvent.click(screen.getByRole('button', { name: '3' }));
+            await waitFor(() => expect(screen.getByText('Board 24')).toBeInTheDocument());
+
+            const nextButton = screen.getByTitle('common.next');
+            expect(nextButton).toBeDisabled();
+            fireEvent.click(nextButton); // no-op: native disabled buttons don't fire onClick
+
+            // Still on page 3 — nothing changed as a side effect of the click.
+            expect(screen.getByText('Board 24')).toBeInTheDocument();
+            expect(screen.getAllByTestId('board-row')).toHaveLength(5); // last page: 25 - 20
+        });
+    });
+
     describe('Search, filter, and sort (FR-009, FR-010, FR-011)', () => {
         const boards = [
             makeBoard({ id: '1', title: 'Sprint 12 Retro', description: 'alpha team', isCreator: true, createdAt: new Date('2023-01-03') }),
@@ -386,6 +441,46 @@ describe('DashboardPage', () => {
             });
         });
 
+        it('leaves no stray/leftover rows from the previous scope after a filter change (spec 032 US1 scenario 1, FR-001, FR-004)', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            fireEvent.click(screen.getByText('(1)')); // "Joined" scope option → only 'Bug Bash Retro'
+
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows).toHaveLength(1);
+            });
+            // Titles from the previous ("All") scope must not linger anywhere in the list.
+            expect(screen.queryByText('Sprint 12 Retro')).not.toBeInTheDocument();
+            expect(screen.queryByText('Q1 Planning')).not.toBeInTheDocument();
+
+            fireEvent.click(screen.getByText('(3)')); // back to "All"
+            await waitFor(() => {
+                expect(screen.getAllByTestId('board-row')).toHaveLength(3);
+            });
+        });
+
+        it('settles on the latest scope with no broken/inconsistent state when filters change rapidly in succession (spec 032 US1 scenario 2, FR-005)', async () => {
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(3));
+
+            // Fire two scope changes back-to-back, before awaiting the first's settle.
+            fireEvent.click(screen.getByText('(1)')); // Joined
+            fireEvent.click(screen.getByText('(2)')); // Created (without awaiting the Joined state first)
+
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows).toHaveLength(2);
+                expect(rows.map((r) => r.textContent)).toEqual(
+                    expect.arrayContaining([expect.stringContaining('Sprint 12 Retro'), expect.stringContaining('Q1 Planning')])
+                );
+            });
+            expect(screen.queryByText('Bug Bash Retro')).not.toBeInTheDocument();
+        });
+
         it('shows a distinct no-results state (not the zero-boards empty state) when search matches nothing', async () => {
             vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(boards);
             renderWithProviders(<DashboardPage />);
@@ -399,6 +494,10 @@ describe('DashboardPage', () => {
                 expect(screen.getByText('dashboard.controls.noResults')).toBeInTheDocument();
             });
             expect(screen.queryByText('dashboard.noBoards')).not.toBeInTheDocument();
+            // spec 032 Polish, Edge Cases, FR-004: the transition into the
+            // no-results state must not leave stray rows from the previous
+            // (matching) set behind.
+            expect(screen.queryAllByTestId('board-row')).toHaveLength(0);
         });
 
         it('sorts by name and toggles direction on repeat selection', async () => {
@@ -417,6 +516,47 @@ describe('DashboardPage', () => {
                 const rows = screen.getAllByTestId('board-row');
                 expect(rows[0]).toHaveTextContent('Sprint 12 Retro'); // descending
             });
+        });
+
+        // BoardRow is stubbed in this file (see top-level mock), so the
+        // per-row transition timing itself is verified in BoardRow.test.tsx
+        // (research.md R1/R2). What this file can and must guard is that
+        // sort doesn't get its own, separate list-rendering path — research.md
+        // R5's claim that sort/filter/pagination all share one row list.
+        it('reorders rows through the single shared AnimatePresence-wrapped list — no separate rendering path for sort (research.md R5, FR-010)', () => {
+            const source = readFileSync(path.resolve(__dirname, '../../pages/Dashboard.tsx'), 'utf-8');
+            const animatePresenceCount = (source.match(/<AnimatePresence/g) ?? []).length;
+            expect(animatePresenceCount).toBe(1);
+        });
+    });
+
+    describe('Cross-interaction interruption (spec 032 Polish, Edge Cases, FR-005, SC-003)', () => {
+        it('settles correctly on the new filtered page when a scope-filter change is immediately followed by a page-number change', async () => {
+            const manyBoards = [
+                ...Array.from({ length: 15 }, (_, i) =>
+                    makeBoard({ id: `created-${i}`, title: `Created ${String(i).padStart(2, '0')}`, isCreator: true })
+                ),
+                ...Array.from({ length: 5 }, (_, i) =>
+                    makeBoard({ id: `joined-${i}`, title: `Joined ${String(i).padStart(2, '0')}`, isCreator: false })
+                ),
+            ];
+            vi.mocked(backendBoardsClient.listBoards).mockResolvedValueOnce(manyBoards);
+            renderWithProviders(<DashboardPage />);
+            await waitFor(() => expect(screen.getAllByTestId('board-row')).toHaveLength(10));
+
+            // Filter to "Created" (15 boards → resets to page 1, 2 pages of 10/5),
+            // then immediately jump to page 2 without awaiting the filter to settle.
+            fireEvent.click(screen.getByText('(15)')); // "Created" scope count
+            fireEvent.click(screen.getByRole('button', { name: '2' }));
+
+            await waitFor(() => {
+                const rows = screen.getAllByTestId('board-row');
+                expect(rows).toHaveLength(5); // page 2 of the 15 "Created" boards: 15 - 10
+            });
+            // No mix of the pre-filter (Joined) set or the pre-page (page 1) set lingering.
+            expect(screen.queryByText('Joined 00')).not.toBeInTheDocument();
+            expect(screen.queryByText('Created 00')).not.toBeInTheDocument(); // page 1's first row
+            expect(screen.getByText('Created 10')).toBeInTheDocument(); // page 2's first row
         });
     });
 

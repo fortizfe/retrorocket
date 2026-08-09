@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
+import { signInWithGoogle, createBoard, createBoardViaApi } from './fixtures/auth-helpers';
 import { addCardToFirstColumn, cardByContent, openReactionPicker } from './fixtures/board';
 import { registerAndConnectMcpClient, revokeMcpConnectionsForClient } from './fixtures/mcp';
 
@@ -293,6 +293,40 @@ test('the P1 core flow (add card, vote, group) completes with prefers-reduced-mo
     await expect(like).not.toHaveText(before ?? '');
 });
 
+// --- Reduced motion for the "Mis Tableros" table (spec 032 FR-006) ---------
+// Same pattern as the P1-flow check above, applied to the table's own
+// filter/sort/pagination interactions (research.md R4: MotionConfig already
+// governs BoardRow's split transition app-wide, this proves nothing is left
+// invisibly stuck mid-transition for this screen specifically).
+test('scope-filter and sort changes on the dashboard table complete with prefers-reduced-motion enabled', async ({ page, context, request }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+
+    const createdTitle = `A11y RM Created Board ${Date.now()}`;
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: createdTitle, locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+
+    const joinedTitle = `A11y RM Joined Board ${Date.now()}`;
+    const joinedBoardId = await createBoardViaApi(request, 'a11y-rm-owner@example.com', 'A11y RM Owner', joinedTitle);
+    const joinRes = await page.request.post(`/api/boards/${joinedBoardId}/join`);
+    expect(joinRes.ok()).toBeTruthy();
+
+    await page.goto('/dashboard');
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).toBeVisible();
+
+    await page.getByRole('radio', { name: /Creadas/ }).click();
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).not.toBeVisible();
+
+    await page.getByRole('radio', { name: /Todas/ }).click();
+    await page.getByTitle('Nombre').click(); // sort — same shared path (research.md R5)
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).toBeVisible();
+});
+
 // --- Keyboard focus visibility (T033 / SC-004) ------------------------------
 
 /**
@@ -322,6 +356,13 @@ for (const theme of THEMES) {
         await forceTheme(page, theme);
         await page.goto('/');
         await applyThemeClass(page, theme);
+        // `load` (inside applyThemeClass) fires before the SPA has hydrated/lazy-loaded
+        // its interactive controls — under CI's slower, cumulatively-loaded shared runner
+        // (playwright.config.ts's own comment on this), Tab could start firing before any
+        // focusable element exists yet, landing focus on <body> for all 8 presses and
+        // failing the "at least one" assertion below. Wait for a known, always-present
+        // landing control so the tab order is guaranteed to be populated first.
+        await expect(page.getByText('Continuar con Google', { exact: true })).toBeVisible({ timeout: 15_000 });
 
         // Tab through the landing surface. Every element that actually receives
         // keyboard focus MUST show a visible indicator (outline or ring); the tab

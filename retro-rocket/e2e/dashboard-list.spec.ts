@@ -45,6 +45,69 @@ test('dashboard lists a user’s created and joined boards, correctly categorize
     await expect(joinedRow.getByText('Unido', { exact: true })).toBeVisible();
 });
 
+/**
+ * Spec 032 (Mis Tableros table motion refinement) / US1, FR-001, FR-004: closes the
+ * pre-existing e2e gap where scope-filter *clicking* had no dedicated coverage (only
+ * the initial, unfiltered categorization was tested above). BoardRow's animation
+ * timing itself is unit-tested (BoardRow.test.tsx); this proves the filter-click
+ * interaction narrows/restores the visible set correctly end-to-end in a real browser.
+ */
+test('clicking a scope filter narrows the visible boards to that scope, and back', async ({ page, context, request }) => {
+    await signInWithGoogle(page, context);
+
+    const createdTitle = `E2E Filter Created Board ${Date.now()}`;
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: createdTitle, locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+
+    const joinedTitle = `E2E Filter Joined Board ${Date.now()}`;
+    const joinedBoardId = await createBoardViaApi(request, 'e2e-filter-owner@example.com', 'E2E Filter Owner', joinedTitle);
+    const joinRes = await page.request.post(`/api/boards/${joinedBoardId}/join`);
+    expect(joinRes.ok()).toBeTruthy();
+
+    await page.goto('/dashboard');
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).toBeVisible();
+
+    await page.getByRole('radio', { name: /Creadas/ }).click();
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).not.toBeVisible();
+
+    await page.getByRole('radio', { name: /Unidas/ }).click();
+    await expect(page.getByText(joinedTitle)).toBeVisible();
+    await expect(page.getByText(createdTitle)).not.toBeVisible();
+
+    await page.getByRole('radio', { name: /Todas/ }).click();
+    await expect(page.getByText(createdTitle)).toBeVisible();
+    await expect(page.getByText(joinedTitle)).toBeVisible();
+});
+
+/**
+ * Spec 032 / US1 scenario 4, FR-010: sort-triggered reordering shares the same
+ * row-rendering path as scope filter/pagination (research.md R5) and must get the
+ * same smooth-transition treatment — this is sort's first dedicated e2e coverage
+ * (previously only exercised incidentally inside the 210-board reachability test above).
+ */
+test('clicking a sort control reorders the visible boards, and toggling it again reverses the order', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    const titlePrefix = `E2E Sort ${Date.now()}`;
+    await seedBoards(page, 3, { titlePrefix });
+
+    await page.goto('/dashboard');
+    await expect(page.getByPlaceholder(/buscar|search/i)).toBeVisible({ timeout: 30_000 });
+    await page.getByPlaceholder(/buscar|search/i).fill(titlePrefix);
+    await expect(page.getByText(boardTitleAt(2, titlePrefix))).toBeVisible({ timeout: 15_000 });
+
+    const matchingRows = page.locator('li', { hasText: titlePrefix });
+
+    await page.getByTitle('Nombre').click(); // ascending
+    await expect(matchingRows.first()).toContainText(boardTitleAt(0, titlePrefix));
+
+    await page.getByTitle('Nombre').click(); // second click on the same key toggles direction
+    await expect(matchingRows.first()).toContainText(boardTitleAt(2, titlePrefix));
+});
+
 /** 017 / FR-008: a backend/network failure while loading boards surfaces a clear error, not a silent empty list. */
 test('a failed board list request shows an error state, not a silently empty dashboard', async ({ page, context }) => {
     await signInWithGoogle(page, context);
@@ -100,6 +163,48 @@ test('a board far beyond the first page remains reachable and openable at 200+ b
     await expect(page.getByText(lastTitle)).toBeVisible();
     await page.getByText(lastTitle).click();
     await page.waitForURL(new RegExp(`/retro/${ids[209]}`));
+});
+
+/**
+ * Spec 032 / US2, FR-002, FR-004: first-class pagination-click coverage — page
+ * numbers, previous/next, and items-per-page — beyond the 210-board reachability
+ * test above, which only exercises "Next" incidentally as a means to an end.
+ */
+test('paging through boards via page numbers, previous/next, and items-per-page all show the expected boards', async ({ page, context }) => {
+    test.setTimeout(60_000);
+    await signInWithGoogle(page, context);
+    const titlePrefix = `E2E Page ${Date.now()}`;
+    await seedBoards(page, 25, { titlePrefix });
+
+    await page.goto('/dashboard');
+    await expect(page.getByPlaceholder(/buscar|search/i)).toBeVisible({ timeout: 30_000 });
+    await page.getByPlaceholder(/buscar|search/i).fill(titlePrefix);
+    await expect(page.getByText(boardTitleAt(24, titlePrefix))).toBeVisible({ timeout: 15_000 });
+
+    // Sort by name ascending for a deterministic order matching the
+    // zero-padded seeded titles (same reasoning as the reachability test
+    // above: concurrent seeding doesn't guarantee createdAt ordering).
+    await page.getByTitle('Nombre').click();
+
+    // Default 10/page: board 0009 visible, board 0010 (page 2) is not yet.
+    await expect(page.getByText(boardTitleAt(9, titlePrefix))).toBeVisible();
+    await expect(page.getByText(boardTitleAt(10, titlePrefix))).not.toBeVisible();
+
+    // exact: true — otherwise this substring-matches board-title buttons
+    // like "E2E Page ...0002" (title links are buttons too), not just the
+    // pagination control.
+    await page.getByRole('button', { name: '2', exact: true }).click();
+    await expect(page.getByText(boardTitleAt(10, titlePrefix))).toBeVisible();
+    await expect(page.getByText(boardTitleAt(0, titlePrefix))).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Anterior', exact: true }).click();
+    await expect(page.getByText(boardTitleAt(0, titlePrefix))).toBeVisible();
+
+    // Switch to 20 per page — resets to page 1, board 0019 now visible.
+    await page.getByTitle('elementos por página').selectOption('20');
+    await expect(page.getByText(boardTitleAt(19, titlePrefix))).toBeVisible();
+
+    await expectNoHorizontalOverflow(page.locator('body'));
 });
 
 /** Spec 031 FR-020: the redesigned dashboard stays legible and usable at both viewport extremes. */

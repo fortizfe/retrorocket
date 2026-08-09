@@ -31,6 +31,16 @@ export interface BoardRowProps {
     onDeleted: (boardId: string) => void;
 }
 
+// Strong ease-out (animate skill's easing table) for entering/exiting motion —
+// the row's true first-mount entrance and its exit when removed by a
+// filter/sort/page change.
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
+// Strong ease-in-out for movement already on screen — a row's `layout` FLIP
+// reflow when sibling rows are added/removed is repositioning, not
+// entering/exiting, so it takes the "moving/morphing on screen" curve
+// instead of the entrance/exit ease-out (spec 032 research.md R2).
+const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
+
 const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpdated, onDeleted }) => {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
@@ -67,8 +77,19 @@ const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpda
             layout
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ delay: Math.min(index * 0.05, 0.3), duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            // Own transition, undelayed and faster than the mount entrance —
+            // a row leaving no longer inherits the entrance stagger (the
+            // root cause of the "crude" exit lag; research.md R1/R2).
+            exit={{ opacity: 0, transition: { duration: 0.15, ease: EASE_OUT } }}
+            transition={{
+                // Applies to initial→animate (the true first-mount entrance)
+                // only — `layout` below overrides this for FLIP reflows.
+                default: { delay: Math.min(index * 0.05, 0.3), duration: 0.2, ease: EASE_OUT },
+                // Undelayed: a row reflowing into a new slot after a
+                // filter/sort/page change is one coordinated move, not a
+                // sequence of individually-staggered reveals.
+                layout: { duration: 0.18, ease: EASE_IN_OUT },
+            }}
             className="px-4 py-3 transition-colors hover:bg-surface focus-within:bg-surface"
         >
             {showDeleteConfirm ? (

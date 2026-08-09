@@ -58,11 +58,20 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
     }, [editingNote?.id]);
 
     const handleCreateNote = async () => {
-        if (!newNoteContent.trim()) return;
+        const content = newNoteContent.trim();
+        if (!content) return;
 
-        await createNote(newNoteContent);
-        setNewNoteContent('');
+        // Close the form (and clear its content) before awaiting the network
+        // call, not after: `notes` is driven by realtime sync (useFacilitatorNotes),
+        // which can deliver the newly created note back into this component
+        // before createNote()'s own request/response round-trip resolves —
+        // leaving the textarea (still showing the same text) and the rendered
+        // note both mounted at once if the close were sequenced after the
+        // await. Errors still surface via the separate `error` banner above,
+        // independent of isCreating.
         setIsCreating(false);
+        setNewNoteContent('');
+        await createNote(content);
     };
 
     const handleStartEdit = (note: FacilitatorNote) => {
@@ -73,10 +82,15 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
     };
 
     const handleUpdateNote = async () => {
-        if (!editingNote?.content.trim()) return;
+        const content = editingNote?.content.trim();
+        if (!content || !editingNote) return;
 
-        await updateNote(editingNote.id, editingNote.content);
+        // Same reasoning as handleCreateNote: close the edit form before
+        // awaiting, so it can't remain mounted alongside the realtime-updated
+        // note content.
+        const noteId = editingNote.id;
         setEditingNote(null);
+        await updateNote(noteId, content);
     };
 
     const handleCancelEdit = () => {
