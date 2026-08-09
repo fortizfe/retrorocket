@@ -29,6 +29,17 @@ test('a board creation date re-renders when the active language changes', async 
     const dateAfter = await row.getByTestId('board-date').innerText();
 
     // Regression guard: a hardcoded 'es-ES' formatter would leave this
-    // unchanged after switching to English.
-    expect(dateAfter).not.toBe(dateBefore);
+    // unchanged after switching to English. We assert against the actual
+    // expected formatting per locale (day/month/year, 2-digit) rather than
+    // just "changed": es-ES (DD/MM) and en-US (MM/DD) legitimately render
+    // identical text on "mirror" dates where day === month (e.g. 08/08), so
+    // a bare inequality check is flaky ~12 days a year regardless of whether
+    // the formatter is correct.
+    const dateOptions: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const today = new Date();
+    const expectedEs = new Intl.DateTimeFormat('es-ES', dateOptions).format(today);
+    const expectedEn = new Intl.DateTimeFormat('en-US', dateOptions).format(today);
+
+    expect(dateBefore).toBe(expectedEs);
+    expect(dateAfter).toBe(expectedEn);
 });
