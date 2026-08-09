@@ -115,4 +115,17 @@ describe('ImprovedExportPopover', () => {
         expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText('retrospective.export.title')).toBeInTheDocument();
     });
+
+    it('exposes real dialog semantics (role, aria-modal, aria-labelledby) for assistive tech', () => {
+        render(<ImprovedExportPopover {...defaultProps} />);
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        expect(dialog).toHaveAttribute('aria-labelledby', 'export-dialog-title');
+    });
+
+    it('marks the selected export format with aria-pressed', () => {
+        render(<ImprovedExportPopover {...defaultProps} />);
+        expect(screen.getByRole('button', { name: /PDF/ })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('button', { name: /TXT/ })).toHaveAttribute('aria-pressed', 'false');
+    });
 });

@@ -4,7 +4,6 @@ import {
     Plus,
     Users
 } from 'lucide-react';
-import Card from '@/lib/components/ui/Card';
 import Button from '@/lib/components/ui/Button';
 import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
 import ColorPicker from '@/lib/components/ui/ColorPicker';
@@ -218,31 +217,28 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     return (
         <div className="flex flex-col h-full min-w-0">
-            {/* Column Header */}
-            <Card variant="outlined" padding="sm" className={`mb-2 ${column.color}`}>
-                <div className="flex items-center space-x-2">
-                    <span className="text-lg">{column.icon}</span>
-                    <div className="flex-1">
-                        <h2 className="text-lg font-semibold text-text-primary">
+            {/* Column Header — no background of its own: this column already sits
+                inside RetrospectiveBoard.tsx's translucent, role-tinted gradient
+                panel (feature 033, "Layered Depth"), so a second opaque card here
+                would fight it rather than compose with it. */}
+            <div className="mb-3 px-1">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-lg shrink-0">{column.icon}</span>
+                        <h2 className="text-sm font-semibold text-text-primary truncate min-w-0">
                             {column.title}
                         </h2>
-                        <p className="text-sm text-text-secondary">{column.description}</p>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center space-x-2 text-sm text-text-muted">
-                        <span>
-                            {totalItems} {totalItems === 1 ? t('retrospective.columns.element') : t('retrospective.columns.elements')}
+                        <span className="text-xs font-medium text-text-secondary bg-surface-raised/70 rounded-full px-2 py-0.5 shadow-sm shrink-0">
+                            {totalItems}
                         </span>
                         {columnGroups.length > 0 && (
-                            <span className="flex items-center space-x-1">
+                            <span className="flex items-center gap-1 text-xs text-text-muted shrink-0">
                                 <Users className="w-3 h-3" />
-                                <span>{t('retrospective.columns.groupsCount', { count: columnGroups.length })}</span>
+                                {t('retrospective.columns.groupsCount', { count: columnGroups.length })}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center space-x-1">
-                        {/* New Grouping Menu */}
+                    <div className="flex items-center gap-1 shrink-0">
                         <ColumnHeaderMenu
                             currentGrouping={columnState.criteria}
                             onGroupingChange={(criteria: GroupingCriteria) => {
@@ -263,13 +259,17 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                             onClick={() => setIsCreating(true)}
                             disabled={isCreating || !currentUser}
                             className="flex items-center space-x-1"
+                            aria-label={t('retrospective.columns.add')}
                         >
                             <Plus size={14} />
-                            <span>{t('retrospective.columns.add')}</span>
+                            <span className="hidden xl:inline">{t('retrospective.columns.add')}</span>
                         </Button>
                     </div>
                 </div>
-            </Card>
+                {column.description && (
+                    <p className="text-xs text-text-muted mt-1 truncate">{column.description}</p>
+                )}
+            </div>
 
             {/* Cards Container */}
             <div className="flex-1 space-y-0 overflow-y-auto">
@@ -281,16 +281,15 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                             className="mb-3"
                         >
-                            <Card
-                                variant="outlined"
-                                customBackground={true}
-                                className={`border-dashed border-2 transition-all duration-300 ${getCardStyling(selectedColor)}`}
+                            <div
+                                className={`rounded-2xl bg-surface-raised/70 backdrop-blur-sm shadow-sm p-3 transition-[background-color,border-color] duration-300 ${getCardStyling(selectedColor)}`}
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs text-text-muted italic">
-                                        Vista previa del color
+                                        {t('retrospective.columns.colorPreview')}
                                     </span>
                                     <ColorPicker
                                         selectedColor={selectedColor}
@@ -321,7 +320,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                         loading={isSubmitting}
                                         disabled={!newCardContent.trim()}
                                     >
-                                        Crear tarjeta
+                                        {t('retrospective.columns.createCard')}
                                     </Button>
                                     <Button
                                         size="sm"
@@ -329,10 +328,10 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                                         onClick={handleCancelCreate}
                                         disabled={isSubmitting}
                                     >
-                                        Cancelar
+                                        {t('retrospective.columns.cancel')}
                                     </Button>
                                 </div>
-                            </Card>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

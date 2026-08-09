@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
+import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Menu,
@@ -9,6 +9,7 @@ import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
 import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useSentimentContext } from '@/features/boards/sentiment';
+import { useBoardMenuOverlay } from '@/features/boards/retrospective/hooks/useBoardMenuOverlay';
 import FacilitatorMenuTabs from '@/features/boards/facilitator/components/FacilitatorMenuTabs';
 import SentimentTab from '@/features/boards/facilitator/components/SentimentTab';
 import NotesTab from '@/features/boards/facilitator/components/NotesTab';
@@ -32,6 +33,13 @@ interface FacilitatorMenuProps {
     myFacilitatorNotes: FacilitatorNote[];
 }
 
+/**
+ * Owner-only facilitator panel, rebuilt on the shared `useBoardMenuOverlay`
+ * (feature 033, tasks.md T013/T046) — previously hand-rolled positioning
+ * (manual `getBoundingClientRect` math), outside-click (`mousedown`), and
+ * Escape-key listeners, all now provided by the shared hook. `role: 'dialog'`
+ * since this is a large multi-tab panel, not a simple dropdown menu.
+ */
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     retrospectiveId,
     facilitatorId,
@@ -43,93 +51,17 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
 }) => {
     const { t } = useLanguage();
     const sentimentAnalysis = useSentimentContext();
-    const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('controls');
-    const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const { open, setOpen, context, refs, floatingStyles, getReferenceProps, getFloatingProps } = useBoardMenuOverlay({
+        placement: 'bottom-end',
+        role: 'dialog',
+    });
 
     const { countdownState } = useCountdown(retrospectiveId, timer);
 
-    // Bloquear scroll cuando el menú esté abierto
-    useBodyScrollLock(isOpen);
-
-    // Update trigger position when opening
-    const handleToggle = useCallback(() => {
-        if (!isOpen && buttonRef.current) {
-            setTriggerRect(buttonRef.current.getBoundingClientRect());
-        }
-        setIsOpen(!isOpen);
-    }, [isOpen]);
-
-    // Close menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                isOpen &&
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node) &&
-                buttonRef.current &&
-                !buttonRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => document.removeEventListener('mousedown', handleClickOutside);
-        }
-    }, [isOpen]);
-
-    // Close menu on escape key
-    useEffect(() => {
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && isOpen) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-            return () => document.removeEventListener('keydown', handleEscape);
-        }
-    }, [isOpen]);
-
-    // Calculate position for the dropdown
-    const getPositionStyles = () => {
-        if (!triggerRect) return {};
-
-        const dropdownWidth = 384; // w-96 = 384px
-        const maxHeight = window.innerHeight * 0.8; // max-h-[80vh]
-        const spacing = 8;
-
-        // Calculate left position - always position to the left of the trigger
-        const left = Math.max(spacing, triggerRect.right - dropdownWidth);
-
-        // Calculate top position with viewport bounds checking
-        let top = triggerRect.bottom + spacing;
-
-        // Check if dropdown would go below viewport
-        if (top + maxHeight > window.innerHeight - spacing) {
-            // Position above the trigger if there's more space
-            const spaceAbove = triggerRect.top - spacing;
-            const spaceBelow = window.innerHeight - triggerRect.bottom - spacing;
-
-            if (spaceAbove > spaceBelow && spaceAbove >= 200) {
-                top = Math.max(spacing, triggerRect.top - maxHeight - spacing);
-            } else {
-                // Keep below but adjust to fit in viewport
-                top = Math.max(spacing, window.innerHeight - maxHeight - spacing);
-            }
-        }
-
-        return {
-            left: `${left}px`,
-            top: `${top}px`,
-        };
-    };
+    // Lock body scroll while the panel is open (unrelated to positioning).
+    useBodyScrollLock(open);
 
     // Calculate badges for tabs
     const getTimerBadge = () => {
@@ -166,10 +98,8 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     };
 
     const handleClose = () => {
-        setIsOpen(false);
+        setOpen(false);
     };
-
-    // Controls handled inside the Controls tab
 
     // Render tab content
     const renderTabContent = () => {
@@ -216,27 +146,25 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
         }
     };
 
-    // Solo mostrar el menú si el usuario es el propietario
+    // Owner-only: absent (not disabled) for every other viewer.
     if (!isOwner) {
         return null;
     }
 
     return (
-        <div className="relative">
-            {/* Hamburger Menu Button */}
+        <>
             <button
-                ref={buttonRef}
-                onClick={handleToggle}
-                className="p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default/50 hover:border-border-strong shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm flex items-center gap-2"
+                ref={refs.setReference}
+                {...getReferenceProps()}
+                className="p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary shadow-sm hover:shadow-md transition-[background-color,color,box-shadow] duration-200 backdrop-blur-sm flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 title={t('retrospective.facilitator.controls')}
                 aria-label={t('retrospective.facilitator.controls')}
-                aria-haspopup="true"
             >
                 <motion.div
-                    animate={{ rotate: isOpen ? 90 : 0 }}
-                    transition={{ duration: 0.2 }}
+                    animate={{ rotate: open ? 90 : 0 }}
+                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 >
-                    {isOpen ? (
+                    {open ? (
                         <X className="w-5 h-5" />
                     ) : (
                         <Menu className="w-5 h-5" />
@@ -245,41 +173,38 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                 <span className="hidden lg:inline font-medium">{t('retrospective.facilitator.menu')}</span>
             </button>
 
-            {/* Portal Dropdown Menu — AnimatePresence must stay mounted across the isOpen
-                transition; `isOpen &&` previously gated the whole portal (including
-                AnimatePresence itself), removing it in one render pass before the
-                declared exit animation could run (design audit finding, spec 028; same
-                class as DAF-001). createPortal is now called unconditionally, and
-                `isOpen` gates only the motion.div child. */}
-            {createPortal(
+            <FloatingPortal>
                 <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
-                            ref={menuRef}
-                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="fixed z-[99999]"
-                            style={triggerRect ? getPositionStyles() : {}}
-                        >
-                            <FacilitatorMenuTabs
-                                activeTab={activeTab}
-                                onTabChange={handleTabChange}
-                                onClose={handleClose}
-                                timerBadge={getTimerBadge()}
-                                sentimentBadge={getSentimentBadge()}
-                                teamMoodBadge={getTeamMoodBadge()}
-                                notesBadge={undefined} // Could add notes count here later
+                    {open && (
+                        <FloatingFocusManager context={context} modal={false}>
+                            <motion.div
+                                ref={refs.setFloating}
+                                style={floatingStyles}
+                                {...getFloatingProps()}
+                                aria-label={t('retrospective.facilitator.controls')}
+                                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                className="z-[99999]"
                             >
-                                {renderTabContent()}
-                            </FacilitatorMenuTabs>
-                        </motion.div>
+                                <FacilitatorMenuTabs
+                                    activeTab={activeTab}
+                                    onTabChange={handleTabChange}
+                                    onClose={handleClose}
+                                    timerBadge={getTimerBadge()}
+                                    sentimentBadge={getSentimentBadge()}
+                                    teamMoodBadge={getTeamMoodBadge()}
+                                    notesBadge={undefined} // Could add notes count here later
+                                >
+                                    {renderTabContent()}
+                                </FacilitatorMenuTabs>
+                            </motion.div>
+                        </FloatingFocusManager>
                     )}
-                </AnimatePresence>,
-                document.body
-            )}
-        </div>
+                </AnimatePresence>
+            </FloatingPortal>
+        </>
     );
 };
 

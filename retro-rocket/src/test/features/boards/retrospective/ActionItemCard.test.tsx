@@ -450,6 +450,17 @@ describe('ActionItemCard', () => {
             expect(screen.getByTitle('Edit action')).toBeDisabled();
             expect(screen.getByTitle('Delete action')).toBeDisabled();
         });
+
+        it('keeps edit/delete controls always visible — never hover-only (research.md §3, FR-012)', () => {
+            render(<ActionItemCard {...defaultProps} />);
+
+            const editButton = screen.getByTitle('Edit action');
+            let node: HTMLElement | null = editButton;
+            while (node) {
+                expect(node.className).not.toMatch(/\bopacity-0\b/);
+                node = node.parentElement;
+            }
+        });
     });
 
     describe('Edge cases', () => {

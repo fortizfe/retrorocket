@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { GroupSuggestionModal } from '@/features/boards/clustering/components/GroupSuggestionModal';
 import { GroupSuggestion, Card } from '@/features/boards/types/card';
 
@@ -83,5 +83,21 @@ describe('GroupSuggestionModal', () => {
 
         rerender(<GroupSuggestionModal {...defaultProps} isOpen={true} />);
         expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('closes on Escape key — a real gap in the previous version, which only closed on backdrop click (FR-012)', () => {
+        const onClose = vi.fn();
+        render(<GroupSuggestionModal {...defaultProps} onClose={onClose} />);
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not listen for Escape while closed', () => {
+        const onClose = vi.fn();
+        render(<GroupSuggestionModal {...defaultProps} isOpen={false} onClose={onClose} />);
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(onClose).not.toHaveBeenCalled();
     });
 });

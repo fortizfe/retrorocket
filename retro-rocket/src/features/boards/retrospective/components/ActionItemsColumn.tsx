@@ -79,19 +79,24 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full min-w-0 max-w-full bg-warning-bg/60 rounded-lg border border-warning-fg shadow-sm overflow-hidden">
+        // No background of its own — this column already sits inside
+        // RetrospectiveBoard.tsx's translucent, action-tinted gradient panel
+        // (feature 033, "Layered Depth"); a second opaque box here would double
+        // the border/background instead of composing with it (same fix as
+        // GroupableColumn.tsx, T034).
+        <div className="flex flex-col h-full min-w-0 max-w-full">
             {/* Header */}
-            <div className="p-2 border-b border-warning-fg">
-                <div className="flex items-center gap-2 mb-1">
-                    <Target className="w-5 h-5 text-warning-fg" />
-                    <h3 className="font-bold text-warning-fg text-base">
+            <div className="px-1 mb-2">
+                <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-warning-fg shrink-0" />
+                    <h3 className="text-sm font-semibold text-text-primary truncate">
                         {t('retrospective.actionItems.title')}
                     </h3>
-                    <div className="bg-warning-bg text-warning-fg text-xs px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs font-medium text-text-secondary bg-surface-raised/70 rounded-full px-2 py-0.5 shadow-sm shrink-0">
                         {actionItems.length}
-                    </div>
+                    </span>
                 </div>
-                <p className="text-xs text-warning-fg">
+                <p className="text-xs text-text-muted mt-1">
                     {t('retrospective.actionItems.description')}
                 </p>
 
@@ -121,7 +126,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
 
             {/* Create Action Item Form (only for facilitator) */}
             {canEdit && (
-                <div className="p-2 border-b border-warning-fg">
+                <div className="px-1 pb-2 mb-2 border-b border-warning-fg/30">
                     <AnimatePresence>
                         {isCreating ? (
                             <motion.div
@@ -172,8 +177,9 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                         onClick={handleCreate}
                                         disabled={!newContent.trim() || loading}
                                         loading={loading}
+                                        variant="primary"
                                         size="sm"
-                                        className="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 text-xs"
+                                        className="px-2 py-1 text-xs"
                                     >
                                         <Plus className="w-4 h-4 mr-1" />
                                         {t('retrospective.actionItems.create')}
@@ -194,7 +200,7 @@ const ActionItemsColumn: React.FC<ActionItemsColumnProps> = ({
                                 onClick={() => setIsCreating(true)}
                                 variant="ghost"
                                 size="sm"
-                                className="w-full border border-dashed border-warning-fg hover:border-warning-fg text-warning-fg hover:bg-warning-bg px-2 py-1 text-xs"
+                                className="w-full border border-dashed border-warning-fg/50 hover:border-warning-fg text-warning-fg hover:bg-warning-bg px-2 py-1 text-xs"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 {t('retrospective.actionItems.addActionItem')}

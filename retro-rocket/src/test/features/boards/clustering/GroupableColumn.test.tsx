@@ -315,8 +315,8 @@ describe('GroupableColumn', () => {
             const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
             await user.click(addButton);
 
-            expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /crear tarjeta/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /retrospective\.columns\.cancel/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /retrospective\.columns\.createCard/i })).toBeInTheDocument();
         });
 
         it('should handle card content input', async () => {
@@ -357,7 +357,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, 'New card content');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -382,7 +382,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, 'New card content');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -397,7 +397,7 @@ describe('GroupableColumn', () => {
             const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
             await user.click(addButton);
 
-            const cancelButton = screen.getByRole('button', { name: /cancelar/i });
+            const cancelButton = screen.getByRole('button', { name: /retrospective\.columns\.cancel/i });
             await user.click(cancelButton);
 
             expect(screen.queryByTestId('textarea-with-emoji')).not.toBeInTheDocument();
@@ -410,7 +410,7 @@ describe('GroupableColumn', () => {
             const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
             await user.click(addButton);
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             expect(submitButton).toBeDisabled();
         });
 
@@ -424,7 +424,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, 'Some content');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             expect(submitButton).not.toBeDisabled();
         });
     });
@@ -545,6 +545,17 @@ describe('GroupableColumn', () => {
             expect(screen.queryByTestId('group-card')).not.toBeInTheDocument();
         });
 
+        it('renders a distinct empty-column state that invites the first contribution (edge case, data-model.md Board State)', () => {
+            render(<GroupableColumn {...defaultProps} cards={[]} groups={[]} />);
+
+            // Distinct from a bare void: the column's own icon (also shown in the
+            // header, hence getAllByText), an explicit "no cards" message, and a
+            // call-to-action to add the first one.
+            expect(screen.getAllByText(mockColumn.icon).length).toBeGreaterThan(0);
+            expect(screen.getByText('retrospective.columns.noCards')).toBeInTheDocument();
+            expect(screen.getByText('retrospective.columns.addFirstCard')).toBeInTheDocument();
+        });
+
         it('should handle empty groups array', () => {
             render(<GroupableColumn {...defaultProps} groups={[]} />);
 
@@ -563,7 +574,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, 'New card content');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             await user.click(submitButton);
 
             await waitFor(() => {
@@ -583,7 +594,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, '   ');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             expect(submitButton).toBeDisabled();
         });
 
@@ -717,7 +728,7 @@ describe('GroupableColumn', () => {
             const textarea = screen.getByTestId('textarea-with-emoji');
             await user.type(textarea, 'New card content');
 
-            const submitButton = screen.getByRole('button', { name: /crear tarjeta/i });
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
             await user.click(submitButton);
 
             expect(mockOnCardCreate).toHaveBeenCalled();

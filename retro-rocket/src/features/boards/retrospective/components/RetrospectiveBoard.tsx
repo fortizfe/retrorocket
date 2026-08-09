@@ -23,6 +23,19 @@ import type { TypingStatusEntry } from '@/features/boards/retrospective/hooks/us
 import type { ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 import type { CountdownTimer, FacilitatorNote, SentimentResult } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
+/**
+ * Per-role tinted-gradient panel background for a column, per the selected
+ * "Layered Depth" direction (feature 033) — each column sits inside a
+ * translucent panel whose accent hints at its role, matching the reviewed
+ * prototype's `COLUMN_ACCENT` treatment.
+ */
+const COLUMN_ACCENT: Record<string, string> = {
+    positive: 'from-success-bg/80',
+    negative: 'from-error-bg/80',
+    neutral: 'from-info-bg/80',
+    action: 'from-warning-bg/80',
+};
+
 interface RetrospectiveBoardProps {
     retrospective: Retrospective;
     currentUser?: string;
@@ -252,13 +265,15 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                             return null;
                         }
 
+                        const accent = COLUMN_ACCENT[(column as DynamicColumnConfig).role] || 'from-surface-raised/80';
+
                         return (
                             <motion.div
                                 key={columnId}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                                className="flex flex-col min-h-0 min-w-0"
+                                transition={{ duration: 0.3, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
+                                className={`flex flex-col min-h-0 min-w-0 rounded-3xl border border-border-default/30 bg-gradient-to-b ${accent} to-surface-raised/30 backdrop-blur-sm p-3 shadow-sm`}
                             >
                                 <GroupableColumn
                                     column={column as DynamicColumnConfig}
@@ -296,8 +311,8 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: 0.4 }}
-                            className="flex flex-col min-h-0"
+                            transition={{ duration: 0.3, delay: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            className={`flex flex-col min-h-0 rounded-3xl border border-border-default/30 bg-gradient-to-b ${COLUMN_ACCENT.action} to-surface-raised/30 backdrop-blur-sm p-3 shadow-sm`}
                         >
                             <ActionItemsColumn
                                 actionItems={actionItems}

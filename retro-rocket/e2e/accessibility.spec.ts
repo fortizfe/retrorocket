@@ -111,13 +111,74 @@ for (const theme of THEMES) {
         await revokeMcpConnectionsForClient(page, mcpClientName);
     });
 
-    test(`Board (cards/columns/voting) has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+    // "Empty column" state — every column freshly created, zero cards. Distinct
+    // from the "populated" state below: RetrospectiveBoard.tsx's per-column empty
+    // placeholder ("Agregar primera tarjeta") is its own render path, not just an
+    // absence of cards.
+    test(`Board empty-column state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
         await createBoard(page, `A11y Board ${theme}`);
         await waitForBoardReady(page);
         await applyThemeClass(page, theme);
-        await expectNoViolations(page, `board (${theme})`);
+        await expectNoViolations(page, `board empty-column state (${theme})`);
+    });
+}
+
+// --- /retro/:id theme × state matrix (feature 033, research.md §6) ---------
+// Closes a gap found during planning: this route — the surface this entire
+// feature redesigns — had no automated WCAG 2.1 AA regression gate at all
+// beyond the empty-column scan above. Adds the three remaining states from
+// data-model.md's "Board State" entity: populated (real cards, not just an
+// empty shell — the DraggableCard/CardFooter/CardMenu DOM the empty-column
+// scan above never exercises), loading, and error.
+
+for (const theme of THEMES) {
+    test(`Board populated state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Populated Board ${theme}`);
+        await waitForBoardReady(page);
+        await addCardToFirstColumn(page, 'Populated-state card');
+        const card = cardByContent(page, 'Populated-state card');
+        await card.getByRole('button', { name: /^\d+$/ }).click();
+        await applyThemeClass(page, theme);
+        await expectNoViolations(page, `board populated state (${theme})`);
+    });
+
+    test(`Board loading state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Loading Board ${theme}`);
+        const boardId = new URL(page.url()).pathname.split('/').pop();
+
+        // Hold the board-state fetch open so the loading spinner stays visible
+        // long enough to scan, mirroring the Dashboard-loading-state pattern above.
+        await page.route(`**/api/retrospectives/${boardId}`, async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await route.continue();
+        });
+        await page.reload();
+        await applyThemeClass(page, theme);
+        // Loading.tsx has no distinguishing role/testid; assert on the absence of
+        // the board content that only renders once the fetch resolves.
+        await expect(page.getByText('Qué me ayudó', { exact: true })).not.toBeVisible();
+        await expectNoViolations(page, `board loading state (${theme})`);
+    });
+
+    test(`Board error state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Error Board ${theme}`);
+        const boardId = new URL(page.url()).pathname.split('/').pop();
+
+        // A network failure (not a 404) drives the generic error branch, distinct
+        // from the board-deleted (`notFound`) branch already covered elsewhere.
+        await page.route(`**/api/retrospectives/${boardId}`, (route) => route.abort('failed'));
+        await page.reload();
+        await applyThemeClass(page, theme);
+        await expect(page.getByText('Retrospectiva no encontrada')).toBeVisible({ timeout: 15_000 });
+        await expectNoViolations(page, `board error state (${theme})`);
     });
 }
 
@@ -253,6 +314,117 @@ test('board cards, voting, reactions and drag-and-drop are keyboard operable', a
     await expect(draggable).toHaveAttribute('tabindex', '0');
 });
 
+// --- Keyboard operability of every board menu — feature 033 T058, ----------
+// accessibility-interaction-contract.md's "100% of the board's menus and
+// popovers ... reachable and operable via keyboard alone (Tab to reach,
+// Enter/Space to activate, Escape to dismiss)". The reaction picker is
+// already covered above; this covers the other five (the four menus
+// consolidated onto `useBoardMenuOverlay`, plus the export popover they
+// open into).
+
+test('every board menu is keyboard-operable (Enter to open, Escape to dismiss)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Menu Keyboard Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Menu keyboard card');
+    const card = cardByContent(page, 'Menu keyboard card');
+
+    // Column header (grouping) menu.
+    const groupingTrigger = page.getByRole('button', { name: 'Opciones de agrupación' }).first();
+    await groupingTrigger.focus();
+    await expect(groupingTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menu')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+
+    // Card menu (convert to action item) — facilitator-only, but the test
+    // user is the board owner/facilitator.
+    const cardMenuTrigger = card.getByTitle('Convertir en elemento de acción');
+    await cardMenuTrigger.focus();
+    await expect(cardMenuTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByText('Convertir en Elemento de Acción')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByText('Convertir en Elemento de Acción')).not.toBeVisible();
+
+    // Facilitator menu.
+    const facilitatorTrigger = page.getByRole('button', { name: 'Controles de Facilitador' });
+    await facilitatorTrigger.focus();
+    await expect(facilitatorTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toHaveCount(0);
+
+    // Options menu, and the export popover it opens into.
+    const optionsTrigger = page.getByRole('button', { name: 'Opciones', exact: true });
+    await optionsTrigger.focus();
+    await expect(optionsTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    const exportItem = page.getByRole('menuitem', { name: 'Exportar' });
+    await expect(exportItem).toBeVisible();
+    await exportItem.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+// --- Touch operability of every board menu — feature 033 T058 --------------
+// Touch has no `:hover` concept at all (same rationale as spec 031's
+// dashboard-manage.spec.ts touch check) — the most direct proof that no
+// menu trigger depends on a prior hover/pointer-enter event (FR-012).
+
+test('every board menu is reachable via touch, with no prior hover event', async ({ browser }) => {
+    const context = await browser.newContext({
+        viewport: { width: 1024, height: 900 },
+        hasTouch: true,
+    });
+    const page = await context.newPage();
+
+    // Board + card created via API, not the UI create-flow: this test's own
+    // focus is menu reachability under touch emulation, not board creation.
+    await signInWithGoogle(page, context);
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: 'A11y Menu Touch Board', locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const { boardId } = (await createRes.json()) as { boardId: string };
+    const cardRes = await page.request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Menu touch card', column: 'helped' },
+    });
+    expect(cardRes.ok()).toBeTruthy();
+
+    await page.goto(`/retro/${boardId}`);
+    await waitForBoardReady(page);
+    const card = cardByContent(page, 'Menu touch card');
+
+    await page.getByRole('button', { name: 'Opciones de agrupación' }).first().tap();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await card.getByTitle('Convertir en elemento de acción').tap();
+    await expect(page.getByText('Convertir en Elemento de Acción')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await card.locator('button[aria-haspopup="dialog"]').first().tap();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'Controles de Facilitador' }).tap();
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'Opciones', exact: true }).tap();
+    const exportItem = page.getByRole('menuitem', { name: 'Exportar' });
+    await expect(exportItem).toBeVisible();
+    await exportItem.tap();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    await context.close();
+});
+
 // --- Runtime theme switch (T028a / FR-010) ----------------------------------
 
 test('toggling theme mid-session keeps the board WCAG 2.1 AA compliant', async ({ page, context }) => {
@@ -291,6 +463,66 @@ test('the P1 core flow (add card, vote, group) completes with prefers-reduced-mo
     const before = await like.textContent();
     await like.click();
     await expect(like).not.toHaveText(before ?? '');
+});
+
+// --- Reduced motion for the remaining primary flows — feature 033, T060 ----
+// The P1-flow check above (spec 028) only ever exercised add-card and vote,
+// despite its name — closes that gap for the flows this feature's redesign
+// actually touched: keyboard drag-and-drop, grouping, every board menu, the
+// export popover, and the countdown, per accessibility-interaction-contract.md's
+// verification procedure step 4.
+
+test('drag-and-drop, grouping, every board menu, export, and the countdown all complete with prefers-reduced-motion enabled', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Reduced Motion Board 2');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Reduced motion drag card');
+    const card = cardByContent(page, 'Reduced motion drag card');
+
+    // Keyboard drag-and-drop (dnd-kit KeyboardSensor: Space to pick up, an
+    // arrow key to move, Space to drop) completes with no stuck intermediate
+    // state — the card remains visible throughout and after.
+    const draggable = card.locator('[aria-roledescription]').first();
+    await draggable.focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Space');
+    await expect(card).toBeVisible();
+
+    // Grouping (select "group by user") reaches its result — a group header
+    // appears — with no animation left mid-flight.
+    await page.getByRole('button', { name: 'Opciones de agrupación' }).first().click();
+    await page.getByRole('menuitem', { name: /Agrupar por usuario/ }).click();
+    await expect(page.getByRole('heading', { name: 'E2E Google User', level: 4 })).toBeVisible();
+
+    // Every board menu still opens and closes.
+    for (const { trigger, closeKey } of [
+        { trigger: page.getByRole('button', { name: 'Opciones de agrupación' }).first(), closeKey: true },
+        { trigger: card.getByTitle('Convertir en elemento de acción'), closeKey: true },
+        { trigger: page.getByRole('button', { name: 'Controles de Facilitador' }), closeKey: true },
+        { trigger: page.getByRole('button', { name: 'Opciones', exact: true }), closeKey: true },
+    ]) {
+        await trigger.click();
+        if (closeKey) await page.keyboard.press('Escape');
+    }
+
+    // Export popover reaches its open state.
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Exportar' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+
+    // Countdown start/pause both complete (mirrors facilitator-countdown.spec.ts).
+    await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
+    await page.getByText('5min', { exact: true }).click();
+    await page.getByText('Crear Temporizador', { exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Iniciar', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Iniciar', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pausar' })).toBeVisible();
+    await page.getByRole('button', { name: 'Pausar' }).click();
+    await expect(page.getByRole('button', { name: 'Iniciar', exact: true })).toBeVisible();
 });
 
 // --- Reduced motion for the "Mis Tableros" table (spec 032 FR-006) ---------
@@ -386,3 +618,40 @@ for (const theme of THEMES) {
         ).toBeGreaterThan(0);
     });
 }
+
+// --- Board-specific focus visibility — feature 033, T066 --------------------
+// The check above only ever exercised the Landing page's tab order; this
+// closes the same evidence gap for the board's own menu triggers and a card
+// action, per accessibility-interaction-contract.md's "every focusable
+// element ... has a visible focus indicator".
+
+test('board menu triggers and card actions are visibly indicated via keyboard focus', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Focus Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Focus visibility card');
+    const card = cardByContent(page, 'Focus visibility card');
+
+    const targets = [
+        page.getByRole('button', { name: 'Opciones de agrupación' }).first(),
+        card.getByTitle('Convertir en elemento de acción'),
+        page.getByRole('button', { name: 'Controles de Facilitador' }),
+        page.getByRole('button', { name: 'Opciones', exact: true }),
+        card.getByRole('button', { name: /^\d+$/ }),
+    ];
+
+    for (let i = 0; i < targets.length; i++) {
+        // `.focus()` alone doesn't set Chromium's "last input was keyboard" flag,
+        // so `:focus-visible` never matches even though the element genuinely has
+        // focus — an immediate Tab/Shift+Tab round-trip (landing back on the same
+        // element) forces real keyboard-focus semantics without needing to Tab
+        // there from a known starting point (targets are scattered across
+        // unrelated DOM regions).
+        await targets[i].focus();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Shift+Tab');
+        const info = await inspectFocus(page);
+        expect(info.focused, `target[${i}] actually received focus`).toBe(true);
+        expect(info.hasIndicator, `target[${i}] focused <${info.focused ? info.tag : ''}> has a visible focus indicator`).toBe(true);
+    }
+});

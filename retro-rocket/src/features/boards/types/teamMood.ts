@@ -78,16 +78,17 @@ export const DEFAULT_TEAM_MOOD_CONFIG: TeamMoodConfig = {
     },
 };
 
+// Bands aligned with getMoodScoreLabel's thresholds (TeamMoodDashboard.tsx): the
+// ≥4.5 "concerning" boundary is the same one that keeps an all-neutral board
+// (≈4.6, see moodScore.ts) from reading as positive.
 export const getMoodScoreColor = (score: number): string => {
-    if (score >= 7.5) return 'text-green-600 dark:text-green-400';
-    if (score >= 6) return 'text-yellow-600 dark:text-yellow-400';
-    if (score >= 4) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 7.5) return 'text-success-fg';
+    if (score >= 4.5) return 'text-warning-fg';
+    return 'text-error-fg';
 };
 
 export const getMoodScoreBgColor = (score: number): string => {
-    if (score >= 7.5) return 'bg-green-100 dark:bg-green-900/20';
-    if (score >= 6) return 'bg-yellow-100 dark:bg-yellow-900/20';
-    if (score >= 4) return 'bg-orange-100 dark:bg-orange-900/20';
-    return 'bg-red-100 dark:bg-red-900/20';
+    if (score >= 7.5) return 'bg-success-bg';
+    if (score >= 4.5) return 'bg-warning-bg';
+    return 'bg-error-bg';
 };

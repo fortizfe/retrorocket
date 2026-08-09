@@ -177,7 +177,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                         initial={{ opacity: 0, height: 0, y: -20 }}
                         animate={{ opacity: 1, height: 'auto', y: 0 }}
                         exit={{ opacity: 0, height: 0, y: -20 }}
-                        className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 border border-warning-fg rounded-lg p-4"
+                        className="bg-warning-bg border border-warning-fg/40 rounded-2xl p-4"
                     >
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-warning-fg">
@@ -189,7 +189,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                                 value={newNoteContent}
                                 onChange={(e) => setNewNoteContent(e.target.value)}
                                 placeholder={t('retrospective.facilitator.notes.placeholder')}
-                                className="w-full p-3 text-sm border border-warning-fg rounded-lg resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-yellow-500 focus:border-transparent min-h-[80px]"
+                                className="w-full p-3 text-sm border border-warning-fg rounded-lg resize-none bg-surface-raised text-text-primary placeholder-text-muted focus:ring-2 focus:ring-focus focus:border-transparent min-h-[80px]"
                                 rows={3}
                             />
                             <div className="flex gap-2">
@@ -198,7 +198,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                                     disabled={!newNoteContent.trim() || loading}
                                     variant="primary"
                                     size="sm"
-                                    className="h-8 bg-yellow-600 hover:bg-yellow-700 border-yellow-600"
+                                    className="h-8"
                                 >
                                     <Check className="w-3 h-3 mr-1" />
                                     {t('retrospective.facilitator.notes.save')}
@@ -231,7 +231,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ delay: index * 0.05 }}
-                            className="group bg-surface-raised border border-border-default rounded-lg p-4 hover:shadow-md dark:hover:shadow-lg transition-all duration-200"
+                            className="bg-surface-raised/90 backdrop-blur-sm border border-border-default/40 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
                         >
                             {editingNote?.id === note.id ? (
                                 <div className="space-y-3">
@@ -275,19 +275,23 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                                         <p className="text-sm text-text-secondary whitespace-pre-wrap flex-1 leading-relaxed">
                                             {note.content}
                                         </p>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {/* Always visible — never hover-only (research.md §3, FR-012),
+                                            same defect class already fixed elsewhere in this feature. */}
+                                        <div className="flex gap-1">
                                             <button
                                                 onClick={() => handleStartEdit(note)}
-                                                className="p-1.5 text-info-fg hover:bg-info-bg rounded transition-colors"
+                                                className="p-1.5 text-info-fg hover:bg-info-bg rounded transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                                                 title={t('retrospective.facilitator.notes.editTitle')}
+                                                aria-label={t('retrospective.facilitator.notes.editTitle')}
                                                 type="button"
                                             >
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteNote(note.id)}
-                                                className="p-1.5 text-error-fg hover:bg-error-bg rounded transition-colors"
+                                                className="p-1.5 text-error-fg hover:bg-error-bg rounded transition-colors focus-visible:ring-2 focus-visible:ring-focus"
                                                 title={t('retrospective.facilitator.notes.deleteTitle')}
+                                                aria-label={t('retrospective.facilitator.notes.deleteTitle')}
                                                 type="button"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />

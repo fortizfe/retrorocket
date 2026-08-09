@@ -68,6 +68,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({
             className={`
         flex items-center gap-1 px-2 py-1 rounded-full text-sm
         transition-all duration-200 min-w-[2.5rem] justify-center
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus
         ${isLiked
                     ? 'bg-info-bg border border-info-fg text-info-fg'
                     : 'bg-surface hover:bg-surface-raised border border-border-default text-text-secondary'

@@ -104,7 +104,7 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
                             </div>
 
                             {/* Group Separator Line */}
-                            <div className="absolute left-0 top-6 w-8 h-px bg-gradient-to-r from-slate-300 dark:from-slate-600 to-transparent"></div>
+                            <div className="absolute left-0 top-6 w-8 h-px bg-gradient-to-r from-border-default to-transparent"></div>
 
                             {/* Cards in this group */}
                             <div className="pl-6 border-l-2 border-border-default">

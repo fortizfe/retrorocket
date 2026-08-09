@@ -277,7 +277,7 @@ describe('CompactAvatarGroup', () => {
             render(<CompactAvatarGroup participants={mockParticipants.slice(0, 3)} onShowAll={onShowAll} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveAttribute('title', 'Ver todos los participantes (3)');
+            expect(button).toHaveAttribute('title', 'participants.viewAll');
         });
     });
 
@@ -372,7 +372,7 @@ describe('CompactAvatarGroup', () => {
             render(<CompactAvatarGroup participants={[mockParticipants[0]]} onShowAll={onShowAll} />);
 
             const button = screen.getByRole('button');
-            expect(button).toHaveAttribute('title', 'Ver todos los participantes (1)');
+            expect(button).toHaveAttribute('title', 'participants.viewAll');
 
             await user.click(button);
             expect(onShowAll).toHaveBeenCalled();

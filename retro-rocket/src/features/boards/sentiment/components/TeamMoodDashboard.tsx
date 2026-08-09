@@ -40,7 +40,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
         return (
             <div className="flex items-center justify-center p-12">
                 <div className="text-center">
-                    <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                    <div className="animate-spin w-8 h-8 border-2 border-info-fg border-t-transparent rounded-full mx-auto mb-3"></div>
                     <p className="text-text-secondary text-sm">
                         {t('retrospective.facilitator.teamMood.analyzing')}
                     </p>
@@ -115,11 +115,11 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
 
     const getInsightIcon = (type: string) => {
         switch (type) {
-            case 'success': return <CheckCircle className="w-4 h-4 text-green-500" />;
-            case 'positive': return <TrendingUp className="w-4 h-4 text-green-500" />;
-            case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-            case 'critical': return <AlertTriangle className="w-4 h-4 text-red-500" />;
-            default: return <Info className="w-4 h-4 text-blue-500" />;
+            case 'success': return <CheckCircle className="w-4 h-4 text-success-fg" />;
+            case 'positive': return <TrendingUp className="w-4 h-4 text-success-fg" />;
+            case 'warning': return <AlertTriangle className="w-4 h-4 text-warning-fg" />;
+            case 'critical': return <AlertTriangle className="w-4 h-4 text-error-fg" />;
+            default: return <Info className="w-4 h-4 text-info-fg" />;
         }
     };
 
@@ -139,6 +139,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                 className="text-center pb-4 border-b border-border-default"
             >
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -160,6 +161,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.05, ease: [0.23, 1, 0.32, 1] }}
                 className={`text-center p-6 rounded-xl border ${getMoodScoreBgColor(moodScore)}`}
             >
                 <div className="text-4xl mb-2">{getMoodIcon()}</div>
@@ -178,7 +180,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.1, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                 className="grid grid-cols-3 gap-3"
             >
                 <div className="text-center p-3 bg-success-bg rounded-lg border border-success-fg">
@@ -211,7 +213,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.2, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                 className="space-y-3"
             >
                 <div className="flex items-center gap-2 mb-3">
@@ -229,7 +231,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                                 key={column.column}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.3 + index * 0.1 }}
+                                transition={{ delay: 0.3 + index * 0.1, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                                 className="bg-surface rounded-lg p-3"
                             >
                                 <div className="flex items-center justify-between mb-2">
@@ -267,7 +269,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
+                    transition={{ delay: 0.4, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                     className="space-y-3"
                 >
                     <div className="flex items-center gap-2 mb-3">
@@ -278,11 +280,12 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        {insights.slice(0, 4).map((insight) => (
+                        {insights.slice(0, 4).map((insight, index) => (
                             <motion.div
                                 key={`${insight.type}-${insight.title.slice(0, 20)}`}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.05, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                                 className={`p-3 rounded-lg border ${getInsightBgColor(insight.type)}`}
                             >
                                 <div className="flex items-start gap-3">
@@ -328,7 +331,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.6, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                 className="bg-surface rounded-lg p-4"
             >
                 <h3 className="text-sm font-medium text-text-primary mb-3">
@@ -370,7 +373,7 @@ const TeamMoodDashboard: React.FC<TeamMoodDashboardProps> = ({
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.7, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
                 className="text-center text-xs text-text-muted bg-surface rounded-lg p-3"
             >
                 <div className="flex items-center justify-center gap-2 mb-1">

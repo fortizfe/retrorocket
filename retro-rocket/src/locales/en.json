@@ -266,7 +266,9 @@
       "groupCardsByCreator": "Group cards by creator",
       "suggestedGroupings": "Suggested groupings",
       "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity",
-      "unknownAuthor": "Unknown author"
+      "unknownAuthor": "Unknown author",
+      "menuTrigger": "Group cards",
+      "menuLabel": "Grouping options"
     },
     "groupCard": {
       "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",
@@ -358,7 +360,8 @@
           "paused": "Paused",
           "running": "Running",
           "stopped": "Stopped"
-        }
+        },
+        "totalTime": "Total time"
       },
       "notes": {
         "title": "Facilitator Notes",
@@ -407,11 +410,10 @@
           "detailedStats": "Detailed Statistics"
         },
         "stats": {
-          "timer": "Timer",
-          "sentiment": "AI",
-          "teamMood": "Team Mood",
-          "controls": "Controls",
-          "notes": "Notes",
+          "totalCards": "Total cards:",
+          "analyzed": "Analyzed:",
+          "averageConfidence": "Average confidence:",
+          "dominantSentiment": "Dominant sentiment:",
           "cards_singular": "card",
           "cards_plural": "cards"
         },
@@ -473,11 +475,14 @@
       "sentiment": {
         "notAvailable": "Sentiment analysis not available"
       },
-      "hideActionItems": "Hide action items"
-    },
-    "groupSuggestion": {
-      "group": "Group",
-      "cardsInGroup": "{{count}} cards"
+      "hideActionItems": "Hide action items",
+      "tabs": {
+        "timer": "Timer",
+        "sentiment": "AI",
+        "teamMood": "Team Mood",
+        "controls": "Controls",
+        "notes": "Notes"
+      }
     },
     "errors": {
       "loadCards": "Error loading cards"
@@ -508,7 +513,9 @@
     "closeList": "Close participants list",
     "totalParticipants": "Total participants",
     "emptyTitle": "No participants",
-    "emptySubtitle": "The session is waiting for participants"
+    "emptySubtitle": "The session is waiting for participants",
+    "viewAll": "View all participants ({{count}})",
+    "avatarOf": "Avatar of {{name}}"
   },
   "typing": {
     "single": "{{username}} is typing",
@@ -829,6 +836,10 @@
     "boardDeleted": {
       "title": "This board no longer exists",
       "message": "The retrospective board you were viewing has been deleted."
+    },
+    "notFound": {
+      "title": "Retrospective not found",
+      "message": "The requested retrospective could not be found."
     }
   },
   "sentiment": {
@@ -842,6 +853,10 @@
     "confidenceThreshold": "Confidence Threshold",
     "batchSize": "Batch Size",
     "advancedSettings": "Advanced Settings",
+    "filter": {
+      "all": "All",
+      "filterBySentiment": "Filter by sentiment"
+    },
     "status": {
       "initializing": "Initializing...",
       "connectionError": "Connection error",
@@ -894,6 +909,22 @@
   "groupSuggestion": {
     "analyzing": "Analyzing similarities...",
     "suggestedHeadCard": "Suggested head card",
-    "createGroup": "Create Group"
+    "createGroup": "Create Group",
+    "group": "Group",
+    "cardsInGroup": "{{count}} cards",
+    "title": "Grouping Suggestions",
+    "subtitle": "{{count}} suggestions found automatically",
+    "noSuggestionsTitle": "No suggestions found",
+    "noSuggestionsBody": "There aren't enough similar cards to create groups automatically.",
+    "hideCards": "Hide cards",
+    "showCards": "Show cards",
+    "reason": "Reason",
+    "algorithm": "Algorithm",
+    "keywords": "Keywords",
+    "discard": "Discard",
+    "footerHint": "You can accept multiple suggestions or create groups manually.",
+    "similarityHigh": "High",
+    "similarityMedium": "Medium",
+    "similarityLow": "Low"
   }
 }

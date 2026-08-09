@@ -203,7 +203,7 @@ const ParticipantPopover: React.FC<ParticipantPopoverProps> = ({
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: popoverPosition === 'top' ? 10 : -10 }}
                                 transition={{ duration: 0.15 }}
-                                className={`w-80 max-w-[90vw] bg-surface-raised border border-border-default rounded-lg shadow-lg ${getOriginClass()}`}
+                                className={`w-80 max-w-[90vw] bg-surface-raised/95 backdrop-blur-xl border border-border-default/40 rounded-2xl shadow-2xl ${getOriginClass()}`}
                             >
                                 {/* Header */}
                                 <div className="flex items-center justify-between p-4 border-b border-border-default">

@@ -139,21 +139,21 @@ describe('RetrospectivePage', () => {
         await renderPage();
 
         expect(screen.getByText('retrospectivePage.boardDeleted.title')).toBeInTheDocument();
-        expect(screen.queryByText('Retrospectiva no encontrada')).not.toBeInTheDocument();
+        expect(screen.queryByText('retrospectivePage.notFound.title')).not.toBeInTheDocument();
     });
 
     it('shows a generic error state when the load fails for a reason other than not-found', async () => {
         setupMocks({ error: 'Network error', board: null as any });
         await renderPage();
 
-        expect(screen.getByText('Retrospectiva no encontrada')).toBeInTheDocument();
+        expect(screen.getByText('retrospectivePage.notFound.title')).toBeInTheDocument();
     });
 
     it('shows error state when board is null after loading with no explicit error', async () => {
         setupMocks({ board: null as any });
         await renderPage();
 
-        expect(screen.getByText('Retrospectiva no encontrada')).toBeInTheDocument();
+        expect(screen.getByText('retrospectivePage.notFound.title')).toBeInTheDocument();
     });
 
     it('renders RetrospectiveBoard once the board has loaded — no separate join/joining state (join happens inside the sync hook)', async () => {

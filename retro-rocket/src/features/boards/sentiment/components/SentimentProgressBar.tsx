@@ -18,9 +18,9 @@ const SentimentProgressBar: React.FC<SentimentProgressBarProps> = ({
 }) => {
     // Crear segmentos basados en porcentajes
     const segments = [
-        { type: 'positive', percentage: positivePercentage, className: 'bg-green-500' },
-        { type: 'neutral', percentage: neutralPercentage, className: 'bg-slate-400' },
-        { type: 'negative', percentage: negativePercentage, className: 'bg-red-500' }
+        { type: 'positive', percentage: positivePercentage, className: 'bg-success-fg' },
+        { type: 'neutral', percentage: neutralPercentage, className: 'bg-text-muted' },
+        { type: 'negative', percentage: negativePercentage, className: 'bg-error-fg' }
     ].filter(segment => segment.percentage > 0);
 
     return (
@@ -29,7 +29,7 @@ const SentimentProgressBar: React.FC<SentimentProgressBarProps> = ({
                 {segments.map((segment) => (
                     <div
                         key={segment.type}
-                        className={`${segment.className} transition-all duration-300 h-full`}
+                        className={`${segment.className} transition-[width] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] h-full`}
                         style={{
                             width: `${segment.percentage}%`
                         }}
