@@ -356,6 +356,13 @@ for (const theme of THEMES) {
         await forceTheme(page, theme);
         await page.goto('/');
         await applyThemeClass(page, theme);
+        // `load` (inside applyThemeClass) fires before the SPA has hydrated/lazy-loaded
+        // its interactive controls — under CI's slower, cumulatively-loaded shared runner
+        // (playwright.config.ts's own comment on this), Tab could start firing before any
+        // focusable element exists yet, landing focus on <body> for all 8 presses and
+        // failing the "at least one" assertion below. Wait for a known, always-present
+        // landing control so the tab order is guaranteed to be populated first.
+        await expect(page.getByText('Continuar con Google', { exact: true })).toBeVisible({ timeout: 15_000 });
 
         // Tab through the landing surface. Every element that actually receives
         // keyboard focus MUST show a visible indicator (outline or ring); the tab
