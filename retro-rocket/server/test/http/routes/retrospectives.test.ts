@@ -1,8 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { buildRetrospectiveTestApp, sessionCookieFor } from './retrospectivesTestApp';
 import type { FakeRetrospectiveRecord } from '../../application/use-cases/retrospective/retrospectiveFakes';
 import type { CardDTO } from '../../../src/application/ports/cards';
+import type { ProfileRecord } from '../../../src/application/ports/profile';
+import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
+
+function profile(overrides: Partial<ProfileRecord> = {}): ProfileRecord {
+    return {
+        uid: 'u1',
+        email: 'u1@example.com',
+        displayName: 'Configured Name',
+        photoURL: null,
+        providers: ['google'],
+        primaryProvider: 'google',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+    };
+}
 
 function board(overrides: Partial<FakeRetrospectiveRecord> = {}): FakeRetrospectiveRecord {
     return {
@@ -121,6 +137,17 @@ describe('POST /api/retrospectives/:id/join', () => {
         expect(second.body.id).toBe(first.body.id);
     });
 
+    it('captures the caller\'s currently configured Profile display name as the participant name, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            overrides: { profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app).post('/api/retrospectives/r1/join').set('Cookie', sessionCookieFor('u1'));
+        // fakeSessionServiceWithUser sets session.user.displayName to 'User u1' — the seeded
+        // profile's 'Configured Name' must win.
+        expect(res.body.name).toBe('Configured Name');
+    });
+
     it('404s for a nonexistent board', async () => {
         const { app } = buildRetrospectiveTestApp();
         const res = await request(app).post('/api/retrospectives/missing/join').set('Cookie', sessionCookieFor('u1'));
@@ -152,6 +179,20 @@ describe('POST /api/retrospectives/:id/cards', () => {
             .set('Cookie', sessionCookieFor('u1'))
             .send({ content: 'Great sprint', column: 'col1' });
         expect(res.body.createdByName).toBe('User u1');
+    });
+
+    it('captures the caller\'s currently configured Profile display name as createdByName, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            overrides: { profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app)
+            .post('/api/retrospectives/r1/cards')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ content: 'Great sprint', column: 'col1' });
+        // fakeSessionServiceWithUser sets session.user.displayName to 'User u1' — the seeded
+        // profile's 'Configured Name' must win, proving the fix resolves via the profile, not the session.
+        expect(res.body.createdByName).toBe('Configured Name');
     });
 
     it('401s without a session cookie', async () => {
@@ -224,6 +265,17 @@ describe('POST /api/cards/:id/like', () => {
         expect(res.status).toBe(200);
         expect(res.body.likes).toHaveLength(1);
     });
+
+    it('captures the caller\'s currently configured Profile display name as the like\'s username, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            cards: [card()],
+            overrides: { profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app).post('/api/cards/c1/like').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        expect(res.body.likes).toEqual([expect.objectContaining({ userId: 'u1', username: 'Configured Name' })]);
+    });
 });
 
 describe('PUT /api/cards/:id/reaction', () => {
@@ -232,6 +284,17 @@ describe('PUT /api/cards/:id/reaction', () => {
         const res = await request(app).put('/api/cards/c1/reaction').set('Cookie', sessionCookieFor('u1')).send({ emoji: '👍' });
         expect(res.status).toBe(200);
         expect(res.body.reactions).toEqual([expect.objectContaining({ userId: 'u1', emoji: '👍' })]);
+    });
+
+    it('captures the caller\'s currently configured Profile display name as the reaction\'s username, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            cards: [card()],
+            overrides: { profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app).put('/api/cards/c1/reaction').set('Cookie', sessionCookieFor('u1')).send({ emoji: '👍' });
+        expect(res.status).toBe(200);
+        expect(res.body.reactions).toEqual([expect.objectContaining({ userId: 'u1', emoji: '👍', username: 'Configured Name' })]);
     });
 });
 
@@ -259,6 +322,23 @@ describe('POST /api/retrospectives/:id/typing', () => {
         const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
         const res = await request(app).post('/api/retrospectives/r1/typing').send({ column: 'col1', isActive: true });
         expect(res.status).toBe(401);
+    });
+
+    it('captures the caller\'s currently configured Profile display name as the typing signal\'s username, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const setTypingStatusSpy = vi.fn(async () => {});
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            overrides: {
+                typingStatusPort: { setTypingStatus: setTypingStatusSpy, listActive: vi.fn(async () => []) },
+                profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]),
+            },
+        });
+        const res = await request(app)
+            .post('/api/retrospectives/r1/typing')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ column: 'col1', isActive: true });
+        expect(res.status).toBe(204);
+        expect(setTypingStatusSpy).toHaveBeenCalledWith('r1', 'u1', 'Configured Name', 'col1', true);
     });
 });
 

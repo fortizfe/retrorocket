@@ -1,7 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { buildBoardsTestApp, sessionCookieFor } from './boardsTestApp';
-import type { FakeBoardRecord } from '../../application/use-cases/boards/boardsFakes';
+import { inMemoryBoardsPort, type FakeBoardRecord } from '../../application/use-cases/boards/boardsFakes';
+import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
+import type { ProfileRecord } from '../../../src/application/ports/profile';
+
+function profile(overrides: Partial<ProfileRecord> = {}): ProfileRecord {
+    return {
+        uid: 'u1',
+        email: 'u1@example.com',
+        displayName: 'Configured Name',
+        photoURL: null,
+        providers: ['google'],
+        primaryProvider: 'google',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+    };
+}
 
 function board(overrides: Partial<FakeBoardRecord>): FakeBoardRecord {
     return {
@@ -69,6 +85,22 @@ describe('POST /api/boards', () => {
         const res = await request(app).post('/api/boards').send({ templateId: 'default', title: 'X', locale: 'en' });
         expect(res.status).toBe(401);
     });
+
+    it('captures the caller\'s currently configured Profile display name as createdByName, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const boardsPort = inMemoryBoardsPort();
+        const createBoardSpy = vi.spyOn(boardsPort, 'createBoard');
+        const { app } = buildBoardsTestApp({
+            overrides: { boardsPort, profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app)
+            .post('/api/boards')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ templateId: 'default', title: 'New Board', locale: 'en' });
+        expect(res.status).toBe(201);
+        // fakeSessionServiceWithUser sets session.user.displayName to 'User u1' — the seeded
+        // profile's 'Configured Name' must win.
+        expect(createBoardSpy).toHaveBeenCalledWith(expect.objectContaining({ createdByName: 'Configured Name' }));
+    });
 });
 
 describe('POST /api/boards/:id/join', () => {
@@ -77,6 +109,19 @@ describe('POST /api/boards/:id/join', () => {
         const res = await request(app).post('/api/boards/b1/join').set('Cookie', sessionCookieFor('u1'));
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ id: 'b1', participantCount: 2, isCreator: false });
+    });
+
+    it('captures the caller\'s currently configured Profile display name as userName, not the raw session name (spec 036-fix-display-name-fallback)', async () => {
+        const boardsPort = inMemoryBoardsPort([board({ id: 'b1', createdBy: 'owner' })]);
+        const joinBoardSpy = vi.spyOn(boardsPort, 'joinBoard');
+        const { app } = buildBoardsTestApp({
+            overrides: { boardsPort, profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]) },
+        });
+        const res = await request(app).post('/api/boards/b1/join').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(200);
+        // fakeSessionServiceWithUser sets session.user.displayName to 'User u1' — the seeded
+        // profile's 'Configured Name' must win.
+        expect(joinBoardSpy).toHaveBeenCalledWith('b1', 'u1', 'Configured Name');
     });
 
     it('is idempotent for a re-join', async () => {

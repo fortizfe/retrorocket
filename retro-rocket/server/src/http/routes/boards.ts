@@ -2,9 +2,11 @@ import { Router, type Request, type Response } from 'express';
 import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { BoardsPort } from '../../application/ports/boards';
+import type { ProfilePort } from '../../application/ports/profile';
 import type { PublicUser } from '../../domain/auth/types';
 import { AppError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
+import { ensureUserProfile } from '../../application/use-cases/profile/EnsureUserProfile';
 import { listBoardsForUser } from '../../application/use-cases/boards/ListBoardsForUser';
 import { createBoard } from '../../application/use-cases/boards/CreateBoard';
 import { joinBoard } from '../../application/use-cases/boards/JoinBoard';
@@ -13,6 +15,7 @@ import { deleteBoard } from '../../application/use-cases/boards/DeleteBoard';
 
 export interface BoardsRouterDeps {
     boardsPort: BoardsPort;
+    profilePort: ProfilePort;
     sessionService: SessionServicePort;
     clock: ClockPort;
     /** Skips boardsLimiter, mirroring auth.ts's authLimiter. MUST be false in production —
@@ -31,8 +34,26 @@ async function requireSession(req: Request, deps: BoardsRouterDeps): Promise<Aut
     return session.data as unknown as AuthedSession;
 }
 
-function displayNameOf(user: PublicUser | undefined): string {
-    return user?.displayName ?? user?.email ?? 'Anonymous';
+/**
+ * Resolves the acting user's currently configured Profile display name (spec
+ * 036-fix-display-name-fallback) — the same source `GET /api/profile` already uses
+ * (routes/profile.ts) — instead of the raw, session-cached OAuth name previously read
+ * directly off `session.user.displayName`. Safe to call repeatedly: `ensureUserProfile`
+ * is a get-or-create that returns the existing profile's displayName untouched when one
+ * already exists.
+ */
+export async function resolveDisplayName(deps: Pick<BoardsRouterDeps, 'profilePort'>, session: AuthedSession): Promise<string> {
+    const profile = await ensureUserProfile(
+        { profilePort: deps.profilePort },
+        {
+            uid: session.sub,
+            email: session.user?.email ?? '',
+            displayName: session.user?.displayName ?? null,
+            photoURL: session.user?.photoURL ?? null,
+            providers: session.user?.providers ?? [],
+        },
+    );
+    return profile.displayName;
 }
 
 function serializeBoard(board: import('../../application/ports/boards').BoardSummary) {
@@ -95,7 +116,7 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
                 title: typeof body.title === 'string' ? body.title : '',
                 locale: body.locale === 'en' ? 'en' : 'es',
                 createdBy: session.sub,
-                createdByName: displayNameOf(session.user),
+                createdByName: await resolveDisplayName(deps, session),
             },
         );
         res.status(201).json(result);
@@ -105,7 +126,7 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
         const session = await requireSession(req, deps);
         const board = await joinBoard(
             { boardsPort: deps.boardsPort },
-            { boardId: String(req.params.id), uid: session.sub, userName: displayNameOf(session.user) },
+            { boardId: String(req.params.id), uid: session.sub, userName: await resolveDisplayName(deps, session) },
         );
         res.status(200).json(serializeBoard(board));
     });
