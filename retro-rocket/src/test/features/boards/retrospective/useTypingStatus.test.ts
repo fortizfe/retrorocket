@@ -279,6 +279,64 @@ describe('useTypingStatus Hook', () => {
         });
     });
 
+    describe('bounded clearing does not depend on this hook (feature 034, Contract 4)', () => {
+        // This hook fires setTypingStatusDebounced() and moves on — it never awaits or
+        // inspects the result, so it has no way to know whether the underlying write
+        // succeeded. That's why the bounded retry for a failed clear write (FR-013)
+        // lives entirely inside OptimizedTypingStatusService (see
+        // OptimizedTypingStatusService.test.ts, "retries a failed isActive:false ...");
+        // this hook's only job — for both the inactivity timeout and an explicit
+        // stopTyping() call — is to reliably SIGNAL the clear intent exactly once per
+        // column per stop, independent of write outcome. This test guards that
+        // boundary: adding retry/awaiting logic here would duplicate the service's
+        // responsibility and risk the hook blocking on a slow retry instead of firing
+        // the next column's own timers on schedule.
+        it('signals stopTyping without awaiting or inspecting the debounced call\'s outcome', () => {
+            const { result } = renderHook(() =>
+                useTypingStatus({ retrospectiveId: mockRetrospectiveId, currentUserId: mockUserId, currentUsername: mockUsername, typingStatuses: [] }),
+            );
+
+            act(() => {
+                result.current.startTyping('good');
+            });
+            mockSetTypingStatusDebounced.mockClear();
+
+            let stopTypingReturnValue: unknown;
+            act(() => {
+                stopTypingReturnValue = result.current.stopTyping('good');
+            });
+
+            expect(stopTypingReturnValue).toBeUndefined();
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledTimes(1);
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'good', isActive: false }),
+            );
+        });
+
+        it('each column\'s inactivity timeout fires its own clear signal independently of other columns (no cross-column dependency to retry around)', () => {
+            const { result } = renderHook(() =>
+                useTypingStatus({ retrospectiveId: mockRetrospectiveId, currentUserId: mockUserId, currentUsername: mockUsername, typingStatuses: [] }),
+            );
+
+            act(() => {
+                result.current.startTyping('helped');
+                result.current.startTyping('hindered');
+            });
+            mockSetTypingStatusDebounced.mockClear();
+
+            act(() => {
+                vi.advanceTimersByTime(3000);
+            });
+
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'helped', isActive: false }),
+            );
+            expect(mockSetTypingStatusDebounced).toHaveBeenCalledWith(
+                expect.objectContaining({ column: 'hindered', isActive: false }),
+            );
+        });
+    });
+
     describe('getTypingUsersForColumn', () => {
         it('should return typing users for specific column', () => {
             const { result } = renderHook(() =>

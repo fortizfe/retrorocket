@@ -159,5 +159,25 @@ describe('RetrospectiveTopbar', () => {
             await user.keyboard('{Escape}');
             expect(screen.queryByRole('menuitem', { name: /retrospectivePage.exit/ })).not.toBeInTheDocument();
         });
+
+        it('keeps the Floating UI positioning node separate from the Framer Motion entrance/exit node (Contract 1, feature 034) so the panel cannot lose its anchor position', async () => {
+            const user = userEvent.setup();
+            render(<RetrospectiveTopbar />);
+
+            await user.click(screen.getByRole('button', { name: 'retrospectivePage.options' }));
+
+            const panel = screen.getByRole('menu', { name: 'retrospectivePage.options' });
+            // The node Floating UI positions (carries its computed inline `position`) must
+            // not be the same node Framer Motion animates via `initial`/`animate`/`exit` —
+            // otherwise Framer Motion's own `transform` (from animating `y`/`scale`) silently
+            // overwrites Floating UI's positioning `transform`, pinning the panel to the
+            // viewport's top-left corner instead of its trigger button (research.md §1).
+            expect(panel.style.position).toBeTruthy();
+            expect(panel.hasAttribute('initial')).toBe(false);
+            expect(panel.hasAttribute('animate')).toBe(false);
+            expect(panel.hasAttribute('exit')).toBe(false);
+            // The entrance/exit animation must still happen, just on a nested node.
+            expect(panel.querySelector('[animate]')).not.toBeNull();
+        });
     });
 });

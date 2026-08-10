@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     StickyNote,
@@ -61,16 +62,29 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
         const content = newNoteContent.trim();
         if (!content) return;
 
-        // Close the form (and clear its content) before awaiting the network
-        // call, not after: `notes` is driven by realtime sync (useFacilitatorNotes),
-        // which can deliver the newly created note back into this component
-        // before createNote()'s own request/response round-trip resolves —
-        // leaving the textarea (still showing the same text) and the rendered
-        // note both mounted at once if the close were sequenced after the
-        // await. Errors still surface via the separate `error` banner above,
-        // independent of isCreating.
+        // Close the form (and clear its content) before awaiting the network call, not
+        // after: `notes` is driven by realtime sync (useFacilitatorNotes), which can
+        // deliver the newly created note back into this component before createNote()'s
+        // own request/response round-trip resolves. Errors still surface via the
+        // separate `error` banner above, independent of isCreating.
+        //
+        // The content must be cleared in its OWN commit, strictly before isCreating
+        // flips to false, not merely before the network call — AnimatePresence freezes
+        // an exiting child's *last-rendered* element for the length of its exit
+        // transition, and if both state updates below landed in the same batch, the
+        // conditional `{isCreating && (...)}` would already be false in that same
+        // render, so the cleared content would never actually reach the tree before
+        // AnimatePresence captured the pre-clear instance (still showing the just-saved
+        // text) to animate out. `flushSync` forces that clear to commit on its own,
+        // so the frozen exit snapshot is always an empty textarea — never the
+        // just-saved text — regardless of how fast the realtime note arrives
+        // (research.md §3, feature 034; this is what broke
+        // e2e/retrospective-board.spec.ts's "a facilitator note is never visible to
+        // another participant's session").
+        flushSync(() => {
+            setNewNoteContent('');
+        });
         setIsCreating(false);
-        setNewNoteContent('');
         await createNote(content);
     };
 

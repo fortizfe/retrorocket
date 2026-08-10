@@ -177,29 +177,40 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                 <AnimatePresence>
                     {open && (
                         <FloatingFocusManager context={context} modal={false}>
-                            <motion.div
+                            {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
+                                `transform` encodes the anchor offset), not a `motion.div` — Framer
+                                Motion's own `animate`/`exit` write their own `transform` (from
+                                `y`/`scale`) onto whatever node they're applied to, which would
+                                silently overwrite Floating UI's positioning transform and pin the
+                                panel to the viewport's top-left corner (research.md §1, feature
+                                034). The entrance/exit animation lives on the nested `motion.div`
+                                below instead, matching ReactionPicker.tsx's already-correct pattern. */}
+                            <div
                                 ref={refs.setFloating}
                                 style={floatingStyles}
                                 {...getFloatingProps()}
                                 aria-label={t('retrospective.facilitator.controls')}
-                                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                 className="z-[99999]"
                             >
-                                <FacilitatorMenuTabs
-                                    activeTab={activeTab}
-                                    onTabChange={handleTabChange}
-                                    onClose={handleClose}
-                                    timerBadge={getTimerBadge()}
-                                    sentimentBadge={getSentimentBadge()}
-                                    teamMoodBadge={getTeamMoodBadge()}
-                                    notesBadge={undefined} // Could add notes count here later
+                                <motion.div
+                                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                 >
-                                    {renderTabContent()}
-                                </FacilitatorMenuTabs>
-                            </motion.div>
+                                    <FacilitatorMenuTabs
+                                        activeTab={activeTab}
+                                        onTabChange={handleTabChange}
+                                        onClose={handleClose}
+                                        timerBadge={getTimerBadge()}
+                                        sentimentBadge={getSentimentBadge()}
+                                        teamMoodBadge={getTeamMoodBadge()}
+                                        notesBadge={undefined} // Could add notes count here later
+                                    >
+                                        {renderTabContent()}
+                                    </FacilitatorMenuTabs>
+                                </motion.div>
+                            </div>
                         </FloatingFocusManager>
                     )}
                 </AnimatePresence>
