@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Palette } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, ChevronDown } from 'lucide-react';
 import { CardColor } from '@/features/boards/types/card';
-import { getAvailableColors, getColorConfig } from '@/lib/utils/cardColors';
+import { getAvailableColors, getColorConfig, resolveCardColor } from '@/lib/utils/cardColors';
+import { useLanguage } from '@/lib/hooks/useLanguage';
+import { useBoardMenuOverlay } from '@/features/boards/retrospective/hooks/useBoardMenuOverlay';
 
 interface ColorPickerProps {
     selectedColor: CardColor;
@@ -12,6 +15,24 @@ interface ColorPickerProps {
     size?: 'sm' | 'md' | 'lg';
 }
 
+/**
+ * "Swatch Strip + Detail" — the Apple HIG-inspired redesign selected by the
+ * product owner from three explored directions (spec 037, data-model.md's
+ * Visual Direction table). Built on `useBoardMenuOverlay`, the same
+ * anchored-popover foundation the board's other menus (options, facilitator,
+ * `CardMenu`) already use, replacing the previous hand-rolled
+ * `getBoundingClientRect`/`mousedown`+`Escape`-listener/raw `createPortal`
+ * implementation.
+ *
+ * The floating panel is split into two layered elements — an outer plain
+ * `<div>` carrying Floating UI's `floatingStyles` (position only) and an
+ * inner `<motion.div>` carrying only the enter/exit animation — because
+ * putting both on one node lets Framer Motion's own resolved `transform`
+ * silently overwrite Floating UI's positioning `translate()` (confirmed
+ * empirically while building this feature's visual-direction prototypes;
+ * same regression class as the feature-034 fix `useBoardMenuOverlay.ts`
+ * already documents). Do not collapse them back into one element.
+ */
 const ColorPicker: React.FC<ColorPickerProps> = ({
     selectedColor,
     onColorChange,
@@ -19,246 +40,156 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     showLabel = false,
     size = 'md'
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
-    const triggerRef = useRef<HTMLButtonElement>(null);
-    const popupRef = useRef<HTMLDivElement>(null);
+    const { t } = useLanguage();
+    const [previewColor, setPreviewColor] = useState<CardColor | null>(null);
+    const swatchRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    const { open, setOpen, context, refs, floatingStyles, getReferenceProps, getFloatingProps } =
+        useBoardMenuOverlay({ placement: 'bottom-start', offsetPx: 12, role: 'dialog', disabled });
 
     const colors = getAvailableColors();
-    const selectedConfig = getColorConfig(selectedColor);
+    const resolvedSelected = resolveCardColor(selectedColor);
+    const selectedConfig = getColorConfig(resolvedSelected);
+    const detailConfig = getColorConfig(previewColor ?? resolvedSelected);
 
-    // Calculate icon size based on size prop
-    const getIconSize = (size: 'sm' | 'md' | 'lg') => {
-        switch (size) {
-            case 'sm': return 12;
-            case 'md': return 14;
-            case 'lg': return 16;
-            default: return 14;
-        }
-    };
-
-    // Size configurations
     const sizeConfig = {
-        sm: {
-            trigger: 'w-6 h-6',
-            colorButton: 'w-8 h-8',
-            popup: 'p-2 gap-2'
-        },
-        md: {
-            trigger: 'w-8 h-8',
-            colorButton: 'w-10 h-10',
-            popup: 'p-3 gap-2'
-        },
-        lg: {
-            trigger: 'w-10 h-10',
-            colorButton: 'w-12 h-12',
-            popup: 'p-4 gap-3'
-        }
-    };
-
+        sm: { trigger: 'h-6 pl-0.5 pr-1.5 gap-1', swatch: 'w-5 h-5', chevron: 10, swatchStrip: 'w-8 h-8' },
+        md: { trigger: 'h-7 pl-1 pr-2 gap-1.5', swatch: 'w-5 h-5', chevron: 12, swatchStrip: 'w-9 h-9' },
+        lg: { trigger: 'h-8 pl-1 pr-2.5 gap-1.5', swatch: 'w-6 h-6', chevron: 14, swatchStrip: 'w-10 h-10' },
+    } as const;
     const config = sizeConfig[size];
 
-    // Calculate popup position
-    const calculatePosition = () => {
-        if (!triggerRef.current) return;
-
-        try {
-            const triggerRect = triggerRef.current.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            // Popup dimensions (approximate)
-            const popupWidth = 260;
-            const popupHeight = 120;
-
-            let left = triggerRect.left;
-            let top = triggerRect.bottom + 8;
-
-            // Adjust horizontal position if it would overflow
-            if (left + popupWidth > viewportWidth) {
-                left = triggerRect.right - popupWidth;
-            }
-
-            // Adjust vertical position if it would overflow
-            if (top + popupHeight > viewportHeight) {
-                top = triggerRect.top - popupHeight - 8;
-            }
-
-            setPopupPosition({ top, left });
-        } catch (error) {
-            // Fallback to default position if getBoundingClientRect fails
-            console.warn('Failed to calculate position:', error);
-            setPopupPosition({ top: 8, left: 0 });
-        }
+    const handleSelect = (color: CardColor) => {
+        onColorChange(color);
+        setOpen(false);
     };
 
-    // Handle outside clicks
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                popupRef.current &&
-                triggerRef.current &&
-                !popupRef.current.contains(event.target as Node) &&
-                !triggerRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            calculatePosition();
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isOpen]);
-
-    // Handle escape key
-    useEffect(() => {
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-        };
-    }, [isOpen]);
-
-    const handleTriggerClick = () => {
-        if (!disabled) {
-            setIsOpen(!isOpen);
+    // Roving arrow-key navigation across the swatch strip (FR-007).
+    const handleStripKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        const currentIndex = swatchRefs.current.findIndex((el) => el === document.activeElement);
+        if (currentIndex === -1) return;
+        let nextIndex: number | null = null;
+        if (event.key === 'ArrowRight') nextIndex = Math.min(currentIndex + 1, colors.length - 1);
+        if (event.key === 'ArrowLeft') nextIndex = Math.max(currentIndex - 1, 0);
+        if (nextIndex !== null) {
+            event.preventDefault();
+            swatchRefs.current[nextIndex]?.focus();
         }
     };
-
-    const handleColorSelect = (color: CardColor) => {
-        if (onColorChange && typeof onColorChange === 'function') {
-            onColorChange(color);
-        }
-        setIsOpen(false);
-    };
-
-    const popup = isOpen ? (
-        <div
-            ref={popupRef}
-            className={`
-        fixed z-[9999] 
-        bg-surface-overlay border border-border-default rounded-xl shadow-2xl
-        ${config.popup}
-        animate-in fade-in-0 zoom-in-95 duration-200
-      `}
-            style={{
-                top: popupPosition.top,
-                left: popupPosition.left,
-            }}
-        >
-            <div className="flex flex-wrap max-w-[240px]">
-                {colors.map((color) => {
-                    const colorConfig = getColorConfig(color);
-                    const isSelected = color === selectedColor;
-
-                    return (
-                        <button
-                            key={color}
-                            onClick={() => handleColorSelect(color)}
-                            className={`
-                ${config.colorButton}
-                ${colorConfig.preview}
-                border-2 rounded-full
-                transition-[transform,box-shadow,border-color] duration-200
-                hover:scale-110 hover:shadow-md
-                focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
-                ${isSelected
-                                    ? 'ring-2 ring-blue-500 ring-offset-2 scale-110 border-blue-500'
-                                    : 'border-border-strong hover:border-border-strong'
-                                }
-              `}
-                            aria-label={colorConfig.ariaLabel}
-                            title={colorConfig.tooltip}
-                        >
-                            {isSelected && (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <svg
-                                        className="w-4 h-4 text-blue-600 drop-shadow-sm"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Color name display with enhanced info */}
-            <div className="mt-3 pt-3 border-t border-border-default">
-                <div className="flex items-center justify-between">
-                    <span className="text-xs text-text-secondary font-medium">
-                        {selectedConfig.name}
-                    </span>
-                    <span className="text-xs text-text-muted">
-                        {colors.indexOf(selectedColor) + 1}/{colors.length}
-                    </span>
-                </div>
-                {selectedConfig.tooltip && (
-                    <div className="text-xs text-text-muted mt-1">
-                        {selectedConfig.tooltip}
-                    </div>
-                )}
-            </div>
-        </div>
-    ) : null;
 
     return (
-        <div className="relative">
-            {/* Trigger button */}
-            <button
-                ref={triggerRef}
-                onClick={handleTriggerClick}
+        <div className="relative inline-block">
+            {/* whileHover/whileTap (not a CSS `hover:scale-*` utility) so Framer
+                Motion owns this element's `transform` — a CSS scale utility
+                here would fight Framer Motion the same way it fought Floating
+                UI's positioning transform on the panel (this file's top-level
+                comment); matches EmojiReactions.tsx's existing trigger, per
+                the `animate` skill decision for this always-visible touch
+                trigger (spec 037, research.md §6). */}
+            <motion.button
+                ref={refs.setReference}
+                {...getReferenceProps()}
+                type="button"
                 disabled={disabled}
+                whileHover={disabled ? undefined : { scale: 1.05 }}
+                whileTap={disabled ? undefined : { scale: 0.95 }}
+                aria-label={`${t(selectedConfig.ariaLabelKey)}`}
+                title={t(selectedConfig.nameKey)}
                 className={`
           ${config.trigger}
-          ${selectedConfig.preview}
-          border-2 border-border-strong rounded-full
-          flex items-center justify-center
-          transition-[transform,box-shadow,border-color] duration-200
-          hover:scale-105 hover:shadow-md hover:border-border-strong
-          focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2
+          rounded-full flex items-center border
+          transition-[border-color] duration-150
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1
+          bg-surface-raised
+          ${open ? 'border-text-primary' : 'border-border-default'}
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          relative
         `}
-                aria-label={`Color selector: ${selectedConfig.name}`}
-                title={`Cambiar color (actual: ${selectedConfig.name})`}
             >
-                {/* Palette icon overlay for better visibility */}
-                <Palette
-                    size={getIconSize(size)}
-                    className="text-text-secondary drop-shadow-sm"
-                />
-            </button>
+                <span className={`${config.swatch} rounded-full ${selectedConfig.preview} border border-border-default shrink-0`} />
+                <ChevronDown size={config.chevron} className="text-text-muted shrink-0" />
+            </motion.button>
 
-            {/* Color name label */}
             {showLabel && (
                 <span className="block text-xs text-text-secondary mt-1 text-center">
-                    {selectedConfig.name}
+                    {t(selectedConfig.nameKey)}
                 </span>
             )}
 
-            {/* Portal for popup to ensure it appears above everything */}
-            {typeof document !== 'undefined' && createPortal(popup, document.body)}
+            <FloatingPortal>
+                <AnimatePresence>
+                    {open && (
+                        <FloatingFocusManager context={context} modal={false}>
+                            {/* Positioning wrapper (Floating UI's transform, plus the
+                                `role="dialog"`/`aria-label` from getFloatingProps + this
+                                aria-label) and the animated surface (Framer Motion's
+                                transform) are deliberately separate elements — see this
+                                file's top-level comment. Matches FacilitatorMenu.tsx's
+                                established pattern: the role/label live on the
+                                positioning div, never duplicated onto the nested
+                                motion.div (that produced a real `aria-required-children`
+                                axe violation — role="dialog" nested inside the
+                                positioning div's own ARIA role — caught live while
+                                building this feature's e2e coverage). */}
+                            <div
+                                ref={refs.setFloating}
+                                style={floatingStyles}
+                                {...getFloatingProps()}
+                                aria-label={t('retrospective.card.colorPicker.panelLabel')}
+                                className="z-[9999]"
+                            >
+                                <motion.div
+                                    // Full `transform` strings, not the `scale`/`y` shorthands —
+                                    // shorthands run on the main thread via rAF and drop frames
+                                    // under load (STANDARDS.md Performance; same fix already
+                                    // applied to the sheet/dropdowns in feature 036, T039).
+                                    initial={{ opacity: 0, transform: 'scale(0.94) translateY(-4px)' }}
+                                    animate={{ opacity: 1, transform: 'scale(1) translateY(0px)' }}
+                                    exit={{ opacity: 0, transform: 'scale(0.94) translateY(-4px)' }}
+                                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                                    style={{ transformOrigin: floatingStyles.transformOrigin }}
+                                    className="bg-surface-raised/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-border-default/30 w-[264px] overflow-hidden"
+                                    onMouseLeave={() => setPreviewColor(null)}
+                                    onKeyDown={handleStripKeyDown}
+                                >
+                                    <div className="p-3 flex gap-2 overflow-x-auto">
+                                        {colors.map((color, index) => {
+                                            const swatchConfig = getColorConfig(color);
+                                            const isSelected = color === resolvedSelected;
+                                            return (
+                                                <button
+                                                    key={color}
+                                                    ref={(el) => { swatchRefs.current[index] = el; }}
+                                                    type="button"
+                                                    onMouseEnter={() => setPreviewColor(color)}
+                                                    onFocus={() => setPreviewColor(color)}
+                                                    onClick={() => handleSelect(color)}
+                                                    aria-label={t(swatchConfig.ariaLabelKey)}
+                                                    title={t(swatchConfig.nameKey)}
+                                                    tabIndex={index === 0 ? 0 : -1}
+                                                    className={`
+                            relative shrink-0 ${config.swatchStrip} rounded-full ${swatchConfig.preview}
+                            border-2 transition-[transform,box-shadow,border-color] duration-150
+                            hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1
+                            ${isSelected ? 'border-text-primary scale-110' : 'border-border-default/60 hover:border-border-strong'}
+                          `}
+                                                >
+                                                    {isSelected && (
+                                                        <Check className="absolute inset-0 m-auto w-4 h-4 text-text-primary drop-shadow-sm" strokeWidth={3} />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="border-t border-border-default/40 px-4 py-2.5 flex items-center justify-between gap-2">
+                                        <span className="text-sm font-medium text-text-primary">{t(detailConfig.nameKey)}</span>
+                                        <span className="text-[11px] text-text-muted truncate max-w-[130px]">{t(detailConfig.tooltipKey)}</span>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </FloatingFocusManager>
+                    )}
+                </AnimatePresence>
+            </FloatingPortal>
         </div>
     );
 };

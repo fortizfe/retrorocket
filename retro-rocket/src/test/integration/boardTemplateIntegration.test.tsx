@@ -109,9 +109,9 @@ describe('Board Template System Integration Tests', () => {
     });
 
     describe('Color Palette Coverage for Templates', () => {
-        it('should use colors from expanded 30-color palette appropriately', () => {
+        it('should use colors from the curated 15-color palette appropriately (spec 037)', () => {
             const availableColors = getAvailableColors();
-            expect(availableColors).toHaveLength(30);
+            expect(availableColors).toHaveLength(15);
 
             // Collect all colors suggested by templates
             const allTemplateColors = new Set<string>();

@@ -824,3 +824,134 @@ test('both menus\' new mobile entry points, and switching facilitator tabs withi
 
     await context.close();
 });
+
+// --- Card color picker (spec 037): keyboard/touch operability, WCAG, and
+// reduced motion. Trigger reads its accessible name from the currently
+// applied color (colors.<slug>_aria, i18next); a brand-new card defaults to
+// the neutral color ("Seleccionar color blanco").
+
+test('the color picker (trigger + panel) is keyboard-operable on an existing card and the add-card form', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Color Picker Keyboard Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Color picker keyboard card');
+    const card = cardByContent(page, 'Color picker keyboard card');
+
+    // Existing card: focus the trigger, open with Enter, arrow-navigate,
+    // select with Enter, and confirm the card's color actually changed. The
+    // trigger's accessible name tracks the card's *current* color, so it's
+    // re-queried by role rather than captured once by a name that goes
+    // stale the moment the color changes.
+    const trigger = card.getByRole('button', { name: 'Seleccionar color blanco', exact: true });
+    await trigger.focus();
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Enter');
+    await expect(dialog).toHaveCount(0);
+    await expect(card).toHaveClass(/bg-blue-50/);
+
+    // Escape dismisses without changing the color.
+    const triggerNowBlue = card.getByRole('button', { name: 'Seleccionar color azul', exact: true });
+    await triggerNowBlue.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(card).toHaveClass(/bg-blue-50/);
+
+    // Add-card form: same trigger, reachable and operable identically.
+    // The "Agregar" label text is responsive-hidden below the `xl`
+    // breakpoint (GroupableColumn.tsx) — target the button's accessible
+    // name instead, which is present at every viewport width.
+    await page.getByRole('button', { name: 'Agregar' }).first().click();
+    const formTrigger = page.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).first();
+    await formTrigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('the color picker is reachable via touch, with no prior hover event, on an existing card and the add-card form', async ({ browser }) => {
+    const context = await browser.newContext({ hasTouch: true });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: 'A11y Color Picker Touch Board', locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const { boardId } = (await createRes.json()) as { boardId: string };
+    const cardRes = await page.request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Color picker touch card', column: 'helped' },
+    });
+    expect(cardRes.ok()).toBeTruthy();
+
+    await page.goto(`/retro/${boardId}`);
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await waitForBoardReady(page);
+    const card = cardByContent(page, 'Color picker touch card');
+
+    // No hover/pointer-enter event is fired before this tap — the trigger
+    // must already be visible and operable (FR-011a).
+    await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).tap();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).tap();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(card).toHaveClass(/bg-blue-50/);
+
+    // "Agregar"'s text label is responsive-hidden below the `xl` breakpoint
+    // (GroupableColumn.tsx) — the mobile viewport here relies on the
+    // button's accessible name instead.
+    await page.getByRole('button', { name: 'Agregar' }).first().tap();
+    await page.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).first().tap();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await context.close();
+});
+
+// --- Touch-viewport WCAG 2.1 AA coverage for the color picker (FR-009, SC-002) ---
+// No prior coverage exists at a touch viewport for this control — the
+// trigger was undiscoverable there before this feature (research.md §2).
+
+for (const theme of THEMES) {
+    test(`Color picker panel (open, on an existing card) has no WCAG 2.1 AA violations, touch viewport (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Color Picker Mobile ${theme}`);
+        await page.setViewportSize(MOBILE_VIEWPORT);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+        await addCardToFirstColumn(page, `Color picker a11y card ${theme}`);
+        const card = cardByContent(page, `Color picker a11y card ${theme}`);
+
+        await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).click();
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await expectNoViolations(page, `color picker panel open, mobile viewport (${theme})`);
+        await context.close();
+    });
+}
+
+// --- Reduced motion (FR-010) ------------------------------------------------
+
+test('opening the color picker and selecting a color complete with prefers-reduced-motion enabled', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Color Picker Reduced Motion Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Reduced motion color card');
+    const card = cardByContent(page, 'Reduced motion color card');
+
+    await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(card).toHaveClass(/bg-blue-50/);
+});

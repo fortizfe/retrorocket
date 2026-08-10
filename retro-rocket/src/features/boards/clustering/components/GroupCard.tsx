@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Users, Sparkles, X } from 'lucide-react';
 import { CardGroup, Card, EmojiReaction } from '@/features/boards/types/card';
 import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
-import { CARD_COLORS } from '@/lib/utils/cardColors';
+import { getColorConfig } from '@/lib/utils/cardColors';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface GroupCardProps {
@@ -50,9 +50,12 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     const totalCards = 1 + memberCards.length;
     const hasCustomTitle = group.title && group.title.trim() !== '';
 
-    // Get the primary color from the head card
-    const headCardColor = headCard.color ?? 'pastelWhite';
-    const colorConfig = CARD_COLORS[headCardColor];
+    // Get the primary color from the head card. Routed through
+    // getColorConfig (which internally calls resolveCardColor) rather than
+    // indexing CARD_COLORS directly, so a pre-curation value still stored
+    // on an existing group's head card (spec 037, FR-013a) resolves to its
+    // closest equivalent instead of throwing on a removed catalog member.
+    const colorConfig = getColorConfig(headCard.color ?? 'pastelWhite');
 
     const handleDisbandGroup = () => {
         if (window.confirm(t('retrospective.groupCard.confirmUngroupCards', { totalCards }))) {

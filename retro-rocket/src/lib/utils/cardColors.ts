@@ -1,329 +1,190 @@
 import { CardColor } from '@/features/boards/types/card';
 
-// Color configuration for accessibility and design consistency
+// Color configuration for accessibility and design consistency. `nameKey`/
+// `tooltipKey`/`ariaLabelKey` are i18next keys under the `colors` namespace
+// (src/locales/{en,es}.json) — resolved via `t()` by the consuming
+// component, not here, per Constitution Principle IV's UI/domain
+// separation (spec 037, research.md §4).
 export interface ColorConfig {
-    name: string;
+    nameKey: string;
     value: CardColor;
     background: string;
     border: string;
     text: string;
     preview: string; // Color for the color picker button
-    ariaLabel: string;
-    tooltip: string;
+    ariaLabelKey: string;
+    tooltipKey: string;
 }
 
-// Carefully curated pastel color palette with excellent contrast
+// Curated pastel color palette (spec 037 — reduced from 30 to 15 colors for
+// scannability, per the product-owner-selected "Swatch Strip + Detail"
+// direction, data-model.md's Visual Direction table). Every background
+// class below already carries a WCAG 2.1 AA-verified dark override in
+// globals.css's `.card-color-bg.*` rules (feature 009); light-mode
+// contrast is verified against the raw Tailwind `-50` shade where no
+// explicit override exists (cardColors.a11y.test.ts's documented policy).
 export const CARD_COLORS: Record<CardColor, ColorConfig> = {
     pastelWhite: {
-        name: 'Blanco',
+        nameKey: 'colors.white',
         value: 'pastelWhite',
         background: 'bg-white',
         border: 'border-gray-200 dark:border-slate-600',
         text: 'text-gray-800 dark:text-slate-100',
         preview: 'bg-white border-gray-300',
-        ariaLabel: 'Seleccionar color blanco',
-        tooltip: 'Blanco clásico'
-    },
-    pastelGreen: {
-        name: 'Verde Menta Suave',
-        value: 'pastelGreen',
-        background: 'bg-green-50',
-        border: 'border-green-200 dark:border-green-800',
-        text: 'text-green-800 dark:text-green-200',
-        preview: 'bg-green-100',
-        ariaLabel: 'Seleccionar color verde menta suave',
-        tooltip: 'Verde menta suave - Ideal para aspectos positivos'
-    },
-    pastelRed: {
-        name: 'Rosa Coral Suave',
-        value: 'pastelRed',
-        background: 'bg-red-50',
-        border: 'border-red-200 dark:border-red-800',
-        text: 'text-red-800 dark:text-red-200',
-        preview: 'bg-red-100',
-        ariaLabel: 'Seleccionar color rosa coral suave',
-        tooltip: 'Rosa coral suave - Ideal para áreas de mejora'
-    },
-    pastelYellow: {
-        name: 'Amarillo Mantequilla',
-        value: 'pastelYellow',
-        background: 'bg-yellow-50',
-        border: 'border-yellow-200 dark:border-yellow-800',
-        text: 'text-yellow-800 dark:text-yellow-200',
-        preview: 'bg-yellow-100',
-        ariaLabel: 'Seleccionar color amarillo mantequilla',
-        tooltip: 'Amarillo mantequilla - Ideal para acciones'
+        ariaLabelKey: 'colors.white_aria',
+        tooltipKey: 'colors.white_tooltip'
     },
     pastelBlue: {
-        name: 'Azul Suave',
+        nameKey: 'colors.blue',
         value: 'pastelBlue',
         background: 'bg-blue-50',
         border: 'border-blue-200 dark:border-blue-800',
         text: 'text-blue-800 dark:text-blue-200',
         preview: 'bg-blue-100',
-        ariaLabel: 'Seleccionar color azul suave',
-        tooltip: 'Azul suave - Perfecto para ideas'
+        ariaLabelKey: 'colors.blue_aria',
+        tooltipKey: 'colors.blue_tooltip'
+    },
+    pastelGreen: {
+        nameKey: 'colors.green',
+        value: 'pastelGreen',
+        background: 'bg-green-50',
+        border: 'border-green-200 dark:border-green-800',
+        text: 'text-green-800 dark:text-green-200',
+        preview: 'bg-green-100',
+        ariaLabelKey: 'colors.green_aria',
+        tooltipKey: 'colors.green_tooltip'
+    },
+    pastelYellow: {
+        nameKey: 'colors.yellow',
+        value: 'pastelYellow',
+        background: 'bg-yellow-50',
+        border: 'border-yellow-200 dark:border-yellow-800',
+        text: 'text-yellow-800 dark:text-yellow-200',
+        preview: 'bg-yellow-100',
+        ariaLabelKey: 'colors.yellow_aria',
+        tooltipKey: 'colors.yellow_tooltip'
+    },
+    pastelRed: {
+        nameKey: 'colors.red',
+        value: 'pastelRed',
+        background: 'bg-red-50',
+        border: 'border-red-200 dark:border-red-800',
+        text: 'text-red-800 dark:text-red-200',
+        preview: 'bg-red-100',
+        ariaLabelKey: 'colors.red_aria',
+        tooltipKey: 'colors.red_tooltip'
     },
     pastelPurple: {
-        name: 'Lavanda',
+        nameKey: 'colors.purple',
         value: 'pastelPurple',
         background: 'bg-purple-50',
         border: 'border-purple-200 dark:border-purple-800',
         text: 'text-purple-800 dark:text-purple-200',
         preview: 'bg-purple-100',
-        ariaLabel: 'Seleccionar color lavanda',
-        tooltip: 'Lavanda suave - Ideal para reflexiones'
+        ariaLabelKey: 'colors.purple_aria',
+        tooltipKey: 'colors.purple_tooltip'
     },
     pastelOrange: {
-        name: 'Melocotón',
+        nameKey: 'colors.orange',
         value: 'pastelOrange',
         background: 'bg-orange-50',
         border: 'border-orange-200 dark:border-orange-800',
         text: 'text-orange-800 dark:text-orange-200',
         preview: 'bg-orange-100',
-        ariaLabel: 'Seleccionar color melocotón',
-        tooltip: 'Melocotón suave - Excelente para alertas'
+        ariaLabelKey: 'colors.orange_aria',
+        tooltipKey: 'colors.orange_tooltip'
     },
     pastelPink: {
-        name: 'Rosa Suave',
+        nameKey: 'colors.pink',
         value: 'pastelPink',
         background: 'bg-pink-50',
         border: 'border-pink-200 dark:border-pink-800',
         text: 'text-pink-800 dark:text-pink-200',
         preview: 'bg-pink-100',
-        ariaLabel: 'Seleccionar color rosa suave',
-        tooltip: 'Rosa suave - Perfecto para celebraciones'
+        ariaLabelKey: 'colors.pink_aria',
+        tooltipKey: 'colors.pink_tooltip'
     },
     pastelTeal: {
-        name: 'Verde Azulado',
+        nameKey: 'colors.teal',
         value: 'pastelTeal',
         background: 'bg-teal-50',
         border: 'border-teal-200 dark:border-teal-800',
         text: 'text-teal-800 dark:text-teal-200',
         preview: 'bg-teal-100',
-        ariaLabel: 'Seleccionar color verde azulado',
-        tooltip: 'Verde azulado suave - Ideal para innovación'
+        ariaLabelKey: 'colors.teal_aria',
+        tooltipKey: 'colors.teal_tooltip'
     },
     pastelGray: {
-        name: 'Gris Perla',
+        nameKey: 'colors.gray',
         value: 'pastelGray',
         background: 'bg-gray-50',
         border: 'border-gray-200 dark:border-slate-700',
         text: 'text-gray-800 dark:text-slate-200',
         preview: 'bg-gray-100',
-        ariaLabel: 'Seleccionar color gris perla',
-        tooltip: 'Gris perla suave - Neutral y elegante'
+        ariaLabelKey: 'colors.gray_aria',
+        tooltipKey: 'colors.gray_tooltip'
     },
     pastelIndigo: {
-        name: 'Índigo Suave',
+        nameKey: 'colors.indigo',
         value: 'pastelIndigo',
         background: 'bg-indigo-50',
         border: 'border-indigo-200 dark:border-indigo-800',
         text: 'text-indigo-800 dark:text-indigo-200',
         preview: 'bg-indigo-100',
-        ariaLabel: 'Seleccionar color índigo suave',
-        tooltip: 'Índigo suave - Perfecto para análisis profundo'
+        ariaLabelKey: 'colors.indigo_aria',
+        tooltipKey: 'colors.indigo_tooltip'
     },
     pastelEmerald: {
-        name: 'Esmeralda Suave',
+        nameKey: 'colors.emerald',
         value: 'pastelEmerald',
         background: 'bg-emerald-50',
         border: 'border-emerald-200 dark:border-emerald-800',
         text: 'text-emerald-800 dark:text-emerald-200',
         preview: 'bg-emerald-100',
-        ariaLabel: 'Seleccionar color esmeralda suave',
-        tooltip: 'Esmeralda suave - Ideal para crecimiento y éxito'
-    },
-    pastelAmber: {
-        name: 'Ámbar Suave',
-        value: 'pastelAmber',
-        background: 'bg-amber-50',
-        border: 'border-amber-200 dark:border-amber-800',
-        text: 'text-amber-800 dark:text-amber-200',
-        preview: 'bg-amber-100',
-        ariaLabel: 'Seleccionar color ámbar suave',
-        tooltip: 'Ámbar suave - Excelente para advertencias importantes'
-    },
-    pastelCyan: {
-        name: 'Cian Suave',
-        value: 'pastelCyan',
-        background: 'bg-cyan-50',
-        border: 'border-cyan-200 dark:border-cyan-800',
-        text: 'text-cyan-800 dark:text-cyan-200',
-        preview: 'bg-cyan-100',
-        ariaLabel: 'Seleccionar color cian suave',
-        tooltip: 'Cian suave - Perfecto para información y datos'
-    },
-    pastelLime: {
-        name: 'Lima Suave',
-        value: 'pastelLime',
-        background: 'bg-lime-50',
-        border: 'border-lime-200 dark:border-lime-800',
-        text: 'text-lime-800 dark:text-lime-200',
-        preview: 'bg-lime-100',
-        ariaLabel: 'Seleccionar color lima suave',
-        tooltip: 'Lima suave - Ideal para energía y motivación'
+        ariaLabelKey: 'colors.emerald_aria',
+        tooltipKey: 'colors.emerald_tooltip'
     },
     pastelRose: {
-        name: 'Rosa Intenso',
+        nameKey: 'colors.rose',
         value: 'pastelRose',
         background: 'bg-rose-50',
         border: 'border-rose-200 dark:border-rose-800',
         text: 'text-rose-800 dark:text-rose-200',
         preview: 'bg-rose-100',
-        ariaLabel: 'Seleccionar color rosa intenso',
-        tooltip: 'Rosa intenso - Perfecto para emociones y pasión'
-    },
-    pastelSlate: {
-        name: 'Pizarra Suave',
-        value: 'pastelSlate',
-        background: 'bg-slate-50',
-        border: 'border-slate-200 dark:border-slate-700',
-        text: 'text-slate-800 dark:text-slate-200',
-        preview: 'bg-slate-100',
-        ariaLabel: 'Seleccionar color pizarra suave',
-        tooltip: 'Pizarra suave - Elegante y profesional'
-    },
-    pastelViolet: {
-        name: 'Violeta Suave',
-        value: 'pastelViolet',
-        background: 'bg-violet-50',
-        border: 'border-violet-200 dark:border-violet-800',
-        text: 'text-violet-800 dark:text-violet-200',
-        preview: 'bg-violet-100 border-violet-300',
-        ariaLabel: 'Seleccionar color violeta suave',
-        tooltip: 'Violeta suave'
+        ariaLabelKey: 'colors.rose_aria',
+        tooltipKey: 'colors.rose_tooltip'
     },
     pastelSky: {
-        name: 'Azul Cielo Brillante',
+        nameKey: 'colors.sky',
         value: 'pastelSky',
         background: 'bg-sky-50',
         border: 'border-sky-200 dark:border-sky-800',
         text: 'text-sky-800 dark:text-sky-200',
         preview: 'bg-sky-100 border-sky-300',
-        ariaLabel: 'Seleccionar color azul cielo brillante',
-        tooltip: 'Azul cielo brillante'
+        ariaLabelKey: 'colors.sky_aria',
+        tooltipKey: 'colors.sky_tooltip'
     },
-    pastelFuchsia: {
-        name: 'Fucsia Suave',
-        value: 'pastelFuchsia',
-        background: 'bg-fuchsia-50',
-        border: 'border-fuchsia-200 dark:border-fuchsia-800',
-        text: 'text-fuchsia-800 dark:text-fuchsia-200',
-        preview: 'bg-fuchsia-100 border-fuchsia-300',
-        ariaLabel: 'Seleccionar color fucsia suave',
-        tooltip: 'Fucsia suave'
-    },
-    pastelMint: {
-        name: 'Verde Menta',
-        value: 'pastelMint',
-        background: 'bg-emerald-25',
-        border: 'border-emerald-100 dark:border-emerald-700',
-        text: 'text-emerald-800 dark:text-emerald-200',
-        preview: 'bg-emerald-50 border-emerald-200',
-        ariaLabel: 'Seleccionar color verde menta',
-        tooltip: 'Verde menta fresco'
-    },
-    pastelPeach: {
-        name: 'Durazno',
-        value: 'pastelPeach',
-        background: 'bg-orange-25',
-        border: 'border-orange-100 dark:border-orange-700',
-        text: 'text-orange-800 dark:text-orange-200',
-        preview: 'bg-orange-50 border-orange-200',
-        ariaLabel: 'Seleccionar color durazno',
-        tooltip: 'Durazno suave'
-    },
-    pastelLavender: {
-        name: 'Lavanda Suave',
-        value: 'pastelLavender',
-        background: 'bg-purple-200',
-        border: 'border-purple-300 dark:border-purple-700',
-        text: 'text-purple-800 dark:text-purple-200',
-        preview: 'bg-purple-200 border-purple-300',
-        ariaLabel: 'Seleccionar color lavanda suave',
-        tooltip: 'Lavanda suave'
-    },
-    pastelCream: {
-        name: 'Crema',
-        value: 'pastelCream',
-        background: 'bg-yellow-25',
-        border: 'border-yellow-50 dark:border-yellow-800',
-        text: 'text-yellow-900 dark:text-yellow-200',
-        preview: 'bg-yellow-50 border-yellow-100',
-        ariaLabel: 'Seleccionar color crema',
-        tooltip: 'Crema cálido'
-    },
-    pastelCoral: {
-        name: 'Coral',
-        value: 'pastelCoral',
-        background: 'bg-red-25',
-        border: 'border-red-100 dark:border-red-700',
-        text: 'text-red-800 dark:text-red-200',
-        preview: 'bg-red-50 border-red-200',
-        ariaLabel: 'Seleccionar color coral',
-        tooltip: 'Coral vibrante'
-    },
-    pastelTurquoise: {
-        name: 'Turquesa',
-        value: 'pastelTurquoise',
-        background: 'bg-cyan-25',
-        border: 'border-cyan-100 dark:border-cyan-700',
-        text: 'text-cyan-800 dark:text-cyan-200',
-        preview: 'bg-cyan-50 border-cyan-200',
-        ariaLabel: 'Seleccionar color turquesa',
-        tooltip: 'Turquesa tropical'
-    },
-    pastelGold: {
-        name: 'Oro Suave',
-        value: 'pastelGold',
-        background: 'bg-amber-25',
-        border: 'border-amber-100 dark:border-amber-700',
-        text: 'text-amber-900 dark:text-amber-200',
-        preview: 'bg-amber-50 border-amber-200',
-        ariaLabel: 'Seleccionar color oro suave',
-        tooltip: 'Oro elegante'
-    },
-    pastelSilver: {
-        name: 'Plata',
-        value: 'pastelSilver',
-        background: 'bg-slate-25',
-        border: 'border-slate-100 dark:border-slate-700',
-        text: 'text-slate-700 dark:text-slate-200',
-        preview: 'bg-slate-50 border-slate-200',
-        ariaLabel: 'Seleccionar color plata',
-        tooltip: 'Plata sofisticado'
-    },
-    pastelBronze: {
-        name: 'Bronce',
-        value: 'pastelBronze',
-        background: 'bg-stone-50',
-        border: 'border-stone-200 dark:border-stone-700',
-        text: 'text-stone-800 dark:text-stone-200',
-        preview: 'bg-stone-100 border-stone-300',
-        ariaLabel: 'Seleccionar color bronce',
-        tooltip: 'Bronce cálido'
-    },
-    pastelIvory: {
-        name: 'Marfil',
-        value: 'pastelIvory',
-        background: 'bg-neutral-25',
-        border: 'border-neutral-100 dark:border-neutral-700',
-        text: 'text-neutral-800 dark:text-neutral-200',
-        preview: 'bg-neutral-50 border-neutral-200',
-        ariaLabel: 'Seleccionar color marfil',
-        tooltip: 'Marfil clásico'
+    pastelAmber: {
+        nameKey: 'colors.amber',
+        value: 'pastelAmber',
+        background: 'bg-amber-50',
+        border: 'border-amber-200 dark:border-amber-800',
+        text: 'text-amber-800 dark:text-amber-200',
+        preview: 'bg-amber-100',
+        ariaLabelKey: 'colors.amber_aria',
+        tooltipKey: 'colors.amber_tooltip'
     }
 };
 
-// Get all available colors in order
+// Get all available colors, in the order presented by the picker's panel
+// (Direction C's "Swatch Strip + Detail" order, as reviewed and approved).
 export const getAvailableColors = (): CardColor[] => {
     return [
         'pastelWhite',
-        'pastelGreen',
-        'pastelRed',
-        'pastelYellow',
         'pastelBlue',
+        'pastelGreen',
+        'pastelYellow',
+        'pastelRed',
         'pastelPurple',
         'pastelOrange',
         'pastelPink',
@@ -331,45 +192,73 @@ export const getAvailableColors = (): CardColor[] => {
         'pastelGray',
         'pastelIndigo',
         'pastelEmerald',
-        'pastelAmber',
-        'pastelCyan',
-        'pastelLime',
         'pastelRose',
-        'pastelSlate',
-        'pastelViolet',
         'pastelSky',
-        'pastelFuchsia',
-        'pastelMint',
-        'pastelPeach',
-        'pastelLavender',
-        'pastelCream',
-        'pastelCoral',
-        'pastelTurquoise',
-        'pastelGold',
-        'pastelSilver',
-        'pastelBronze',
-        'pastelIvory'
+        'pastelAmber'
     ];
 };
 
-// Get color configuration
-export const getColorConfig = (color: CardColor): ColorConfig => {
-    return CARD_COLORS[color];
+// Get color configuration. Accepts any string (not just CardColor) so a raw,
+// possibly-legacy stored value resolves safely — see `resolveCardColor`.
+export const getColorConfig = (color: string): ColorConfig => {
+    return CARD_COLORS[resolveCardColor(color)];
 };
 
 // Get card styling classes with enhanced specificity
-export const getCardStyling = (color: CardColor = 'pastelWhite'): string => {
+export const getCardStyling = (color: string = 'pastelWhite'): string => {
     const config = getColorConfig(color);
     return `card-color-bg ${config.background} ${config.border} ${config.text}`;
 };
 
-// Check if color is valid
+// Check if color is a current, valid catalog member (post-curation).
 export const isValidColor = (color: string): color is CardColor => {
     return color in CARD_COLORS;
 };
 
 // Get default color
 export const getDefaultColor = (): CardColor => 'pastelWhite';
+
+/**
+ * Remaps a color curated away by spec 037 (FR-013) to its closest surviving
+ * equivalent — see `specs/037-card-color-picker-redesign/data-model.md`'s
+ * finalized "Color Catalog Curation Mapping" for the rationale behind each
+ * pairing. This is the FR-013a contract: an existing card holding a
+ * pre-curation value is never left broken, and is remapped to its closest
+ * equivalent rather than reset to the neutral default (the latter would be
+ * the *rejected* clarification option).
+ */
+const CURATED_COLOR_REMAP: Record<string, CardColor> = {
+    pastelCyan: 'pastelTeal',
+    pastelLime: 'pastelGreen',
+    pastelSlate: 'pastelGray',
+    pastelViolet: 'pastelPurple',
+    pastelFuchsia: 'pastelPink',
+    pastelMint: 'pastelTeal',
+    pastelPeach: 'pastelOrange',
+    pastelLavender: 'pastelPurple',
+    pastelCream: 'pastelYellow',
+    pastelCoral: 'pastelRed',
+    pastelTurquoise: 'pastelTeal',
+    pastelGold: 'pastelAmber',
+    pastelSilver: 'pastelGray',
+    pastelBronze: 'pastelOrange',
+    pastelIvory: 'pastelWhite'
+};
+
+/**
+ * Resolves any raw stored color value to a current, valid `CardColor`:
+ * already-curated values pass through unchanged, colors removed by spec
+ * 037's curation resolve to their closest equivalent (FR-013a), and any
+ * other unrecognized value falls back to the neutral default. This is the
+ * single source of truth every read of a card's stored `color` MUST go
+ * through — `getColorConfig`/`getCardStyling` above, `getCardColorHex`
+ * below, `validateColor`, and `GroupCard.tsx`'s own lookup.
+ */
+export const resolveCardColor = (raw: string | undefined | null): CardColor => {
+    if (!raw) return getDefaultColor();
+    if (isValidColor(raw)) return raw;
+    return CURATED_COLOR_REMAP[raw] ?? getDefaultColor();
+};
 
 // Get suggested color for retrospective column by ID (preferred) or title
 export const getSuggestedColorForColumn = (columnTitle: string, columnId?: string): CardColor => {
@@ -427,48 +316,32 @@ export const getSuggestedColorForColumn = (columnTitle: string, columnId?: strin
     return 'pastelWhite';
 };
 
-// Validate color and provide fallback
+// Validate a raw stored color and provide a safe, current fallback —
+// delegates to `resolveCardColor` so a curated-away value remaps to its
+// closest equivalent (FR-013a) rather than resetting to neutral.
 export const validateColor = (color: string | undefined | null): CardColor => {
-    if (!color || !isValidColor(color)) {
-        return getDefaultColor();
-    }
-    return color;
+    return resolveCardColor(color);
 };
 
-// Get hex color for PDF export
-export const getCardColorHex = (color: CardColor): string => {
+// Get hex color for PDF/DOCX export. Accepts any raw stored value.
+export const getCardColorHex = (color: string): string => {
     const colorHexMap: Record<CardColor, string> = {
         pastelWhite: '#FFFFFF',
-        pastelGreen: '#F0FDF4',
-        pastelRed: '#FEF2F2',
-        pastelYellow: '#FEFCE8',
         pastelBlue: '#EFF6FF',
+        pastelGreen: '#F0FDF4',
+        pastelYellow: '#FEFCE8',
+        pastelRed: '#FEF2F2',
         pastelPurple: '#FAF5FF',
-        pastelPink: '#FDF2F8',
         pastelOrange: '#FFF7ED',
+        pastelPink: '#FDF2F8',
         pastelTeal: '#F0FDFA',
         pastelGray: '#F9FAFB',
         pastelIndigo: '#EEF2FF',
         pastelEmerald: '#ECFDF5',
-        pastelAmber: '#FFFBEB',
-        pastelCyan: '#ECFEFF',
-        pastelLime: '#F7FEE7',
         pastelRose: '#FFF1F2',
-        pastelSlate: '#F8FAFC',
-        pastelViolet: '#F5F3FF',
         pastelSky: '#F0F9FF',
-        pastelFuchsia: '#FDF4FF',
-        pastelMint: '#F0FDF9',
-        pastelPeach: '#FFF8F1',
-        pastelLavender: '#FAF5FF',
-        pastelCream: '#FFFEF7',
-        pastelCoral: '#FEF7F7',
-        pastelTurquoise: '#F0FFFE',
-        pastelGold: '#FFFDF2',
-        pastelSilver: '#FEFFFE',
-        pastelBronze: '#FFF9F5',
-        pastelIvory: '#FEFEF9'
+        pastelAmber: '#FFFBEB'
     };
 
-    return colorHexMap[color] || colorHexMap.pastelWhite;
+    return colorHexMap[resolveCardColor(color)];
 };

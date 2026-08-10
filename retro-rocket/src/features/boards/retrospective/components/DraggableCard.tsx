@@ -210,9 +210,17 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             >
                     {/* Drag handle y Color picker compactos. The drag activator is a
                         dedicated, keyboard-focusable handle (not the whole card) — see
-                        DragHandleProps. `focus-within` reveals it for keyboard users. */}
+                        DragHandleProps.
+                        The color picker trigger is persistently visible (no opacity
+                        gating) — spec 037, FR-011a: today's touch devices produce no
+                        hover event, so hiding it behind group-hover made it
+                        undiscoverable there, matching the always-visible-trigger
+                        precedent already established by EmojiReactions.tsx's own
+                        "add reaction" button on this same card. The drag handle keeps
+                        its hover/`focus-within` reveal — it has no touch equivalent to
+                        provide and remains a deliberate, precedented exception. */}
                     {!isEditing && (canEdit || dragHandleProps) && (
-                        <div className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <div className="absolute top-1 right-1 flex items-center gap-1">
                             {canEdit && (
                                 <ColorPicker
                                     selectedColor={cardColor}
@@ -220,22 +228,24 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                     size="sm"
                                 />
                             )}
-                            {dragHandleProps ? (
-                                <button
-                                    type="button"
-                                    ref={dragHandleProps.setActivatorNodeRef}
-                                    {...dragHandleProps.attributes}
-                                    {...dragHandleProps.listeners}
-                                    aria-label={t('retrospective.card.dragHandle')}
-                                    className="cursor-grab active:cursor-grabbing text-text-muted rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                                >
-                                    <GripVertical size={14} />
-                                </button>
-                            ) : (
-                                <div className="cursor-grab active:cursor-grabbing">
-                                    <GripVertical size={14} className="text-text-muted" />
-                                </div>
-                            )}
+                            <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                {dragHandleProps ? (
+                                    <button
+                                        type="button"
+                                        ref={dragHandleProps.setActivatorNodeRef}
+                                        {...dragHandleProps.attributes}
+                                        {...dragHandleProps.listeners}
+                                        aria-label={t('retrospective.card.dragHandle')}
+                                        className="cursor-grab active:cursor-grabbing text-text-muted rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    >
+                                        <GripVertical size={14} />
+                                    </button>
+                                ) : (
+                                    <div className="cursor-grab active:cursor-grabbing">
+                                        <GripVertical size={14} className="text-text-muted" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
