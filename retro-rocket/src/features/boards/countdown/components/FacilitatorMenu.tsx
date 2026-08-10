@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Menu,
-    X
-} from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
 import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { useSentimentContext } from '@/features/boards/sentiment';
 import { useBoardMenuOverlay } from '@/features/boards/retrospective/hooks/useBoardMenuOverlay';
+import BottomSheet from '@/lib/components/ui/BottomSheet';
 import FacilitatorMenuTabs from '@/features/boards/facilitator/components/FacilitatorMenuTabs';
+import FacilitatorTabList from '@/features/boards/facilitator/components/FacilitatorTabList';
 import SentimentTab from '@/features/boards/facilitator/components/SentimentTab';
 import NotesTab from '@/features/boards/facilitator/components/NotesTab';
 import TeamMoodTab from '@/features/boards/facilitator/components/TeamMoodTab';
@@ -34,11 +33,21 @@ interface FacilitatorMenuProps {
 }
 
 /**
- * Owner-only facilitator panel, rebuilt on the shared `useBoardMenuOverlay`
- * (feature 033, tasks.md T013/T046) — previously hand-rolled positioning
- * (manual `getBoundingClientRect` math), outside-click (`mousedown`), and
- * Escape-key listeners, all now provided by the shared hook. `role: 'dialog'`
- * since this is a large multi-tab panel, not a simple dropdown menu.
+ * Owner-only facilitator panel, rebuilt on the Apple HIG-inspired "Adaptive
+ * Sheet" direction (feature 036, clarity-forward: opaque panels, visible
+ * borders) selected by the product owner. Desktop keeps the
+ * `useBoardMenuOverlay`-anchored dialog introduced in feature 033/034; a new
+ * mobile entry point (FR-013a) opens the same four tabs in a `BottomSheet`,
+ * since no mobile path to this menu existed before this feature.
+ *
+ * The desktop panel's `open` state and the mobile sheet's `sheetOpen` state
+ * are deliberately independent, not shared: the sheet is portaled to
+ * `document.body`, outside the Floating-UI-anchored dialog's own DOM
+ * subtree, so `useDismiss` would treat a press inside the sheet as a press
+ * outside the dialog — closing (and unmounting) the sheet before its own
+ * `onClick` fires. Found via a real failing test while building the
+ * options menu's identical mobile entry point (`RetrospectiveTopbar.tsx`);
+ * confirmed to apply here too before this file was written.
  */
 const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     retrospectiveId,
@@ -52,6 +61,7 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
     const { t } = useLanguage();
     const sentimentAnalysis = useSentimentContext();
     const [activeTab, setActiveTab] = useState('controls');
+    const [sheetOpen, setSheetOpen] = useState(false);
 
     const { open, setOpen, context, refs, floatingStyles, getReferenceProps, getFloatingProps } = useBoardMenuOverlay({
         placement: 'bottom-end',
@@ -60,8 +70,10 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
 
     const { countdownState } = useCountdown(retrospectiveId, timer);
 
-    // Lock body scroll while the panel is open (unrelated to positioning).
-    useBodyScrollLock(open);
+    // Lock body scroll while either surface is open (unrelated to positioning).
+    useBodyScrollLock(open || sheetOpen);
+
+    const label = t('retrospective.facilitator.controls');
 
     // Calculate badges for tabs
     const getTimerBadge = () => {
@@ -156,21 +168,12 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
             <button
                 ref={refs.setReference}
                 {...getReferenceProps()}
-                className="p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary shadow-sm hover:shadow-md transition-[background-color,color,box-shadow] duration-200 backdrop-blur-sm flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                title={t('retrospective.facilitator.controls')}
-                aria-label={t('retrospective.facilitator.controls')}
+                className="hidden md:inline-flex p-2.5 rounded-lg bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default shadow-sm transition-colors items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                title={label}
+                aria-label={label}
             >
-                <motion.div
-                    animate={{ rotate: open ? 90 : 0 }}
-                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                >
-                    {open ? (
-                        <X className="w-5 h-5" />
-                    ) : (
-                        <Menu className="w-5 h-5" />
-                    )}
-                </motion.div>
-                <span className="hidden lg:inline font-medium">{t('retrospective.facilitator.menu')}</span>
+                <SlidersHorizontal className="w-5 h-5" />
+                <span className="font-medium text-sm">{t('retrospective.facilitator.menu')}</span>
             </button>
 
             <FloatingPortal>
@@ -189,14 +192,14 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                                 ref={refs.setFloating}
                                 style={floatingStyles}
                                 {...getFloatingProps()}
-                                aria-label={t('retrospective.facilitator.controls')}
+                                aria-label={label}
                                 className="z-[99999]"
                             >
                                 <motion.div
-                                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                    initial={{ opacity: 0, transform: 'translateY(-4px)' }}
+                                    animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                                    exit={{ opacity: 0, transform: 'translateY(-4px)' }}
+                                    transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
                                 >
                                     <FacilitatorMenuTabs
                                         activeTab={activeTab}
@@ -215,6 +218,38 @@ const FacilitatorMenu: React.FC<FacilitatorMenuProps> = ({
                     )}
                 </AnimatePresence>
             </FloatingPortal>
+
+            {/* Mobile entry point (FR-013a) — no reachable path below the `md`
+                breakpoint existed before this feature. */}
+            <button
+                onClick={() => setSheetOpen(true)}
+                className="md:hidden inline-flex p-3 rounded-lg bg-surface hover:bg-surface-raised text-text-secondary border border-border-default shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                title={label}
+                aria-label={label}
+            >
+                <SlidersHorizontal className="w-5 h-5" />
+            </button>
+
+            <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={label}>
+                <FacilitatorTabList
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    timerBadge={getTimerBadge()}
+                    sentimentBadge={getSentimentBadge()}
+                    teamMoodBadge={getTeamMoodBadge()}
+                    notesBadge={undefined}
+                    idPrefix="facilitator-mobile"
+                />
+                <div
+                    id={`facilitator-mobile-tabpanel-${activeTab}`}
+                    role="tabpanel"
+                    aria-labelledby={`facilitator-mobile-tab-${activeTab}`}
+                    tabIndex={0}
+                    className="p-4"
+                >
+                    {renderTabContent()}
+                </div>
+            </BottomSheet>
         </>
     );
 };

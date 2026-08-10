@@ -6,6 +6,11 @@ import userEvent from '@testing-library/user-event';
 vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        // Needed by the real FacilitatorTabList (feature 036's mobile entry
+        // point renders it unmocked) — its team-mood badge defaults to a
+        // truthy placeholder ('⚪') even with sentiment analysis unmocked/
+        // disabled, so the badge's `motion.span` always renders here.
+        span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     },
     // A detectable marker (not a bare fragment passthrough) so tests can assert
     // AnimatePresence stays mounted (in the portal) across the isOpen transition —
@@ -37,6 +42,8 @@ vi.mock('lucide-react', () => ({
     Plus: () => <svg data-testid="plus-icon" />,
     Brain: () => <svg data-testid="brain-icon" />,
     StickyNote: () => <svg data-testid="sticky-note-icon" />,
+    Users: () => <svg data-testid="users-icon" />,
+    SlidersHorizontal: () => <svg data-testid="sliders-icon" />,
 }));
 
 vi.mock('@/features/boards/countdown/hooks/useCountdown', () => ({
@@ -150,7 +157,7 @@ describe('FacilitatorMenu', () => {
         it('renders facilitator menu button when user is owner', () => {
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             expect(menuButton).toBeInTheDocument();
         });
 
@@ -165,7 +172,7 @@ describe('FacilitatorMenu', () => {
             const user = userEvent.setup();
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // menu content should appear (tabs container is rendered)
@@ -178,10 +185,13 @@ describe('FacilitatorMenu', () => {
 
             // AnimatePresence must always be present (portaled to document.body),
             // independent of isOpen — only its child should be conditional.
-            expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
+            // Two are expected even before opening anything: one for the
+            // desktop dialog's own AnimatePresence (FacilitatorMenu.tsx) and
+            // one for the mobile BottomSheet's (feature 036, not mocked here).
+            expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
             expect(screen.queryByTestId('facilitator-menu-tabs')).not.toBeInTheDocument();
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // Open state now also renders ControlsTab's own AnimatePresence boundaries
@@ -195,7 +205,7 @@ describe('FacilitatorMenu', () => {
             const user = userEvent.setup();
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // creation UI contains plus icon
@@ -206,7 +216,7 @@ describe('FacilitatorMenu', () => {
             const user = userEvent.setup();
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             const panel = screen.getByRole('dialog', { name: 'Controles del Facilitador' });
@@ -227,7 +237,7 @@ describe('FacilitatorMenu', () => {
             const user = userEvent.setup();
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // Click on notes tab to switch to notes
@@ -264,7 +274,7 @@ describe('FacilitatorMenu', () => {
 
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // Ensure Controls tab is active
@@ -280,7 +290,7 @@ describe('FacilitatorMenu', () => {
             const user = userEvent.setup();
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // Click controls tab to make sure controls are visible
@@ -299,7 +309,7 @@ describe('FacilitatorMenu', () => {
 
             render(<FacilitatorMenu {...defaultProps} />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             await user.click(menuButton);
 
             // creation UI contains plus icon
@@ -309,8 +319,67 @@ describe('FacilitatorMenu', () => {
         it('handles retrospectiveId prop correctly', () => {
             render(<FacilitatorMenu {...defaultProps} retrospectiveId="test-123" />);
 
-            const menuButton = screen.getByLabelText('Controles del Facilitador');
+            const menuButton = screen.getAllByLabelText('Controles del Facilitador')[0];
             expect(menuButton).toBeInTheDocument();
+        });
+    });
+
+    describe('mobile entry point (FR-013a, feature 036)', () => {
+        // Both the desktop (`hidden md:inline-flex`) and mobile (`md:hidden`)
+        // triggers share the same accessible name by design — a real browser
+        // exposes only one to the accessibility tree at a time via CSS,
+        // matching the active viewport. jsdom doesn't apply the compiled
+        // Tailwind stylesheet, so both are present here; index [1] is mobile.
+        const getMobileTrigger = () => screen.getAllByLabelText('Controles del Facilitador')[1];
+
+        it('is absent entirely (not just the desktop trigger) for a non-owner', () => {
+            render(<FacilitatorMenu {...defaultProps} isOwner={false} />);
+            expect(screen.queryAllByLabelText('Controles del Facilitador')).toHaveLength(0);
+        });
+
+        it('opens a bottom sheet with the real tab list, defaulting to Controls', async () => {
+            const user = userEvent.setup();
+            render(<FacilitatorMenu {...defaultProps} />);
+
+            await user.click(getMobileTrigger());
+
+            const sheet = screen.getByRole('dialog', { name: 'Controles del Facilitador' });
+            expect(sheet).toBeInTheDocument();
+            // Desktop's FacilitatorMenuTabs is mocked to plain buttons (no
+            // role="tab") in this file, so every real tab found here is the
+            // mobile sheet's own FacilitatorTabList instance.
+            const tabs = screen.getAllByRole('tab');
+            expect(tabs).toHaveLength(4);
+            const controlsTab = tabs.find((tab) => tab.id === 'facilitator-mobile-tab-controls');
+            expect(controlsTab).toHaveAttribute('aria-selected', 'true');
+        });
+
+        it('switches tabs and shows the notes content, same as desktop', async () => {
+            const user = userEvent.setup();
+            render(<FacilitatorMenu {...defaultProps} />);
+
+            await user.click(getMobileTrigger());
+            // Found by element ID, not translated text: the mocked useLanguage
+            // in this file only translates a handful of controls-tab-specific
+            // keys, so untranslated tab labels (e.g. the "notes" tab) render
+            // as their raw i18n key — matching FacilitatorMenuTabs.test.tsx's
+            // own precedent of asserting tabs by ID rather than label text.
+            const notesTab = document.getElementById('facilitator-mobile-tab-notes');
+            expect(notesTab).not.toBeNull();
+            await user.click(notesTab!);
+
+            expect(screen.getByTestId('facilitator-notes')).toBeInTheDocument();
+        });
+
+        it('closes on Escape', async () => {
+            const user = userEvent.setup();
+            render(<FacilitatorMenu {...defaultProps} />);
+
+            await user.click(getMobileTrigger());
+            expect(screen.getByRole('dialog', { name: 'Controles del Facilitador' })).toBeInTheDocument();
+
+            await user.keyboard('{Escape}');
+            expect(screen.queryByRole('dialog', { name: 'Controles del Facilitador' })).not.toBeInTheDocument();
         });
     });
 });

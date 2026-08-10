@@ -122,6 +122,7 @@ const Header: React.FC = () => {
                             <button
                                 ref={userMenuButtonRef}
                                 onClick={handleUserMenuToggle}
+                                aria-label={userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || t('header.user')}
                                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-raised transition-colors"
                             >
                                 {userProfile?.photoURL ? (

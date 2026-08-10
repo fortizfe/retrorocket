@@ -245,7 +245,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ retrospectiveId, facilitatorId, not
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ delay: index * 0.05 }}
-                            className="bg-surface-raised/90 backdrop-blur-sm border border-border-default/40 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                            className="bg-surface-raised border border-border-default rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
                         >
                             {editingNote?.id === note.id ? (
                                 <div className="space-y-3">

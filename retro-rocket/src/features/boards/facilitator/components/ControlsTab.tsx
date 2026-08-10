@@ -156,11 +156,11 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                                     initial={{ opacity: 0, y: -6 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -6 }}
-                                    className="bg-surface-raised/70 backdrop-blur-sm rounded-2xl p-4 border border-border-default/40"
+                                    className="bg-surface-raised rounded-xl p-4 border border-border-default"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                                         <div className="md:col-span-1 flex items-center gap-3">
-                                            <div className="p-2 rounded-md bg-surface-raised/60 border border-border-default">
+                                            <div className="p-2 rounded-md bg-surface border border-border-default">
                                                 <TimerIcon className="w-6 h-6 text-info-fg" />
                                             </div>
                                             <div>
