@@ -190,6 +190,42 @@ test('creates and likes a card — the card write itself goes through the backen
     await expect.poll(() => likeResponses.some((r) => r.ok())).toBe(true);
 });
 
+// ---------------------------------------------------------------------------
+// Spec 035: a new card must default to the neutral color, never the color
+// associated with its parent column, while manual color selection still works.
+// ---------------------------------------------------------------------------
+
+test('a new card defaults to the neutral color instead of its column\'s associated color, and a manual override still persists', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner6b@example.com', 'E2E Retro Owner 6b', 'E2E Card Color Default Board');
+
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Card Color Default Board')).toBeVisible({ timeout: 30_000 });
+
+    // The first column (helped / "¿Qué funcionó bien?") previously seeded new cards with
+    // its associated pastelGreen default (bg-green-50). A card added without touching the
+    // color picker must now carry the neutral pastelWhite default (bg-white) instead.
+    await addCardToFirstColumn(page, 'Neutral default card');
+    const neutralCard = cardByContent(page, 'Neutral default card');
+    await expect(neutralCard).toBeVisible();
+    await expect(neutralCard).toHaveClass(/bg-white/);
+    await expect(neutralCard).not.toHaveClass(/bg-green-50/);
+
+    // Manual color selection must still work: opening the add-card form again, picking a
+    // color via the real ColorPicker, and submitting must persist that chosen color.
+    await page.getByText('Agregar', { exact: true }).first().click();
+    // The add-card form's own trigger renders before any card's (form precedes the
+    // cards list in DOM order), so .first() reliably targets it over an existing card's.
+    await page.getByRole('button', { name: /^Color selector:/ }).first().click();
+    await page.getByRole('button', { name: 'Seleccionar color azul suave' }).click();
+    await page.locator('textarea').first().fill('Manually colored card');
+    await page.getByRole('button', { name: 'Crear tarjeta' }).click();
+
+    const coloredCard = cardByContent(page, 'Manually colored card');
+    await expect(coloredCard).toBeVisible();
+    await expect(coloredCard).toHaveClass(/bg-blue-50/);
+});
+
 test('a card created by one participant appears live for a second participant without reloading', async ({ browser, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner7@example.com', 'E2E Retro Owner 7', 'E2E Two-Context Live Card Board');
 
