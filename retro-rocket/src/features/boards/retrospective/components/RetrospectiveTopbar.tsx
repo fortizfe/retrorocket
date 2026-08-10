@@ -117,55 +117,67 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
                         <AnimatePresence>
                             {optionsOpen && (
                                 <FloatingFocusManager context={context} modal={false}>
-                                    <motion.div
+                                    {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
+                                        `transform` encodes the anchor offset) and all interaction/ARIA
+                                        props. Deliberately NOT a `motion.div` — Framer Motion's own
+                                        `animate`/`exit` write their own `transform` (from `y`/`scale`)
+                                        onto whatever node they're applied to, which would silently
+                                        overwrite Floating UI's positioning transform and pin the panel to
+                                        the viewport's top-left corner (research.md §1, feature 034). The
+                                        entrance/exit animation lives on the nested `motion.div` below
+                                        instead, matching ReactionPicker.tsx's already-correct pattern. */}
+                                    <div
                                         ref={refs.setFloating}
                                         style={floatingStyles}
                                         {...getFloatingProps()}
                                         aria-label={t('retrospectivePage.options') || 'Opciones'}
-                                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                                        transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
                                         className="w-56 bg-surface-raised/95 backdrop-blur-xl border border-border-default/40 rounded-2xl shadow-2xl overflow-hidden z-[99999]"
                                     >
-                                        <div className="p-2">
-                                            <button
-                                                onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
-                                                role="menuitem"
-                                                className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary transition-colors"
-                                            >
-                                                <Copy className="w-4 h-4 text-text-muted" />
-                                                <span>{t('retrospective.export.exportText') || 'Export'}</span>
-                                            </button>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                                            transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
+                                        >
+                                            <div className="p-2">
+                                                <button
+                                                    onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
+                                                    role="menuitem"
+                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary transition-colors"
+                                                >
+                                                    <Copy className="w-4 h-4 text-text-muted" />
+                                                    <span>{t('retrospective.export.exportText') || 'Export'}</span>
+                                                </button>
 
-                                            <button
-                                                onClick={() => { handleCopyId(); setOptionsOpen(false); }}
-                                                role="menuitem"
-                                                className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                            >
-                                                <Copy className="w-4 h-4 text-text-muted" />
-                                                <span>{t('retrospectivePage.copyId')}</span>
-                                            </button>
+                                                <button
+                                                    onClick={() => { handleCopyId(); setOptionsOpen(false); }}
+                                                    role="menuitem"
+                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
+                                                >
+                                                    <Copy className="w-4 h-4 text-text-muted" />
+                                                    <span>{t('retrospectivePage.copyId')}</span>
+                                                </button>
 
-                                            <button
-                                                onClick={() => { handleShare(); setOptionsOpen(false); }}
-                                                role="menuitem"
-                                                className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                            >
-                                                <Share2 className="w-4 h-4 text-text-muted" />
-                                                <span>{t('retrospectivePage.share')}</span>
-                                            </button>
+                                                <button
+                                                    onClick={() => { handleShare(); setOptionsOpen(false); }}
+                                                    role="menuitem"
+                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
+                                                >
+                                                    <Share2 className="w-4 h-4 text-text-muted" />
+                                                    <span>{t('retrospectivePage.share')}</span>
+                                                </button>
 
-                                            <button
-                                                onClick={() => { handleLeaveRetrospective(); setOptionsOpen(false); }}
-                                                role="menuitem"
-                                                className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                            >
-                                                <ArrowLeft className="w-4 h-4 text-text-muted" />
-                                                <span>{t('retrospectivePage.exit')}</span>
-                                            </button>
-                                        </div>
-                                    </motion.div>
+                                                <button
+                                                    onClick={() => { handleLeaveRetrospective(); setOptionsOpen(false); }}
+                                                    role="menuitem"
+                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
+                                                >
+                                                    <ArrowLeft className="w-4 h-4 text-text-muted" />
+                                                    <span>{t('retrospectivePage.exit')}</span>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </div>
                                 </FloatingFocusManager>
                             )}
                         </AnimatePresence>

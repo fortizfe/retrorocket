@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ColumnConfig } from '@/features/boards/types/retrospective';
@@ -370,6 +370,50 @@ describe('GroupableColumn Basic Tests', () => {
 
             render(<GroupableColumn {...minimalProps} />);
             expect(screen.getByText('What Helped')).toBeInTheDocument();
+        });
+    });
+
+    describe('Header row structure (feature 034, Contract 2 — readable column titles)', () => {
+        it('renders the title and card count together on row 1, without the group/add controls', () => {
+            const card: Card = {
+                id: 'card-1', content: 'x', column: 'helped', order: 0, retrospectiveId: 'retro-1',
+                color: 'pastelBlue', votes: 0, likes: [], reactions: [], createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1',
+            };
+            render(<GroupableColumn {...mockProps} cards={[card]} />);
+
+            const row1 = screen.getByTestId('column-header-row-title');
+            expect(within(row1).getByText('What Helped')).toBeInTheDocument();
+            expect(within(row1).getByText('1')).toBeInTheDocument();
+            expect(within(row1).queryByTestId('column-header-menu')).not.toBeInTheDocument();
+            expect(within(row1).queryByTestId('plus-icon')).not.toBeInTheDocument();
+        });
+
+        it('renders the column description on its own row, separate from the title row', () => {
+            render(<GroupableColumn {...mockProps} />);
+
+            const row1 = screen.getByTestId('column-header-row-title');
+            const row2 = screen.getByTestId('column-header-row-subtitle');
+            expect(within(row2).getByText('What helped us?')).toBeInTheDocument();
+            expect(within(row1).queryByText('What helped us?')).not.toBeInTheDocument();
+        });
+
+        it('omits the subtitle row entirely when the column has no description (no empty gap)', () => {
+            const columnWithoutDescription = { ...mockColumn, description: undefined };
+            render(<GroupableColumn {...mockProps} column={columnWithoutDescription} />);
+
+            expect(screen.queryByTestId('column-header-row-subtitle')).not.toBeInTheDocument();
+        });
+
+        it('renders the group control and the add control together on row 3, separate from the title', () => {
+            render(<GroupableColumn {...mockProps} />);
+
+            const row3 = screen.getByTestId('column-header-row-controls');
+            expect(within(row3).getByTestId('column-header-menu')).toBeInTheDocument();
+            expect(within(row3).getByTestId('plus-icon')).toBeInTheDocument();
+            expect(within(row3).queryByText('What Helped')).not.toBeInTheDocument();
+
+            const row1 = screen.getByTestId('column-header-row-title');
+            expect(within(row1).queryByTestId('column-header-menu')).not.toBeInTheDocument();
         });
     });
 });

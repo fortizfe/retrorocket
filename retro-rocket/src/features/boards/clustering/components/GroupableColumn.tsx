@@ -221,54 +221,65 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 inside RetrospectiveBoard.tsx's translucent, role-tinted gradient
                 panel (feature 033, "Layered Depth"), so a second opaque card here
                 would fight it rather than compose with it. */}
-            <div className="mb-3 px-1">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-lg shrink-0">{column.icon}</span>
-                        <h2 className="text-sm font-semibold text-text-primary truncate min-w-0">
-                            {column.title}
-                        </h2>
-                        <span className="text-xs font-medium text-text-secondary bg-surface-raised/70 rounded-full px-2 py-0.5 shadow-sm shrink-0">
-                            {totalItems}
+            <div className="mb-3 px-1 space-y-1">
+                {/* Row 1: title + card count — the one piece of information this header
+                    exists to convey, so it alone gets to be the flexible/growable element;
+                    every sibling here is `shrink-0` (feature 034, US2 — previously shared a
+                    row with the group/add controls, which made the title the first thing to
+                    get crowded out under space pressure). */}
+                <div data-testid="column-header-row-title" className="flex items-center gap-2 min-w-0">
+                    <span className="text-lg shrink-0">{column.icon}</span>
+                    <h2 className="text-sm font-semibold text-text-primary truncate min-w-0 flex-1">
+                        {column.title}
+                    </h2>
+                    <span className="text-xs font-medium text-text-secondary bg-surface-raised/70 rounded-full px-2 py-0.5 shadow-sm shrink-0">
+                        {totalItems}
+                    </span>
+                    {columnGroups.length > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-text-muted shrink-0">
+                            <Users className="w-3 h-3" />
+                            {t('retrospective.columns.groupsCount', { count: columnGroups.length })}
                         </span>
-                        {columnGroups.length > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-text-muted shrink-0">
-                                <Users className="w-3 h-3" />
-                                {t('retrospective.columns.groupsCount', { count: columnGroups.length })}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                        <ColumnHeaderMenu
-                            currentGrouping={columnState.criteria}
-                            onGroupingChange={(criteria: GroupingCriteria) => {
-                                setGroupingCriteria(column.id, criteria);
-
-                                // Handle special grouping modes
-                                if (criteria === 'suggestions') {
-                                    handleGenerateSuggestions();
-                                }
-                            }}
-                            hasCards={true}
-                            disabled={!currentUser}
-                        />
-
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setIsCreating(true)}
-                            disabled={isCreating || !currentUser}
-                            className="flex items-center space-x-1"
-                            aria-label={t('retrospective.columns.add')}
-                        >
-                            <Plus size={14} />
-                            <span className="hidden xl:inline">{t('retrospective.columns.add')}</span>
-                        </Button>
-                    </div>
+                    )}
                 </div>
+
+                {/* Row 2: subtitle/description — omitted entirely (not just hidden) when the
+                    column has none, so no empty gap is reserved. */}
                 {column.description && (
-                    <p className="text-xs text-text-muted mt-1 truncate">{column.description}</p>
+                    <p data-testid="column-header-row-subtitle" className="text-xs text-text-muted truncate">
+                        {column.description}
+                    </p>
                 )}
+
+                {/* Row 3: group + add controls — moved off the title row so neither control
+                    competes with the title for space. */}
+                <div data-testid="column-header-row-controls" className="flex items-center gap-1">
+                    <ColumnHeaderMenu
+                        currentGrouping={columnState.criteria}
+                        onGroupingChange={(criteria: GroupingCriteria) => {
+                            setGroupingCriteria(column.id, criteria);
+
+                            // Handle special grouping modes
+                            if (criteria === 'suggestions') {
+                                handleGenerateSuggestions();
+                            }
+                        }}
+                        hasCards={true}
+                        disabled={!currentUser}
+                    />
+
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsCreating(true)}
+                        disabled={isCreating || !currentUser}
+                        className="flex items-center space-x-1"
+                        aria-label={t('retrospective.columns.add')}
+                    >
+                        <Plus size={14} />
+                        <span className="hidden xl:inline">{t('retrospective.columns.add')}</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Cards Container */}

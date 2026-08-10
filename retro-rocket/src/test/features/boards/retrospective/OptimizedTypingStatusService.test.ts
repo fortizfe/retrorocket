@@ -107,6 +107,66 @@ describe('OptimizedTypingStatusService', () => {
             consoleErrorSpy.mockRestore();
         });
 
+        it('retries a failed isActive:false (clear) write a bounded number of times, off the write-serialization chain, so it never blocks the next queued write (FR-013, Contract 4, feature 034)', async () => {
+            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            // The clear write fails on its first attempt, then succeeds on retry.
+            mockSetTypingStatus
+                .mockRejectedValueOnce(new Error('network error'))
+                .mockResolvedValueOnce(undefined);
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: false });
+            await flushMicrotasks();
+
+            // The failed write still doesn't block a next queued write for the same key
+            // (existing FR-007 guarantee, unchanged) — a caller isn't left waiting on
+            // the retry.
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            // The bounded retry (off-chain) eventually re-sends the clear.
+            await vi.advanceTimersByTimeAsync(600);
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(2);
+            expect(mockSetTypingStatus).toHaveBeenNthCalledWith(2, 'r1', 'helped', false);
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('gives up after a bounded number of retries for a persistently failing clear write, rather than retrying forever', async () => {
+            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            mockSetTypingStatus.mockRejectedValue(new Error('network error'));
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: false });
+            await flushMicrotasks();
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(600);
+            await flushMicrotasks();
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(2);
+
+            await vi.advanceTimersByTimeAsync(600);
+            await flushMicrotasks();
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(3);
+
+            // No further retries beyond the bound, even given more time.
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(3);
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('does not retry a failed isActive:true (start-typing) write — only clears need the bounded retry', async () => {
+            const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            mockSetTypingStatus.mockRejectedValueOnce(new Error('network error'));
+
+            OptimizedTypingStatusService.setTypingStatusDebounced({ userId: 'u1', username: 'Alice', retrospectiveId: 'r1', column: 'helped', isActive: true });
+            await flushMicrotasks();
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(mockSetTypingStatus).toHaveBeenCalledTimes(1);
+
+            consoleErrorSpy.mockRestore();
+        });
+
         it('does not serialize writes for different keys against each other', () => {
             const pendingHelped = deferred<void>();
             mockSetTypingStatus.mockReturnValueOnce(pendingHelped.promise);

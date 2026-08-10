@@ -1370,3 +1370,59 @@ test('pre-existing data (written in the old, pre-migration document shape) loads
     await expect(page.getByText('Grupo de 2 tarjetas')).toBeVisible();
     await expect(page.getByText('Legacy action item')).toBeVisible();
 });
+
+// ---------------------------------------------------------------------------
+// Feature 034, User Story 1: the options menu and facilitator menu must open
+// anchored to their trigger button, never pinned to the viewport's top-left corner
+// (Contract 1, specs/034-fix-retro-board-bugs/contracts/ui-behavior-contracts.md).
+// ---------------------------------------------------------------------------
+
+/** True when `panel`'s bounding box sits directly against `trigger`'s (touching its
+ * bottom edge, or its top edge if flipped above) rather than floating disconnected
+ * from it elsewhere on screen — the direct regression check for the reported "panel
+ * jumps to the top-left corner" defect (research.md §1: a Framer Motion `transform`
+ * overwriting Floating UI's own positioning `transform` on the same DOM node). */
+async function isAnchoredToTrigger(panel: import('@playwright/test').Locator, trigger: import('@playwright/test').Locator): Promise<boolean> {
+    const panelBox = await panel.boundingBox();
+    const triggerBox = await trigger.boundingBox();
+    if (!panelBox || !triggerBox) return false;
+    const ANCHOR_SLACK_PX = 16; // offset(8) + shift/flip padding(8) from useBoardMenuOverlay
+    const touchesBelow = Math.abs(panelBox.y - (triggerBox.y + triggerBox.height)) <= ANCHOR_SLACK_PX;
+    const touchesAbove = Math.abs((panelBox.y + panelBox.height) - triggerBox.y) <= ANCHOR_SLACK_PX;
+    const horizontallyOverlapsOrNear = panelBox.x < triggerBox.x + triggerBox.width + 200 && panelBox.x + panelBox.width > triggerBox.x - 200;
+    return (touchesBelow || touchesAbove) && horizontallyOverlapsOrNear;
+}
+
+test('the options menu and the facilitator menu open anchored to their trigger button, not pinned to the top-left corner', async ({ page, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner16@example.com', 'E2E Retro Owner 16', 'E2E Menu Anchor Board');
+    await signInAs(page, 'e2e-retro-owner16@example.com', 'E2E Retro Owner 16');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Menu Anchor Board')).toBeVisible({ timeout: 30_000 });
+
+    // Options menu: anchored below its own trigger button at default viewport size.
+    const optionsTrigger = page.getByRole('button', { name: 'Opciones', exact: true });
+    await optionsTrigger.click();
+    const optionsPanel = page.getByRole('menu', { name: 'Opciones', exact: true });
+    await expect(optionsPanel).toBeVisible();
+    expect(await isAnchoredToTrigger(optionsPanel, optionsTrigger)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(optionsPanel).not.toBeVisible();
+
+    // Facilitator menu: anchored below its own (different) trigger button.
+    const facilitatorTrigger = page.getByRole('button', { name: 'Controles de Facilitador' });
+    await facilitatorTrigger.click();
+    const facilitatorPanel = page.getByRole('dialog', { name: 'Controles de Facilitador' });
+    await expect(facilitatorPanel).toBeVisible();
+    expect(await isAnchoredToTrigger(facilitatorPanel, facilitatorTrigger)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(facilitatorPanel).not.toBeVisible();
+
+    // Still anchored after a viewport resize while closed, then reopened — `autoUpdate`
+    // must recompute the anchor against the button's new on-screen position rather than
+    // a stale one.
+    await page.setViewportSize({ width: 900, height: 700 });
+    await optionsTrigger.click();
+    await expect(optionsPanel).toBeVisible();
+    expect(await isAnchoredToTrigger(optionsPanel, optionsTrigger)).toBe(true);
+    await page.keyboard.press('Escape');
+});
