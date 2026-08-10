@@ -7,8 +7,41 @@ import {
     getSuggestedColorForColumn,
     validateColor,
     getDefaultColor,
-    getCardStyling
+    getCardStyling,
+    resolveCardColor,
+    CARD_COLORS
 } from '@/lib/utils/cardColors';
+import { CardColor } from '@/features/boards/types/card';
+
+// spec 037: catalog curated from 30 colors down to 15 (data-model.md's
+// "Color Catalog Curation Mapping"). This is the finalized 15-member
+// curated catalog, mirrored here so tests don't silently drift from
+// getAvailableColors()'s own source of truth.
+const CURATED_COLORS: CardColor[] = [
+    'pastelWhite', 'pastelBlue', 'pastelGreen', 'pastelYellow', 'pastelRed',
+    'pastelPurple', 'pastelOrange', 'pastelPink', 'pastelTeal', 'pastelGray',
+    'pastelIndigo', 'pastelEmerald', 'pastelRose', 'pastelSky', 'pastelAmber',
+];
+
+// The finalized Color Catalog Curation Mapping (data-model.md, FR-013a):
+// every color removed by curation → its closest surviving equivalent.
+const REMAP_TABLE: Record<string, CardColor> = {
+    pastelCyan: 'pastelTeal',
+    pastelLime: 'pastelGreen',
+    pastelSlate: 'pastelGray',
+    pastelViolet: 'pastelPurple',
+    pastelFuchsia: 'pastelPink',
+    pastelMint: 'pastelTeal',
+    pastelPeach: 'pastelOrange',
+    pastelLavender: 'pastelPurple',
+    pastelCream: 'pastelYellow',
+    pastelCoral: 'pastelRed',
+    pastelTurquoise: 'pastelTeal',
+    pastelGold: 'pastelAmber',
+    pastelSilver: 'pastelGray',
+    pastelBronze: 'pastelOrange',
+    pastelIvory: 'pastelWhite',
+};
 
 describe('cardColors utilities', () => {
     beforeEach(() => {
@@ -16,46 +49,33 @@ describe('cardColors utilities', () => {
     });
 
     describe('getCardColorHex', () => {
-        it('should return correct hex colors for all 30 card colors', () => {
-            // Original 10 colors
+        it('should return correct hex colors for all 15 curated card colors', () => {
             expect(getCardColorHex('pastelWhite')).toBe('#FFFFFF');
-            expect(getCardColorHex('pastelGreen')).toBe('#F0FDF4');
-            expect(getCardColorHex('pastelRed')).toBe('#FEF2F2');
-            expect(getCardColorHex('pastelYellow')).toBe('#FEFCE8');
             expect(getCardColorHex('pastelBlue')).toBe('#EFF6FF');
+            expect(getCardColorHex('pastelGreen')).toBe('#F0FDF4');
+            expect(getCardColorHex('pastelYellow')).toBe('#FEFCE8');
+            expect(getCardColorHex('pastelRed')).toBe('#FEF2F2');
             expect(getCardColorHex('pastelPurple')).toBe('#FAF5FF');
             expect(getCardColorHex('pastelOrange')).toBe('#FFF7ED');
             expect(getCardColorHex('pastelPink')).toBe('#FDF2F8');
             expect(getCardColorHex('pastelTeal')).toBe('#F0FDFA');
             expect(getCardColorHex('pastelGray')).toBe('#F9FAFB');
-
-            // Extended colors (8 more)
             expect(getCardColorHex('pastelIndigo')).toBe('#EEF2FF');
             expect(getCardColorHex('pastelEmerald')).toBe('#ECFDF5');
-            expect(getCardColorHex('pastelAmber')).toBe('#FFFBEB');
-            expect(getCardColorHex('pastelCyan')).toBe('#ECFEFF');
-            expect(getCardColorHex('pastelLime')).toBe('#F7FEE7');
             expect(getCardColorHex('pastelRose')).toBe('#FFF1F2');
-            expect(getCardColorHex('pastelSlate')).toBe('#F8FAFC');
-            expect(getCardColorHex('pastelViolet')).toBe('#F5F3FF');
-
-            // Latest expansion (12 more) - Total 30 colors
             expect(getCardColorHex('pastelSky')).toBe('#F0F9FF');
-            expect(getCardColorHex('pastelFuchsia')).toBe('#FDF4FF');
-            expect(getCardColorHex('pastelMint')).toBe('#F0FDF9');
-            expect(getCardColorHex('pastelPeach')).toBe('#FFF8F1');
-            expect(getCardColorHex('pastelLavender')).toBe('#FAF5FF');
-            expect(getCardColorHex('pastelCream')).toBe('#FFFEF7');
-            expect(getCardColorHex('pastelCoral')).toBe('#FEF7F7');
-            expect(getCardColorHex('pastelTurquoise')).toBe('#F0FFFE');
-            expect(getCardColorHex('pastelGold')).toBe('#FFFDF2');
-            expect(getCardColorHex('pastelSilver')).toBe('#FEFFFE');
-            expect(getCardColorHex('pastelBronze')).toBe('#FFF9F5');
-            expect(getCardColorHex('pastelIvory')).toBe('#FEFEF9');
+            expect(getCardColorHex('pastelAmber')).toBe('#FFFBEB');
         });
 
-        it('should return default color for invalid color', () => {
-            expect(getCardColorHex('invalidColor' as any)).toBe('#FFFFFF');
+        it('should resolve a curated-away legacy color to its remapped equivalent hex (FR-013a)', () => {
+            // pastelCoral was removed and remaps to pastelRed.
+            expect(getCardColorHex('pastelCoral')).toBe(getCardColorHex('pastelRed'));
+            // pastelIvory was removed and remaps to pastelWhite (the identity/default).
+            expect(getCardColorHex('pastelIvory')).toBe('#FFFFFF');
+        });
+
+        it('should return default color hex for a genuinely invalid color', () => {
+            expect(getCardColorHex('not-a-real-color')).toBe('#FFFFFF');
         });
     });
 
@@ -63,7 +83,7 @@ describe('cardColors utilities', () => {
         it('should return correct config for card colors', () => {
             const config = getColorConfig('pastelGreen');
             expect(config).toBeDefined();
-            expect(config.name).toBe('Verde Menta Suave');
+            expect(config.nameKey).toBe('colors.green');
             expect(config.value).toBe('pastelGreen');
             expect(config.background).toBe('bg-green-50');
             expect(config.border).toBe('border-green-200 dark:border-green-800');
@@ -71,106 +91,95 @@ describe('cardColors utilities', () => {
 
         it('should have all required properties in config', () => {
             const config = getColorConfig('pastelWhite');
-            expect(config).toHaveProperty('name');
+            expect(config).toHaveProperty('nameKey');
             expect(config).toHaveProperty('value');
             expect(config).toHaveProperty('background');
             expect(config).toHaveProperty('border');
             expect(config).toHaveProperty('text');
             expect(config).toHaveProperty('preview');
-            expect(config).toHaveProperty('ariaLabel');
-            expect(config).toHaveProperty('tooltip');
+            expect(config).toHaveProperty('ariaLabelKey');
+            expect(config).toHaveProperty('tooltipKey');
+        });
+
+        it('should resolve a curated-away legacy color to its remapped config (FR-013a)', () => {
+            const config = getColorConfig('pastelLavender');
+            expect(config.value).toBe('pastelPurple');
         });
     });
 
     describe('isValidColor', () => {
-        it('should return true for all 30 valid card colors', () => {
-            // Original 10 colors
-            expect(isValidColor('pastelWhite')).toBe(true);
-            expect(isValidColor('pastelGreen')).toBe(true);
-            expect(isValidColor('pastelRed')).toBe(true);
-            expect(isValidColor('pastelYellow')).toBe(true);
-            expect(isValidColor('pastelBlue')).toBe(true);
-            expect(isValidColor('pastelPurple')).toBe(true);
-            expect(isValidColor('pastelOrange')).toBe(true);
-            expect(isValidColor('pastelPink')).toBe(true);
-            expect(isValidColor('pastelTeal')).toBe(true);
-            expect(isValidColor('pastelGray')).toBe(true);
+        it('should return true for all 15 curated card colors', () => {
+            CURATED_COLORS.forEach((color) => {
+                expect(isValidColor(color)).toBe(true);
+            });
+        });
 
-            // Extended colors
-            expect(isValidColor('pastelIndigo')).toBe(true);
-            expect(isValidColor('pastelEmerald')).toBe(true);
-            expect(isValidColor('pastelAmber')).toBe(true);
-            expect(isValidColor('pastelCyan')).toBe(true);
-            expect(isValidColor('pastelLime')).toBe(true);
-            expect(isValidColor('pastelRose')).toBe(true);
-            expect(isValidColor('pastelSlate')).toBe(true);
-            expect(isValidColor('pastelViolet')).toBe(true);
-
-            // Latest expansion
-            expect(isValidColor('pastelSky')).toBe(true);
-            expect(isValidColor('pastelFuchsia')).toBe(true);
-            expect(isValidColor('pastelMint')).toBe(true);
-            expect(isValidColor('pastelPeach')).toBe(true);
-            expect(isValidColor('pastelLavender')).toBe(true);
-            expect(isValidColor('pastelCream')).toBe(true);
-            expect(isValidColor('pastelCoral')).toBe(true);
-            expect(isValidColor('pastelTurquoise')).toBe(true);
-            expect(isValidColor('pastelGold')).toBe(true);
-            expect(isValidColor('pastelSilver')).toBe(true);
-            expect(isValidColor('pastelBronze')).toBe(true);
-            expect(isValidColor('pastelIvory')).toBe(true);
+        it('should return false for a color removed by curation (not a current catalog member)', () => {
+            expect(isValidColor('pastelCoral')).toBe(false);
+            expect(isValidColor('pastelIvory')).toBe(false);
         });
 
         it('should return false for invalid colors', () => {
             expect(isValidColor('invalidColor')).toBe(false);
             expect(isValidColor('')).toBe(false);
-            expect(isValidColor(undefined as any)).toBe(false);
-            expect(isValidColor(null as any)).toBe(false);
+            expect(isValidColor(undefined as unknown as string)).toBe(false);
+            expect(isValidColor(null as unknown as string)).toBe(false);
         });
     });
 
     describe('getAvailableColors', () => {
-        it('should return all 30 valid card color options in correct order', () => {
+        it('should return all 15 curated card color options in the reviewed panel order', () => {
             const colors = getAvailableColors();
-            expect(colors).toHaveLength(30);
-            expect(colors).toEqual([
-                'pastelWhite',
-                'pastelGreen',
-                'pastelRed',
-                'pastelYellow',
-                'pastelBlue',
-                'pastelPurple',
-                'pastelOrange',
-                'pastelPink',
-                'pastelTeal',
-                'pastelGray',
-                'pastelIndigo',
-                'pastelEmerald',
-                'pastelAmber',
-                'pastelCyan',
-                'pastelLime',
-                'pastelRose',
-                'pastelSlate',
-                'pastelViolet',
-                'pastelSky',
-                'pastelFuchsia',
-                'pastelMint',
-                'pastelPeach',
-                'pastelLavender',
-                'pastelCream',
-                'pastelCoral',
-                'pastelTurquoise',
-                'pastelGold',
-                'pastelSilver',
-                'pastelBronze',
-                'pastelIvory'
-            ]);
+            expect(colors).toHaveLength(15);
+            expect(colors).toEqual(CURATED_COLORS);
         });
 
         it('should contain only unique colors', () => {
             const colors = getAvailableColors();
             const uniqueColors = [...new Set(colors)];
             expect(colors).toHaveLength(uniqueColors.length);
+        });
+
+        it('should exactly match the CARD_COLORS catalog keys', () => {
+            const colors = getAvailableColors();
+            expect(colors.sort()).toEqual(Object.keys(CARD_COLORS).sort());
+        });
+    });
+
+    describe('resolveCardColor (FR-013a Color Catalog Curation Mapping)', () => {
+        it('should pass through every already-curated color unchanged (identity)', () => {
+            CURATED_COLORS.forEach((color) => {
+                expect(resolveCardColor(color)).toBe(color);
+            });
+        });
+
+        it('should remap every removed color to its documented closest equivalent', () => {
+            Object.entries(REMAP_TABLE).forEach(([previousColor, newColor]) => {
+                expect(resolveCardColor(previousColor)).toBe(newColor);
+            });
+        });
+
+        it('should map the neutral/default color to itself (FR-012 identity)', () => {
+            expect(resolveCardColor('pastelWhite')).toBe('pastelWhite');
+            expect(resolveCardColor('pastelIvory')).toBe('pastelWhite');
+        });
+
+        it('should fall back to the neutral default for a genuinely unrecognized value', () => {
+            expect(resolveCardColor('not-a-real-color')).toBe('pastelWhite');
+        });
+
+        it('should fall back to the neutral default for null/undefined/empty', () => {
+            expect(resolveCardColor(undefined)).toBe('pastelWhite');
+            expect(resolveCardColor(null)).toBe('pastelWhite');
+            expect(resolveCardColor('')).toBe('pastelWhite');
+        });
+
+        it('should achieve total coverage: every pre-curation (30-member) color resolves to a member of the current 15-color catalog', () => {
+            const preCurationColors = [...CURATED_COLORS, ...Object.keys(REMAP_TABLE)];
+            expect(preCurationColors).toHaveLength(30);
+            preCurationColors.forEach((color) => {
+                expect(isValidColor(resolveCardColor(color))).toBe(true);
+            });
         });
     });
 
@@ -224,7 +233,14 @@ describe('cardColors utilities', () => {
             expect(validateColor('pastelGreen')).toBe('pastelGreen');
         });
 
-        it('should return default for invalid color', () => {
+        it('should remap a curated-away color to its closest equivalent, not reset to default (FR-013a)', () => {
+            // Confirms validateColor now delegates to resolveCardColor rather
+            // than performing the previously-rejected reset-to-neutral behavior.
+            expect(validateColor('pastelCoral')).toBe('pastelRed');
+            expect(validateColor('pastelLavender')).toBe('pastelPurple');
+        });
+
+        it('should return default for a genuinely invalid color or empty input', () => {
             expect(validateColor('invalidColor')).toBe('pastelWhite');
             expect(validateColor(undefined)).toBe('pastelWhite');
             expect(validateColor(null)).toBe('pastelWhite');
@@ -252,17 +268,22 @@ describe('cardColors utilities', () => {
             expect(styling).toContain('border-gray-200');
         });
 
-        it('should handle all new color variants', () => {
-            // Test some of the new colors
+        it('should handle every curated color variant', () => {
             const skyStyle = getCardStyling('pastelSky');
             expect(skyStyle).toContain('bg-sky-50');
             expect(skyStyle).toContain('border-sky-200');
             expect(skyStyle).toContain('text-sky-800');
 
-            const goldStyle = getCardStyling('pastelGold');
-            expect(goldStyle).toContain('bg-amber-25');
-            expect(goldStyle).toContain('border-amber-100');
-            expect(goldStyle).toContain('text-amber-900');
+            const amberStyle = getCardStyling('pastelAmber');
+            expect(amberStyle).toContain('bg-amber-50');
+            expect(amberStyle).toContain('border-amber-200');
+            expect(amberStyle).toContain('text-amber-800');
+        });
+
+        it('should style a card holding a curated-away legacy color via its remapped equivalent (FR-013a)', () => {
+            const legacyStyle = getCardStyling('pastelGold');
+            const amberStyle = getCardStyling('pastelAmber');
+            expect(legacyStyle).toBe(amberStyle);
         });
     });
 
@@ -272,31 +293,30 @@ describe('cardColors utilities', () => {
 
             colors.forEach(color => {
                 const config = getColorConfig(color);
-                expect(config.name).toBeTruthy();
+                expect(config.nameKey).toBeTruthy();
                 expect(config.value).toBe(color);
                 expect(config.background).toBeTruthy();
                 expect(config.border).toBeTruthy();
                 expect(config.text).toBeTruthy();
                 expect(config.preview).toBeTruthy();
-                expect(config.ariaLabel).toBeTruthy();
-                expect(config.tooltip).toBeTruthy();
+                expect(config.ariaLabelKey).toBeTruthy();
+                expect(config.tooltipKey).toBeTruthy();
             });
         });
 
-        it('should have unique names for all colors', () => {
+        it('should have unique name keys for all colors', () => {
             const colors = getAvailableColors();
-            const names = colors.map(color => getColorConfig(color).name);
-            const uniqueNames = [...new Set(names)];
-            expect(names).toHaveLength(uniqueNames.length);
+            const nameKeys = colors.map(color => getColorConfig(color).nameKey);
+            const uniqueNameKeys = [...new Set(nameKeys)];
+            expect(nameKeys).toHaveLength(uniqueNameKeys.length);
         });
 
-        it('should have proper accessibility labels', () => {
+        it('should have aria-label keys following the colors.<slug>_aria convention', () => {
             const colors = getAvailableColors();
 
             colors.forEach(color => {
                 const config = getColorConfig(color);
-                expect(config.ariaLabel).toContain('Seleccionar color');
-                expect(config.ariaLabel.length).toBeGreaterThan(10);
+                expect(config.ariaLabelKey).toMatch(/^colors\.\w+_aria$/);
             });
         });
     });
@@ -309,13 +329,13 @@ describe('cardColors utilities', () => {
 
             // Negative emotions should have cooler/neutral colors
             expect(['pastelRed', 'pastelOrange', 'pastelPink'].includes(getSuggestedColorForColumn('', 'hindered'))).toBe(true);
-            expect(['pastelGray', 'pastelSlate', 'pastelOrange'].includes(getSuggestedColorForColumn('', 'mad'))).toBe(true);
+            expect(['pastelGray', 'pastelOrange'].includes(getSuggestedColorForColumn('', 'mad'))).toBe(true);
         });
 
         it('should provide consistent action-oriented colors', () => {
-            // Action items should consistently use yellow tones
-            expect(['pastelYellow', 'pastelAmber', 'pastelGold'].includes(getSuggestedColorForColumn('', 'actionItems'))).toBe(true);
-            expect(['pastelYellow', 'pastelAmber', 'pastelGold'].includes(getSuggestedColorForColumn('', 'improve'))).toBe(true);
+            // Action items should consistently use yellow/amber tones
+            expect(['pastelYellow', 'pastelAmber'].includes(getSuggestedColorForColumn('', 'actionItems'))).toBe(true);
+            expect(['pastelYellow', 'pastelAmber'].includes(getSuggestedColorForColumn('', 'improve'))).toBe(true);
         });
     });
 });

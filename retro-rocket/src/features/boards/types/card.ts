@@ -3,38 +3,26 @@ import { ALL_EMOJIS } from '@/lib/utils/emojiConstants';
 // Available emoji reactions - Now includes all available emojis
 export type EmojiReaction = typeof ALL_EMOJIS[number];
 
-// Card color palette - 18 beautiful pastel colors for more variety
+// Card color palette - 15 curated pastel colors (spec 037: curated down
+// from 30 for scannability; a card holding a pre-curation value not listed
+// here is remapped to its closest surviving equivalent at read time via
+// `resolveCardColor` in cardColors.ts, never left broken — FR-013a).
 export type CardColor =
     | 'pastelWhite'
-    | 'pastelGreen'
-    | 'pastelRed'
-    | 'pastelYellow'
     | 'pastelBlue'
+    | 'pastelGreen'
+    | 'pastelYellow'
+    | 'pastelRed'
     | 'pastelPurple'
-    | 'pastelPink'
     | 'pastelOrange'
+    | 'pastelPink'
     | 'pastelTeal'
     | 'pastelGray'
     | 'pastelIndigo'
     | 'pastelEmerald'
-    | 'pastelAmber'
-    | 'pastelCyan'
-    | 'pastelLime'
     | 'pastelRose'
-    | 'pastelSlate'
-    | 'pastelViolet'
     | 'pastelSky'
-    | 'pastelFuchsia'
-    | 'pastelMint'
-    | 'pastelPeach'
-    | 'pastelLavender'
-    | 'pastelCream'
-    | 'pastelCoral'
-    | 'pastelTurquoise'
-    | 'pastelGold'
-    | 'pastelSilver'
-    | 'pastelBronze'
-    | 'pastelIvory';
+    | 'pastelAmber';
 
 // Individual like record
 export interface Like {

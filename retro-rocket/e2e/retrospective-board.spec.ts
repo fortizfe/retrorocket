@@ -216,8 +216,11 @@ test('a new card defaults to the neutral color instead of its column\'s associat
     await page.getByText('Agregar', { exact: true }).first().click();
     // The add-card form's own trigger renders before any card's (form precedes the
     // cards list in DOM order), so .first() reliably targets it over an existing card's.
-    await page.getByRole('button', { name: /^Color selector:/ }).first().click();
-    await page.getByRole('button', { name: 'Seleccionar color azul suave' }).click();
+    // Spec 037: trigger/swatch aria-labels are now fully localized via i18next
+    // (colors.<slug>_aria), replacing the old hardcoded "Color selector: <name>"/
+    // "<name> suave" strings.
+    await page.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).click();
     await page.locator('textarea').first().fill('Manually colored card');
     await page.getByRole('button', { name: 'Crear tarjeta' }).click();
 

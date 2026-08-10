@@ -495,6 +495,26 @@ describe('DraggableCard', () => {
         });
     });
 
+    describe('Color picker touch reachability (spec 037, FR-011a)', () => {
+        it('keeps the color-picker trigger persistently visible — no hover-gating opacity classes on its wrapper', () => {
+            render(<DraggableCard {...defaultProps} />);
+
+            const colorPicker = screen.getByTestId('color-picker');
+            const cluster = colorPicker.closest('.absolute.top-1.right-1');
+            expect(cluster).not.toBeNull();
+            expect(cluster?.className).not.toMatch(/opacity-0/);
+        });
+
+        it('still hover/focus-gates the drag handle — a deliberate, precedented exception (no touch equivalent to provide)', () => {
+            const { container } = render(<DraggableCard {...defaultProps} />);
+
+            const gripWrapper = container.querySelector('.cursor-grab')?.parentElement;
+            expect(gripWrapper?.className).toMatch(/opacity-0/);
+            expect(gripWrapper?.className).toMatch(/group-hover:opacity-100/);
+            expect(gripWrapper?.className).toMatch(/focus-within:opacity-100/);
+        });
+    });
+
     describe('Author display name (spec 020-user-display-name-fix)', () => {
         it('resolves the author label from the live participants list when createdByName is absent (legacy card)', () => {
             const legacyCard = { ...mockCard, createdBy: 'user1', createdByName: undefined };
