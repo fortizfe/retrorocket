@@ -65,3 +65,45 @@ test('the exported TXT file shows the card author\'s display name, never the raw
     expect(content).toContain(`Autor: ${TEST_USER_DISPLAY_NAME}`);
     expect(content).not.toContain(authorUid);
 });
+
+// ─── 036-options-facilitator-menus, User Story 1: new mobile entry point ───
+// Before this feature, the options menu had no reachable path below the `md`
+// breakpoint at all (FR-013a) — this is new coverage, not an update to
+// existing coverage. At a real narrow viewport, only the mobile trigger is
+// exposed to the accessibility tree (`hidden md:inline-flex` / `md:hidden`),
+// so `getByRole` resolves unambiguously without extra disambiguation.
+test('the options menu is reachable and fully usable from a narrow mobile viewport', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: 'E2E Mobile Options Board', locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const { boardId } = (await createRes.json()) as { boardId: string };
+    await page.goto(`/retro/${boardId}`);
+
+    // Open — a genuine bottom sheet, not the desktop dropdown.
+    await page.getByRole('button', { name: 'Opciones' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Opciones' });
+    await expect(sheet).toBeVisible();
+
+    // Every action is present and reachable via touch-sized targets.
+    await expect(sheet.getByText('Exportar', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Copiar ID', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Compartir', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Salir', { exact: true })).toBeVisible();
+
+    // Copy ID: completes and confirms via toast, closing the sheet.
+    await sheet.getByText('Copiar ID', { exact: true }).click();
+    await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 10_000 });
+    await expect(sheet).not.toBeVisible();
+
+    // Reopen and exit — navigates back to the dashboard.
+    await page.getByRole('button', { name: 'Opciones' }).click();
+    await page.getByRole('dialog', { name: 'Opciones' }).getByText('Salir', { exact: true }).click();
+    await page.waitForURL(/\/(mis-tableros|dashboard)/, { timeout: 10_000 });
+
+    await context.close();
+});

@@ -2,10 +2,10 @@ import React from 'react';
 import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Copy, Share2, ArrowLeft, Menu as MenuIcon, X } from 'lucide-react';
+import { Copy, Share2, ArrowLeft, Menu as MenuIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
-// Button unused in this topbar refactor
 import ImprovedExportPopover from '@/features/boards/export/components/ImprovedExportPopover';
+import BottomSheet from '@/lib/components/ui/BottomSheet';
 import { ResponsiveParticipantDisplay } from '@/features/boards/participants/components/index';
 import { CountdownTimer, FacilitatorMenu } from '@/features/boards/countdown/components/index';
 import { useBoardMenuOverlay } from '@/features/boards/retrospective/hooks/useBoardMenuOverlay';
@@ -15,11 +15,16 @@ import { useSentimentContext } from '@/features/boards/sentiment';
 import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
 /**
- * The topbar's compact options menu (export/copy/share/exit), rebuilt on the
- * shared `useBoardMenuOverlay` (feature 033, tasks.md T013/T054) — the fifth
- * and final of the board's menus this hook consolidates. Previously hand-rolled
- * `getBoundingClientRect` positioning, `mousedown` outside-click, and its own
- * Escape-key listener; all now provided by the shared hook.
+ * The topbar's options menu (export/copy/share/exit), rebuilt on the
+ * Apple HIG-inspired "Adaptive Sheet" direction (feature 036, clarity-
+ * forward: opaque panels, visible borders) selected by the product owner
+ * during that feature's design review. Desktop keeps the `useBoardMenuOverlay`-
+ * anchored dropdown introduced in feature 033/034; a new mobile entry point
+ * (FR-013a) opens the same four actions in a `BottomSheet`, since no mobile
+ * path to this menu existed before this feature — the desktop and mobile
+ * triggers share one `open`/`setOpen` state from the same overlay hook call,
+ * with CSS (`hidden md:*` / `md:hidden`) selecting which trigger and panel
+ * are reachable at the current viewport.
  */
 const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospectiveId }) => {
     const { id: paramId } = useParams<{ id: string }>();
@@ -39,6 +44,16 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
     const { open: optionsOpen, setOpen: setOptionsOpen, context, refs, floatingStyles, getReferenceProps, getFloatingProps } = useBoardMenuOverlay({
         placement: 'bottom-end',
     });
+    // Deliberately a separate state from `optionsOpen`, not reused: the sheet
+    // is portaled to `document.body` (see BottomSheet.tsx), outside the
+    // Floating-UI-anchored dropdown's own DOM subtree. `useBoardMenuOverlay`'s
+    // `useDismiss` treats any press outside that subtree as an outside click —
+    // including a press *inside* the sheet — so sharing one boolean closed the
+    // sheet (and unmounted whatever was just clicked) before its own onClick
+    // could fire. Found via a real failing test, not by inspection.
+    const [sheetOpen, setSheetOpen] = React.useState(false);
+
+    const optionsLabel = t('retrospectivePage.options') || 'Opciones';
 
     const handleLeaveRetrospective = async () => {
         toast.success(t('retrospectivePage.backToDashboard') || 'Volviendo al dashboard');
@@ -60,6 +75,13 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
         }
     };
 
+    const optionsItems = [
+        { icon: Copy, label: t('retrospective.export.exportText') || 'Export', onClick: () => setShowExportPopover(true) },
+        { icon: Copy, label: t('retrospectivePage.copyId'), onClick: handleCopyId },
+        { icon: Share2, label: t('retrospectivePage.share'), onClick: handleShare },
+        { icon: ArrowLeft, label: t('retrospectivePage.exit'), onClick: handleLeaveRetrospective },
+    ];
+
     // If we don't have retrospective data yet, show a compact placeholder
     // so the top area is not empty (helps when Header is rendered outside route params)
     if (!retrospective) {
@@ -78,136 +100,149 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
     }
 
     return (
-        <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="min-w-0">
-                    <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">
-                        {retrospective.title}
-                    </h2>
-                    {/* subtitle removed: redundant with user menu */}
+        <>
+            <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="min-w-0">
+                        <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">
+                            {retrospective.title}
+                        </h2>
+                        {/* subtitle removed: redundant with user menu */}
+                    </div>
+                    <div className="hidden md:block ml-4 flex-shrink-0">
+                        <ResponsiveParticipantDisplay participants={participants || []} className="flex items-center" />
+                    </div>
                 </div>
-                <div className="hidden md:block ml-4 flex-shrink-0">
-                    <ResponsiveParticipantDisplay participants={participants || []} className="flex items-center" />
-                </div>
-            </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-                <CountdownTimer retrospectiveId={retrospective.id} timer={timer} />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <CountdownTimer retrospectiveId={retrospective.id} timer={timer} />
 
-                {/* Compact options hamburger that groups export/share/copy/exit */}
-                <div className="flex items-center gap-2">
-                    <button
-                        ref={refs.setReference}
-                        {...getReferenceProps()}
-                        className="hidden sm:inline-flex p-2.5 rounded-lg bg-surface-raised/80 hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default/50 hover:border-border-strong shadow-sm hover:shadow-md transition-[background-color,color,border-color,box-shadow] duration-200 backdrop-blur-sm items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                        title={t('retrospectivePage.options') || 'Opciones'}
-                        aria-label={t('retrospectivePage.options') || 'Opciones'}
-                    >
-                        <motion.div animate={{ rotate: optionsOpen ? 90 : 0 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
-                            {optionsOpen ? (
-                                <X className="w-5 h-5" />
-                            ) : (
-                                <MenuIcon className="w-5 h-5" />
-                            )}
-                        </motion.div>
-                        <span className="hidden lg:inline font-medium">{t('retrospectivePage.options') || 'Opciones'}</span>
-                    </button>
+                    {/* Compact options button that groups export/share/copy/exit */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            ref={refs.setReference}
+                            {...getReferenceProps()}
+                            className="inline-flex p-2.5 rounded-lg bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary border border-border-default shadow-sm transition-colors items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            title={optionsLabel}
+                            aria-label={optionsLabel}
+                        >
+                            <MenuIcon className="w-5 h-5" />
+                            <span className="hidden lg:inline font-medium text-sm">{optionsLabel}</span>
+                        </button>
 
-                    <FloatingPortal>
-                        <AnimatePresence>
-                            {optionsOpen && (
-                                <FloatingFocusManager context={context} modal={false}>
-                                    {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
-                                        `transform` encodes the anchor offset) and all interaction/ARIA
-                                        props. Deliberately NOT a `motion.div` — Framer Motion's own
-                                        `animate`/`exit` write their own `transform` (from `y`/`scale`)
-                                        onto whatever node they're applied to, which would silently
-                                        overwrite Floating UI's positioning transform and pin the panel to
-                                        the viewport's top-left corner (research.md §1, feature 034). The
-                                        entrance/exit animation lives on the nested `motion.div` below
-                                        instead, matching ReactionPicker.tsx's already-correct pattern. */}
-                                    <div
-                                        ref={refs.setFloating}
-                                        style={floatingStyles}
-                                        {...getFloatingProps()}
-                                        aria-label={t('retrospectivePage.options') || 'Opciones'}
-                                        className="w-56 bg-surface-raised/95 backdrop-blur-xl border border-border-default/40 rounded-2xl shadow-2xl overflow-hidden z-[99999]"
-                                    >
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                                            transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
+                        <FloatingPortal>
+                            <AnimatePresence>
+                                {optionsOpen && (
+                                    <FloatingFocusManager context={context} modal={false}>
+                                        {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
+                                            `transform` encodes the anchor offset) and all interaction/ARIA
+                                            props. Deliberately NOT a `motion.div` — Framer Motion's own
+                                            `animate`/`exit` write their own `transform` (from `y`/`scale`)
+                                            onto whatever node they're applied to, which would silently
+                                            overwrite Floating UI's positioning transform and pin the panel to
+                                            the viewport's top-left corner (research.md §1, feature 034). The
+                                            entrance/exit animation lives on the nested `motion.div` below
+                                            instead, matching ReactionPicker.tsx's already-correct pattern. */}
+                                        <div
+                                            ref={refs.setFloating}
+                                            style={floatingStyles}
+                                            {...getFloatingProps()}
+                                            aria-label={optionsLabel}
+                                            className="w-56 bg-surface-raised border border-border-default rounded-xl shadow-2xl overflow-hidden z-[99999]"
                                         >
-                                            <div className="p-2">
-                                                <button
-                                                    onClick={() => { setShowExportPopover(true); setOptionsOpen(false); }}
-                                                    role="menuitem"
-                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary transition-colors"
-                                                >
-                                                    <Copy className="w-4 h-4 text-text-muted" />
-                                                    <span>{t('retrospective.export.exportText') || 'Export'}</span>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => { handleCopyId(); setOptionsOpen(false); }}
-                                                    role="menuitem"
-                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                                >
-                                                    <Copy className="w-4 h-4 text-text-muted" />
-                                                    <span>{t('retrospectivePage.copyId')}</span>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => { handleShare(); setOptionsOpen(false); }}
-                                                    role="menuitem"
-                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                                >
-                                                    <Share2 className="w-4 h-4 text-text-muted" />
-                                                    <span>{t('retrospectivePage.share')}</span>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => { handleLeaveRetrospective(); setOptionsOpen(false); }}
-                                                    role="menuitem"
-                                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface flex items-center gap-2 text-sm text-text-secondary mt-1 transition-colors"
-                                                >
-                                                    <ArrowLeft className="w-4 h-4 text-text-muted" />
-                                                    <span>{t('retrospectivePage.exit')}</span>
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    </div>
-                                </FloatingFocusManager>
-                            )}
-                        </AnimatePresence>
-                    </FloatingPortal>
+                                            <motion.div
+                                                initial={{ opacity: 0, transform: 'translateY(-4px)' }}
+                                                animate={{ opacity: 1, transform: 'translateY(0px)' }}
+                                                exit={{ opacity: 0, transform: 'translateY(-4px)' }}
+                                                transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
+                                                className="p-1.5"
+                                            >
+                                                {optionsItems.map((item) => (
+                                                    <button
+                                                        key={item.label}
+                                                        onClick={() => { item.onClick(); setOptionsOpen(false); }}
+                                                        role="menuitem"
+                                                        className="w-full text-left px-3 py-2 rounded-md hover:bg-surface flex items-center gap-2 text-sm font-medium text-text-primary transition-colors"
+                                                    >
+                                                        <item.icon className="w-4 h-4 text-text-secondary" />
+                                                        <span>{item.label}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        </div>
+                                    </FloatingFocusManager>
+                                )}
+                            </AnimatePresence>
+                        </FloatingPortal>
+                    </div>
                 </div>
-
-                {/* Export popover mounted at topbar level so it isn't trapped inside the options menu portal */}
-                <ImprovedExportPopover
-                    retrospective={retrospective}
-                    cards={exportCards}
-                    groups={exportGroups}
-                    participants={participants || []}
-                    facilitatorNotes={myFacilitatorNotes}
-                    actionItems={exportActionItems}
-                    sentimentAnalysis={sentimentAnalysis}
-                    isOpen={showExportPopover}
-                    onClose={() => setShowExportPopover(false)}
-                />
-
-                <FacilitatorMenu
-                    retrospectiveId={retrospective.id}
-                    facilitatorId={uid || ''}
-                    isOwner={retrospective.createdBy === uid}
-                    cards={exportCards}
-                    columnConfigs={columnConfigs}
-                    timer={timer}
-                    myFacilitatorNotes={myFacilitatorNotes}
-                />
             </div>
-        </div>
+
+            {/* Mobile entry point (FR-013a) — the options menu had no reachable
+                path below the `md` breakpoint before this feature. The rest of
+                the topbar (title, participants, countdown display) stays out of
+                scope per spec.md's Edge Cases; only the menu itself needs to be
+                reachable here. */}
+            <div className="flex md:hidden items-center gap-2 ml-auto flex-shrink-0">
+                <button
+                    onClick={() => setSheetOpen(true)}
+                    className="inline-flex p-3 rounded-lg bg-surface hover:bg-surface-raised text-text-secondary border border-border-default shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    title={optionsLabel}
+                    aria-label={optionsLabel}
+                >
+                    <MenuIcon className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* FacilitatorMenu owns its own responsive presentation internally
+                (a desktop `hidden md:inline-flex` trigger + panel, and a
+                `md:hidden` mobile trigger + BottomSheet — FacilitatorMenu.tsx).
+                It MUST render here, outside both viewport-conditional branches
+                above, not nested inside either — nesting it inside the
+                desktop-only branch previously made its own mobile trigger
+                permanently unreachable regardless of its own `md:hidden`
+                class, since a `display: none` ANCESTOR always wins over a
+                child's own display value. Found via live verification in a
+                real browser, not by inspection — no unit test (none apply
+                real CSS) could have caught this class of bug. */}
+            <FacilitatorMenu
+                retrospectiveId={retrospective.id}
+                facilitatorId={uid || ''}
+                isOwner={retrospective.createdBy === uid}
+                cards={exportCards}
+                columnConfigs={columnConfigs}
+                timer={timer}
+                myFacilitatorNotes={myFacilitatorNotes}
+            />
+
+            <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={optionsLabel} heightClass="max-h-[40vh]">
+                <div className="p-2 md:hidden">
+                    {optionsItems.map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={() => { item.onClick(); setSheetOpen(false); }}
+                            className="w-full text-left px-4 py-3.5 rounded-lg hover:bg-surface flex items-center gap-3 text-base font-medium text-text-primary transition-colors"
+                        >
+                            <item.icon className="w-5 h-5 text-text-secondary" />
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </BottomSheet>
+
+            {/* Export popover mounted at topbar level so it isn't trapped inside the options menu portal */}
+            <ImprovedExportPopover
+                retrospective={retrospective}
+                cards={exportCards}
+                groups={exportGroups}
+                participants={participants || []}
+                facilitatorNotes={myFacilitatorNotes}
+                actionItems={exportActionItems}
+                sentimentAnalysis={sentimentAnalysis}
+                isOpen={showExportPopover}
+                onClose={() => setShowExportPopover(false)}
+            />
+        </>
     );
 };
 

@@ -655,3 +655,160 @@ test('board menu triggers and card actions are visibly indicated via keyboard fo
         expect(info.hasIndicator, `target[${i}] focused <${info.focused ? info.tag : ''}> has a visible focus indicator`).toBe(true);
     }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 036-options-facilitator-menus, User Story 5: the new mobile entry points
+// (FR-013a) — genuinely new coverage below, not updates to existing tests.
+// Before this feature neither menu was reachable below the `md` breakpoint
+// at all, so none of this had anything to cover.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MOBILE_VIEWPORT = { width: 390, height: 844 };
+
+// --- Keyboard operability of both mobile entry points (FR-009, SC-003) -----
+
+test('both menus\' new mobile entry points are keyboard-operable (Enter to open, Escape to dismiss)', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Mobile Menu Keyboard Board');
+    await waitForBoardReady(page);
+
+    const facilitatorTrigger = page.getByRole('button', { name: 'Controles de Facilitador' });
+    await facilitatorTrigger.focus();
+    await expect(facilitatorTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toHaveCount(0);
+
+    const optionsTrigger = page.getByRole('button', { name: 'Opciones', exact: true });
+    await optionsTrigger.focus();
+    await expect(optionsTrigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Opciones' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Opciones' })).toHaveCount(0);
+
+    await context.close();
+});
+
+// --- Touch operability of both mobile entry points (FR-009, SC-003) --------
+
+test('both menus\' new mobile entry points are reachable via touch, with no prior hover event', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT, hasTouch: true });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Mobile Menu Touch Board');
+    await waitForBoardReady(page);
+
+    await page.getByRole('button', { name: 'Controles de Facilitador' }).tap();
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toBeVisible();
+    // Always-visible close button, not swipe-only (contracts/accessibility-interaction-contract.md).
+    await page.getByRole('dialog', { name: 'Controles de Facilitador' }).getByRole('button', { name: 'Cerrar' }).tap();
+    await expect(page.getByRole('dialog', { name: 'Controles de Facilitador' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Opciones', exact: true }).tap();
+    const sheet = page.getByRole('dialog', { name: 'Opciones' });
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole('button', { name: 'Cerrar' }).tap();
+    await expect(sheet).toHaveCount(0);
+
+    await context.close();
+});
+
+// --- Mobile-viewport WCAG 2.1 AA coverage (FR-011, SC-002, SC-008) ---------
+// data-model.md's Board State entity lists every menu-open variant; this
+// covers the mobile-specific ones a desktop-width scan can't reach —
+// options-open-mobile, two representative facilitator tabs (Controls,
+// Notes) via facilitator-open-mobile-{tab}, and facilitator-absent-non-owner
+// re-verified at this viewport specifically.
+
+for (const theme of THEMES) {
+    test(`Options menu mobile entry point has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Mobile Options ${theme}`);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+
+        await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+        await expect(page.getByRole('dialog', { name: 'Opciones' })).toBeVisible();
+        await expectNoViolations(page, `options menu mobile sheet (${theme})`);
+        await context.close();
+    });
+
+    test(`Facilitator menu mobile entry point (Controls + Notes tabs) has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Mobile Facilitator ${theme}`);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+
+        await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
+        const sheet = page.getByRole('dialog', { name: 'Controles de Facilitador' });
+        await expect(sheet).toBeVisible();
+        await expect(sheet.getByRole('tab', { name: /Controles/i, selected: true })).toBeVisible();
+        await expectNoViolations(page, `facilitator menu mobile sheet, Controls tab (${theme})`);
+
+        await sheet.getByRole('tab', { name: /Notas/i }).click();
+        await expect(sheet.getByRole('tabpanel')).toBeVisible();
+        await expectNoViolations(page, `facilitator menu mobile sheet, Notes tab (${theme})`);
+        await context.close();
+    });
+
+    test(`Facilitator menu mobile entry point is absent for a non-owner, with no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Mobile Non-Owner ${theme}`);
+        const boardId = new URL(page.url()).pathname.split('/').pop();
+        await context.close();
+
+        const guestContext = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const guestPage = await guestContext.newPage();
+        await forceTheme(guestPage, theme);
+        await guestPage.request.post('/api/auth/test-login', {
+            data: { email: `e2e-mobile-nonowner-a11y-${theme}@example.com`, displayName: 'A11y Mobile Non-Owner' },
+        });
+        await guestPage.goto(`/retro/${boardId}`);
+        await waitForBoardReady(guestPage);
+        await applyThemeClass(guestPage, theme);
+        await expect(guestPage.getByRole('button', { name: 'Controles de Facilitador' })).toHaveCount(0);
+        await expectNoViolations(guestPage, `board as non-owner, mobile viewport (${theme})`);
+        await guestContext.close();
+    });
+}
+
+// --- Reduced motion for both new mobile entry points (FR-012) --------------
+
+test('both menus\' new mobile entry points, and switching facilitator tabs within one, complete with prefers-reduced-motion enabled', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+    const page = await context.newPage();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Mobile Reduced Motion Board');
+    await waitForBoardReady(page);
+
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Opciones' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Opciones' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Controles de Facilitador' });
+    await expect(sheet).toBeVisible();
+    for (const tabName of [/Estado del Equipo/i, /IA/i, /Notas/i, /Controles/i]) {
+        await sheet.getByRole('tab', { name: tabName }).click();
+        await expect(sheet.getByRole('tabpanel')).toBeVisible();
+    }
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+
+    await context.close();
+});

@@ -53,3 +53,37 @@ test('facilitator team-mood panel opens and renders a coherent state on a seeded
         .or(page.getByText('Datos insuficientes', { exact: true }));
     await expect(coherentState.first()).toBeVisible({ timeout: 30_000 });
 });
+
+// ─── 036-options-facilitator-menus, User Story 3: reachable via the new
+// mobile entry point (FR-013a) ───────────────────────────────────────────
+// Sentiment and Team Mood are tab *content*, unchanged by this feature
+// (T028/T029 found both already opaque/Direction-B-conformant — no restyle
+// needed); what's new is reaching them through the mobile sheet at all.
+test('the Sentiment and Team Mood tabs are reachable through the facilitator menu\'s mobile entry point', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'E2E Mobile Sentiment Team Mood');
+
+    await seedCard(page, 'El equipo colaboró excelente esta iteración');
+    await seedCard(page, 'Estoy muy contento con los resultados del sprint');
+    await seedCard(page, 'La comunicación fue estupenda y muy fluida');
+
+    await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Controles de Facilitador' });
+    await expect(sheet).toBeVisible();
+
+    // Sentiment tab: the enable/disable control renders (no model download wait).
+    await sheet.getByRole('tab', { name: /IA/i }).click();
+    await expect(sheet.getByRole('tabpanel')).toBeVisible();
+
+    // Team Mood tab: reaches the same coherent state as the desktop flow.
+    await sheet.getByRole('tab', { name: /Equipo/i }).click();
+    const coherentState = sheet
+        .getByText(/\d(\.\d)?\/10/)
+        .or(sheet.getByText('Inicializando Análisis', { exact: true }))
+        .or(sheet.getByText('Datos insuficientes', { exact: true }));
+    await expect(coherentState.first()).toBeVisible({ timeout: 30_000 });
+
+    await context.close();
+});
