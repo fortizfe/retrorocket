@@ -12,6 +12,7 @@ import { FirestoreFacilitatorNoteAdapter } from '../adapters/firebase/FirestoreF
 import { FirestoreSentimentResultAdapter } from '../adapters/firebase/FirestoreSentimentResultAdapter';
 import { FirestoreTypingStatusAdapter } from '../adapters/firebase/FirestoreTypingStatusAdapter';
 import { FirestoreRealtimeGatewayAdapter } from '../adapters/firebase/FirestoreRealtimeGatewayAdapter';
+import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
 import { SystemClock } from '../adapters/system';
 
 /** Superset of RetrospectiveRouterDeps consumed by both the REST router and the
@@ -51,6 +52,7 @@ export function buildRetrospectiveDeps(
         sentimentResultPort: new FirestoreSentimentResultAdapter(db),
         typingStatusPort: new FirestoreTypingStatusAdapter(db),
         realtimeGateway: new FirestoreRealtimeGatewayAdapter(db),
+        profilePort: new FirestoreProfileAdapter(db),
         sessionService,
         clock: new SystemClock(),
         testMode: config.authTestMode,

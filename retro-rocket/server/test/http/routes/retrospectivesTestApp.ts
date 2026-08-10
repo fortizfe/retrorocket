@@ -5,6 +5,7 @@ import { errorHandler, notFoundHandler } from '../../../src/http/middleware/erro
 import { retrospectiveRouter, type RetrospectiveRouterDeps } from '../../../src/http/routes/retrospectives';
 import type { SessionServicePort } from '../../../src/application/ports';
 import { createRetrospectiveFakeStore, type FakeRetrospectiveRecord } from '../../application/use-cases/retrospective/retrospectiveFakes';
+import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
 import type { ColumnDTO, CountdownTimerDTO, ParticipantDTO } from '../../../src/application/ports/retrospective';
 import type { CardDTO, CardGroupDTO } from '../../../src/application/ports/cards';
 import type { ActionItemDTO } from '../../../src/application/ports/actionItems';
@@ -51,6 +52,7 @@ export function buildRetrospectiveTestApp(seed: RetrospectiveTestAppSeed = {}): 
 
     const deps: RetrospectiveRouterDeps = {
         ...store,
+        profilePort: inMemoryProfilePort([]),
         sessionService: fakeSessionServiceWithUser(),
         clock: fixedClock(),
         testMode: true,

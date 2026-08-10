@@ -6,6 +6,7 @@ import { boardsRouter, type BoardsRouterDeps } from '../../../src/http/routes/bo
 import type { SessionServicePort } from '../../../src/application/ports';
 import { fixedClock } from '../../application/use-cases/mcp/mcpFakes';
 import { inMemoryBoardsPort, type FakeBoardRecord, type FakeMembership } from '../../application/use-cases/boards/boardsFakes';
+import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
 
 /**
  * Unlike mcpFakes.ts's fakeSessionServiceFor (which omits `user` — MCP tools only need
@@ -38,6 +39,7 @@ export interface BoardsTestAppOptions {
 export function buildBoardsTestApp(options: BoardsTestAppOptions = {}): { app: Express; deps: BoardsRouterDeps } {
     const deps: BoardsRouterDeps = {
         boardsPort: inMemoryBoardsPort(options.boards ?? [], options.memberships ?? []),
+        profilePort: inMemoryProfilePort([]),
         sessionService: fakeSessionServiceWithUser(),
         clock: fixedClock(),
         ...options.overrides,

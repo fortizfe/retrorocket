@@ -7,9 +7,11 @@ import type { FacilitatorNotePort } from '../../application/ports/facilitatorNot
 import type { ParticipantPort, RetrospectiveBoardPort } from '../../application/ports/retrospective';
 import type { SentimentResultPort } from '../../application/ports/sentiment';
 import type { TypingStatusPort } from '../../application/ports/typing';
+import type { ProfilePort } from '../../application/ports/profile';
 import type { PublicUser } from '../../domain/auth/types';
 import { AppError, ForbiddenError, NotFoundError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
+import { ensureUserProfile } from '../../application/use-cases/profile/EnsureUserProfile';
 import { getBoardState } from '../../application/use-cases/retrospective/GetBoardState';
 import { joinRetrospective } from '../../application/use-cases/retrospective/JoinRetrospective';
 import { createCard, editCard, deleteCard } from '../../application/use-cases/retrospective/CardLifecycle';
@@ -32,6 +34,7 @@ export interface RetrospectiveRouterDeps {
     facilitatorNotePort: FacilitatorNotePort;
     sentimentResultPort: SentimentResultPort;
     typingStatusPort: TypingStatusPort;
+    profilePort: ProfilePort;
     sessionService: SessionServicePort;
     clock: ClockPort;
     /** Skips retrospectiveLimiter — see boards.ts's testMode doc comment; MUST be false in production. */
@@ -49,8 +52,26 @@ export async function requireSession(req: Request, deps: RetrospectiveRouterDeps
     return session.data as unknown as AuthedSession;
 }
 
-export function displayNameOf(user: PublicUser | undefined): string {
-    return user?.displayName ?? user?.email ?? 'Anonymous';
+/**
+ * Resolves the acting user's currently configured Profile display name (spec
+ * 036-fix-display-name-fallback) — the same source `GET /api/profile` already uses
+ * (routes/profile.ts) — instead of the raw, session-cached OAuth name previously read
+ * directly off `session.user.displayName`. Safe to call repeatedly: `ensureUserProfile`
+ * is a get-or-create that returns the existing profile's displayName untouched when one
+ * already exists.
+ */
+export async function resolveDisplayName(deps: Pick<RetrospectiveRouterDeps, 'profilePort'>, session: AuthedSession): Promise<string> {
+    const profile = await ensureUserProfile(
+        { profilePort: deps.profilePort },
+        {
+            uid: session.sub,
+            email: session.user?.email ?? '',
+            displayName: session.user?.displayName ?? null,
+            photoURL: session.user?.photoURL ?? null,
+            providers: session.user?.providers ?? [],
+        },
+    );
+    return profile.displayName;
 }
 
 /** Throws NotFoundError/ForbiddenError; returns the board so callers can reuse it. */
@@ -174,7 +195,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
         const session = await requireSession(req, deps);
         const participant = await joinRetrospective(
             { ...deps },
-            { retrospectiveId: String(req.params.id), uid: session.sub, userName: displayNameOf(session.user), photoURL: session.user?.photoURL ?? null },
+            { retrospectiveId: String(req.params.id), uid: session.sub, userName: await resolveDisplayName(deps, session), photoURL: session.user?.photoURL ?? null },
         );
         res.status(200).json(serializeParticipant(participant));
     });
@@ -189,7 +210,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
                 content: typeof body.content === 'string' ? body.content : '',
                 column: typeof body.column === 'string' ? body.column : '',
                 createdBy: session.sub,
-                createdByName: displayNameOf(session.user),
+                createdByName: await resolveDisplayName(deps, session),
                 color: typeof body.color === 'string' ? body.color : undefined,
             },
         );
@@ -226,7 +247,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
 
     router.post('/api/cards/:id/like', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
-        const updated = await toggleLike({ cardPort: deps.cardPort }, { cardId: String(req.params.id), uid: session.sub, username: displayNameOf(session.user) });
+        const updated = await toggleLike({ cardPort: deps.cardPort }, { cardId: String(req.params.id), uid: session.sub, username: await resolveDisplayName(deps, session) });
         res.status(200).json(serializeCard(updated));
     });
 
@@ -236,7 +257,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
         if (typeof body.emoji !== 'string' || !body.emoji) {
             throw new AppError('invalid_request', 'emoji is required', 400);
         }
-        const updated = await setReaction({ cardPort: deps.cardPort }, { cardId: String(req.params.id), uid: session.sub, username: displayNameOf(session.user), emoji: body.emoji });
+        const updated = await setReaction({ cardPort: deps.cardPort }, { cardId: String(req.params.id), uid: session.sub, username: await resolveDisplayName(deps, session), emoji: body.emoji });
         res.status(200).json(serializeCard(updated));
     });
 
@@ -254,7 +275,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
             {
                 retrospectiveId: String(req.params.id),
                 userId: session.sub,
-                username: displayNameOf(session.user),
+                username: await resolveDisplayName(deps, session),
                 column: typeof body.column === 'string' ? body.column : '',
                 isActive: body.isActive === true,
             },

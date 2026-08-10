@@ -4,6 +4,7 @@ import type { LoggerPort } from '../application/ports/observability';
 import type { SessionServicePort } from '../application/ports';
 import type { BoardsRouterDeps } from './routes/boards';
 import { FirestoreBoardsAdapter } from '../adapters/firebase/FirestoreBoardsAdapter';
+import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
 import { SystemClock } from '../adapters/system';
 
 /**
@@ -27,6 +28,7 @@ export function buildBoardsDeps(
 
     return {
         boardsPort: new FirestoreBoardsAdapter(db),
+        profilePort: new FirestoreProfileAdapter(db),
         sessionService,
         clock: new SystemClock(),
         testMode: config.authTestMode,
