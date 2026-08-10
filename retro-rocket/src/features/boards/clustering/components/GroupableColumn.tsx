@@ -16,7 +16,7 @@ import { useTypingContext } from '@/features/boards/retrospective/contexts/useTy
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
-import { getCardStyling, getSuggestedColorForColumn } from '@/lib/utils/cardColors';
+import { getCardStyling, getDefaultColor } from '@/lib/utils/cardColors';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
 import { GroupingCriteria, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 import { Participant } from '@/features/boards/types/participant';
@@ -74,7 +74,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [newCardContent, setNewCardContent] = useState('');
-    const [selectedColor, setSelectedColor] = useState<CardColor>(() => getSuggestedColorForColumn(column.title, column.id));
+    const [selectedColor, setSelectedColor] = useState<CardColor>(() => getDefaultColor());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
@@ -135,7 +135,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
             await onCardCreate(cardInput);
             setNewCardContent('');
-            setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
+            setSelectedColor(getDefaultColor());
             setIsCreating(false);
         } catch (error) {
             console.error('❌ DEBUG Error creating card in GroupableColumn:', error);
@@ -149,7 +149,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
         stopTyping(column.id);
         setIsCreating(false);
         setNewCardContent('');
-        setSelectedColor(getSuggestedColorForColumn(column.title, column.id));
+        setSelectedColor(getDefaultColor());
     };
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

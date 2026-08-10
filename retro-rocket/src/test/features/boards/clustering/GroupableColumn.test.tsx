@@ -62,11 +62,11 @@ vi.mock('@/lib/components/ui/TextareaWithEmoji', () => ({
 }));
 
 vi.mock('@/lib/components/ui/ColorPicker', () => ({
-    default: ({ selectedColor, onColorSelect, ...props }: any) => (
+    default: ({ selectedColor, onColorChange, ...props }: any) => (
         <div data-testid="color-picker" {...props}>
-            <button onClick={() => onColorSelect?.('blue')}>Blue</button>
-            <button onClick={() => onColorSelect?.('red')}>Red</button>
-            <span>Selected: {selectedColor ?? 'blue'}</span>
+            <button onClick={() => onColorChange?.('blue')}>Blue</button>
+            <button onClick={() => onColorChange?.('red')}>Red</button>
+            <span>Selected: {selectedColor}</span>
         </div>
     )
 }));
@@ -162,7 +162,7 @@ vi.mock('@/features/boards/clustering/hooks/useColumnGrouping', () => ({
 
 vi.mock('@/lib/utils/cardColors', () => ({
     getCardStyling: vi.fn(() => ({ bg: 'bg-blue-100', border: 'border-blue-200' })),
-    getSuggestedColorForColumn: vi.fn(() => 'blue'),
+    getDefaultColor: vi.fn(() => 'pastelWhite'),
 }));
 
 describe('GroupableColumn', () => {
@@ -332,7 +332,17 @@ describe('GroupableColumn', () => {
             expect(textarea).toHaveValue('New card content');
         });
 
-        it('should handle color selection', async () => {
+        it('should pre-select the neutral default color, not a column-derived one', async () => {
+            const user = userEvent.setup();
+            render(<GroupableColumn {...defaultProps} />);
+
+            const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
+            await user.click(addButton);
+
+            expect(screen.getByText(/Selected:.*pastelWhite/)).toBeInTheDocument();
+        });
+
+        it('should update the selected color when the user picks one manually', async () => {
             const user = userEvent.setup();
             render(<GroupableColumn {...defaultProps} />);
 
@@ -342,8 +352,7 @@ describe('GroupableColumn', () => {
             const redButton = screen.getByText('Red');
             await user.click(redButton);
 
-            // Check that blue is initially selected
-            expect(screen.getByText(/Selected:.*blue/)).toBeInTheDocument();
+            expect(screen.getByText(/Selected:.*red/)).toBeInTheDocument();
         });
 
         it('should create card when form is submitted', async () => {
@@ -364,7 +373,35 @@ describe('GroupableColumn', () => {
                 expect(mockOnCardCreate).toHaveBeenCalledWith({
                     content: 'New card content',
                     column: 'helped',
-                    color: 'blue',
+                    color: 'pastelWhite',
+                    createdBy: 'user-1',
+                    retrospectiveId: 'retro-1',
+                });
+            });
+        });
+
+        it('should create card with the manually selected color when the user overrides the default', async () => {
+            const user = userEvent.setup();
+            const mockOnCardCreate = vi.fn().mockResolvedValue(undefined);
+            render(<GroupableColumn {...defaultProps} onCardCreate={mockOnCardCreate} />);
+
+            const addButton = screen.getByRole('button', { name: /retrospective\.columns\.add/i });
+            await user.click(addButton);
+
+            const redButton = screen.getByText('Red');
+            await user.click(redButton);
+
+            const textarea = screen.getByTestId('textarea-with-emoji');
+            await user.type(textarea, 'New card content');
+
+            const submitButton = screen.getByRole('button', { name: /retrospective\.columns\.createCard/i });
+            await user.click(submitButton);
+
+            await waitFor(() => {
+                expect(mockOnCardCreate).toHaveBeenCalledWith({
+                    content: 'New card content',
+                    column: 'helped',
+                    color: 'red',
                     createdBy: 'user-1',
                     retrospectiveId: 'retro-1',
                 });
