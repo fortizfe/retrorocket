@@ -60,10 +60,15 @@ test('facilitator team-mood panel opens and renders a coherent state on a seeded
 // (T028/T029 found both already opaque/Direction-B-conformant — no restyle
 // needed); what's new is reaching them through the mobile sheet at all.
 test('the Sentiment and Team Mood tabs are reachable through the facilitator menu\'s mobile entry point', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // Sign in and create the board at the default viewport first — signInWithGoogle()
+    // waits for a header element the app hides below the `md` breakpoint (same
+    // constraint as board-responsive.spec.ts) — then resize down to the real
+    // narrow-phone width before touching the board.
+    const context = await browser.newContext();
     const page = await context.newPage();
     await signInWithGoogle(page, context);
     await createBoard(page, 'E2E Mobile Sentiment Team Mood');
+    await page.setViewportSize({ width: 390, height: 844 });
 
     await seedCard(page, 'El equipo colaboró excelente esta iteración');
     await seedCard(page, 'Estoy muy contento con los resultados del sprint');

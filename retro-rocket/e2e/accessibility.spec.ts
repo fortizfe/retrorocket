@@ -668,10 +668,15 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 // --- Keyboard operability of both mobile entry points (FR-009, SC-003) -----
 
 test('both menus\' new mobile entry points are keyboard-operable (Enter to open, Escape to dismiss)', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+    // Sign in and create the board at the context's default viewport first: the
+    // shared signInWithGoogle() helper waits for a header element the app hides
+    // below the `md` breakpoint (same constraint as board-responsive.spec.ts) —
+    // resize down to the real narrow-phone width only after that flow completes.
+    const context = await browser.newContext();
     const page = await context.newPage();
     await signInWithGoogle(page, context);
     await createBoard(page, 'A11y Mobile Menu Keyboard Board');
+    await page.setViewportSize(MOBILE_VIEWPORT);
     await waitForBoardReady(page);
 
     const facilitatorTrigger = page.getByRole('button', { name: 'Controles de Facilitador' });
@@ -696,10 +701,13 @@ test('both menus\' new mobile entry points are keyboard-operable (Enter to open,
 // --- Touch operability of both mobile entry points (FR-009, SC-003) --------
 
 test('both menus\' new mobile entry points are reachable via touch, with no prior hover event', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT, hasTouch: true });
+    // Same signInWithGoogle() viewport constraint as above — `hasTouch` must be
+    // set at context creation, but the narrow viewport itself is applied after.
+    const context = await browser.newContext({ hasTouch: true });
     const page = await context.newPage();
     await signInWithGoogle(page, context);
     await createBoard(page, 'A11y Mobile Menu Touch Board');
+    await page.setViewportSize(MOBILE_VIEWPORT);
     await waitForBoardReady(page);
 
     await page.getByRole('button', { name: 'Controles de Facilitador' }).tap();
@@ -726,11 +734,12 @@ test('both menus\' new mobile entry points are reachable via touch, with no prio
 
 for (const theme of THEMES) {
     test(`Options menu mobile entry point has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
-        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const context = await browser.newContext();
         const page = await context.newPage();
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
         await createBoard(page, `A11y Mobile Options ${theme}`);
+        await page.setViewportSize(MOBILE_VIEWPORT);
         await waitForBoardReady(page);
         await applyThemeClass(page, theme);
 
@@ -741,11 +750,12 @@ for (const theme of THEMES) {
     });
 
     test(`Facilitator menu mobile entry point (Controls + Notes tabs) has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
-        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const context = await browser.newContext();
         const page = await context.newPage();
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
         await createBoard(page, `A11y Mobile Facilitator ${theme}`);
+        await page.setViewportSize(MOBILE_VIEWPORT);
         await waitForBoardReady(page);
         await applyThemeClass(page, theme);
 
@@ -762,11 +772,12 @@ for (const theme of THEMES) {
     });
 
     test(`Facilitator menu mobile entry point is absent for a non-owner, with no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
-        const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+        const context = await browser.newContext();
         const page = await context.newPage();
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
         await createBoard(page, `A11y Mobile Non-Owner ${theme}`);
+        await page.setViewportSize(MOBILE_VIEWPORT);
         const boardId = new URL(page.url()).pathname.split('/').pop();
         await context.close();
 
@@ -788,11 +799,12 @@ for (const theme of THEMES) {
 // --- Reduced motion for both new mobile entry points (FR-012) --------------
 
 test('both menus\' new mobile entry points, and switching facilitator tabs within one, complete with prefers-reduced-motion enabled', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: MOBILE_VIEWPORT });
+    const context = await browser.newContext();
     const page = await context.newPage();
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInWithGoogle(page, context);
     await createBoard(page, 'A11y Mobile Reduced Motion Board');
+    await page.setViewportSize(MOBILE_VIEWPORT);
     await waitForBoardReady(page);
 
     await page.getByRole('button', { name: 'Opciones', exact: true }).click();

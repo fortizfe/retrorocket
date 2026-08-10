@@ -34,10 +34,15 @@ test('facilitator starts, pauses, and stops the countdown timer', async ({ page,
 // viewport, only the mobile trigger is exposed to the accessibility tree, so
 // `getByRole`/`getByLabelText` resolve unambiguously without disambiguation.
 test('the facilitator menu is reachable from a narrow mobile viewport, defaults to Controls, and stays absent for a non-owner', async ({ browser }) => {
-    const ownerContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // Sign in and create the board at the default viewport first — signInWithGoogle()
+    // waits for a header element the app hides below the `md` breakpoint (same
+    // constraint as board-responsive.spec.ts) — then resize down to the real
+    // narrow-phone width before touching the board.
+    const ownerContext = await browser.newContext();
     const ownerPage = await ownerContext.newPage();
     await signInWithGoogle(ownerPage, ownerContext);
     await createBoard(ownerPage, 'E2E Mobile Facilitator Board');
+    await ownerPage.setViewportSize({ width: 390, height: 844 });
     const boardId = new URL(ownerPage.url()).pathname.split('/').pop();
 
     // Owner: mobile entry point opens a bottom sheet defaulting to Controls,
@@ -62,9 +67,10 @@ test('the facilitator menu is reachable from a narrow mobile viewport, defaults 
     // Non-owner (a genuinely distinct identity, not the same TEST_USER_EMAIL
     // account signInWithGoogle always uses), same narrow viewport: the
     // trigger is absent entirely, not just hidden.
-    const guestContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const guestContext = await browser.newContext();
     const guestPage = await guestContext.newPage();
     await signInAs(guestPage, 'e2e-mobile-facilitator-guest@example.com', 'E2E Mobile Facilitator Guest');
+    await guestPage.setViewportSize({ width: 390, height: 844 });
     await guestPage.goto(`/retro/${boardId}`);
     await expect(guestPage.getByRole('button', { name: 'Controles de Facilitador' })).toHaveCount(0);
     await guestContext.close();
@@ -73,7 +79,11 @@ test('the facilitator menu is reachable from a narrow mobile viewport, defaults 
 // ─── 036-options-facilitator-menus, User Story 4: Notes reachable via the
 // mobile entry point (FR-013a) ──────────────────────────────────────────
 test('a facilitator can add, edit, and delete a private note through the mobile entry point', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // Sign in and create the board at the default viewport first — signInWithGoogle()
+    // waits for a header element the app hides below the `md` breakpoint (same
+    // constraint as board-responsive.spec.ts) — then resize down to the real
+    // narrow-phone width before touching the board.
+    const context = await browser.newContext();
     const page = await context.newPage();
     // `window.confirm` (NotesTab.tsx's delete confirmation, FR-007) is a
     // real native browser dialog — accept every one for this test.
@@ -81,6 +91,7 @@ test('a facilitator can add, edit, and delete a private note through the mobile 
 
     await signInWithGoogle(page, context);
     await createBoard(page, 'E2E Mobile Notes Board');
+    await page.setViewportSize({ width: 390, height: 844 });
 
     await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
     const sheet = page.getByRole('dialog', { name: 'Controles de Facilitador' });

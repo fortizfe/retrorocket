@@ -73,9 +73,14 @@ test('the exported TXT file shows the card author\'s display name, never the raw
 // exposed to the accessibility tree (`hidden md:inline-flex` / `md:hidden`),
 // so `getByRole` resolves unambiguously without extra disambiguation.
 test('the options menu is reachable and fully usable from a narrow mobile viewport', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // Sign in at the default viewport first — signInWithGoogle() waits for a
+    // header element the app hides below the `md` breakpoint (same constraint
+    // as board-responsive.spec.ts) — then resize down to the real narrow-phone
+    // width before touching the board.
+    const context = await browser.newContext();
     const page = await context.newPage();
     await signInWithGoogle(page, context);
+    await page.setViewportSize({ width: 390, height: 844 });
 
     const createRes = await page.request.post('/api/boards', {
         data: { templateId: 'default', title: 'E2E Mobile Options Board', locale: 'es' },
