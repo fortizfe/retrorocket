@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { signInWithGoogle, signInAs, createBoardViaApi } from './fixtures/auth-helpers';
+import { signInWithGoogle, signInAs, createBoard, createBoardViaApi } from './fixtures/auth-helpers';
 import { getEmulatorFirestore } from './fixtures/firestoreAdmin';
 import { addCardToFirstColumn, cardByContent } from './fixtures/board';
 
@@ -487,6 +487,94 @@ test('renaming a participant propagates live to a second, already-open session �
 
     await contextA.close();
     await contextB.close();
+});
+
+// 036-fix-display-name-fallback, User Story 1: reproduces the originally reported bug
+// end-to-end — a user whose Profile display name differs from their connected
+// account's raw name must see the configured name on a card written on a board they
+// just created, immediately, with no reload and no rename event (unlike the test
+// above, which renames *after* content already exists on an *existing* board).
+test('a card on a brand-new board shows the author\'s configured Profile display name, not their raw connected-account name', async ({ page }) => {
+    const email = 'e2e-display-name-fallback1@example.com';
+    await signInAs(page, email, 'Raw OAuth Full Name');
+
+    const patchRes = await page.request.patch('/api/profile', { data: { displayName: 'Configured Display Name' } });
+    expect(patchRes.ok()).toBeTruthy();
+
+    await createBoard(page, 'E2E Brand-New Board For Display Name Fix');
+    await addCardToFirstColumn(page, 'Sprint went great this week');
+
+    const card = cardByContent(page, 'Sprint went great this week');
+    await expect(card).toBeVisible({ timeout: 10_000 });
+    await expect(card.getByText('Configured Display Name')).toBeVisible();
+    await expect(card.getByText('Raw OAuth Full Name')).not.toBeVisible();
+
+    // User Story 2: the participant list (topbar avatar strip) shows the configured
+    // name from the moment the board is created, not the raw connected-account name.
+    await expect(page.getByTitle('Configured Display Name')).toBeVisible();
+    await expect(page.getByTitle('Raw OAuth Full Name')).toHaveCount(0);
+
+    // User Story 2: the "group by user" header also shows the configured name.
+    await page.getByRole('button', { name: 'Opciones de agrupación' }).first().click();
+    await page.getByText('Agrupar por usuario', { exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Configured Display Name' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Raw OAuth Full Name' })).not.toBeVisible();
+});
+
+// 036-fix-display-name-fallback, User Story 3: likes, reactions, and the live typing
+// indicator on a brand-new board all show the author's configured Profile display
+// name, not their raw connected-account name — the same root defect as US1/US2,
+// closed on the remaining surfaces.
+test('likes, reactions, and the live typing indicator on a brand-new board show the actor\'s configured Profile display name, not their raw connected-account name', async ({ browser, request }) => {
+    const email = 'e2e-display-name-fallback2@example.com';
+    const loginRes = await request.post('/api/auth/test-login', { data: { email, displayName: 'Raw OAuth Name For Interactions' } });
+    expect(loginRes.ok()).toBeTruthy();
+    // GET /api/profile is what normally creates the profile doc on first load via the UI
+    // (ensureUserProfile); this test drives the API directly, so it must do the same
+    // before PATCH, which requires the doc to already exist.
+    const getProfileRes = await request.get('/api/profile');
+    expect(getProfileRes.ok()).toBeTruthy();
+    const patchRes = await request.patch('/api/profile', { data: { displayName: 'Configured Name For Interactions' } });
+    expect(patchRes.ok()).toBeTruthy();
+
+    const createBoardRes = await request.post('/api/boards', { data: { templateId: 'default', title: 'E2E Brand-New Interactions Board', locale: 'es' } });
+    expect(createBoardRes.ok()).toBeTruthy();
+    const { boardId } = (await createBoardRes.json()) as { boardId: string };
+    const joinRes = await request.post(`/api/retrospectives/${boardId}/join`);
+    expect(joinRes.ok()).toBeTruthy();
+
+    const createCardRes = await request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Card for likes/reactions/typing check', column: 'helped' },
+    });
+    expect(createCardRes.ok()).toBeTruthy();
+    const { id: cardId } = (await createCardRes.json()) as { id: string };
+
+    const likeRes = await request.post(`/api/cards/${cardId}/like`);
+    expect(likeRes.ok()).toBeTruthy();
+    const reactRes = await request.put(`/api/cards/${cardId}/reaction`, { data: { emoji: '👍' } });
+    expect(reactRes.ok()).toBeTruthy();
+
+    // Observer opens the board and sees the configured name on the like tooltip and
+    // the reaction tooltip.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signInAs(page, 'e2e-display-name-fallback2-observer@example.com', 'Observer B');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Brand-New Interactions Board')).toBeVisible({ timeout: 30_000 });
+
+    const card = cardByContent(page, 'Card for likes/reactions/typing check');
+    await expect(card).toBeVisible({ timeout: 10_000 });
+    await expect(card.getByTitle(/Configured Name For Interactions/)).toHaveCount(2); // like tooltip + reaction tooltip
+    await expect(card.getByTitle(/Raw OAuth Name For Interactions/)).toHaveCount(0);
+
+    // Typing status has a short (~3s) TTL (feature 026), so the signal is sent last,
+    // immediately before asserting the observer's live indicator.
+    const typingRes = await request.post(`/api/retrospectives/${boardId}/typing`, { data: { column: 'helped', isActive: true } });
+    expect(typingRes.ok()).toBeTruthy();
+    const typingRegion = page.getByRole('status').filter({ hasText: /está escribiendo/ });
+    await expect(typingRegion).toHaveText('Configured Name For Interactions está escribiendo', { timeout: 10_000 });
+
+    await context.close();
 });
 
 // 022-display-name-consistency, User Story 2: content whose author's account no longer
