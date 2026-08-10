@@ -1,6 +1,6 @@
 {
   "name": "retro-rocket",
-  "version": "1.16.2",
+  "version": "1.16.3",
   "type": "module",
   "description": "A modern, collaborative tool for Scrum teams to manage their retrospectives.",
   "main": "src/main.tsx",
