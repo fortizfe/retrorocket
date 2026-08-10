@@ -90,7 +90,7 @@ test('the options menu is reachable and fully usable from a narrow mobile viewpo
     await page.goto(`/retro/${boardId}`);
 
     // Open — a genuine bottom sheet, not the desktop dropdown.
-    await page.getByRole('button', { name: 'Opciones' }).click();
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
     const sheet = page.getByRole('dialog', { name: 'Opciones' });
     await expect(sheet).toBeVisible();
 
@@ -106,7 +106,7 @@ test('the options menu is reachable and fully usable from a narrow mobile viewpo
     await expect(sheet).not.toBeVisible();
 
     // Reopen and exit — navigates back to the dashboard.
-    await page.getByRole('button', { name: 'Opciones' }).click();
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
     await page.getByRole('dialog', { name: 'Opciones' }).getByText('Salir', { exact: true }).click();
     await page.waitForURL(/\/(mis-tableros|dashboard)/, { timeout: 10_000 });
 

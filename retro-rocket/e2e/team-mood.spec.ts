@@ -68,11 +68,24 @@ test('the Sentiment and Team Mood tabs are reachable through the facilitator men
     const page = await context.newPage();
     await signInWithGoogle(page, context);
     await createBoard(page, 'E2E Mobile Sentiment Team Mood');
-    await page.setViewportSize({ width: 390, height: 844 });
+    const boardId = new URL(page.url()).pathname.split('/').pop();
 
-    await seedCard(page, 'El equipo colaboró excelente esta iteración');
-    await seedCard(page, 'Estoy muy contento con los resultados del sprint');
-    await seedCard(page, 'La comunicación fue estupenda y muy fluida');
+    // Seed via API, not the UI: `seedCard()`'s "Agregar (primera) tarjeta" targets
+    // only exist in the desktop-width column layout — the mobile board itself
+    // isn't otherwise in scope for this feature (spec.md's Assumptions), so
+    // reaching the tabs is what this test verifies, not the add-card flow.
+    for (const content of [
+        'El equipo colaboró excelente esta iteración',
+        'Estoy muy contento con los resultados del sprint',
+        'La comunicación fue estupenda y muy fluida',
+    ]) {
+        const createRes = await page.request.post(`/api/retrospectives/${boardId}/cards`, {
+            data: { content, column: 'helped' },
+        });
+        expect(createRes.ok()).toBeTruthy();
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
 
     await page.getByRole('button', { name: 'Controles de Facilitador' }).click();
     const sheet = page.getByRole('dialog', { name: 'Controles de Facilitador' });
