@@ -1271,6 +1271,46 @@ test('converting a card to an action item propagates live to a second participan
     await contextB.close();
 });
 
+test('the card actions menu opens anchored to its trigger, not pinned to the top-left corner', async ({ page, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner20@example.com', 'E2E Retro Owner 20', 'E2E Card Menu Anchor Board');
+    const createRes = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card with actions menu', column: 'helped' } });
+    expect(createRes.ok()).toBeTruthy();
+
+    // The actions-menu trigger only renders for the board's facilitator (owner) —
+    // RetrospectiveBoard.tsx passes canConvertToAction={isFacilitator} — so this
+    // must sign in as the same identity that created the board via the API above.
+    await signInAs(page, 'e2e-retro-owner20@example.com', 'E2E Retro Owner 20');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Card Menu Anchor Board')).toBeVisible({ timeout: 30_000 });
+
+    const card = cardByContent(page, 'Card with actions menu');
+    const trigger = card.getByLabel('Convertir en elemento de acción');
+    await expect(trigger).toBeVisible({ timeout: 10_000 });
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox).not.toBeNull();
+
+    await trigger.click();
+    // Both the trigger's own aria-label and the panel's accessible name (resolved via
+    // Floating UI's aria-labelledby back to the trigger) happen to be this same
+    // Spanish string (es.json's convertToAction/convertToActionTitle keys).
+    const panel = page.getByRole('menu', { name: 'Convertir en elemento de acción' });
+    await expect(panel).toBeVisible();
+    const panelBox = await panel.boundingBox();
+    expect(panelBox).not.toBeNull();
+
+    // The reported defect: the panel rendered pinned at the viewport's top-left
+    // corner (x≈0, y≈0) regardless of the trigger's real on-screen position. Assert
+    // it is nowhere near the origin and instead close to the trigger it was opened
+    // from (research.md §1 — a real, non-trivial Y offset from 0, close to the
+    // trigger's own, proves Floating UI's positioning transform survived the
+    // entrance animation instead of being overwritten by it).
+    expect(panelBox!.y).toBeGreaterThan(50);
+    expect(Math.abs(panelBox!.y - triggerBox!.y)).toBeLessThan(200);
+
+    await page.keyboard.press('Escape');
+    await expect(panel).not.toBeVisible();
+});
+
 // ---------------------------------------------------------------------------
 // US6: action items direct CRUD (not via card conversion), backend-mediated and live.
 // ---------------------------------------------------------------------------
