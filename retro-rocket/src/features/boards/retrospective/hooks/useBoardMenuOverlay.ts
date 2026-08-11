@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
     useFloating,
     offset,
@@ -86,11 +86,18 @@ export function useBoardMenuOverlay(options: UseBoardMenuOverlayOptions = {}): U
     const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
     const open = controlledOpen ?? uncontrolledOpen;
 
-    const setOpen = (next: boolean) => {
-        if (disabled) return;
-        if (controlledOpen === undefined) setUncontrolledOpen(next);
-        onOpenChange?.(next);
-    };
+    // Stable identity across renders (feature 038) — callers that need `setOpen` in a
+    // `useEffect` dependency array (e.g. RetrospectiveTopbar.tsx's success→auto-close
+    // effect) would otherwise re-run that effect on every render, since an inline
+    // function has a new identity each time.
+    const setOpen = useCallback(
+        (next: boolean) => {
+            if (disabled) return;
+            if (controlledOpen === undefined) setUncontrolledOpen(next);
+            onOpenChange?.(next);
+        },
+        [disabled, controlledOpen, onOpenChange]
+    );
 
     const { refs, floatingStyles, context } = useFloating({
         open,
