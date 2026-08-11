@@ -4,40 +4,17 @@ import { vi, describe, it, expect } from 'vitest';
 import ImprovedExportPopover from '@/features/boards/export/components/ImprovedExportPopover';
 import { Retrospective } from '@/features/boards/types/retrospective';
 
-// A detectable marker (not a bare passthrough) so tests can assert AnimatePresence
-// stays mounted (via the portal) across the isOpen transition — required for the
-// popover to exit-animate instead of vanishing instantly (design audit finding,
-// spec 028: same AnimatePresence-boundary bug class as DAF-001; `{isOpen &&
-// createPortal(<AnimatePresence>...)}` previously removed AnimatePresence itself
-// along with everything inside it in one render pass).
-vi.mock('react-dom', () => ({
-    createPortal: (children: React.ReactNode) => children,
-}));
-
 vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-        button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+        button: ({ children, whileTap: _whileTap, ...props }: any) => <button {...props}>{children}</button>,
+        span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     },
-    AnimatePresence: ({ children }: any) => <div data-testid="animate-presence">{children}</div>,
+    AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({ t: (key: string) => key }),
-}));
-
-vi.mock('@/lib/hooks/useBodyScrollLock', () => ({
-    useBodyScrollLock: () => undefined,
-}));
-
-vi.mock('@/features/boards/export/hooks/useUnifiedExport', () => ({
-    useUnifiedExport: () => ({
-        isExporting: false,
-        progress: 0,
-        error: null,
-        success: false,
-        exportRetrospective: vi.fn(),
-    }),
 }));
 
 vi.mock('@/features/auth/hooks/useAuth', () => ({
@@ -69,6 +46,13 @@ vi.mock('@/features/boards/sentiment', () => ({
     useTeamMood: () => ({ report: null }),
 }));
 
+// Feature 038 (T013/T016): ImprovedExportPopover is now a pure content component —
+// mounting/dismissal-gating and Floating UI/BottomSheet chrome live entirely in its
+// caller (RetrospectiveTopbar.tsx), matching the established FacilitatorMenuTabs.tsx
+// pattern (no `isOpen` prop; the parent's own `{open && ...}` conditional render
+// controls whether this mounts at all). The export-job state (isExporting/progress/
+// error/success/exportRetrospective) is consumed as props, lifted by the caller
+// (T012) rather than owned here.
 describe('ImprovedExportPopover', () => {
     const retrospective = {
         id: 'retro-1',
@@ -81,51 +65,90 @@ describe('ImprovedExportPopover', () => {
         cards: [],
         groups: [],
         participants: [],
-        isOpen: true,
         onClose: vi.fn(),
-        children: <button>Trigger</button>,
+        presentation: 'desktop' as const,
+        isExporting: false,
+        progress: 0,
+        error: null,
+        success: false,
+        exportRetrospective: vi.fn(),
+        resetState: vi.fn(),
     };
 
-    it('renders the trigger', () => {
+    it('renders its content unconditionally once mounted — the caller decides whether to mount it at all', () => {
         render(<ImprovedExportPopover {...defaultProps} />);
-        expect(screen.getByText('Trigger')).toBeInTheDocument();
-    });
-
-    it('does not render popover content when closed', () => {
-        render(<ImprovedExportPopover {...defaultProps} isOpen={false} />);
-        expect(screen.queryByText('retrospective.export.title')).not.toBeInTheDocument();
-    });
-
-    it('renders popover content when open', () => {
-        render(<ImprovedExportPopover {...defaultProps} isOpen={true} />);
         expect(screen.getByText('retrospective.export.title')).toBeInTheDocument();
-    });
-
-    it('keeps AnimatePresence mounted even when closed, so the popover can exit-animate instead of being removed via `isOpen &&` gating the whole portal (design audit finding, spec 028)', () => {
-        const { rerender } = render(<ImprovedExportPopover {...defaultProps} isOpen={false} />);
-
-        expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
-        expect(screen.queryByText('retrospective.export.title')).not.toBeInTheDocument();
-
-        rerender(<ImprovedExportPopover {...defaultProps} isOpen={true} />);
-
-        // Open state also renders the error/success status AnimatePresence boundaries
-        // (design audit finding DAF's exit-animation fixes), so multiple markers are
-        // expected here — the assertion is that at least one persists.
-        expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
-        expect(screen.getByText('retrospective.export.title')).toBeInTheDocument();
-    });
-
-    it('exposes real dialog semantics (role, aria-modal, aria-labelledby) for assistive tech', () => {
-        render(<ImprovedExportPopover {...defaultProps} />);
-        const dialog = screen.getByRole('dialog');
-        expect(dialog).toHaveAttribute('aria-modal', 'true');
-        expect(dialog).toHaveAttribute('aria-labelledby', 'export-dialog-title');
+        expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
     });
 
     it('marks the selected export format with aria-pressed', () => {
         render(<ImprovedExportPopover {...defaultProps} />);
         expect(screen.getByRole('button', { name: /PDF/ })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByRole('button', { name: /TXT/ })).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('preserves the always-included-content notice for every participant', () => {
+        render(<ImprovedExportPopover {...defaultProps} />);
+        expect(screen.getByText('retrospective.export.alwaysIncluded.title')).toBeInTheDocument();
+    });
+
+    it('omits the facilitator-only zone entirely for a non-owner participant', () => {
+        const nonOwnerRetrospective = { ...retrospective, createdBy: 'someone-else' };
+        render(<ImprovedExportPopover {...defaultProps} retrospective={nonOwnerRetrospective} />);
+        expect(screen.queryByText('retrospective.export.facilitatorZone.title')).not.toBeInTheDocument();
+    });
+
+    it('shows the facilitator-only zone for the board owner', () => {
+        render(<ImprovedExportPopover {...defaultProps} />);
+        expect(screen.getByText('retrospective.export.facilitatorZone.title')).toBeInTheDocument();
+    });
+
+    describe('desktop presentation', () => {
+        it('renders its own shelled header, including a close button that calls onClose', async () => {
+            const onClose = vi.fn();
+            const { default: userEvent } = await import('@testing-library/user-event');
+            const user = userEvent.setup();
+            render(<ImprovedExportPopover {...defaultProps} presentation="desktop" onClose={onClose} />);
+
+            const closeButton = screen.getByRole('button', { name: 'common.close' });
+            await user.click(closeButton);
+            expect(onClose).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('mobile presentation', () => {
+        it('renders content only — no shell header or close button of its own (BottomSheet supplies both)', () => {
+            render(<ImprovedExportPopover {...defaultProps} presentation="mobile" />);
+            expect(screen.queryByRole('button', { name: 'common.close' })).not.toBeInTheDocument();
+            // The content itself (format grid etc.) is still present either way.
+            expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
+        });
+    });
+
+    describe('export job state (feature 038, FR-007/FR-007a — lifted props from T012)', () => {
+        it('shows in-progress feedback, including progress, when isExporting is true', () => {
+            render(<ImprovedExportPopover {...defaultProps} isExporting={true} progress={42} />);
+            expect(screen.getByText(/42/)).toBeInTheDocument();
+        });
+
+        it('shows the success state from props, without owning any export-job state itself', () => {
+            render(<ImprovedExportPopover {...defaultProps} success={true} />);
+            expect(screen.getByText('retrospective.export.success')).toBeInTheDocument();
+        });
+
+        it('shows the error state from props', () => {
+            render(<ImprovedExportPopover {...defaultProps} error="Something went wrong" />);
+            expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+        });
+
+        it('calls the injected exportRetrospective (not a locally-owned hook) when the export button is clicked', async () => {
+            const exportRetrospective = vi.fn().mockResolvedValue(undefined);
+            const { default: userEvent } = await import('@testing-library/user-event');
+            const user = userEvent.setup();
+            render(<ImprovedExportPopover {...defaultProps} exportRetrospective={exportRetrospective} />);
+
+            await user.click(screen.getByRole('button', { name: /retrospective.export.export/ }));
+            expect(exportRetrospective).toHaveBeenCalledTimes(1);
+        });
     });
 });

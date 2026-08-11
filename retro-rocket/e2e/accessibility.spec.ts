@@ -825,6 +825,224 @@ test('both menus\' new mobile entry points, and switching facilitator tabs withi
     await context.close();
 });
 
+// --- Export window (feature 038): WCAG 2.1 AA coverage, keyboard/touch
+// operability of its own controls, reduced motion, and locale layout. The
+// export dialog's OPEN state was previously exercised (lines above) but
+// never axe-scanned, and had no mobile-viewport coverage at all —
+// research.md §6's confirmed gap, closed here (FR-010, SC-002, T028).
+
+for (const theme of THEMES) {
+    test(`Export window (desktop anchored panel) has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Export Desktop ${theme}`);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+
+        await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+        await page.getByRole('menuitem', { name: 'Exportar' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Exportar Retrospectiva' });
+        await expect(dialog).toBeVisible();
+        // Board owner by default — the facilitator-only zone is present, exercising
+        // that state alongside the rest of the panel's controls.
+        await expect(page.getByText('Zona Exclusiva del Facilitador')).toBeVisible();
+        await expectNoViolations(page, `export window, desktop anchored panel (${theme})`);
+    });
+
+    test(`Export window (mobile bottom sheet) has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Export Mobile ${theme}`);
+        await page.setViewportSize(MOBILE_VIEWPORT);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+
+        await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+        await expect(page.getByRole('dialog', { name: 'Opciones' })).toBeVisible();
+        await page.getByRole('button', { name: 'Exportar' }).click();
+        await expect(page.getByRole('dialog', { name: 'Exportar Retrospectiva' })).toBeVisible();
+        await expectNoViolations(page, `export window, mobile bottom sheet (${theme})`);
+        await context.close();
+    });
+
+    test(`Export window's facilitator-only zone is absent for a non-owner, with no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await createBoard(page, `A11y Export NonOwner ${theme}`);
+        const boardId = new URL(page.url()).pathname.split('/').pop();
+        await context.close();
+
+        const guestContext = await browser.newContext();
+        const guestPage = await guestContext.newPage();
+        await forceTheme(guestPage, theme);
+        await guestPage.request.post('/api/auth/test-login', {
+            data: { email: `e2e-export-nonowner-a11y-${theme}@example.com`, displayName: 'A11y Export Non-Owner' },
+        });
+        await guestPage.goto(`/retro/${boardId}`);
+        await waitForBoardReady(guestPage);
+        await applyThemeClass(guestPage, theme);
+
+        await guestPage.getByRole('button', { name: 'Opciones', exact: true }).click();
+        await guestPage.getByRole('menuitem', { name: 'Exportar' }).click();
+        await expect(guestPage.getByRole('dialog', { name: 'Exportar Retrospectiva' })).toBeVisible();
+        await expect(guestPage.getByText('Zona Exclusiva del Facilitador')).toHaveCount(0);
+        await expectNoViolations(guestPage, `export window, non-owner, facilitator zone absent (${theme})`);
+        await guestContext.close();
+    });
+}
+
+// --- Export window controls: keyboard and touch operability (FR-008, SC-003, T029) ---
+
+test('every control inside the export window is keyboard-operable, desktop presentation', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Export Keyboard Board');
+    await waitForBoardReady(page);
+
+    const optionsTrigger = page.getByRole('button', { name: 'Opciones', exact: true });
+    await optionsTrigger.focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('menuitem', { name: 'Exportar' }).focus();
+    await page.keyboard.press('Enter');
+
+    const dialog = page.getByRole('dialog', { name: 'Exportar Retrospectiva' });
+    await expect(dialog).toBeVisible();
+
+    // Format buttons are reachable and activate via Enter, not just click.
+    const txtButton = dialog.getByRole('button', { name: /^TXT/ });
+    await txtButton.focus();
+    await expect(txtButton).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(txtButton).toHaveAttribute('aria-pressed', 'true');
+
+    // The document-title field is reachable and editable via keyboard.
+    const titleField = dialog.getByLabel('Título personalizado');
+    await titleField.focus();
+    await page.keyboard.type(' (a11y)');
+    await expect(titleField).toHaveValue(/\(a11y\)$/);
+
+    // A checkbox toggles via Space.
+    const logoCheckbox = dialog.getByRole('checkbox', { name: /Incluir logo/ });
+    await logoCheckbox.focus();
+    await expect(logoCheckbox).toBeChecked();
+    await page.keyboard.press('Space');
+    await expect(logoCheckbox).not.toBeChecked();
+
+    // Escape dismisses the whole panel, no mouse involved anywhere above.
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+});
+
+test('every control inside the export window is reachable via touch, mobile presentation, with no prior hover event', async ({ browser }) => {
+    const context = await browser.newContext({ hasTouch: true });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Export Touch Board');
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await waitForBoardReady(page);
+
+    await page.getByRole('button', { name: 'Opciones', exact: true }).tap();
+    await page.getByRole('button', { name: 'Exportar' }).tap();
+
+    const sheet = page.getByRole('dialog', { name: 'Exportar Retrospectiva' });
+    await expect(sheet).toBeVisible();
+
+    await sheet.getByRole('button', { name: /^DOCX/ }).tap();
+    await expect(sheet.getByRole('button', { name: /^DOCX/ })).toHaveAttribute('aria-pressed', 'true');
+
+    const actionItemsCheckbox = sheet.getByRole('checkbox', { name: /Elementos de Acción/ });
+    await expect(actionItemsCheckbox).toBeChecked();
+    await actionItemsCheckbox.tap();
+    await expect(actionItemsCheckbox).not.toBeChecked();
+
+    // Always-visible close control, not swipe-only.
+    await sheet.getByRole('button', { name: 'Cerrar' }).tap();
+    await expect(sheet).toHaveCount(0);
+
+    await context.close();
+});
+
+// --- Export window: reduced motion (FR-011, T030) ---------------------------
+
+test('the export window (both presentations) and its idle/exporting/success states complete with prefers-reduced-motion enabled', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Export Reduced Motion Board');
+    await waitForBoardReady(page);
+
+    // Desktop: open, switch format (exercises the T026 crossfade/tap-scale motion),
+    // start and complete a real export, confirm the success banner and the
+    // subsequent auto-close both still resolve with nothing stuck mid-animation.
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Exportar' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Exportar Retrospectiva' });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: /^TXT/ }).click();
+    const [download] = await Promise.all([
+        page.waitForEvent('download', { timeout: 15_000 }),
+        dialog.getByRole('button', { name: /Exportar TXT/ }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.txt$/);
+    await expect(page.getByText('¡Exportación completada exitosamente!')).toBeVisible();
+    // Auto-close (US1 Acceptance Scenario 3) still resolves, not stuck mid-fade.
+    await expect(dialog).toHaveCount(0, { timeout: 5_000 });
+
+    // Mobile: open/close the sheet, confirm it too completes with no stuck state.
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.getByRole('button', { name: 'Opciones', exact: true }).click();
+    await page.getByRole('button', { name: 'Exportar' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Exportar Retrospectiva' });
+    await expect(sheet).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+});
+
+// --- Export window: locale layout at narrow/ultra-wide viewports (FR-009, T031) ---
+// Edge Cases (spec.md): differing English/Spanish text lengths must not break
+// either presentation's layout. English strings run longer than Spanish for
+// several of this panel's labels (e.g. "Include RetroRocket logo" vs "Incluir
+// logo de RetroRocket"), so this specifically switches language, not just theme.
+
+test('the export window layout holds in English at both a narrow mobile and an ultra-wide desktop viewport', async ({ page, context }) => {
+    // Sign in and create the board in the default (Spanish) locale first — the
+    // dashboard's create-board flow (auth-helpers.ts) is hardcoded to Spanish
+    // copy, same as every other test in this suite. Switch language only after,
+    // then reload so this test's own assertions run against English.
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Export Locale Board');
+    await page.evaluate(() => window.localStorage.setItem('retrorocket-language', 'en'));
+    await page.reload();
+    await expect(page.getByText('What helped', { exact: true })).toBeVisible({ timeout: 15_000 });
+
+    // Ultra-wide desktop: the two-column layout must not overflow its own panel.
+    await page.setViewportSize({ width: 2200, height: 1000 });
+    await page.getByRole('button', { name: 'Options', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Export' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Export Retrospective' });
+    await expect(dialog).toBeVisible();
+    await expect(page.getByText('Facilitator Exclusive Zone')).toBeVisible();
+    const dialogBox = await dialog.boundingBox();
+    expect(dialogBox).not.toBeNull();
+    // Fixed panel width regardless of viewport — not stretched full-bleed, and
+    // its own content never needs to exceed that fixed width to stay legible.
+    expect(dialogBox!.width).toBeLessThan(700);
+    await page.keyboard.press('Escape');
+
+    // Narrow mobile: the sheet's content must not require horizontal scrolling.
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.getByRole('button', { name: 'Options', exact: true }).click();
+    await page.getByRole('button', { name: 'Export', exact: true }).click();
+    const sheet = page.getByRole('dialog', { name: 'Export Retrospective' });
+    await expect(sheet).toBeVisible();
+    const sheetScrollWidth = await sheet.evaluate((el) => el.scrollWidth);
+    const sheetClientWidth = await sheet.evaluate((el) => el.clientWidth);
+    expect(sheetScrollWidth).toBeLessThanOrEqual(sheetClientWidth + 1); // +1: subpixel rounding
+});
+
 // --- Card color picker (spec 037): keyboard/touch operability, WCAG, and
 // reduced motion. Trigger reads its accessible name from the currently
 // applied color (colors.<slug>_aria, i18next); a brand-new card defaults to
