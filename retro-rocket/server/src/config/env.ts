@@ -5,6 +5,12 @@ export interface ServerConfig {
     version: string;
     serverPort: number;
     authTestMode: boolean;
+    /** Redis connection string backing Story 3's cross-instance listener coordination
+     * (040, contracts/redis-coordination-protocol.md). Absent means that story is
+     * disabled for this deployment — retrospective-wiring.ts falls back to the
+     * uncoordinated FirestoreRealtimeGatewayAdapter, exactly like every deployment
+     * before this feature. No `requireVars` entry: this is optional, not required. */
+    redisUrl: string | undefined;
 }
 
 /**
@@ -37,5 +43,6 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): ServerConfi
         version: source.BACKEND_VERSION ?? 'dev',
         serverPort,
         authTestMode: source.AUTH_TEST_MODE === 'true',
+        redisUrl: source.REDIS_URL || undefined,
     };
 }

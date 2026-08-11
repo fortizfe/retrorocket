@@ -55,4 +55,12 @@ describe('loadConfig', () => {
         expect(loadConfig({ AUTH_TEST_MODE: 'TRUE' }).authTestMode).toBe(false);
         expect(loadConfig({ AUTH_TEST_MODE: '1' }).authTestMode).toBe(false);
     });
+
+    it('leaves redisUrl undefined when REDIS_URL is absent (040, Story 3 opt-in)', () => {
+        expect(loadConfig({}).redisUrl).toBeUndefined();
+    });
+
+    it('reads REDIS_URL into redisUrl when present', () => {
+        expect(loadConfig({ REDIS_URL: 'redis://localhost:6379' }).redisUrl).toBe('redis://localhost:6379');
+    });
 });

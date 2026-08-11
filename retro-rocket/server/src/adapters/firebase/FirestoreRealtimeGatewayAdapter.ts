@@ -14,11 +14,13 @@ const COUNTDOWN_TIMERS = 'countdown_timers';
 
 /** Server-enforced hard TTL for typing-status docs — the only mechanism that clears a
  * typing indicator when a participant disconnects without sending an explicit stop
- * (feature 026, research.md §3). Bounded at 3s/500ms so a disconnected participant's
+ * (feature 026, research.md §3). Bounded at 3s so a disconnected participant's
  * indicator clears for other viewers within ~3.5s worst case, matching the client's own
- * 3-second inactivity grace period (useTypingStatus.ts). */
+ * 3-second inactivity grace period (useTypingStatus.ts). The sweep that enforces this
+ * TTL is event-driven (040, US2): scheduled from the typingStatus listener's own
+ * observed writes instead of an unconditional fixed-interval poll, eliminating the
+ * background cost while a board is open but idle. */
 const TYPING_STATUS_TTL_MS = 3000;
-const TYPING_STATUS_SWEEP_INTERVAL_MS = 500;
 
 /**
  * Exported so this pure Firestore-docChanges()-to-wire-event translation logic can be
@@ -84,16 +86,128 @@ function toDate(value: unknown): Date {
     return value instanceof Date ? value : new Date(value as string);
 }
 
+/** Milliseconds from `now` until `writeTimestamp + ttlMs`, clamped to 0 if already
+ * past. Pure decision logic behind the event-driven sweep schedule (040, US2) —
+ * exported so it can be unit-tested directly, mirroring toOp/toEntityChangeEvent. */
+export function computeSweepDelayMs(writeTimestamp: Date, now: Date, ttlMs: number): number {
+    return Math.max(0, writeTimestamp.getTime() + ttlMs - now.getTime());
+}
+
+/** Raw translated-change callback fed by startFirestoreBoardListeners — same shape as
+ * FirestoreRealtimeGatewayAdapter's own private broadcast() took before the 040/US3
+ * extraction, just decoupled from "deliver to local connections" so a caller can redirect
+ * it (e.g. to Redis publish) instead. */
+export type FirestoreChangeSink = (entity: RealtimeEntity, changeType: DocumentChangeType, id: string, data: Record<string, unknown> | undefined) => void;
+
+export interface FirestoreBoardListenerSet {
+    unsubscribe(): void;
+}
+
+/**
+ * Owns the Firestore onSnapshot listeners + event-driven typing-status sweep for a
+ * single board, invoking `onEvent` for every translated change instead of delivering
+ * directly to WebSocket connections. Extracted from FirestoreRealtimeGatewayAdapter
+ * (040, research.md §6) so Story 3's CoordinatedRealtimeGatewayAdapter can redirect the
+ * board's owning instance's translated events to Redis pub/sub, reusing the exact same
+ * listener-composition and sweep-scheduling logic instead of duplicating it.
+ * FirestoreRealtimeGatewayAdapter itself uses this with `onEvent` wired straight to its
+ * own local broadcast — its behavior is unchanged by this extraction.
+ */
+export function startFirestoreBoardListeners(db: Firestore, retrospectiveId: string, onEvent: FirestoreChangeSink): FirestoreBoardListenerSet {
+    let pendingSweep: ReturnType<typeof setTimeout> | undefined;
+
+    function watchCollection(collection: string, entity: RealtimeEntity, field = 'retrospectiveId'): Unsubscribe {
+        return db
+            .collection(collection)
+            .where(field, '==', retrospectiveId)
+            .onSnapshot((snapshot) => {
+                for (const change of snapshot.docChanges()) {
+                    onEvent(entity, change.type, change.doc.id, change.doc.data());
+                }
+            });
+    }
+
+    /** Like watchCollection, but for typingStatus specifically: every observed write
+     * also (re)schedules the TTL sweep (040, US2) — an event-driven timer anchored to
+     * real activity instead of an unconditional fixed-interval poll. Any previously
+     * pending sweep is cleared first so repeated writes reschedule a single timer
+     * rather than accumulating parallel ones. */
+    function watchTypingStatus(): Unsubscribe {
+        return db
+            .collection(TYPING_STATUS)
+            .where('retrospectiveId', '==', retrospectiveId)
+            .onSnapshot((snapshot) => {
+                const changes = snapshot.docChanges();
+                for (const change of changes) {
+                    onEvent('typingStatus', change.type, change.doc.id, change.doc.data());
+                }
+                // Only an actual write (added/modified) needs a future staleness check
+                // scheduled — a 'removed' change (including one caused by the sweep's
+                // own delete) has nothing left to sweep, and rescheduling from it would
+                // just trigger an immediate, empty follow-up sweep query.
+                const writes = changes.filter((change) => change.type !== 'removed');
+                if (writes.length === 0) return;
+                const latestWrite = writes.reduce((latest, change) => {
+                    const timestamp = toDate(change.doc.data().timestamp);
+                    return timestamp > latest ? timestamp : latest;
+                }, new Date(0));
+                clearTimeout(pendingSweep);
+                const delay = computeSweepDelayMs(latestWrite, new Date(), TYPING_STATUS_TTL_MS);
+                pendingSweep = setTimeout(() => {
+                    void sweepStaleTyping(db, retrospectiveId);
+                }, delay);
+            });
+    }
+
+    const unsubscribers: Unsubscribe[] = [
+        watchCollection(CARDS, 'card'),
+        watchCollection(GROUPS, 'group'),
+        watchCollection(ACTION_ITEMS, 'actionItem'),
+        watchCollection(FACILITATOR_NOTES, 'facilitatorNote'),
+        watchTypingStatus(),
+        watchCollection(PARTICIPANTS, 'participant'),
+        db.collection(RETROSPECTIVES).doc(retrospectiveId).onSnapshot((snap) => {
+            if (!snap.exists) return;
+            onEvent('retrospective', 'modified', snap.id, snap.data());
+        }),
+        db.collection(COUNTDOWN_TIMERS).doc(retrospectiveId).onSnapshot((snap) => {
+            onEvent('timer', snap.exists ? 'modified' : 'removed', snap.id, snap.data());
+        }),
+    ];
+
+    return {
+        unsubscribe() {
+            for (const unsubscribe of unsubscribers) unsubscribe();
+            clearTimeout(pendingSweep);
+        },
+    };
+}
+
+/** Deletes typingStatus docs older than the TTL — server-side enforcement independent
+ * of any client's own debounce timing (data-model.md). Module-level (not a method) so
+ * startFirestoreBoardListeners can call it without needing a class instance. */
+async function sweepStaleTyping(db: Firestore, retrospectiveId: string): Promise<void> {
+    const now = Date.now();
+    const snap = await db.collection(TYPING_STATUS).where('retrospectiveId', '==', retrospectiveId).get();
+    const stale = snap.docs.filter((doc) => now - toDate(doc.data().timestamp).getTime() > TYPING_STATUS_TTL_MS);
+    if (stale.length === 0) return;
+    const batch = db.batch();
+    for (const doc of stale) batch.delete(doc.ref);
+    await batch.commit();
+}
+
 interface BoardWatch {
     connections: Set<RealtimeConnection>;
-    unsubscribers: Unsubscribe[];
-    sweepInterval: ReturnType<typeof setInterval>;
+    listeners: FirestoreBoardListenerSet;
 }
 
 /**
  * Per-board, reference-counted server-side Firestore listeners relaying translated
- * change events to registered WebSocket connections (research.md §1). The single
- * concrete implementation of RealtimeGatewayPort.
+ * change events to registered WebSocket connections (research.md §1). The default,
+ * uncoordinated implementation of RealtimeGatewayPort — used directly when Story 3's
+ * Redis coordination (040) isn't configured (`REDIS_URL` absent), and internally by
+ * CoordinatedRealtimeGatewayAdapter's fail-open fallback when Redis is temporarily
+ * unreachable.
  */
 export class FirestoreRealtimeGatewayAdapter implements RealtimeGatewayPort {
     private readonly boards = new Map<string, BoardWatch>();
@@ -104,7 +218,10 @@ export class FirestoreRealtimeGatewayAdapter implements RealtimeGatewayPort {
         const { retrospectiveId } = connection;
         let watch = this.boards.get(retrospectiveId);
         if (!watch) {
-            watch = this.startWatch(retrospectiveId);
+            const listeners = startFirestoreBoardListeners(this.db, retrospectiveId, (entity, changeType, id, data) => {
+                this.broadcast(retrospectiveId, entity, changeType, id, data);
+            });
+            watch = { connections: new Set(), listeners };
             this.boards.set(retrospectiveId, watch);
         }
         watch.connections.add(connection);
@@ -115,8 +232,7 @@ export class FirestoreRealtimeGatewayAdapter implements RealtimeGatewayPort {
         if (!watch) return;
         watch.connections.delete(connection);
         if (watch.connections.size === 0) {
-            for (const unsubscribe of watch.unsubscribers) unsubscribe();
-            clearInterval(watch.sweepInterval);
+            watch.listeners.unsubscribe();
             this.boards.delete(connection.retrospectiveId);
         }
     }
@@ -128,52 +244,5 @@ export class FirestoreRealtimeGatewayAdapter implements RealtimeGatewayPort {
             if (!isVisibleToConnection(entity, data, connection.uid)) continue;
             connection.send(toEntityChangeEvent(entity, changeType, id, data));
         }
-    }
-
-    private watchCollection(retrospectiveId: string, collection: string, entity: RealtimeEntity, field = 'retrospectiveId'): Unsubscribe {
-        return this.db
-            .collection(collection)
-            .where(field, '==', retrospectiveId)
-            .onSnapshot((snapshot) => {
-                for (const change of snapshot.docChanges()) {
-                    this.broadcast(retrospectiveId, entity, change.type, change.doc.id, change.doc.data());
-                }
-            });
-    }
-
-    private startWatch(retrospectiveId: string): BoardWatch {
-        const unsubscribers: Unsubscribe[] = [
-            this.watchCollection(retrospectiveId, CARDS, 'card'),
-            this.watchCollection(retrospectiveId, GROUPS, 'group'),
-            this.watchCollection(retrospectiveId, ACTION_ITEMS, 'actionItem'),
-            this.watchCollection(retrospectiveId, FACILITATOR_NOTES, 'facilitatorNote'),
-            this.watchCollection(retrospectiveId, TYPING_STATUS, 'typingStatus'),
-            this.watchCollection(retrospectiveId, PARTICIPANTS, 'participant'),
-            this.db.collection(RETROSPECTIVES).doc(retrospectiveId).onSnapshot((snap) => {
-                if (!snap.exists) return;
-                this.broadcast(retrospectiveId, 'retrospective', 'modified', snap.id, snap.data());
-            }),
-            this.db.collection(COUNTDOWN_TIMERS).doc(retrospectiveId).onSnapshot((snap) => {
-                this.broadcast(retrospectiveId, 'timer', snap.exists ? 'modified' : 'removed', snap.id, snap.data());
-            }),
-        ];
-
-        const sweepInterval = setInterval(() => {
-            void this.sweepStaleTyping(retrospectiveId);
-        }, TYPING_STATUS_SWEEP_INTERVAL_MS);
-
-        return { connections: new Set(), unsubscribers, sweepInterval };
-    }
-
-    /** Deletes typingStatus docs older than the 5000ms TTL — server-side enforcement
-     * independent of any client's own debounce timing (data-model.md). */
-    private async sweepStaleTyping(retrospectiveId: string): Promise<void> {
-        const now = Date.now();
-        const snap = await this.db.collection(TYPING_STATUS).where('retrospectiveId', '==', retrospectiveId).get();
-        const stale = snap.docs.filter((doc) => now - toDate(doc.data().timestamp).getTime() > TYPING_STATUS_TTL_MS);
-        if (stale.length === 0) return;
-        const batch = this.db.batch();
-        for (const doc of stale) batch.delete(doc.ref);
-        await batch.commit();
     }
 }

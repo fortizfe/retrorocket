@@ -73,6 +73,12 @@ test('a failed profile load shows a visible error, not a blank page or crash', a
 
 // ─── User Story 2: update display name ─────────────────────────────────────────
 
+// 040, US1/FR-003: this test's rename-then-immediate-reload sequence happens well
+// within the profile lookup's 60-second per-instance cache TTL added by this feature
+// (FirestoreProfileAdapter.ensureProfile()). It is the authoritative regression guard
+// for FR-003's "still reflecting explicit profile updates promptly" requirement — a
+// stale cache hit surviving updateDisplayName()'s invalidation would make this test
+// see the pre-rename name after reload instead of newName.
 test('editing the display name persists after reload, via the backend only', async ({ page }) => {
     // A dedicated, unique identity (not the shared TEST_USER_EMAIL account): this test
     // permanently renames whoever it signs in as, and that account is reused by every

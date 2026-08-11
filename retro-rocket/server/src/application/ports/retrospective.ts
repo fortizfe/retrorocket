@@ -76,8 +76,17 @@ export interface RetrospectiveBoardPort {
 /** The `participants` collection's write side — 015's FirestoreRetrospectiveReadAdapter reads only. */
 export interface ParticipantPort {
     listParticipants(retrospectiveId: string): Promise<ParticipantDTO[]>;
-    /** Idempotent: no duplicate participant record if uid already joined (FR-005). */
-    join(retrospectiveId: string, uid: string, userName: string, photoURL: string | null): Promise<ParticipantDTO>;
+    /**
+     * Idempotent: no duplicate participant record if uid already joined (FR-005).
+     *
+     * `knownBoard` (040, FR-001): when the caller already fetched the board this
+     * reconnection cycle (e.g. JoinRetrospective's own getRetrospective() call),
+     * implementations MUST use it for their own existence/isActive check instead of
+     * re-fetching the board, to avoid a redundant read of the same document within one
+     * reconnection cycle. When omitted, implementations MUST fetch the board
+     * themselves (unchanged behavior for any caller that hasn't already fetched it).
+     */
+    join(retrospectiveId: string, uid: string, userName: string, photoURL: string | null, knownBoard?: RetrospectiveDTO): Promise<ParticipantDTO>;
     /**
      * Fan-out for a display-name change (022, FR-007) — updates `name` on every
      * participants doc where userId === uid, across every retrospective the user has

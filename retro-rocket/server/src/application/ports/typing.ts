@@ -6,17 +6,7 @@
 // immediately on any explicit stop, or after its own 3-second inactivity timeout.
 // ---------------------------------------------------------------------------
 
-export interface TypingStatusDTO {
-    id: string;
-    userId: string;
-    username: string;
-    retrospectiveId: string;
-    column: string;
-    timestamp: Date;
-}
-
 export interface TypingStatusPort {
     /** isActive:true writes the doc; isActive:false deletes it (never sets isActive:false). */
     setTypingStatus(retrospectiveId: string, userId: string, username: string, column: string, isActive: boolean): Promise<void>;
-    listActive(retrospectiveId: string): Promise<TypingStatusDTO[]>;
 }
