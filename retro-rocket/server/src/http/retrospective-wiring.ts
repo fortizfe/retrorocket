@@ -1,4 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore';
+import { Redis } from 'ioredis';
+import type { RedisLike } from '../adapters/firebase/redis/RedisLike';
 import type { ServerConfig } from '../config/env';
 import type { LoggerPort } from '../application/ports/observability';
 import type { SessionServicePort } from '../application/ports';
@@ -12,8 +14,32 @@ import { FirestoreFacilitatorNoteAdapter } from '../adapters/firebase/FirestoreF
 import { FirestoreSentimentResultAdapter } from '../adapters/firebase/FirestoreSentimentResultAdapter';
 import { FirestoreTypingStatusAdapter } from '../adapters/firebase/FirestoreTypingStatusAdapter';
 import { FirestoreRealtimeGatewayAdapter } from '../adapters/firebase/FirestoreRealtimeGatewayAdapter';
+import { RedisBoardCoordinationAdapter } from '../adapters/firebase/redis/RedisBoardCoordinationAdapter';
+import { CoordinatedRealtimeGatewayAdapter } from '../adapters/firebase/redis/CoordinatedRealtimeGatewayAdapter';
 import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
 import { SystemClock } from '../adapters/system';
+
+/** 040, US3: two separate ioredis connections per process — Redis puts a connection
+ * into subscriber-only mode once SUBSCRIBE is called, so the command path
+ * (SET/EVAL/PUBLISH) and the subscription path can't share one connection. */
+function buildRealtimeGateway(db: ReturnType<typeof getFirestore>, redisUrl: string | undefined, logger: LoggerPort): RealtimeGatewayPort {
+    if (!redisUrl) {
+        logger.warn('redis_coordination_disabled', { reason: 'REDIS_URL not configured — falling back to uncoordinated per-instance listeners' });
+        return new FirestoreRealtimeGatewayAdapter(db);
+    }
+    // ioredis's `Redis` class has a heavily overloaded `set`/`eval` surface (extra
+    // optional trailing args across its various overload branches) that TypeScript's
+    // structural check on function-typed properties rejects even though the exact call
+    // shape RedisBoardCoordinationAdapter actually uses is valid at runtime (verified
+    // against a real Redis instance, e2e/concurrent-board-network.spec.ts). Narrowing
+    // the cast to this one wiring boundary keeps RedisLike itself simple and
+    // ioredis-agnostic for testability, rather than widening it to match ioredis's
+    // full typings.
+    const commandClient = new Redis(redisUrl) as unknown as RedisLike;
+    const subscriberClient = new Redis(redisUrl) as unknown as RedisLike;
+    const coordinator = new RedisBoardCoordinationAdapter(commandClient, subscriberClient);
+    return new CoordinatedRealtimeGatewayAdapter(db, coordinator);
+}
 
 /** Superset of RetrospectiveRouterDeps consumed by both the REST router and the
  * WebSocket upgrade handler (attachRealtimeUpgrade), so one wiring call serves both. */
@@ -51,7 +77,7 @@ export function buildRetrospectiveDeps(
         facilitatorNotePort: new FirestoreFacilitatorNoteAdapter(db),
         sentimentResultPort: new FirestoreSentimentResultAdapter(db),
         typingStatusPort: new FirestoreTypingStatusAdapter(db),
-        realtimeGateway: new FirestoreRealtimeGatewayAdapter(db),
+        realtimeGateway: buildRealtimeGateway(db, config.redisUrl, logger),
         profilePort: new FirestoreProfileAdapter(db),
         sessionService,
         clock: new SystemClock(),

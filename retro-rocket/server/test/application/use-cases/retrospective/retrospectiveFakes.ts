@@ -11,7 +11,7 @@ import type { CardDTO, CardGroupDTO, CardGroupPort, CardPort, CreateCardGroupInp
 import type { ActionItemDTO, ActionItemPort, CreateActionItemInput, EditActionItemInput } from '../../../../src/application/ports/actionItems';
 import type { FacilitatorNoteDTO, FacilitatorNotePort } from '../../../../src/application/ports/facilitatorNotes';
 import type { SaveSentimentResultInput, SentimentResultDTO, SentimentResultPort, SentimentType } from '../../../../src/application/ports/sentiment';
-import type { TypingStatusDTO, TypingStatusPort } from '../../../../src/application/ports/typing';
+import type { TypingStatusPort } from '../../../../src/application/ports/typing';
 
 /**
  * In-memory fakes for every feature-019 port, replicating each Firestore adapter's
@@ -500,19 +500,12 @@ export function createRetrospectiveFakeStore(seed: {
         },
     };
 
-    const typingStatusMap = new Map<string, TypingStatusDTO>();
-
     const typingStatusPort: TypingStatusPort = {
-        async setTypingStatus(retrospectiveId, userId, username, column, isActive) {
-            const key = `${retrospectiveId}_${userId}_${column}`;
-            if (!isActive) {
-                typingStatusMap.delete(key);
-                return;
-            }
-            typingStatusMap.set(key, { id: key, userId, username, retrospectiveId, column, timestamp: new Date() });
-        },
-        async listActive(retrospectiveId) {
-            return [...typingStatusMap.values()].filter((t) => t.retrospectiveId === retrospectiveId).map((t) => ({ ...t }));
+        async setTypingStatus() {
+            // No fake test currently asserts on stored typing-status state (only that
+            // this method was called with the right args, via a spy where needed) — see
+            // FirestoreTypingStatusAdapter.ts's doc comment for why the real TTL/sweep
+            // logic lives in FirestoreRealtimeGatewayAdapter instead.
         },
     };
 

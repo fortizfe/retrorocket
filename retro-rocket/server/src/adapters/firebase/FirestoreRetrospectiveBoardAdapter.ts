@@ -123,11 +123,21 @@ export class FirestoreRetrospectiveBoardAdapter implements RetrospectiveBoardPor
         return snap.docs.map((doc) => toParticipant(doc.id, doc.data()));
     }
 
-    async join(retrospectiveId: string, uid: string, userName: string, photoURL: string | null): Promise<ParticipantDTO> {
+    async join(retrospectiveId: string, uid: string, userName: string, photoURL: string | null, knownBoard?: RetrospectiveDTO): Promise<ParticipantDTO> {
         const boardRef = this.db.collection(RETROSPECTIVES).doc(retrospectiveId);
-        const boardSnap = await boardRef.get();
-        if (!boardSnap.exists || boardSnap.data()?.isActive !== true) {
-            throw new NotFoundError('El tablero especificado no existe o no está disponible');
+        // 040, FR-001: skip this read entirely when the caller (JoinRetrospective)
+        // already fetched the board this reconnection cycle — avoids a redundant
+        // second read of the same retrospectives/{id} document. Callers that haven't
+        // already fetched it (knownBoard undefined) get the original behavior.
+        if (knownBoard) {
+            if (!knownBoard.isActive) {
+                throw new NotFoundError('El tablero especificado no existe o no está disponible');
+            }
+        } else {
+            const boardSnap = await boardRef.get();
+            if (!boardSnap.exists || boardSnap.data()?.isActive !== true) {
+                throw new NotFoundError('El tablero especificado no existe o no está disponible');
+            }
         }
 
         // A query-then-write existence check outside a transaction (this.db.collection

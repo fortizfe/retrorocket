@@ -5,7 +5,6 @@ import type { TypingStatusPort } from '../../../../src/application/ports/typing'
 function fakeTypingStatusPort(): TypingStatusPort {
     return {
         setTypingStatus: vi.fn(async () => {}),
-        listActive: vi.fn(async () => []),
     };
 }
 

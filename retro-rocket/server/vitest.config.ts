@@ -26,6 +26,17 @@ export default defineConfig({
                 'src/http/profile-wiring.ts',
                 'src/http/retrospective-wiring.ts',
                 'src/adapters/system.ts',
+                // 040, US3: CoordinatedRealtimeGatewayAdapter is thin orchestration glue
+                // over live ioredis + firebase-admin calls (register/unregister,
+                // Firestore listener lifecycle), exercised by the Playwright E2E suite
+                // against the emulator + a real Redis instance — same rationale as the
+                // wiring files above. Its actual lease/pub-sub decision logic
+                // (RedisBoardCoordinationAdapter.ts) and fail-open state tracking
+                // (RedisFailOpenTracker.ts) are deliberately NOT excluded here — both
+                // are pure/injectable-double-testable and have full Vitest coverage
+                // (server/test/adapters/firebase/redis/), unlike the Firestore adapters'
+                // established no-unit-test convention.
+                'src/adapters/firebase/redis/CoordinatedRealtimeGatewayAdapter.ts',
             ],
             // NOTE (feature 019 Polish pass, 2026-07-29): the 80% floor was already
             // unmet before this feature — every Firestore adapter across every backend

@@ -1,7 +1,13 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { AuthProviderType, EnsureProfileInput, ProfilePort, ProfileRecord } from '../../application/ports/profile';
+import { InMemoryTtlCache } from '../cache/InMemoryTtlCache';
 
 export const USERS = 'users';
+
+/** Per-instance profile cache TTL (040, FR-003, clarified at 60s). Cross-instance
+ * staleness up to this window is accepted; the instance that handles an explicit
+ * rename invalidates its own entry immediately rather than waiting out the TTL. */
+export const PROFILE_CACHE_TTL_MS = 60_000;
 
 /**
  * Exported so this pure mapping/union logic can be unit-tested directly — the rest of
@@ -42,9 +48,16 @@ export function unionMissingProviders(existing: AuthProviderType[], providers: A
  * §2). Kept separate from FirebaseIdentityAdapter (Firebase Auth custom claims).
  */
 export class FirestoreProfileAdapter implements ProfilePort {
+    private readonly cache = new InMemoryTtlCache<string, ProfileRecord>();
+
     constructor(private readonly db: Firestore) {}
 
     async ensureProfile(input: EnsureProfileInput): Promise<ProfileRecord> {
+        // 040, FR-002/FR-003: a cache hit serves both a repeat lookup within the same
+        // request cycle and any lookup within the 60s window, without a Firestore read.
+        const cached = this.cache.get(input.uid);
+        if (cached) return cached;
+
         const docRef = this.db.collection(USERS).doc(input.uid);
         const snap = await docRef.get();
 
@@ -52,11 +65,14 @@ export class FirestoreProfileAdapter implements ProfilePort {
             const existing = toProfileRecord(snap.id, snap.data()!);
             const providers = unionMissingProviders(existing.providers, input.providers);
             if (providers.length === existing.providers.length) {
+                this.cache.set(input.uid, existing, PROFILE_CACHE_TTL_MS);
                 return existing;
             }
             await docRef.update({ providers, updatedAt: FieldValue.serverTimestamp() });
             const updated = await docRef.get();
-            return toProfileRecord(updated.id, updated.data()!);
+            const record = toProfileRecord(updated.id, updated.data()!);
+            this.cache.set(input.uid, record, PROFILE_CACHE_TTL_MS);
+            return record;
         }
 
         const primaryProvider: AuthProviderType = input.providers[0] ?? 'google';
@@ -72,13 +88,20 @@ export class FirestoreProfileAdapter implements ProfilePort {
             updatedAt: FieldValue.serverTimestamp(),
         });
         const created = await docRef.get();
-        return toProfileRecord(created.id, created.data()!);
+        const record = toProfileRecord(created.id, created.data()!);
+        this.cache.set(input.uid, record, PROFILE_CACHE_TTL_MS);
+        return record;
     }
 
     async updateDisplayName(uid: string, displayName: string): Promise<ProfileRecord> {
+        // Invalidate first (not just overwrite-on-return) so a concurrent ensureProfile
+        // read that races this write can never observe a stale cached name (040, FR-003).
+        this.cache.delete(uid);
         const docRef = this.db.collection(USERS).doc(uid);
         await docRef.update({ displayName, updatedAt: FieldValue.serverTimestamp() });
         const updated = await docRef.get();
-        return toProfileRecord(updated.id, updated.data()!);
+        const record = toProfileRecord(updated.id, updated.data()!);
+        this.cache.set(uid, record, PROFILE_CACHE_TTL_MS);
+        return record;
     }
 }

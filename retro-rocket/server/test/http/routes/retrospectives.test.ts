@@ -329,7 +329,7 @@ describe('POST /api/retrospectives/:id/typing', () => {
         const { app } = buildRetrospectiveTestApp({
             retrospectives: [board()],
             overrides: {
-                typingStatusPort: { setTypingStatus: setTypingStatusSpy, listActive: vi.fn(async () => []) },
+                typingStatusPort: { setTypingStatus: setTypingStatusSpy },
                 profilePort: inMemoryProfilePort([profile({ uid: 'u1', displayName: 'Configured Name' })]),
             },
         });

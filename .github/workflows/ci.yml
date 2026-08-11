@@ -70,6 +70,22 @@ jobs:
     defaults:
       run:
         working-directory: retro-rocket
+    # 040, US3: a Redis service container backs the cross-instance listener-
+    # coordination E2E coverage (e2e/concurrent-board-network.spec.ts). Story 1/2 tests
+    # and every other spec are unaffected — they don't set REDIS_URL, so the backend
+    # falls back to its uncoordinated default (retrospective-wiring.ts).
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v5
 

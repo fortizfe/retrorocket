@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toOp, toEntityChangeEvent, isVisibleToConnection, serializeFirestoreValue } from '../../../src/adapters/firebase/FirestoreRealtimeGatewayAdapter';
+import { toOp, toEntityChangeEvent, isVisibleToConnection, serializeFirestoreValue, computeSweepDelayMs } from '../../../src/adapters/firebase/FirestoreRealtimeGatewayAdapter';
 
 // FirestoreRealtimeGatewayAdapter's per-board reference-counted onSnapshot listener
 // lifecycle and its WebSocket relay wiring are exercised end-to-end by the Playwright
@@ -91,5 +91,35 @@ describe('isVisibleToConnection', () => {
 
     it('is not visible for a facilitatorNote when data is unavailable', () => {
         expect(isVisibleToConnection('facilitatorNote', undefined, 'fac-1')).toBe(false);
+    });
+});
+
+// 040, US2: the typing-status sweep moved from an unconditional 500ms setInterval to
+// an event-driven setTimeout scheduled from the observed write. computeSweepDelayMs is
+// the pure decision logic behind that scheduling — how long to wait, from "now", before
+// the TTL-based staleness sweep should fire for a given write.
+describe('computeSweepDelayMs', () => {
+    it('returns the full TTL when the write just happened', () => {
+        const writeTimestamp = new Date('2026-01-01T00:00:00.000Z');
+        const now = new Date('2026-01-01T00:00:00.000Z');
+        expect(computeSweepDelayMs(writeTimestamp, now, 3000)).toBe(3000);
+    });
+
+    it('returns the remaining time when some of the TTL has already elapsed', () => {
+        const writeTimestamp = new Date('2026-01-01T00:00:00.000Z');
+        const now = new Date('2026-01-01T00:00:01.000Z');
+        expect(computeSweepDelayMs(writeTimestamp, now, 3000)).toBe(2000);
+    });
+
+    it('clamps to 0 once the TTL has already fully elapsed', () => {
+        const writeTimestamp = new Date('2026-01-01T00:00:00.000Z');
+        const now = new Date('2026-01-01T00:00:05.000Z');
+        expect(computeSweepDelayMs(writeTimestamp, now, 3000)).toBe(0);
+    });
+
+    it('clamps to 0 exactly at the TTL boundary', () => {
+        const writeTimestamp = new Date('2026-01-01T00:00:00.000Z');
+        const now = new Date('2026-01-01T00:00:03.000Z');
+        expect(computeSweepDelayMs(writeTimestamp, now, 3000)).toBe(0);
     });
 });

@@ -61,6 +61,42 @@ test('re-opening an already-joined board does not create a duplicate participant
     expect(body.participantCount).toBe(2);
 });
 
+// 040, US1: the platform forces a WebSocket reconnect roughly every 5 minutes
+// (maxDuration), which resyncs via join()+GET /api/retrospectives/:id on every
+// reconnect, not just the first mount. This regression-guards that a *WS-triggered*
+// reconnect (as opposed to the page-navigation-triggered rejoin above) still stays
+// idempotent after the join-dedup refactor (JoinRetrospective passing its
+// already-fetched board through to participantPort.join instead of a second read).
+test('a forced WebSocket reconnect on an already-joined board does not create a duplicate participant', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner10@example.com', 'E2E Retro Owner 10', 'E2E Reconnect Rejoin Board');
+
+    let forceCloseLatest: (() => void) | undefined;
+    await page.routeWebSocket(/\/live$/, (ws) => {
+        ws.connectToServer(); // default bidirectional passthrough — no interception, just a hook to close on demand
+        forceCloseLatest = () => ws.close();
+    });
+
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Reconnect Rejoin Board')).toBeVisible({ timeout: 30_000 });
+
+    const joinResponses = collectResponses(page, `/api/retrospectives/${boardId}/join`, 'POST');
+    const stateResponses = collectResponses(page, `/api/retrospectives/${boardId}`, 'GET');
+
+    // Force exactly one WebSocket close/reconnect (no page.reload()) — on reconnect
+    // the client resyncs via join()+GET /api/retrospectives/:id, same as a real
+    // ~5-minute forced reconnection would.
+    forceCloseLatest?.();
+
+    await expect.poll(() => joinResponses.latest()?.ok()).toBe(true);
+    await expect.poll(() => stateResponses.latest()?.ok()).toBe(true);
+    const stateBody = (await stateResponses.latest()!.json()) as { participantCount: number };
+    // Owner (1, from createBoardViaApi) + this same signed-in user reconnecting
+    // (idempotent, FR-005) = still 2, not 3 — mirrors the sibling page-navigation
+    // rejoin test above.
+    expect(stateBody.participantCount).toBe(2);
+});
+
 test('a load failure (backend unreachable) shows a visible error state, not a blank board', async ({ page, context, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner3@example.com', 'E2E Retro Owner 3', 'E2E Load Failure Board');
 

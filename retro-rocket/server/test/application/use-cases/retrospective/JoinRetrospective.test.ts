@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { joinRetrospective } from '../../../../src/application/use-cases/retrospective/JoinRetrospective';
 import { createRetrospectiveFakeStore } from './retrospectiveFakes';
 import { NotFoundError } from '../../../../src/domain/errors';
@@ -43,5 +43,16 @@ describe('joinRetrospective', () => {
     it('throws NotFoundError for an inactive board', async () => {
         const store = createRetrospectiveFakeStore({ retrospectives: [board({ isActive: false })] });
         await expect(joinRetrospective({ ...store }, { retrospectiveId: 'r1', uid: 'u1', userName: 'Alice', photoURL: null })).rejects.toThrow(NotFoundError);
+    });
+
+    it('passes the board it already fetched through to participantPort.join, so a conforming adapter never needs a second existence read (FR-001)', async () => {
+        const store = createRetrospectiveFakeStore({ retrospectives: [board()] });
+        const joinSpy = vi.spyOn(store.participantPort, 'join');
+
+        await joinRetrospective({ ...store }, { retrospectiveId: 'r1', uid: 'u1', userName: 'Alice', photoURL: null });
+
+        expect(joinSpy).toHaveBeenCalledTimes(1);
+        const [, , , , knownBoard] = joinSpy.mock.calls[0];
+        expect(knownBoard).toMatchObject({ id: 'r1', isActive: true });
     });
 });

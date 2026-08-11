@@ -4,7 +4,7 @@ import { createStdoutObservability } from '../../src/adapters/observability/stdo
 import type { ServerConfig } from '../../src/config/env';
 
 function testConfig(): ServerConfig {
-    return { nodeEnv: 'test', version: 'test', serverPort: 3001, authTestMode: true };
+    return { nodeEnv: 'test', version: 'test', serverPort: 3001, authTestMode: true, redisUrl: undefined };
 }
 
 describe('trust proxy configuration (research.md §1, FR-002)', () => {
