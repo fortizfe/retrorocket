@@ -82,6 +82,20 @@ export default defineConfig({
                 GOOGLE_OAUTH_CLIENT_SECRET: 'e2e-dummy',
                 GITHUB_OAUTH_CLIENT_ID: 'e2e-dummy',
                 GITHUB_OAUTH_CLIENT_SECRET: 'e2e-dummy',
+                // 040, US3: same rationale as FIREBASE_SERVICE_ACCOUNT above — CI's `e2e`
+                // job sets REDIS_URL at the job level (.github/workflows/ci.yml) so the
+                // *dedicated* Redis-coordination test in
+                // e2e/concurrent-board-network.spec.ts can construct its own ioredis
+                // clients directly. That job-level var would otherwise also flow through
+                // to this spawned dev:server process (Node child processes inherit the
+                // parent env by default), silently switching every other test in the
+                // suite onto CoordinatedRealtimeGatewayAdapter instead of the plain
+                // FirestoreRealtimeGatewayAdapter they're written against — the extra
+                // async lease-acquisition step on first registration is enough to lose
+                // races in tests that write and immediately assert a live update.
+                // Blanking it here scopes Redis coordination to only the one test that
+                // asks for it, matching local dev (REDIS_URL normally unset).
+                REDIS_URL: '',
             },
             timeout: 30_000,
         },
