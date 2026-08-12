@@ -3,6 +3,10 @@ import { correlationId } from '../../../src/http/middleware/correlationId';
 import { errorHandler, notFoundHandler } from '../../../src/http/middleware/errorHandler';
 import { mcpRouter, type McpRouterDeps } from '../../../src/http/routes/mcp';
 import { JoseMcpTokenAdapter } from '../../../src/adapters/session/JoseMcpTokenAdapter';
+import { InMemoryTtlCache } from '../../../src/adapters/cache/InMemoryTtlCache';
+import type { McpConnection } from '../../../src/domain/mcp/McpConnection';
+import type { CachedDetailFanOut } from '../../../src/application/use-cases/mcp/GetRetrospectiveDetail';
+import type { CachedSummaryFanOut } from '../../../src/application/use-cases/mcp/GetRetrospectiveSummary';
 import {
     inMemoryClientStore,
     inMemoryConnectionStore,
@@ -41,6 +45,11 @@ export function buildMcpTestApp(options: McpTestAppOptions = {}): { app: Express
         baseUrl: BASE_URL,
         signInRedirect: SIGN_IN_REDIRECT,
         consentRedirect: CONSENT_REDIRECT,
+        // 041: fresh caches per test app, mirroring mcp-wiring.ts's real construction —
+        // never shared across independently-built test apps.
+        connectionAuthCache: new InMemoryTtlCache<string, McpConnection>(),
+        detailFanOutCache: new InMemoryTtlCache<string, CachedDetailFanOut>(),
+        summaryFanOutCache: new InMemoryTtlCache<string, CachedSummaryFanOut>(),
         ...options.overrides,
     };
 

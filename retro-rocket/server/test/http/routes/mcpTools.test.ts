@@ -5,7 +5,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { buildMcpTestApp } from './mcpTestApp';
 import { McpConnection } from '../../../src/domain/mcp/McpConnection';
-import type { McpRouterDeps } from '../../../src/http/routes/mcp';
+import { toolIdentityKeyGenerator, type McpRouterDeps } from '../../../src/http/routes/mcp';
+import { revokeConnection } from '../../../src/application/use-cases/mcp/RevokeConnection';
 
 const RETRO = { id: 'r1', title: 'Sprint 42', createdBy: 'facilitator-1', createdAt: new Date('2026-07-01') };
 
@@ -114,10 +115,44 @@ describe('MCP tool transport (Streamable HTTP)', () => {
     it('rejects a tool call once the connection has been revoked (Clarification Q1)', async () => {
         const revokeToken = await mintAccessToken(deps, 'to-be-revoked');
         const client = await connectedClient(url, revokeToken);
-        const connection = await deps.connectionStore.getConnectionById('conn-to-be-revoked');
-        await deps.connectionStore.saveConnection(connection!.revoked(deps.clock.nowSeconds()));
+        // Goes through the real revokeConnection() use case (not a direct store
+        // mutation) so it also evicts the 041 connectionAuthCache entry the connect()
+        // handshake above just populated — a direct store mutation would leave that
+        // cache entry stale for up to its TTL, which is the accepted-but-not-instant
+        // bound FR-001 already covers; this test is about the *explicit* revoke path,
+        // which must take effect on this same instance's very next request.
+        await revokeConnection(
+            { connectionStore: deps.connectionStore, clock: deps.clock, connectionAuthCache: deps.connectionAuthCache },
+            { connectionId: 'conn-to-be-revoked', uid: 'to-be-revoked' },
+        );
 
         await expect(client.callTool({ name: 'list_retrospectives', arguments: {} })).rejects.toThrow();
         await client.close();
+    });
+
+    // --- 041, US1 -----------------------------------------------------------------
+
+    it('toolIdentityKeyGenerator resolves the authenticated uid (041, FR-003)', async () => {
+        const res = { locals: { mcpAuth: { sub: 'facilitator-1' } } } as unknown as Parameters<typeof toolIdentityKeyGenerator>[1];
+        expect(toolIdentityKeyGenerator({} as never, res)).toBe('facilitator-1');
+    });
+
+    it('rejects an unauthenticated request without consuming a toolLimiter slot (041, FR-003)', async () => {
+        // A burst of unauthenticated attempts, well past the shared 120/min threshold if
+        // it were still IP-keyed pre-041.
+        for (let i = 0; i < 5; i++) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+            });
+            expect(res.status).toBe(401);
+        }
+        // A subsequent burst of *valid*, identity-keyed calls from a distinct uid must
+        // be unaffected — proves the prior unauthenticated attempts never touched
+        // toolLimiter's identity-keyed bucket for this or any other user.
+        const res = await facilitatorClient.callTool({ name: 'list_retrospectives', arguments: {} });
+        const body = textResult(res as never) as { retrospectives: unknown[] };
+        expect(body.retrospectives).toHaveLength(1);
     });
 });

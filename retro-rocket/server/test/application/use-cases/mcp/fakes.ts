@@ -28,7 +28,7 @@ export function fakeRetrospectiveReadPort(fixture: FakeRetrospectiveFixture = {}
         listCards: async () => fixture.cards ?? [],
         listGroups: async () => fixture.groups ?? [],
         listParticipants: async () => fixture.participants ?? [],
-        listSentimentResults: async () => fixture.sentimentResults ?? [],
+        listSentimentResults: async (cardIds) => (fixture.sentimentResults ?? []).filter((s) => cardIds.includes(s.cardId)),
         listActionItems: async () => fixture.actionItems ?? [],
         listFacilitatorNotes: async () => fixture.facilitatorNotes ?? [],
     };

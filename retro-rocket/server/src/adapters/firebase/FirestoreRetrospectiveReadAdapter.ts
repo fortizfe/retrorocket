@@ -54,11 +54,21 @@ export class FirestoreRetrospectiveReadAdapter implements RetrospectiveReadPort 
         const joinedIds = [...new Set(participations.docs.map((d) => d.data().retrospectiveId as string))].filter(
             (id) => !entries.has(id),
         );
-        for (const id of joinedIds) {
-            const snap = await this.db.collection(RETROSPECTIVES).doc(id).get();
-            if (!snap.exists) continue;
-            const data = snap.data()!;
-            entries.set(id, { id, title: data.title, createdAt: toDate(data.createdAt), role: 'participant' });
+
+        // 041, FR-005: a single batched getAll() per chunk instead of one .doc().get()
+        // per joined retrospective — chunked at 30 to mirror listSentimentResults'
+        // existing 'in'-query chunk size (bounding any single RPC's payload size), not
+        // because getAll() itself has that cap.
+        for (let i = 0; i < joinedIds.length; i += 30) {
+            const chunk = joinedIds.slice(i, i + 30);
+            const refs = chunk.map((id) => this.db.collection(RETROSPECTIVES).doc(id));
+            if (refs.length === 0) continue;
+            const snaps = await this.db.getAll(...refs);
+            for (const snap of snaps) {
+                if (!snap.exists) continue;
+                const data = snap.data()!;
+                entries.set(snap.id, { id: snap.id, title: data.title, createdAt: toDate(data.createdAt), role: 'participant' });
+            }
         }
 
         return [...entries.values()];
@@ -103,8 +113,7 @@ export class FirestoreRetrospectiveReadAdapter implements RetrospectiveReadPort 
         });
     }
 
-    async listSentimentResults(retrospectiveId: string): Promise<SentimentResultRecord[]> {
-        const cardIds = (await this.listCards(retrospectiveId)).map((c) => c.id);
+    async listSentimentResults(cardIds: string[]): Promise<SentimentResultRecord[]> {
         if (cardIds.length === 0) return [];
 
         // Firestore 'in' queries cap at 30 values — chunk rather than scanning the whole

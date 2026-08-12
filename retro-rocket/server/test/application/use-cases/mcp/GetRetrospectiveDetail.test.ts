@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { getRetrospectiveDetail } from '../../../../src/application/use-cases/mcp/GetRetrospectiveDetail';
+import { describe, it, expect, vi } from 'vitest';
+import { getRetrospectiveDetail, RETROSPECTIVE_DETAIL_CACHE_TTL_MS } from '../../../../src/application/use-cases/mcp/GetRetrospectiveDetail';
 import { NotFoundError } from '../../../../src/domain/errors';
+import { InMemoryTtlCache } from '../../../../src/adapters/cache/InMemoryTtlCache';
 import { fakeRetrospectiveReadPort } from './fakes';
 
 const RETRO = { id: 'r1', title: 'Sprint 42', createdBy: 'facilitator-1', createdAt: new Date('2026-07-01') };
@@ -60,5 +61,79 @@ describe('getRetrospectiveDetail', () => {
         await expect(
             getRetrospectiveDetail({ retrospectiveReadPort: port }, { retrospectiveId: 'r1', requesterUid: 'stranger-3' }),
         ).rejects.toThrow(NotFoundError);
+    });
+
+    // --- 041, FR-004 -------------------------------------------------------------
+
+    it('passes the already-fetched cardIds to listSentimentResults instead of a retrospectiveId (041, FR-004)', async () => {
+        const port = fakeRetrospectiveReadPort({
+            retrospectives: [RETRO],
+            participants: [],
+            cards: [
+                { id: 'c1', content: 'x', column: 'helped', createdBy: 'u1', createdAt: new Date(), reactions: [] },
+                { id: 'c2', content: 'y', column: 'hindered', createdBy: 'u1', createdAt: new Date(), reactions: [] },
+            ],
+        });
+        const listSentimentResults = vi.spyOn(port, 'listSentimentResults');
+        await getRetrospectiveDetail({ retrospectiveReadPort: port }, { retrospectiveId: 'r1', requesterUid: 'facilitator-1' });
+        expect(listSentimentResults).toHaveBeenCalledWith(['c1', 'c2']);
+    });
+
+    // --- 041, FR-008/Story 3 -------------------------------------------------------
+
+    describe('detail fan-out cache (041, FR-008/Story 3)', () => {
+        it('serves a second call within the cache window without re-fetching cards/groups/sentiment/actionItems', async () => {
+            const port = fakeRetrospectiveReadPort({
+                retrospectives: [RETRO],
+                participants: [],
+                cards: [{ id: 'c1', content: 'x', column: 'helped', createdBy: 'u1', createdAt: new Date(), reactions: [] }],
+            });
+            const listCards = vi.spyOn(port, 'listCards');
+            const detailFanOutCache = new InMemoryTtlCache<string, never>();
+
+            await getRetrospectiveDetail({ retrospectiveReadPort: port, detailFanOutCache }, { retrospectiveId: 'r1', requesterUid: 'facilitator-1' });
+            await getRetrospectiveDetail({ retrospectiveReadPort: port, detailFanOutCache }, { retrospectiveId: 'r1', requesterUid: 'facilitator-1' });
+
+            expect(listCards).toHaveBeenCalledTimes(1);
+        });
+
+        it('scopes facilitatorNotes live per requester even when the cached portion is shared', async () => {
+            const port = fakeRetrospectiveReadPort({
+                retrospectives: [RETRO],
+                participants: [{ name: 'Bob', userId: 'participant-2', joinedAt: new Date() }],
+                facilitatorNotes: [{ content: 'private', timestamp: new Date() }],
+            });
+            const detailFanOutCache = new InMemoryTtlCache<string, never>();
+
+            const facilitatorResult = await getRetrospectiveDetail(
+                { retrospectiveReadPort: port, detailFanOutCache },
+                { retrospectiveId: 'r1', requesterUid: 'facilitator-1' },
+            );
+            const participantResult = await getRetrospectiveDetail(
+                { retrospectiveReadPort: port, detailFanOutCache },
+                { retrospectiveId: 'r1', requesterUid: 'participant-2' },
+            );
+
+            expect(facilitatorResult.facilitatorNotes).toHaveLength(1);
+            expect(participantResult).not.toHaveProperty('facilitatorNotes');
+        });
+
+        it('does not cache anything when no cache instance is supplied (default, every other caller)', async () => {
+            const port = fakeRetrospectiveReadPort({
+                retrospectives: [RETRO],
+                participants: [],
+                cards: [{ id: 'c1', content: 'x', column: 'helped', createdBy: 'u1', createdAt: new Date(), reactions: [] }],
+            });
+            const listCards = vi.spyOn(port, 'listCards');
+
+            await getRetrospectiveDetail({ retrospectiveReadPort: port }, { retrospectiveId: 'r1', requesterUid: 'facilitator-1' });
+            await getRetrospectiveDetail({ retrospectiveReadPort: port }, { retrospectiveId: 'r1', requesterUid: 'facilitator-1' });
+
+            expect(listCards).toHaveBeenCalledTimes(2);
+        });
+
+        it('exposes a 15-second TTL constant matching the upper bound of the Clarifications window', () => {
+            expect(RETROSPECTIVE_DETAIL_CACHE_TTL_MS).toBe(15_000);
+        });
     });
 });

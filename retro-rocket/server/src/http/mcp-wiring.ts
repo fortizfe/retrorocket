@@ -7,6 +7,10 @@ import { JoseMcpTokenAdapter } from '../adapters/session/JoseMcpTokenAdapter';
 import { FirestoreMcpConnectionAdapter } from '../adapters/firebase/FirestoreMcpConnectionAdapter';
 import { FirestoreRetrospectiveReadAdapter } from '../adapters/firebase/FirestoreRetrospectiveReadAdapter';
 import { SystemClock, SystemRandom } from '../adapters/system';
+import { InMemoryTtlCache } from '../adapters/cache/InMemoryTtlCache';
+import type { McpConnection } from '../domain/mcp/McpConnection';
+import type { CachedDetailFanOut } from '../application/use-cases/mcp/GetRetrospectiveDetail';
+import type { CachedSummaryFanOut } from '../application/use-cases/mcp/GetRetrospectiveSummary';
 
 /**
  * Composition glue for the MCP connector (mirrors auth-wiring.ts): resolves env,
@@ -46,5 +50,14 @@ export function buildMcpDeps(
         baseUrl,
         signInRedirect: '/',
         consentRedirect: '/mcp/consent',
+        // 041, FR-001: one cache instance shared by mcpAuthMiddleware (populates/reads
+        // it) and the DELETE /api/mcp/connections/:id route's revokeConnection() call
+        // (evicts it on revoke) — both wired to the same instance here so a revoke is
+        // enforced on this instance's very next request, not just after the TTL elapses.
+        connectionAuthCache: new InMemoryTtlCache<string, McpConnection>(),
+        // 041, FR-008/Story 3: one instance per app, shared across every /api/mcp
+        // request this instance serves — see GetRetrospectiveDetail.ts's docstring.
+        detailFanOutCache: new InMemoryTtlCache<string, CachedDetailFanOut>(),
+        summaryFanOutCache: new InMemoryTtlCache<string, CachedSummaryFanOut>(),
     };
 }
