@@ -16,8 +16,9 @@ import { exchangeMcpToken, hashRefreshToken } from '../../application/use-cases/
 import { listConnections } from '../../application/use-cases/mcp/ListConnections';
 import { revokeConnection } from '../../application/use-cases/mcp/RevokeConnection';
 import { listRetrospectives } from '../../application/use-cases/mcp/ListRetrospectives';
-import { getRetrospectiveDetail } from '../../application/use-cases/mcp/GetRetrospectiveDetail';
-import { getRetrospectiveSummary } from '../../application/use-cases/mcp/GetRetrospectiveSummary';
+import { getRetrospectiveDetail, type CachedDetailFanOut } from '../../application/use-cases/mcp/GetRetrospectiveDetail';
+import { getRetrospectiveSummary, type CachedSummaryFanOut } from '../../application/use-cases/mcp/GetRetrospectiveSummary';
+import type { InMemoryTtlCache } from '../../adapters/cache/InMemoryTtlCache';
 
 export interface McpRouterDeps extends McpAuthDeps {
     clientStore: McpClientStorePort;
@@ -33,6 +34,11 @@ export interface McpRouterDeps extends McpAuthDeps {
     signInRedirect: string;
     /** SPA route that renders the consent screen; receives ?requestCode=...&clientName=... */
     consentRedirect: string;
+    /** 041, FR-008/Story 3: shared, per-app instances (constructed once in
+     * mcp-wiring.ts/mcpTestApp.ts, never per-request) — see GetRetrospectiveDetail.ts/
+     * GetRetrospectiveSummary.ts for why these are optional at the use-case level. */
+    detailFanOutCache: InMemoryTtlCache<string, CachedDetailFanOut>;
+    summaryFanOutCache: InMemoryTtlCache<string, CachedSummaryFanOut>;
 }
 
 /**
@@ -70,6 +76,17 @@ async function mcpTokenKeyGenerator(deps: { connectionStore: McpConnectionStoreP
     return `ip:${ipKeyGenerator(req.ip ?? 'unknown')}`;
 }
 
+/**
+ * 041, FR-003: keys `toolLimiter` by the authenticated identity (uid) instead of the
+ * default IP-based key, so distinct users sharing an MCP client's infrastructure are not
+ * collapsed into one shared allowance. Requires `mcpAuthMiddleware` to run *before*
+ * `toolLimiter` on the route (see the reordered `router.post('/api/mcp', ...)` below,
+ * 041 research.md §3) so `res.locals.mcpAuth` is already populated by the time this runs.
+ */
+export function toolIdentityKeyGenerator(_req: Request, res: Response): string {
+    return (res.locals.mcpAuth as { sub: string }).sub;
+}
+
 function firstQuery(value: unknown): string {
     const v = Array.isArray(value) ? value[0] : value;
     return typeof v === 'string' ? v : '';
@@ -87,7 +104,11 @@ async function requireSession(req: Request, deps: McpRouterDeps): Promise<{ sub:
 }
 
 /** Builds a fresh McpServer with the three read-only tools, scoped to one authenticated uid. */
-function buildMcpToolServer(retrospectiveReadPort: RetrospectiveReadPort, requesterUid: string): McpServer {
+function buildMcpToolServer(
+    retrospectiveReadPort: RetrospectiveReadPort,
+    requesterUid: string,
+    caches: { detailFanOutCache: InMemoryTtlCache<string, CachedDetailFanOut>; summaryFanOutCache: InMemoryTtlCache<string, CachedSummaryFanOut> },
+): McpServer {
     const server = new McpServer({ name: 'retrorocket-mcp', version: '1.0.0' });
 
     server.registerTool(
@@ -107,7 +128,10 @@ function buildMcpToolServer(retrospectiveReadPort: RetrospectiveReadPort, reques
         },
         async ({ retrospectiveId }) => {
             try {
-                const detail = await getRetrospectiveDetail({ retrospectiveReadPort }, { retrospectiveId, requesterUid });
+                const detail = await getRetrospectiveDetail(
+                    { retrospectiveReadPort, detailFanOutCache: caches.detailFanOutCache },
+                    { retrospectiveId, requesterUid },
+                );
                 return { content: [{ type: 'text', text: JSON.stringify(detail) }] };
             } catch (err) {
                 if (err instanceof NotFoundError) {
@@ -126,7 +150,10 @@ function buildMcpToolServer(retrospectiveReadPort: RetrospectiveReadPort, reques
         },
         async ({ retrospectiveId }) => {
             try {
-                const summary = await getRetrospectiveSummary({ retrospectiveReadPort }, { retrospectiveId, requesterUid });
+                const summary = await getRetrospectiveSummary(
+                    { retrospectiveReadPort, summaryFanOutCache: caches.summaryFanOutCache },
+                    { retrospectiveId, requesterUid },
+                );
                 return { content: [{ type: 'text', text: JSON.stringify(summary) }] };
             } catch (err) {
                 if (err instanceof NotFoundError) {
@@ -170,16 +197,16 @@ export function mcpRouter(deps: McpRouterDeps): Router {
             res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests — please wait a moment and try again.' }, correlationId: correlationOf(res) });
         },
     });
-    // Runs after mcpAuthMiddleware already resolved a real Bearer-token uid for the
-    // call, but stays IP-keyed (025, plan.md Summary): tool calls are out of this
-    // feature's "connection attempt" scope, and rescoping it is deliberately deferred
-    // per Constitution V (YAGNI) until a spec calls for it.
+    // Runs after mcpAuthMiddleware has already resolved a real Bearer-token uid for the
+    // call (041, FR-003: identity-keyed, not IP-keyed — the pre-041 IP-keyed behavior
+    // this comment used to describe was rescoped once this spec called for it).
     const toolLimiter = rateLimit({
         windowMs: 60 * 1000,
         limit: 120,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         validate: false,
+        keyGenerator: toolIdentityKeyGenerator,
         handler: (_req, res) => {
             res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests' }, correlationId: correlationOf(res) });
         },
@@ -337,16 +364,27 @@ export function mcpRouter(deps: McpRouterDeps): Router {
 
     router.delete('/api/mcp/connections/:id', async (req, res) => {
         const session = await requireSession(req, deps);
-        const result = await revokeConnection({ connectionStore: deps.connectionStore, clock: deps.clock }, { connectionId: req.params.id, uid: session.sub });
+        const result = await revokeConnection(
+            { connectionStore: deps.connectionStore, clock: deps.clock, connectionAuthCache: deps.connectionAuthCache },
+            { connectionId: req.params.id, uid: session.sub },
+        );
         if (result === 'not_found') throw new NotFoundError('Connection not found');
         res.status(204).end();
     });
 
     // --- MCP tool transport (Streamable HTTP, stateless — FR-014: no caching) --
+    // 041, research.md §3: mcpAuthMiddleware runs before toolLimiter (reordered from
+    // the pre-041 toolLimiter-first chain) so toolLimiter's identity-keyed rate limit
+    // can read res.locals.mcpAuth — an unauthenticated request is now rejected by
+    // mcpAuthMiddleware (and, if repeated, bounded by its own FR-002 backoff) without
+    // ever consuming a toolLimiter slot.
 
-    router.post('/api/mcp', toolLimiter, mcpAuthMiddleware(deps), async (req, res) => {
+    router.post('/api/mcp', mcpAuthMiddleware(deps), toolLimiter, async (req, res) => {
         const auth = res.locals.mcpAuth as { sub: string };
-        const server = buildMcpToolServer(deps.retrospectiveReadPort, auth.sub);
+        const server = buildMcpToolServer(deps.retrospectiveReadPort, auth.sub, {
+            detailFanOutCache: deps.detailFanOutCache,
+            summaryFanOutCache: deps.summaryFanOutCache,
+        });
         const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
         res.on('close', () => {
             void transport.close();

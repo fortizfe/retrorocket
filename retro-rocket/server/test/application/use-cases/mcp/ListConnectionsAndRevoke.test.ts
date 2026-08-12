@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { listConnections } from '../../../../src/application/use-cases/mcp/ListConnections';
 import { revokeConnection } from '../../../../src/application/use-cases/mcp/RevokeConnection';
+import { InMemoryTtlCache } from '../../../../src/adapters/cache/InMemoryTtlCache';
 import { MCP_AUTHORIZATION_REQUEST_TTL_SECONDS } from '../../../../src/application/use-cases/mcp/AuthorizeMcpConnection';
 import { McpConnection } from '../../../../src/domain/mcp/McpConnection';
 import { inMemoryConnectionStore, fixedClock, NOW } from './mcpFakes';
@@ -90,10 +91,14 @@ describe('listConnections', () => {
     });
 });
 
+function noopCache(): { delete(connectionId: string): void } {
+    return { delete: vi.fn() };
+}
+
 describe('revokeConnection', () => {
     it('revokes the caller’s own connection', async () => {
         const connectionStore = await seeded();
-        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10) }, { connectionId: 'c1', uid: 'u1' });
+        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10), connectionAuthCache: noopCache() }, { connectionId: 'c1', uid: 'u1' });
         expect(result).toBe('revoked');
         expect((await connectionStore.getConnectionById('c1'))?.data.status).toBe('revoked');
     });
@@ -102,7 +107,7 @@ describe('revokeConnection', () => {
         const connectionStore = await seeded();
         const sibling = McpConnection.createPending({ id: 'c3', uid: 'u1', clientId: 'client1', clientName: 'Claude', nowSeconds: NOW }).activated('h3');
         await connectionStore.saveConnection(sibling);
-        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10) }, { connectionId: 'c1', uid: 'u1' });
+        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10), connectionAuthCache: noopCache() }, { connectionId: 'c1', uid: 'u1' });
         expect(result).toBe('revoked');
         const untouched = await connectionStore.getConnectionById('c3');
         expect(untouched?.data.status).toBe('active');
@@ -111,15 +116,36 @@ describe('revokeConnection', () => {
 
     it('rejects revoking someone else’s connection (reported as not_found, not forbidden)', async () => {
         const connectionStore = await seeded();
-        const result = await revokeConnection({ connectionStore, clock: fixedClock() }, { connectionId: 'c2', uid: 'u1' });
+        const result = await revokeConnection({ connectionStore, clock: fixedClock(), connectionAuthCache: noopCache() }, { connectionId: 'c2', uid: 'u1' });
         expect(result).toBe('not_found');
         expect((await connectionStore.getConnectionById('c2'))?.data.status).toBe('active');
     });
 
     it('is idempotent: revoking an already-revoked connection still reports revoked', async () => {
         const connectionStore = await seeded();
-        await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10) }, { connectionId: 'c1', uid: 'u1' });
-        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 999) }, { connectionId: 'c1', uid: 'u1' });
+        const connectionAuthCache = noopCache();
+        await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10), connectionAuthCache }, { connectionId: 'c1', uid: 'u1' });
+        const result = await revokeConnection({ connectionStore, clock: fixedClock(NOW + 999), connectionAuthCache }, { connectionId: 'c1', uid: 'u1' });
         expect(result).toBe('revoked');
+    });
+
+    // --- 041, FR-001 ---------------------------------------------------------------
+
+    it('evicts the connection from connectionAuthCache on revoke (041, FR-001)', async () => {
+        const connectionStore = await seeded();
+        const connectionAuthCache = new InMemoryTtlCache<string, unknown>();
+        connectionAuthCache.set('c1', { cached: true }, 10_000);
+        await revokeConnection({ connectionStore, clock: fixedClock(NOW + 10), connectionAuthCache }, { connectionId: 'c1', uid: 'u1' });
+        expect(connectionAuthCache.get('c1')).toBeUndefined();
+    });
+
+    it('does not evict anything from connectionAuthCache when revoking someone else’s connection fails as not_found', async () => {
+        const connectionStore = await seeded();
+        const connectionAuthCache = new InMemoryTtlCache<string, unknown>();
+        connectionAuthCache.set('c2', { cached: true }, 10_000);
+        await revokeConnection({ connectionStore, clock: fixedClock(), connectionAuthCache }, { connectionId: 'c2', uid: 'u1' });
+        // 'not_found' is returned for an ownership mismatch (c2 belongs to u2), so the
+        // real connection's cache entry must be left untouched.
+        expect(connectionAuthCache.get('c2')).toEqual({ cached: true });
     });
 });

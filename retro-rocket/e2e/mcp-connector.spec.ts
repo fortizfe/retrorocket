@@ -1,9 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { signInWithGoogle, signInAs } from './fixtures/auth-helpers';
 import { revokeMcpConnectionsForClient } from './fixtures/mcp';
+import { getEmulatorFirestore } from './fixtures/firestoreAdmin';
 
 /**
  * MCP connector critical flow (feature 015, User Story 1): register a client, authorize
@@ -302,4 +303,169 @@ test('two connections for the same AI client show distinct, automatically detect
     await expect(page.getByText('Móvil')).toBeVisible({ timeout: 10_000 });
 
     await mobileContext.close();
+});
+
+// --- 041, Story 2 & Story 3: read-volume optimizations -----------------------------
+
+async function currentUid(page: Page): Promise<string> {
+    const res = await page.request.get('/api/auth/session');
+    const body = (await res.json()) as { user: { uid: string } };
+    return body.user.uid;
+}
+
+/** Registers a fresh client, drives the real consent screen, exchanges for an access
+ * token, and returns it — the MCP-tool-calling analogue of e2e/fixtures/mcp.ts's
+ * registerAndConnectMcpClient (which only returns void, not the token this suite's new
+ * tool-calling scenarios need to drive an MCP SDK Client directly). */
+async function getMcpAccessToken(page: Page, clientName: string): Promise<string> {
+    const registerRes = await page.request.post('/api/mcp/register', { data: { client_name: clientName, redirect_uris: [REDIRECT_URI] } });
+    if (!registerRes.ok()) throw new Error(`mcp register failed: ${registerRes.status()}`);
+    const { client_id: clientId } = await registerRes.json();
+
+    const { verifier, challenge } = pkcePair();
+    const authorizeUrl =
+        `/api/mcp/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+        `&code_challenge=${challenge}&code_challenge_method=S256&state=041-${Math.random()}`;
+    await page.goto(authorizeUrl);
+    await page.getByText(clientName).first().waitFor({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Permitir' }).click();
+    await page.waitForURL(/code=/, { timeout: 10_000 });
+    const code = new URL(page.url()).searchParams.get('code');
+
+    const tokenRes = await page.request.post('/api/mcp/token', {
+        data: { grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI, client_id: clientId, code_verifier: verifier },
+    });
+    if (!tokenRes.ok()) throw new Error(`mcp token exchange failed: ${tokenRes.status()}`);
+    const { access_token: accessToken } = await tokenRes.json();
+    return accessToken as string;
+}
+
+async function mcpClientFor(accessToken: string): Promise<Client> {
+    const transport = new StreamableHTTPClientTransport(new URL('/api/mcp', 'http://localhost:3000'), {
+        requestInit: { headers: { Authorization: `Bearer ${accessToken}` } },
+    });
+    const client = new Client({ name: 'e2e-041-client', version: '1.0.0' });
+    await client.connect(transport);
+    return client;
+}
+
+function textResult(res: { content: Array<{ type: string; text?: string }> }): unknown {
+    const first = res.content[0];
+    return first?.text ? JSON.parse(first.text) : undefined;
+}
+
+test('list_retrospectives returns every retrospective for a user who participates in more than 30 (041, FR-005)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    const uid = await currentUid(page);
+    const db = getEmulatorFirestore();
+
+    const retroCount = 35;
+    const facilitatorUid = `041-facilitator-${Date.now()}`;
+    const batch = db.batch();
+    const retroIds: string[] = [];
+    for (let i = 0; i < retroCount; i++) {
+        const retroRef = db.collection('retrospectives').doc();
+        retroIds.push(retroRef.id);
+        batch.set(retroRef, { title: `041 Batch Retro ${i}`, createdBy: facilitatorUid, createdAt: new Date() });
+        const participantRef = db.collection('participants').doc();
+        batch.set(participantRef, { retrospectiveId: retroRef.id, userId: uid, name: 'E2E Google User', joinedAt: new Date() });
+    }
+    await batch.commit();
+
+    const accessToken = await getMcpAccessToken(page, 'E2E Batch List Client');
+    const client = await mcpClientFor(accessToken);
+    const res = await client.callTool({ name: 'list_retrospectives', arguments: {} });
+    const body = textResult(res as never) as { retrospectives: Array<{ id: string; role: string }> };
+    await client.close();
+
+    for (const id of retroIds) {
+        expect(body.retrospectives).toContainEqual(expect.objectContaining({ id, role: 'participant' }));
+    }
+
+    await revokeMcpConnectionsForClient(page, 'E2E Batch List Client');
+});
+
+test('get_retrospective_detail scopes facilitatorNotes live per requester even when the cached fan-out is shared (041, FR-006/FR-008)', async ({
+    page,
+    context,
+    browser,
+}) => {
+    await signInWithGoogle(page, context);
+    const facilitatorUid = await currentUid(page);
+
+    const secondContext = await browser.newContext();
+    const secondPage = await secondContext.newPage();
+    await signInAs(secondPage, 'e2e-mcp-041-participant@example.com', 'E2E 041 Participant');
+    const participantUid = await currentUid(secondPage);
+
+    const db = getEmulatorFirestore();
+    const retroRef = db.collection('retrospectives').doc();
+    await retroRef.set({ title: '041 Cache Scoping Retro', createdBy: facilitatorUid, createdAt: new Date() });
+    await db.collection('participants').add({ retrospectiveId: retroRef.id, userId: participantUid, name: 'E2E 041 Participant', joinedAt: new Date() });
+    await db.collection('facilitatorNotes').add({ retrospectiveId: retroRef.id, facilitatorId: facilitatorUid, content: '041 private note', timestamp: new Date() });
+
+    const facilitatorToken = await getMcpAccessToken(page, 'E2E 041 Facilitator Client');
+    const participantToken = await getMcpAccessToken(secondPage, 'E2E 041 Participant Client');
+    const facilitatorClient = await mcpClientFor(facilitatorToken);
+    const participantClient = await mcpClientFor(participantToken);
+
+    // Back-to-back, within the same 15s cache window — the requester-independent fan-out
+    // (cards/groups/sentiment/actionItems) may be shared, but facilitatorNotes must not
+    // leak across requesters regardless.
+    const facilitatorRes = await facilitatorClient.callTool({ name: 'get_retrospective_detail', arguments: { retrospectiveId: retroRef.id } });
+    const participantRes = await participantClient.callTool({ name: 'get_retrospective_detail', arguments: { retrospectiveId: retroRef.id } });
+    const facilitatorBody = textResult(facilitatorRes as never) as { facilitatorNotes?: unknown[] };
+    const participantBody = textResult(participantRes as never) as Record<string, unknown>;
+
+    expect(facilitatorBody.facilitatorNotes).toHaveLength(1);
+    expect(participantBody).not.toHaveProperty('facilitatorNotes');
+
+    await facilitatorClient.close();
+    await participantClient.close();
+    await revokeMcpConnectionsForClient(page, 'E2E 041 Facilitator Client');
+    await revokeMcpConnectionsForClient(secondPage, 'E2E 041 Participant Client');
+    await secondContext.close();
+});
+
+test('the detail cache never lets an unauthorized requester ride a differently-authorized call within the cache window (041, FR-006)', async ({
+    page,
+    context,
+    browser,
+}) => {
+    await signInWithGoogle(page, context);
+    const outsiderUid = await currentUid(page);
+
+    const secondContext = await browser.newContext();
+    const secondPage = await secondContext.newPage();
+    await signInAs(secondPage, 'e2e-mcp-041-insider@example.com', 'E2E 041 Insider');
+    const insiderUid = await currentUid(secondPage);
+    void outsiderUid;
+
+    const db = getEmulatorFirestore();
+    const retroRef = db.collection('retrospectives').doc();
+    await retroRef.set({ title: '041 Access Isolation Retro', createdBy: insiderUid, createdAt: new Date() });
+
+    const outsiderToken = await getMcpAccessToken(page, 'E2E 041 Outsider Client');
+    const insiderToken = await getMcpAccessToken(secondPage, 'E2E 041 Insider Client');
+    const outsiderClient = await mcpClientFor(outsiderToken);
+    const insiderClient = await mcpClientFor(insiderToken);
+
+    const firstAttempt = await outsiderClient.callTool({ name: 'get_retrospective_detail', arguments: { retrospectiveId: retroRef.id } });
+    expect((firstAttempt as { isError?: boolean }).isError).toBe(true);
+
+    // The insider's successful call, within the same cache window, populates the
+    // requester-independent fan-out cache for this retrospectiveId.
+    const insiderRes = await insiderClient.callTool({ name: 'get_retrospective_detail', arguments: { retrospectiveId: retroRef.id } });
+    expect((insiderRes as { isError?: boolean }).isError).toBeFalsy();
+
+    // The outsider must still be rejected — a populated cache entry must never bypass the
+    // live per-requester access check.
+    const secondAttempt = await outsiderClient.callTool({ name: 'get_retrospective_detail', arguments: { retrospectiveId: retroRef.id } });
+    expect((secondAttempt as { isError?: boolean }).isError).toBe(true);
+
+    await outsiderClient.close();
+    await insiderClient.close();
+    await revokeMcpConnectionsForClient(page, 'E2E 041 Outsider Client');
+    await revokeMcpConnectionsForClient(secondPage, 'E2E 041 Insider Client');
+    await secondContext.close();
 });

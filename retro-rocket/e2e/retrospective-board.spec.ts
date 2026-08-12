@@ -923,10 +923,18 @@ test('typing indicator clears for the other participant when a participant disco
     // A's own browser context closes entirely (simulating disconnect/tab-close) while
     // still marked as typing — no beforeunload/explicit stop write is guaranteed to
     // land; only the server's retuned TTL sweep (~3.5s worst case,
-    // FirestoreRealtimeGatewayAdapter.ts, FR-004) can clear the indicator for B.
+    // FirestoreRealtimeGatewayAdapter.ts, FR-004) can clear the indicator for B. On CI,
+    // this event is additionally relayed through Redis pub/sub when coordinated mode is
+    // active (040, US3 — REDIS_URL is provisioned for the whole e2e job, not just its own
+    // dedicated coordination spec), adding a hop this test's own worst-case estimate
+    // doesn't account for. A hardcoded 5s here previously undercut the 10s headroom
+    // playwright.config.ts's own `expect.timeout` default already establishes for exactly
+    // this "CI runners are noticeably slower" class of margin (see that file's comment) —
+    // observed failing in CI (5s exceeded) while passing locally; use the same 10s budget
+    // as this test's own sibling assertion (line 921) instead of a tighter one-off value.
     await contextA.close();
 
-    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 5_000 });
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 10_000 });
 
     await contextB.close();
 });

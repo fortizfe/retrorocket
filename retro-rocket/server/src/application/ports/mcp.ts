@@ -145,7 +145,10 @@ export interface RetrospectiveReadPort {
     listCards(retrospectiveId: string): Promise<CardRecord[]>;
     listGroups(retrospectiveId: string): Promise<CardGroupRecord[]>;
     listParticipants(retrospectiveId: string): Promise<ParticipantRecord[]>;
-    listSentimentResults(retrospectiveId: string): Promise<SentimentResultRecord[]>;
+    /** 041, FR-004: takes the card ids the caller already fetched (e.g. via listCards())
+     * instead of a retrospectiveId, so callers that already have the cards never trigger
+     * a second, redundant read of the same collection to re-derive them. */
+    listSentimentResults(cardIds: string[]): Promise<SentimentResultRecord[]>;
     listActionItems(retrospectiveId: string): Promise<ActionItemRecord[]>;
     listFacilitatorNotes(retrospectiveId: string): Promise<FacilitatorNoteRecord[]>;
 }
