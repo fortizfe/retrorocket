@@ -16,6 +16,7 @@ import { FirestoreTypingStatusAdapter } from '../adapters/firebase/FirestoreTypi
 import { FirestoreRealtimeGatewayAdapter } from '../adapters/firebase/FirestoreRealtimeGatewayAdapter';
 import { RedisBoardCoordinationAdapter } from '../adapters/firebase/redis/RedisBoardCoordinationAdapter';
 import { CoordinatedRealtimeGatewayAdapter } from '../adapters/firebase/redis/CoordinatedRealtimeGatewayAdapter';
+import { attachRedisConnectionLogging } from '../adapters/firebase/redis/RedisConnectionObservability';
 import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
 import { SystemClock } from '../adapters/system';
 
@@ -35,8 +36,16 @@ function buildRealtimeGateway(db: ReturnType<typeof getFirestore>, redisUrl: str
     // the cast to this one wiring boundary keeps RedisLike itself simple and
     // ioredis-agnostic for testability, rather than widening it to match ioredis's
     // full typings.
-    const commandClient = new Redis(redisUrl) as unknown as RedisLike;
-    const subscriberClient = new Redis(redisUrl) as unknown as RedisLike;
+    const rawCommandClient = new Redis(redisUrl);
+    const rawSubscriberClient = new Redis(redisUrl);
+    // 043: without an `error` listener, ioredis falls back to its own noisy
+    // "[ioredis] Unhandled error event" console logger for every failed (re)connect
+    // attempt — this replaces that with bounded, structured logging (contracts/
+    // redis-connection-logging.md) via the app's own LoggerPort.
+    attachRedisConnectionLogging(rawCommandClient, 'command', logger, redisUrl);
+    attachRedisConnectionLogging(rawSubscriberClient, 'subscriber', logger, redisUrl);
+    const commandClient = rawCommandClient as unknown as RedisLike;
+    const subscriberClient = rawSubscriberClient as unknown as RedisLike;
     const coordinator = new RedisBoardCoordinationAdapter(commandClient, subscriberClient);
     return new CoordinatedRealtimeGatewayAdapter(db, coordinator);
 }
