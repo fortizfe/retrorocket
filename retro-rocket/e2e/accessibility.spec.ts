@@ -348,10 +348,12 @@ test('the AI-unavailable state is distinguishable from loading/empty by more tha
     await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card one', column: 'improve' } });
     await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card two', column: 'improve' } });
 
-    await page.route('**huggingface.co/**', route => route.abort('failed'));
+    // Sign in and reach the board before registering the network block — only the
+    // model host needs to be blocked, and only once we're about to request suggestions.
     await signInWithGoogle(page, context);
     await page.goto(`/retro/${boardId}`);
     await waitForBoardReady(page);
+    await page.route('**huggingface.co/**', route => route.abort('failed'));
 
     const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).last();
     await trigger.click();
