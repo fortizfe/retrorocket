@@ -737,6 +737,24 @@
         "tip": "Advanced export configuration"
       }
     },
+    "sentiment": {
+      "title": "AI-powered sentiment analysis",
+      "subtitle": "Every card is analyzed on-device as your team writes — see the mood of the retrospective update live, with zero setup.",
+      "items": {
+        "autoDetection": {
+          "title": "Automatic detection",
+          "description": "On-device AI classifies each card as positive, negative, or neutral the moment it's created."
+        },
+        "teamScore": {
+          "title": "Real-time team score",
+          "description": "A single 0-10 mood score summarizes how the whole team is feeling, updated live as cards come in."
+        },
+        "insights": {
+          "title": "Actionable insights",
+          "description": "Automatic recommendations flag the columns that need attention before the retrospective even ends."
+        }
+      }
+    },
     "technology": {
       "title": "Modern and reliable technology",
       "subtitle": "Built with the best tools to guarantee performance, security and scalability",

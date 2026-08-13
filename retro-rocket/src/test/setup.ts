@@ -146,6 +146,16 @@ vi.mock('framer-motion', () => ({
     // createElement, not JSX, because this file has a .ts (not .tsx) extension.
     MotionConfig: ({ children, reducedMotion }: { children: React.ReactNode; reducedMotion?: string }) =>
         createElement('div', { 'data-testid': 'motion-config', 'data-reduced-motion': reducedMotion }, children),
+    // Stubs for the landing page's scroll-driven parallax (ParallaxLayer, feature 042).
+    // jsdom has no real scroll/layout engine, so these return static, well-formed
+    // values rather than reactive MotionValues — component logic under test
+    // (computeParallaxRange) is unit-tested directly instead of through rendered DOM
+    // transforms; these stubs only need to keep components that call them from
+    // crashing during render.
+    useScroll: vi.fn(() => ({ scrollYProgress: { get: () => 0, on: vi.fn(() => vi.fn()) } })),
+    useTransform: vi.fn((_value: unknown, _input: unknown, output: unknown) =>
+        Array.isArray(output) ? output[0] : output
+    ),
 }));
 
 // Mock react-router-dom
