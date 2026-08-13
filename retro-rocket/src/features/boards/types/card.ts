@@ -47,17 +47,13 @@ export interface GroupedReaction {
     userIds: string[]; // raw userIds, parallel-indexed with `users`
 }
 
-// Similarity algorithms for automatic grouping
-export type SimilarityAlgorithm = 'levenshtein' | 'jaccard' | 'keyword' | 'combined';
-
-// Group suggestion for automatic grouping
+// Group suggestion for automatic grouping — computed from on-device AI semantic
+// analysis (spec 044); `algorithm`/`keywords`/`reason` were specific to the removed
+// text-similarity algorithm and have no equivalent here (data-model.md).
 export interface GroupSuggestion {
     id: string;
     cardIds: string[];
-    similarity: number;      // Similarity score (0-1)
-    reason: string;          // Reason for suggestion
-    algorithm: SimilarityAlgorithm;
-    keywords?: string[];     // Common keywords found
+    similarity: number;      // Cosine similarity between card embeddings, clamped to [0, 1]
 }
 
 // Card group entity

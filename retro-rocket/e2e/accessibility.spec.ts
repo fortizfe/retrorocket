@@ -283,6 +283,90 @@ for (const theme of THEMES) {
     });
 }
 
+// --- Grouping-suggestions panel surface (spec 044) — anchored panel introduced to
+// fix the reported top-left-corner positioning defect; verifies the new panel itself
+// (not just its trigger) meets WCAG 2.1 AA in both themes, across its loading, result,
+// and unavailable states, which must be distinguishable by more than color alone. -----
+
+for (const theme of THEMES) {
+    test(`open grouping-suggestions panel has no WCAG 2.1 AA violations (${theme})`, async ({ page, context, request }) => {
+        const boardId = await createBoardViaApi(request, `e2e-a11y-suggestions-${theme}@example.com`, `A11y Suggestions ${theme}`, `A11y Suggestions Board ${theme}`);
+        await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Necesitamos mejorar la comunicación del equipo', column: 'improve' } });
+        await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Deberíamos comunicarnos mejor como equipo', column: 'improve' } });
+
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        await page.goto(`/retro/${boardId}`);
+        await waitForBoardReady(page);
+        await applyThemeClass(page, theme);
+
+        const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).last();
+        await trigger.click();
+        await page.getByText('Agrupaciones sugeridas', { exact: true }).click();
+
+        const panel = page.getByRole('dialog', { name: 'Sugerencias de Agrupación' });
+        await expect(panel).toBeVisible({ timeout: 15_000 });
+        await expect(panel.getByText(/Grupo 1|No se encontraron sugerencias/)).toBeVisible({ timeout: 90_000 });
+
+        await expectNoViolations(page, `grouping-suggestions panel, populated (${theme})`);
+    });
+}
+
+test('the grouping-suggestions panel is keyboard-operable and returns focus to its trigger on Escape', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-a11y-suggestions-kbd@example.com', 'A11y Suggestions Kbd', 'A11y Suggestions Keyboard Board');
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card one', column: 'improve' } });
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card two', column: 'improve' } });
+
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await waitForBoardReady(page);
+
+    const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).last();
+    await trigger.focus();
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menu')).toBeVisible();
+
+    // Select "Agrupaciones sugeridas" via keyboard, not a mouse click — focus the
+    // actual `role="menuitem"` control (its `onClick`/keyboard handling live there),
+    // not the plain text node inside it.
+    await page.getByRole('menuitem', { name: /Agrupaciones sugeridas/ }).focus();
+    await page.keyboard.press('Enter');
+
+    const panel = page.getByRole('dialog', { name: 'Sugerencias de Agrupación' });
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(panel.getByText(/Grupo 1|No se encontraron sugerencias/)).toBeVisible({ timeout: 90_000 });
+
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    // Focus must return to the trigger (FloatingFocusManager), not get lost to <body>.
+    await expect(trigger).toBeFocused();
+});
+
+test('the AI-unavailable state is distinguishable from loading/empty by more than color: distinct role, icon, and copy', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-a11y-suggestions-unavail@example.com', 'A11y Suggestions Unavail', 'A11y Suggestions Unavailable Board');
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card one', column: 'improve' } });
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Card two', column: 'improve' } });
+
+    await page.route('**huggingface.co/**', route => route.abort('failed'));
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await waitForBoardReady(page);
+
+    const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).last();
+    await trigger.click();
+    await page.getByText('Agrupaciones sugeridas', { exact: true }).click();
+
+    const panel = page.getByRole('dialog', { name: 'Sugerencias de Agrupación' });
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    // `role="alert"` (an ARIA live region distinct from static content) plus icon and
+    // copy — the distinction is encoded in accessible semantics, not merely a CSS color.
+    const alert = panel.getByRole('alert');
+    await expect(alert).toBeVisible({ timeout: 30_000 });
+    await expect(alert).toContainText('Análisis de IA no disponible');
+    await expectNoViolations(page, 'grouping-suggestions panel, unavailable state');
+});
+
 // --- Keyboard operability of board interactions — FR-018 / SC-008 -----------
 
 test('board cards, voting, reactions and drag-and-drop are keyboard operable', async ({ page, context }) => {

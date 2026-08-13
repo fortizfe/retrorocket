@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -7,7 +7,8 @@ import {
     Check,
     Info,
     Eye,
-    EyeOff
+    EyeOff,
+    AlertTriangle
 } from 'lucide-react';
 import { GroupSuggestion, Card } from '@/features/boards/types/card';
 import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
@@ -15,28 +16,38 @@ import Button from '@/lib/components/ui/Button';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface GroupSuggestionModalProps {
-    isOpen: boolean;
     onClose: () => void;
     suggestions: GroupSuggestion[];
     cards: Card[];
     onAcceptSuggestion: (suggestion: GroupSuggestion) => void;
     onRejectSuggestion: (suggestionId: string) => void;
     loading?: boolean;
+    /** Set when AI-based grouping analysis failed (FR-008) — rendered as a distinct
+     * "unavailable" state, never silently falling back to a different computation. */
+    error?: string | null;
 }
 
+/**
+ * Content for the grouping-suggestions panel (spec 044). Rendered by
+ * `ColumnHeaderMenu.tsx` inside its own anchored, positioned, and animated floating
+ * panel — this component owns only the header/body/footer visuals, not the panel's
+ * positioning, entrance/exit animation, portal, or Escape/outside-click dismissal,
+ * which are `useBoardMenuOverlay`'s responsibility, matching every other popup in the
+ * app. Mounting/unmounting (previously this component's own `isOpen` prop) is now the
+ * caller's decision, so `AnimatePresence` for the panel itself also lives upstream.
+ */
 export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
-    isOpen,
     onClose,
     suggestions,
     cards,
     onAcceptSuggestion,
     onRejectSuggestion,
-    loading = false
+    loading = false,
+    error = null
 }) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(null);
     const [previewMode, setPreviewMode] = useState<{ [key: string]: boolean }>({});
 
-    // Get language context
     const { t } = useLanguage();
 
     const getCardById = (cardId: string) => cards.find(card => card.id === cardId);
@@ -70,238 +81,197 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
         setSelectedSuggestion(null);
     };
 
-    // Escape-key dismissal — the previous version only closed on backdrop click,
-    // a real gap against FR-012's "dismissible via Escape and outside-click".
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') onClose();
-        };
-        document.addEventListener('keydown', handleEscape);
-        return () => document.removeEventListener('keydown', handleEscape);
-    }, [isOpen, onClose]);
-
     return (
-        // AnimatePresence must stay mounted across the isOpen transition — an early
-        // `if (!isOpen) return null` (previously above) removed it along with
-        // everything inside in one render pass, so the exit animation never got a
-        // chance to run (design audit finding, spec 028; same class as DAF-001).
-        <AnimatePresence>
-            {isOpen && (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-                onClick={onClose}
-            >
-                <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={t('groupSuggestion.title')}
-                    className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 max-w-4xl w-full max-h-[90vh] overflow-hidden"
-                    onClick={e => e.stopPropagation()}
-                >
-                    {/* Header */}
-                    <div className="px-6 py-4 border-b border-border-default">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-info-bg rounded-lg">
-                                    <Sparkles className="w-6 h-6 text-info-fg" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-semibold text-text-primary">
-                                        {t('groupSuggestion.title')}
-                                    </h2>
-                                    <p className="text-sm text-text-secondary">
-                                        {t('groupSuggestion.subtitle', { count: suggestions.length })}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
-                                title={t('common.close')}
-                                aria-label={t('common.close')}
-                            >
-                                <X className="w-5 h-5 text-text-muted" />
-                            </button>
+        <div className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 w-[420px] max-w-[90vw] max-h-[70vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-border-default shrink-0">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-info-bg rounded-lg">
+                            <Sparkles className="w-6 h-6 text-info-fg" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-semibold text-text-primary">
+                                {t('groupSuggestion.title')}
+                            </h2>
+                            <p className="text-sm text-text-secondary">
+                                {t('groupSuggestion.subtitle', { count: suggestions.length })}
+                            </p>
                         </div>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
+                        title={t('common.close')}
+                        aria-label={t('common.close')}
+                    >
+                        <X className="w-5 h-5 text-text-muted" />
+                    </button>
+                </div>
+            </div>
 
-                    {/* Content */}
-                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-                        {loading ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info-fg"></div>
-                                <span className="ml-3 text-text-secondary">{t('groupSuggestion.analyzing')}</span>
-                            </div>
-                        ) : suggestions.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Info className="w-12 h-12 text-text-muted mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-text-primary mb-2">
-                                    {t('groupSuggestion.noSuggestionsTitle')}
-                                </h3>
-                                <p className="text-text-muted">
-                                    {t('groupSuggestion.noSuggestionsBody')}
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                {suggestions.map((suggestion, index) => {
-                                    const suggestionCards = suggestion.cardIds
-                                        .map(getCardById)
-                                        .filter(Boolean) as Card[];
+            {/* Content */}
+            <div className="p-6 overflow-y-auto">
+                {error ? (
+                    <div className="text-center py-12" role="alert">
+                        <AlertTriangle className="w-12 h-12 text-warning-fg mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-text-primary mb-2">
+                            {t('groupSuggestion.unavailableTitle')}
+                        </h3>
+                        <p className="text-text-muted">
+                            {t('groupSuggestion.unavailableBody')}
+                        </p>
+                    </div>
+                ) : loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info-fg"></div>
+                        <span className="ml-3 text-text-secondary">{t('groupSuggestion.analyzing')}</span>
+                    </div>
+                ) : suggestions.length === 0 ? (
+                    <div className="text-center py-12">
+                        <Info className="w-12 h-12 text-text-muted mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-text-primary mb-2">
+                            {t('groupSuggestion.noSuggestionsTitle')}
+                        </h3>
+                        <p className="text-text-muted">
+                            {t('groupSuggestion.noSuggestionsBody')}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {suggestions.map((suggestion, index) => {
+                            const suggestionCards = suggestion.cardIds
+                                .map(getCardById)
+                                .filter(Boolean) as Card[];
 
-                                    const isPreviewMode = previewMode[suggestion.id];
-                                    const isSelected = selectedSuggestion === suggestion.id;
+                            const isPreviewMode = previewMode[suggestion.id];
+                            const isSelected = selectedSuggestion === suggestion.id;
 
-                                    return (
-                                        <motion.div
-                                            key={suggestion.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            className={`border rounded-xl overflow-hidden ${isSelected ? 'border-info-fg bg-info-bg' : 'border-border-default bg-surface-raised'
-                                                }`}
-                                        >
-                                            {/* Suggestion Header */}
-                                            <div className="p-4 border-b border-border-default">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Users className="w-5 h-5 text-text-secondary" />
-                                                            <span className="font-medium text-text-primary">
-                                                                {t('groupSuggestion.group')} {index + 1}
-                                                            </span>
-                                                            <span className="text-sm text-text-muted">
-                                                                ({t('groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
-                                                            </span>
-                                                        </div>
+                            return (
+                                <motion.div
+                                    key={suggestion.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className={`border rounded-xl overflow-hidden ${isSelected ? 'border-info-fg bg-info-bg' : 'border-border-default bg-surface-raised'
+                                        }`}
+                                >
+                                    {/* Suggestion Header */}
+                                    <div className="p-4 border-b border-border-default">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex items-center space-x-2">
+                                                    <Users className="w-5 h-5 text-text-secondary" />
+                                                    <span className="font-medium text-text-primary">
+                                                        {t('groupSuggestion.group')} {index + 1}
+                                                    </span>
+                                                    <span className="text-sm text-text-muted">
+                                                        ({t('groupSuggestion.cardsInGroup', { count: suggestion.cardIds.length })})
+                                                    </span>
+                                                </div>
 
-                                                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${getSimilarityColor(suggestion.similarity)}`}>
-                                                            {getSimilarityLabel(suggestion.similarity)} - {Math.round(suggestion.similarity * 100)}%
-                                                        </div>
-                                                    </div>
+                                                <div className={`px-2 py-1 rounded-full text-xs font-medium ${getSimilarityColor(suggestion.similarity)}`}>
+                                                    {getSimilarityLabel(suggestion.similarity)} - {Math.round(suggestion.similarity * 100)}%
+                                                </div>
+                                            </div>
 
-                                                    <div className="flex items-center space-x-2">
-                                                        <button
-                                                            onClick={() => togglePreview(suggestion.id)}
-                                                            className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
-                                                            title={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
-                                                            aria-label={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => togglePreview(suggestion.id)}
+                                                    className="p-2 hover:bg-surface-raised rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-focus"
+                                                    title={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
+                                                    aria-label={isPreviewMode ? t('groupSuggestion.hideCards') : t('groupSuggestion.showCards')}
+                                                >
+                                                    {isPreviewMode ? (
+                                                        <EyeOff className="w-4 h-4 text-text-muted" />
+                                                    ) : (
+                                                        <Eye className="w-4 h-4 text-text-muted" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Preview */}
+                                    <AnimatePresence>
+                                        {isPreviewMode && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="p-4 bg-surface space-y-3">
+                                                    {suggestionCards.map((card, cardIndex) => (
+                                                        <div
+                                                            key={card.id}
+                                                            className={`${cardIndex === 0 ? 'ring-2 ring-info-fg/40' : ''}`}
                                                         >
-                                                            {isPreviewMode ? (
-                                                                <EyeOff className="w-4 h-4 text-text-muted" />
-                                                            ) : (
-                                                                <Eye className="w-4 h-4 text-text-muted" />
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                {/* Suggestion Details */}
-                                                <div className="mt-3">
-                                                    <p className="text-sm text-text-secondary mb-2">
-                                                        <span className="font-medium">{t('groupSuggestion.reason')}:</span> {suggestion.reason}
-                                                    </p>
-                                                    <div className="flex items-center space-x-4 text-xs text-text-muted">
-                                                        <span>{t('groupSuggestion.algorithm')}: {suggestion.algorithm}</span>
-                                                        {suggestion.keywords && suggestion.keywords.length > 0 && (
-                                                            <span>
-                                                                {t('groupSuggestion.keywords')}: {suggestion.keywords.join(', ')}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Card Preview */}
-                                            <AnimatePresence>
-                                                {isPreviewMode && (
-                                                    <motion.div
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: 'auto', opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        transition={{ duration: 0.2 }}
-                                                        className="overflow-hidden"
-                                                    >
-                                                        <div className="p-4 bg-surface space-y-3">
-                                                            {suggestionCards.map((card, cardIndex) => (
-                                                                <div
-                                                                    key={card.id}
-                                                                    className={`${cardIndex === 0 ? 'ring-2 ring-info-fg/40' : ''}`}
-                                                                >
-                                                                    {cardIndex === 0 && (
-                                                                        <div className="mb-2">
-                                                                            <span className="inline-flex items-center space-x-1 text-xs font-medium text-info-fg bg-info-bg px-2 py-1 rounded-full">
-                                                                                <Sparkles className="w-3 h-3" />
-                                                                                <span>{t('groupSuggestion.suggestedHeadCard')}</span>
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                    <DraggableCard
-                                                                        card={card}
-                                                                        currentUser=""
-                                                                        canEdit={false}
-                                                                        isDragging={false}
-                                                                    />
+                                                            {cardIndex === 0 && (
+                                                                <div className="mb-2">
+                                                                    <span className="inline-flex items-center space-x-1 text-xs font-medium text-info-fg bg-info-bg px-2 py-1 rounded-full">
+                                                                        <Sparkles className="w-3 h-3" />
+                                                                        <span>{t('groupSuggestion.suggestedHeadCard')}</span>
+                                                                    </span>
                                                                 </div>
-                                                            ))}
+                                                            )}
+                                                            <DraggableCard
+                                                                card={card}
+                                                                currentUser=""
+                                                                canEdit={false}
+                                                                isDragging={false}
+                                                            />
                                                         </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-
-                                            {/* Actions */}
-                                            <div className="p-4 bg-surface border-t border-border-default">
-                                                <div className="flex items-center justify-between">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleReject(suggestion.id)}
-                                                        className="text-text-secondary hover:text-text-primary"
-                                                    >
-                                                        {t('groupSuggestion.discard')}
-                                                    </Button>
-
-                                                    <Button
-                                                        variant="primary"
-                                                        size="sm"
-                                                        onClick={() => handleAccept(suggestion)}
-                                                        className="flex items-center space-x-2"
-                                                    >
-                                                        <Check className="w-4 h-4" />
-                                                        <span>{t('groupSuggestion.createGroup')}</span>
-                                                    </Button>
+                                                    ))}
                                                 </div>
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
-                    {/* Footer */}
-                    {!loading && suggestions.length > 0 && (
-                        <div className="px-6 py-4 border-t border-border-default bg-surface">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm text-text-secondary">
-                                    {t('groupSuggestion.footerHint')}
-                                </p>
-                                <Button variant="ghost" onClick={onClose}>
-                                    {t('common.close')}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </motion.div>
-            </motion.div>
+                                    {/* Actions */}
+                                    <div className="p-4 bg-surface border-t border-border-default">
+                                        <div className="flex items-center justify-between">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleReject(suggestion.id)}
+                                                className="text-text-secondary hover:text-text-primary"
+                                            >
+                                                {t('groupSuggestion.discard')}
+                                            </Button>
+
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                onClick={() => handleAccept(suggestion)}
+                                                className="flex items-center space-x-2"
+                                            >
+                                                <Check className="w-4 h-4" />
+                                                <span>{t('groupSuggestion.createGroup')}</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Footer */}
+            {!loading && suggestions.length > 0 && (
+                <div className="px-6 py-4 border-t border-border-default bg-surface shrink-0">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-text-secondary">
+                            {t('groupSuggestion.footerHint')}
+                        </p>
+                        <Button variant="ghost" onClick={onClose}>
+                            {t('common.close')}
+                        </Button>
+                    </div>
+                </div>
             )}
-        </AnimatePresence>
+        </div>
     );
 };

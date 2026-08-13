@@ -3,7 +3,8 @@ import { CardGroup, Card, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { calculateGroupAggregations } from '@/features/boards/clustering/services/cardGroupService';
-import { findSimilarCardGroups, SimilarityConfig } from '@/features/boards/clustering/services/similarityService';
+import { findSemanticCardGroups, GroupingConfig } from '@/features/boards/clustering/services/semanticGroupingService';
+import { useEmbeddingWorkerManager } from '@/features/boards/clustering/hooks/useEmbeddingWorkerManager';
 
 interface UseCardGroupsProps {
     retrospectiveId: string;
@@ -28,8 +29,8 @@ interface UseCardGroupsReturn {
     removeFromGroup: (cardId: string) => Promise<void>;
     toggleGroupCollapse: (groupId: string) => Promise<void>;
 
-    // Similarity detection
-    findSuggestions: (config?: Partial<SimilarityConfig>) => GroupSuggestion[];
+    // AI-based grouping suggestions (spec 044)
+    findSuggestions: (config?: Partial<GroupingConfig>) => Promise<GroupSuggestion[]>;
     acceptSuggestion: (suggestion: GroupSuggestion) => Promise<string>;
 
     // Helper functions
@@ -49,6 +50,7 @@ export const useCardGroups = ({
     groups: inputGroups = [],
 }: UseCardGroupsProps): UseCardGroupsReturn => {
     const [error, setError] = useState<string | null>(null);
+    const embeddingWorker = useEmbeddingWorkerManager();
 
     const groups = useMemo(
         () =>
@@ -136,7 +138,11 @@ export const useCardGroups = ({
         [groups],
     );
 
-    const findSuggestions = useCallback((config?: Partial<SimilarityConfig>): GroupSuggestion[] => findSimilarCardGroups(ungroupedCards, config), [ungroupedCards]);
+    const findSuggestions = useCallback(
+        (config?: Partial<GroupingConfig>): Promise<GroupSuggestion[]> =>
+            findSemanticCardGroups(ungroupedCards, embeddingWorker.embed, config),
+        [ungroupedCards, embeddingWorker.embed],
+    );
 
     const acceptSuggestion = useCallback(
         async (suggestion: GroupSuggestion): Promise<string> => {

@@ -32,6 +32,17 @@ vi.mock('lucide-react', () => ({
     Sparkles: ({ className }: any) => <div data-testid="sparkles-icon" className={className}></div>
 }));
 
+// Mock the suggestions-panel content component — its own icon/rendering concerns are
+// covered by GroupSuggestionModal.test.tsx; this file only needs to verify ColumnHeaderMenu
+// anchors and mounts it correctly.
+vi.mock('@/features/boards/clustering/components/GroupSuggestionModal', () => ({
+    GroupSuggestionModal: ({ onClose }: any) => (
+        <div data-testid="group-suggestion-modal-content">
+            <button onClick={onClose} data-testid="close-suggestions">Close</button>
+        </div>
+    ),
+}));
+
 // Mock columnGrouping module
 vi.mock('@/features/boards/types/columnGrouping', () => ({
     getGroupingOptions: vi.fn(() => [
@@ -82,6 +93,17 @@ describe('ColumnHeaderMenu', () => {
         onGroupingChange: vi.fn(),
         disabled: false,
         hasCards: true
+    };
+
+    const suggestionsPanelProps = {
+        suggestionsOpen: true,
+        suggestions: [],
+        suggestionCards: [],
+        suggestionsLoading: false,
+        suggestionsError: null,
+        onAcceptSuggestion: vi.fn(),
+        onRejectSuggestion: vi.fn(),
+        onCloseSuggestions: vi.fn(),
     };
 
     beforeEach(() => {
@@ -375,6 +397,43 @@ describe('ColumnHeaderMenu', () => {
             await user.click(button);
 
             expect(button).toHaveAttribute('aria-expanded', 'true');
+        });
+    });
+
+    describe('Suggestions Panel (spec 044)', () => {
+        it('anchors the suggestions panel to the same trigger button as the grouping-mode dropdown', () => {
+            render(<ColumnHeaderMenu {...defaultProps} {...suggestionsPanelProps} />);
+
+            // A single physical trigger button serves both the grouping-mode dropdown
+            // and the suggestions panel — proving they share one Floating UI reference
+            // rather than each rendering their own separate trigger.
+            const triggers = screen.getAllByRole('button', { name: 'retrospective.grouping.menuLabel' });
+            expect(triggers).toHaveLength(1);
+
+            expect(screen.getByRole('dialog', { name: 'groupSuggestion.title' })).toBeInTheDocument();
+        });
+
+        it('keeps the Floating UI positioning node separate from the Framer Motion entrance/exit node (research.md §1) so the panel cannot lose its anchor position', () => {
+            render(<ColumnHeaderMenu {...defaultProps} {...suggestionsPanelProps} />);
+
+            const panel = screen.getByRole('dialog', { name: 'groupSuggestion.title' });
+            // The node Floating UI positions (carries its computed inline `position`) must
+            // not be the same node Framer Motion animates via `initial`/`animate`/`exit` —
+            // otherwise Framer Motion's own `transform` silently overwrites Floating UI's
+            // positioning `transform`, pinning the panel to the viewport's top-left corner
+            // instead of its trigger button (the exact defect this feature fixes).
+            expect(panel.style.position).toBeTruthy();
+            expect(panel.hasAttribute('initial')).toBe(false);
+            expect(panel.hasAttribute('animate')).toBe(false);
+            expect(panel.hasAttribute('exit')).toBe(false);
+            // The entrance/exit animation must still happen, just on a nested node.
+            expect(panel.querySelector('[animate]')).not.toBeNull();
+        });
+
+        it('does not render the suggestions panel when suggestionsOpen is false', () => {
+            render(<ColumnHeaderMenu {...defaultProps} {...suggestionsPanelProps} suggestionsOpen={false} />);
+
+            expect(screen.queryByRole('dialog', { name: 'groupSuggestion.title' })).not.toBeInTheDocument();
         });
     });
 

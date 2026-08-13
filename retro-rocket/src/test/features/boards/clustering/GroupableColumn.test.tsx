@@ -90,34 +90,49 @@ vi.mock('@/features/boards/clustering/components/GroupCard', () => ({
     ),
 }));
 
-vi.mock('@/features/boards/clustering/components/GroupSuggestionModal', () => ({
-    GroupSuggestionModal: ({ isOpen, onClose, onAcceptSuggestion, suggestions }: any) => (
-        isOpen ? (
-            <div data-testid="group-suggestion-modal">
-                <button onClick={onClose}>Close</button>
-                {suggestions?.map((suggestion: any, index: number) => (
-                    <button
-                        key={index}
-                        onClick={() => onAcceptSuggestion?.(suggestion)}
-                        data-testid={`suggestion-${index}`}
-                    >
-                        Accept Suggestion {index}
-                    </button>
-                ))}
-            </div>
-        ) : null
-    ),
-}));
-
+// GroupSuggestionModal is no longer rendered directly by GroupableColumn (spec 044,
+// US1 — it moved into ColumnHeaderMenu's own anchored panel); the mocked
+// ColumnHeaderMenu below exposes the suggestion props/handlers GroupableColumn passes
+// down, so this file can still assert on that plumbing directly.
 vi.mock('@/features/boards/clustering/components/ColumnHeaderMenu', () => ({
-    default: ({ currentGrouping, onGroupingChange, hasCards, disabled }: any) => (
+    default: ({
+        currentGrouping, onGroupingChange, hasCards, disabled,
+        suggestionsOpen, suggestions, suggestionsLoading, suggestionsError,
+        onAcceptSuggestion, onRejectSuggestion, onCloseSuggestions,
+    }: any) => (
         <div data-testid="column-header-menu">
             <span>Current: {currentGrouping}</span>
             <button onClick={() => onGroupingChange?.('user')}>Group by User</button>
-            <button onClick={() => onGroupingChange?.('similarity')}>Group by Similarity</button>
+            <button onClick={() => onGroupingChange?.('suggestions')}>Group by Suggestions</button>
             <button onClick={() => onGroupingChange?.('none')}>No Grouping</button>
             {hasCards && <span>Has Cards</span>}
             {disabled && <span>Disabled</span>}
+
+            {suggestionsOpen && (
+                <div data-testid="group-suggestion-modal">
+                    {suggestionsLoading && <span data-testid="suggestions-loading">Loading</span>}
+                    {suggestionsError && <span data-testid="suggestions-error">{suggestionsError}</span>}
+                    <button onClick={onCloseSuggestions}>Close</button>
+                    {suggestions?.map((suggestion: any, index: number) => (
+                        <button
+                            key={index}
+                            onClick={() => onAcceptSuggestion?.(suggestion)}
+                            data-testid={`suggestion-${index}`}
+                        >
+                            Accept Suggestion {index}
+                        </button>
+                    ))}
+                    {suggestions?.map((suggestion: any, index: number) => (
+                        <button
+                            key={`reject-${index}`}
+                            onClick={() => onRejectSuggestion?.(suggestion.id)}
+                            data-testid={`reject-suggestion-${index}`}
+                        >
+                            Reject Suggestion {index}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     ),
 }));
@@ -551,20 +566,81 @@ describe('GroupableColumn', () => {
         });
     });
 
-    describe('Group Suggestions', () => {
-        it('should show suggestions functionality exists', () => {
-            render(<GroupableColumn {...defaultProps} />);
-
-            // The component exists and handles suggestion functionality
-            expect(screen.getByText('What went well?')).toBeInTheDocument();
-        });
-
-        it('should handle suggestion generation callback', () => {
-            const mockOnSuggestionGenerate = vi.fn(() => []);
+    describe('Group Suggestions (spec 044: async AI-based generation)', () => {
+        it('opens the panel in its loading state immediately, before the async onSuggestionGenerate resolves (FR-007)', async () => {
+            const user = userEvent.setup();
+            let resolveSuggestions!: (value: unknown[]) => void;
+            const pending = new Promise(resolve => { resolveSuggestions = resolve; });
+            const mockOnSuggestionGenerate = vi.fn().mockReturnValue(pending);
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
 
-            // The component should exist with the suggestion generate callback
-            expect(screen.getByText('What went well?')).toBeInTheDocument();
+            await user.click(screen.getByText('Group by Suggestions'));
+
+            // The panel must be visible with a loading indicator *before* the promise
+            // resolves — this is a real async round-trip now (worker + model
+            // inference), not the old synchronous algorithm.
+            expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument();
+            expect(screen.getByTestId('suggestions-loading')).toBeInTheDocument();
+
+            resolveSuggestions([{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }]);
+            await waitFor(() => expect(screen.queryByTestId('suggestions-loading')).not.toBeInTheDocument());
+        });
+
+        it('awaits the async onSuggestionGenerate and shows the resulting suggestions', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+
+            expect(mockOnSuggestionGenerate).toHaveBeenCalledTimes(1);
+            await waitFor(() => {
+                expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument();
+                expect(screen.getByTestId('suggestion-0')).toBeInTheDocument();
+            });
+            expect(screen.queryByTestId('suggestions-error')).not.toBeInTheDocument();
+        });
+
+        it('shows a distinct error state (not an empty result) when onSuggestionGenerate rejects (FR-008)', async () => {
+            const user = userEvent.setup();
+            const mockOnSuggestionGenerate = vi.fn().mockRejectedValue(new Error('AI model unavailable'));
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument();
+                expect(screen.getByTestId('suggestions-error')).toHaveTextContent('AI model unavailable');
+            });
+            expect(screen.queryByTestId('suggestion-0')).not.toBeInTheDocument();
+        });
+
+        it('accepting a suggestion creates a group via onGroupCreate', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            const mockOnGroupCreate = vi.fn().mockResolvedValue('new-group-id');
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+            await user.click(screen.getByTestId('suggestion-0'));
+
+            await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2']));
+        });
+
+        it('closing the suggestions panel clears its state', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument());
+
+            await user.click(screen.getByText('Close'));
+            await waitFor(() => expect(screen.queryByTestId('group-suggestion-modal')).not.toBeInTheDocument());
         });
     });
 

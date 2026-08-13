@@ -518,14 +518,13 @@
     "noSuggestionsBody": "No hay suficientes tarjetas similares para crear grupos automáticamente.",
     "hideCards": "Ocultar tarjetas",
     "showCards": "Mostrar tarjetas",
-    "reason": "Razón",
-    "algorithm": "Algoritmo",
-    "keywords": "Palabras clave",
     "discard": "Descartar",
     "footerHint": "Puedes aceptar múltiples sugerencias o crear grupos manualmente.",
     "similarityHigh": "Alta",
     "similarityMedium": "Media",
-    "similarityLow": "Baja"
+    "similarityLow": "Baja",
+    "unavailableTitle": "Análisis de IA no disponible",
+    "unavailableBody": "No pudimos analizar tus tarjetas en este momento. Inténtalo de nuevo en unos instantes."
   },
   "datePicker": {
     "placeholder": "Seleccionar fecha",
