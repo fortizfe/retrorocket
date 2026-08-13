@@ -26,6 +26,21 @@ test('a backend session reaches the authenticated dashboard', async ({ page, con
     await expect(page.getByText('Mis Retrospectivas')).toBeVisible();
 });
 
+// Feature 042 (landing redesign) T013: closes a coverage gap flagged by
+// /speckit-analyze — SC-002 claims this flow ("redirect-when-authenticated")
+// is E2E-verified, but no test anywhere previously exercised it directly.
+// AuthWrapper's `!requireAuth && isAuthenticated` branch (unchanged by the
+// redesign) is what performs this redirect.
+test('an already-authenticated visitor navigating back to "/" is redirected away from the landing page', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await expect(page).toHaveURL(/\/mis-tableros/);
+
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/mis-tableros/);
+    await expect(page.getByText('Continuar con Google', { exact: true })).not.toBeVisible();
+});
+
 test('the session cookie is httpOnly (not readable from document.cookie)', async ({ page, context }) => {
     await signInWithGoogle(page, context);
     const documentCookies = await page.evaluate(() => document.cookie);

@@ -759,6 +759,24 @@
         "tip": "Configuración avanzada de exportación"
       }
     },
+    "sentiment": {
+      "title": "Análisis de sentimiento con IA",
+      "subtitle": "Cada tarjeta se analiza en el dispositivo mientras tu equipo escribe — observa el estado de ánimo de la retrospectiva actualizarse en vivo, sin configuración.",
+      "items": {
+        "autoDetection": {
+          "title": "Detección automática",
+          "description": "La IA analiza cada tarjeta en el dispositivo, clasificándola como positiva, negativa o neutral en el momento en que se crea."
+        },
+        "teamScore": {
+          "title": "Puntuación del equipo en tiempo real",
+          "description": "Una puntuación de ánimo de 0 a 10 resume cómo se siente todo el equipo, actualizada en vivo a medida que llegan las tarjetas."
+        },
+        "insights": {
+          "title": "Recomendaciones accionables",
+          "description": "Recomendaciones automáticas señalan las columnas que necesitan atención antes de que termine la retrospectiva."
+        }
+      }
+    },
     "technology": {
       "title": "Tecnología moderna y confiable",
       "subtitle": "Construido con las mejores herramientas para garantizar rendimiento, seguridad y escalabilidad",

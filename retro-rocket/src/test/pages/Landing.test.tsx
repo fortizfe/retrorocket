@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import toast from 'react-hot-toast';
@@ -128,22 +128,25 @@ describe('Landing — hero renders sign-in and surfaces auth errors', () => {
 });
 
 /**
- * Feature 029 hero follow-up (post-implementation product-owner feedback,
- * 2026-08-08): the hero's abstract grid mark shipped as 4 empty decorative
- * blocks, which read as unfinished rather than intentional once seen live.
- * Fixed to preview 4 real capabilities instead (still no product
- * screenshots — just icon + short label, FR-001).
+ * Feature 042 (Vision Pro-style redesign) T011: the hero is now a truly
+ * minimalist single viewport (FR-001) — no capability-preview grid (that was
+ * a feature-029 decision this feature intentionally supersedes). This is the
+ * hero's presentational contract, written before LandingHero existed
+ * (Constitution Principle I), scoped via `data-testid="landing-hero"` since
+ * the hero's own content is otherwise made of generic text/button roles that
+ * also exist elsewhere on the page.
  */
-describe('Landing — hero previews key capabilities (not empty decoration)', () => {
-    it('shows a real capability label in each of the 4 hero grid cells (appears once in the hero teaser + once in the full capabilities section)', () => {
+describe('Landing — hero is a minimalist single viewport (FR-001)', () => {
+    it('renders exactly one heading and the sign-in CTA inside the hero, with no other section content', () => {
         renderAt('/');
 
-        // >= 2 is the real signal: 1 occurrence would just be the existing
-        // capabilities-section item, proving the hero teaser is still empty.
-        expect(screen.getAllByText('landing.capabilities.items.realTimeCollab.title').length).toBeGreaterThanOrEqual(2);
-        expect(screen.getAllByText('landing.capabilities.items.cardSystem.title').length).toBeGreaterThanOrEqual(2);
-        expect(screen.getAllByText('landing.capabilities.items.smartGrouping.title').length).toBeGreaterThanOrEqual(2);
-        expect(screen.getAllByText('landing.capabilities.items.export.title').length).toBeGreaterThanOrEqual(2);
+        const hero = screen.getByTestId('landing-hero');
+        expect(within(hero).getAllByRole('heading').length).toBe(1);
+        expect(within(hero).getByRole('button', { name: /google/i })).toBeInTheDocument();
+        expect(within(hero).getByRole('button', { name: /github/i })).toBeInTheDocument();
+        // Capability/how-it-works/technology copy belongs to sections below the
+        // hero, not inside it.
+        expect(within(hero).queryByText('landing.capabilities.items.realTimeCollab.title')).not.toBeInTheDocument();
     });
 });
 

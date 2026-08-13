@@ -32,6 +32,16 @@ export default defineConfig({
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
         },
+        // Media capture script (feature 042, contracts/capture-script-contract.md
+        // rule 6). Deliberately not matched by the default `*.spec.ts` testMatch, so
+        // bare `playwright test` (the `e2e` npm script, pinned to --project=chromium
+        // below) never runs it. Invoke explicitly:
+        //   npx playwright test --project=landing-capture --config playwright.config.ts
+        {
+            name: 'landing-capture',
+            testMatch: /landing-capture\.ts$/,
+            use: { ...devices['Desktop Chrome'] },
+        },
     ],
     // Two servers: the Vite SPA and the hexagonal backend. Vite proxies /api/* to the
     // backend (:3001), which runs with AUTH_TEST_MODE + firebase-admin pointed at the Auth
