@@ -83,8 +83,8 @@ description: "Task list for Fix Redis Connection Error Noise"
 
 - [X] T010 [P] Run `npm run test:server:coverage` from `retro-rocket/` and confirm the thresholds in `retro-rocket/server/vitest.config.ts` (80% branches, 68% functions, 74% lines, 74% statements) are still met with the new files included
 - [X] T011 [P] Run `npm run lint` and `npm run type-check:server` from `retro-rocket/` across all changed/added files
-- [ ] T012 Deploy to a Vercel preview and run quickstart.md Scenario D (`vercel logs --project retro-rocket --query "redis_connection" --json`) to read the `redis_connection_configured` log and resolve research.md §1's open question (CLI display artifact vs. genuine `REDIS_URL` misconfiguration vs. network block); if it reveals a genuine misconfiguration, re-provision/re-link the Upstash `REDIS_URL` value via the Vercel dashboard/CLI as a follow-up operational action (not a code change)
-- [ ] T013 Run all of quickstart.md's scenarios (A-E) end-to-end as final sign-off before merge
+- [X] T012 Deploy to a Vercel preview and run quickstart.md Scenario D (`vercel logs --project retro-rocket --query "redis_connection" --json`) to read the `redis_connection_configured` log and resolve research.md §1's open question (CLI display artifact vs. genuine `REDIS_URL` misconfiguration vs. network block); if it reveals a genuine misconfiguration, re-provision/re-link the Upstash `REDIS_URL` value via the Vercel dashboard/CLI as a follow-up operational action (not a code change)
+- [X] T013 Run all of quickstart.md's scenarios (A-E) end-to-end as final sign-off before merge
 
 ---
 

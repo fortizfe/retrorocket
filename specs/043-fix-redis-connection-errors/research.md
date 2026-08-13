@@ -58,3 +58,9 @@
 ## Summary of unresolved items carried into planning
 
 None block Phase 1 design. The single open question (exact root cause of `ETIMEDOUT`: CLI display artifact vs. genuine misconfiguration vs. network block) is answered by design, not deferred as a `NEEDS CLARIFICATION` — §1's redacted host/port logging plus the transition-based error logging from §2 together give an operator everything needed to read the real cause off the next deploy.
+
+## Resolved (post-deploy, 2026-08-13)
+
+Confirmed via `vercel logs --project retro-rocket --environment production --query redis_connection` after this feature deployed to production: `redis_connection_configured` logged `host: "still-bull-114433.upstash.io"`, `port: 6379`, `tls: true` for both connections — **`REDIS_URL` parses into a real, valid Upstash target**. The `eyJ2IjoidjIiLCJjIj…` string seen in `vercel env ls` was confirmed to be a CLI display artifact (an encrypted-envelope preview), not the actual misconfigured runtime value — branch 1 of §1's hypothesis, not branch 2.
+
+Nine minutes into production traffic, both connections hit a genuine, brief `ETIMEDOUT` (self-healed in 281–286ms, 2 attempts each) — a real, transient network blip to Upstash, not a persistent outage or misconfiguration. Total log output for the event: 2 `redis_connection_configured` + 2 `redis_connection_unhealthy` + 2 `redis_connection_recovered` — 6 structured lines, versus what would previously have been an unbounded stream of raw `[ioredis] Unhandled error event` stack traces for the same incident. This is the feature's success criteria (SC-001–SC-004) confirmed directly against production, not just the quickstart's local/preview scenarios.
