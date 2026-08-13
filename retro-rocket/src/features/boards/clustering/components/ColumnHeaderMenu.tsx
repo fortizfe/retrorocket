@@ -41,11 +41,15 @@ interface ColumnHeaderMenuProps {
  * FR-012's "dismissible via Escape and outside-click" requirement, now fixed by
  * construction via the shared hook.
  *
- * Note (spec 044, research.md §1): this file's own grouping-mode dropdown below still
- * carries the pre-existing `floatingStyles` + Framer Motion `initial`/`animate`/`exit`
- * single-node collision that feature 039 identified and explicitly deferred (out of
- * that feature's scope). It is deliberately left unchanged here too — this feature's
- * scope is the new suggestions panel, not a drive-by fix of the older dropdown.
+ * Both floating overlays below (the grouping-mode dropdown and the suggestions
+ * panel) use the split-node pattern: an outer plain `<div>` carries Floating UI's
+ * `ref`/`style`/`getFloatingProps()` (positioning only), and a nested `motion.div`
+ * carries only Framer Motion's `initial`/`animate`/`exit` (animation only). Putting
+ * both sets of props on the same node lets Framer Motion's own `transform` silently
+ * overwrite Floating UI's positioning `transform` on every frame, pinning the panel
+ * to the viewport's top-left corner — the defect feature 039 first identified and
+ * fixed in `CardMenu.tsx`, spec 044 fixed for the suggestions panel below, and
+ * spec 045 fixed for this dropdown, closing the last block feature 039 had deferred.
  */
 const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     currentGrouping,
@@ -131,46 +135,53 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                 <AnimatePresence>
                     {open && (
                         <FloatingFocusManager context={context} modal={false}>
-                            <motion.div
+                            {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
+                                `transform` encodes the anchor offset), not a `motion.div` — see
+                                the split-node explanation in this component's doc comment above. */}
+                            <div
                                 ref={refs.setFloating}
                                 style={floatingStyles}
                                 {...getFloatingProps()}
-                                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                                transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
-                                className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 py-1 z-50 min-w-[220px]"
                                 aria-label={t('retrospective.grouping.menuLabel')}
+                                className="z-50"
                             >
-                                {groupingOptions.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        onClick={() => handleGroupingSelect(option.value)}
-                                        role="menuitem"
-                                        className={`
-                                            w-full flex items-center justify-between px-3 py-2 text-xs
-                                            transition-colors hover:bg-surface-raised
-                                            ${currentGrouping === option.value ? 'text-info-fg bg-info-bg' : 'text-text-secondary'}
-                                        `}
-                                        aria-label={`${option.label}: ${option.description}`}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <option.icon className="w-4 h-4" />
-                                            <div className="text-left">
-                                                <div className="font-medium">{option.label}</div>
-                                                {option.description && (
-                                                    <div className="text-xs text-text-muted mt-0.5">
-                                                        {option.description}
-                                                    </div>
-                                                )}
+                                <motion.div
+                                    initial={{ opacity: 0, transform: 'translateY(-8px) scale(0.95)' }}
+                                    animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
+                                    exit={{ opacity: 0, transform: 'translateY(-8px) scale(0.95)' }}
+                                    transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                                    className="bg-surface-raised/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border-default/40 py-1 min-w-[220px]"
+                                >
+                                    {groupingOptions.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => handleGroupingSelect(option.value)}
+                                            role="menuitem"
+                                            className={`
+                                                w-full flex items-center justify-between px-3 py-2 text-xs
+                                                transition-colors hover:bg-surface-raised
+                                                ${currentGrouping === option.value ? 'text-info-fg bg-info-bg' : 'text-text-secondary'}
+                                            `}
+                                            aria-label={`${option.label}: ${option.description}`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <option.icon className="w-4 h-4" />
+                                                <div className="text-left">
+                                                    <div className="font-medium">{option.label}</div>
+                                                    {option.description && (
+                                                        <div className="text-xs text-text-muted mt-0.5">
+                                                            {option.description}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        {currentGrouping === option.value && (
-                                            <CheckCircle className="w-3 h-3 text-info-fg" />
-                                        )}
-                                    </button>
-                                ))}
-                            </motion.div>
+                                            {currentGrouping === option.value && (
+                                                <CheckCircle className="w-3 h-3 text-info-fg" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </motion.div>
+                            </div>
                         </FloatingFocusManager>
                     )}
                 </AnimatePresence>
