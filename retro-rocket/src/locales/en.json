@@ -957,13 +957,12 @@
     "noSuggestionsBody": "There aren't enough similar cards to create groups automatically.",
     "hideCards": "Hide cards",
     "showCards": "Show cards",
-    "reason": "Reason",
-    "algorithm": "Algorithm",
-    "keywords": "Keywords",
     "discard": "Discard",
     "footerHint": "You can accept multiple suggestions or create groups manually.",
     "similarityHigh": "High",
     "similarityMedium": "Medium",
-    "similarityLow": "Low"
+    "similarityLow": "Low",
+    "unavailableTitle": "AI analysis unavailable",
+    "unavailableBody": "We couldn't analyze your cards right now. Please try again in a moment."
   }
 }

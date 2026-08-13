@@ -8,8 +8,7 @@ import {
     GroupSuggestion,
     GroupedReaction,
     Like,
-    Reaction,
-    SimilarityAlgorithm
+    Reaction
 } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 import { ALL_EMOJIS } from '@/lib/utils/emojiConstants';
@@ -207,25 +206,6 @@ describe('Card Types', () => {
         });
     });
 
-    describe('SimilarityAlgorithm type', () => {
-        it('should include all expected algorithm types', () => {
-            const algorithms: SimilarityAlgorithm[] = [
-                'levenshtein',
-                'jaccard',
-                'keyword',
-                'combined'
-            ];
-
-            algorithms.forEach(algorithm => {
-                const testAlgorithm: SimilarityAlgorithm = algorithm;
-                expect(typeof testAlgorithm).toBe('string');
-                expect(algorithms).toContain(testAlgorithm);
-            });
-
-            expect(algorithms).toHaveLength(4);
-        });
-    });
-
     describe('GroupedReaction interface', () => {
         it('should have correct structure', () => {
             const groupedReaction: GroupedReaction = {
@@ -273,45 +253,17 @@ describe('Card Types', () => {
             const groupSuggestion: GroupSuggestion = {
                 id: 'suggestion123',
                 cardIds: ['card1', 'card2'],
-                similarity: 0.85,
-                reason: 'Similar keywords found',
-                algorithm: 'keyword'
+                similarity: 0.85
             };
 
             expect(typeof groupSuggestion.id).toBe('string');
             expect(Array.isArray(groupSuggestion.cardIds)).toBe(true);
             expect(typeof groupSuggestion.similarity).toBe('number');
-            expect(typeof groupSuggestion.reason).toBe('string');
-            expect(typeof groupSuggestion.algorithm).toBe('string');
 
             // Required properties
             expect(groupSuggestion).toHaveProperty('id');
             expect(groupSuggestion).toHaveProperty('cardIds');
             expect(groupSuggestion).toHaveProperty('similarity');
-            expect(groupSuggestion).toHaveProperty('reason');
-            expect(groupSuggestion).toHaveProperty('algorithm');
-        });
-
-        it('should handle optional keywords property', () => {
-            const withKeywords: GroupSuggestion = {
-                id: 'suggestion456',
-                cardIds: ['card3', 'card4'],
-                similarity: 0.92,
-                reason: 'Keyword match',
-                algorithm: 'keyword',
-                keywords: ['performance', 'optimization']
-            };
-
-            const withoutKeywords: GroupSuggestion = {
-                id: 'suggestion789',
-                cardIds: ['card5', 'card6'],
-                similarity: 0.75,
-                reason: 'Levenshtein distance',
-                algorithm: 'levenshtein'
-            };
-
-            expect(withKeywords.keywords).toEqual(['performance', 'optimization']);
-            expect(withoutKeywords.keywords).toBeUndefined();
         });
 
         it('should validate similarity score range', () => {
@@ -319,8 +271,6 @@ describe('Card Types', () => {
                 id: 'test',
                 cardIds: ['card1'],
                 similarity: 0.5, // Should be between 0 and 1
-                reason: 'test',
-                algorithm: 'combined'
             };
 
             expect(validSuggestion.similarity).toBeGreaterThanOrEqual(0);

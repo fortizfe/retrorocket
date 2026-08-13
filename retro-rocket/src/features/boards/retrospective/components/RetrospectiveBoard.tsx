@@ -292,7 +292,14 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     onGroupToggleCollapse={toggleGroupCollapse}
                                     onCardRemoveFromGroup={removeFromGroup}
                                     onSuggestionGenerate={() => findSuggestions({
-                                        threshold: 0.6,
+                                        // 0.6 was tuned for the removed blended
+                                        // Levenshtein/Jaccard text score; cosine
+                                        // similarity between sentence embeddings behaves
+                                        // differently, so this is recalibrated to match
+                                        // semanticGroupingService.ts's own considered
+                                        // default (spec 044, research.md §5) rather than
+                                        // carrying over a now-meaningless magic number.
+                                        threshold: 0.55,
                                         minGroupSize: 2,
                                         maxGroupSize: 6
                                     })}

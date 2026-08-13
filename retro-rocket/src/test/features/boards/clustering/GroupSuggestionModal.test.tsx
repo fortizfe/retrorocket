@@ -3,11 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { GroupSuggestionModal } from '@/features/boards/clustering/components/GroupSuggestionModal';
 import { GroupSuggestion, Card } from '@/features/boards/types/card';
 
-// A detectable marker (not a bare fragment passthrough) so tests can assert
-// AnimatePresence stays mounted across `isOpen` transitions — required for the modal
-// to exit-animate instead of vanishing instantly (design audit finding, spec 028: an
-// `if (!isOpen) return null` guard previously sat *before* the component's own
-// AnimatePresence, removing it along with everything inside in one render pass).
 vi.mock('framer-motion', () => ({
     motion: {
         div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
@@ -57,8 +52,11 @@ describe('GroupSuggestionModal', () => {
         } as GroupSuggestion,
     ];
 
+    // spec 044: mounting/unmounting (previously this component's own `isOpen` prop)
+    // and Escape/outside-click dismissal are now the caller's responsibility
+    // (ColumnHeaderMenu.tsx's `useBoardMenuOverlay` instance) — this component only
+    // ever renders its content, unconditionally, once mounted.
     const defaultProps = {
-        isOpen: true,
         onClose: vi.fn(),
         suggestions: mockSuggestions,
         cards: mockCards,
@@ -66,38 +64,27 @@ describe('GroupSuggestionModal', () => {
         onRejectSuggestion: vi.fn(),
     };
 
-    it('renders modal content when open', () => {
+    it('renders suggestion content', () => {
         render(<GroupSuggestionModal {...defaultProps} />);
         expect(screen.getByText('groupSuggestion.group 1')).toBeInTheDocument();
     });
 
-    it('does not render modal content when closed', () => {
-        render(<GroupSuggestionModal {...defaultProps} isOpen={false} />);
+    it('renders the loading state instead of suggestions while loading', () => {
+        render(<GroupSuggestionModal {...defaultProps} loading />);
         expect(screen.queryByText('groupSuggestion.group 1')).not.toBeInTheDocument();
+        expect(screen.getByText('groupSuggestion.analyzing')).toBeInTheDocument();
     });
 
-    it('keeps AnimatePresence mounted even when closed, so the modal can exit-animate instead of being removed via an early return (design audit finding, spec 028)', () => {
-        const { rerender } = render(<GroupSuggestionModal {...defaultProps} isOpen={false} />);
-
-        expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
-
-        rerender(<GroupSuggestionModal {...defaultProps} isOpen={true} />);
-        expect(screen.getAllByTestId('animate-presence').length).toBeGreaterThanOrEqual(1);
+    it('renders the empty state when there are no suggestions', () => {
+        render(<GroupSuggestionModal {...defaultProps} suggestions={[]} />);
+        expect(screen.getByText('groupSuggestion.noSuggestionsTitle')).toBeInTheDocument();
     });
 
-    it('closes on Escape key — a real gap in the previous version, which only closed on backdrop click (FR-012)', () => {
+    it('calls onClose when the header close button is clicked', () => {
         const onClose = vi.fn();
         render(<GroupSuggestionModal {...defaultProps} onClose={onClose} />);
 
-        fireEvent.keyDown(document, { key: 'Escape' });
+        fireEvent.click(screen.getByLabelText('common.close'));
         expect(onClose).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not listen for Escape while closed', () => {
-        const onClose = vi.fn();
-        render(<GroupSuggestionModal {...defaultProps} isOpen={false} onClose={onClose} />);
-
-        fireEvent.keyDown(document, { key: 'Escape' });
-        expect(onClose).not.toHaveBeenCalled();
     });
 });

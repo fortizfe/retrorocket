@@ -9,7 +9,6 @@ import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
 import ColorPicker from '@/lib/components/ui/ColorPicker';
 import TypingPreview from '@/lib/components/ui/TypingPreview';
 import { GroupCard } from '@/features/boards/clustering/components/GroupCard';
-import { GroupSuggestionModal } from '@/features/boards/clustering/components/GroupSuggestionModal';
 import ColumnHeaderMenu from '@/features/boards/clustering/components/ColumnHeaderMenu';
 import GroupedCardList from '@/features/boards/clustering/components/GroupedCardList';
 import { useTypingContext } from '@/features/boards/retrospective/contexts/useTypingContext';
@@ -37,7 +36,7 @@ interface GroupableColumnProps {
     onGroupDisband: (groupId: string) => Promise<void>;
     onGroupToggleCollapse: (groupId: string) => Promise<void>;
     onCardRemoveFromGroup: (cardId: string) => Promise<void>;
-    onSuggestionGenerate: () => GroupSuggestion[];
+    onSuggestionGenerate: () => Promise<GroupSuggestion[]>;
     currentUser?: string;
     retrospectiveId: string;
     /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4). */
@@ -79,6 +78,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
     const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+    const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
     const newCardTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Focus the new-card textarea when the form is mounted in response to an explicit
@@ -172,13 +172,23 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     };
 
     const handleGenerateSuggestions = async () => {
+        // Open the panel immediately, in its loading state (FR-007) — AI-based
+        // generation is a real async round-trip (worker + model inference), unlike the
+        // old synchronous algorithm, so the panel must not wait for it to resolve
+        // before appearing at all.
+        setSuggestions([]);
+        setSuggestionsError(null);
+        setShowSuggestions(true);
         setIsGeneratingSuggestions(true);
         try {
-            const newSuggestions = onSuggestionGenerate();
+            const newSuggestions = await onSuggestionGenerate();
             setSuggestions(newSuggestions);
-            setShowSuggestions(true);
         } catch (error) {
+            // AI analysis unavailable (FR-008) — the panel stays open, showing a
+            // distinct unavailable state (ColumnHeaderMenu/GroupSuggestionModal) rather
+            // than silently falling back to any other computation.
             console.error('Error generating suggestions:', error);
+            setSuggestionsError(error instanceof Error ? error.message : 'Unknown error');
         } finally {
             setIsGeneratingSuggestions(false);
         }
@@ -211,6 +221,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
         restorePreviousState(column.id);
         setShowSuggestions(false);
         setSuggestions([]);
+        setSuggestionsError(null);
     };
 
     const totalItems = ungroupedCards.length + columnGroups.length;
@@ -266,6 +277,14 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         }}
                         hasCards={true}
                         disabled={!currentUser}
+                        suggestionsOpen={showSuggestions}
+                        suggestions={suggestions}
+                        suggestionCards={ungroupedCards}
+                        suggestionsLoading={isGeneratingSuggestions}
+                        suggestionsError={suggestionsError}
+                        onAcceptSuggestion={handleAcceptSuggestion}
+                        onRejectSuggestion={handleRejectSuggestion}
+                        onCloseSuggestions={handleCloseSuggestions}
                     />
 
                     <Button
@@ -431,17 +450,6 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     )}
                 </AnimatePresence>
             </div>
-
-            {/* Group Suggestions Modal */}
-            <GroupSuggestionModal
-                isOpen={showSuggestions}
-                onClose={handleCloseSuggestions}
-                suggestions={suggestions}
-                cards={ungroupedCards}
-                onAcceptSuggestion={handleAcceptSuggestion}
-                onRejectSuggestion={handleRejectSuggestion}
-                loading={isGeneratingSuggestions}
-            />
         </div>
     );
 };

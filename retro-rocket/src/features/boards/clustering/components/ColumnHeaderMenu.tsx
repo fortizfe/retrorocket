@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -12,12 +12,26 @@ import {
     getGroupingOptions
 } from '@/features/boards/types/columnGrouping';
 import { useBoardMenuOverlay } from '@/features/boards/retrospective/hooks/useBoardMenuOverlay';
+import { GroupSuggestionModal } from '@/features/boards/clustering/components/GroupSuggestionModal';
+import { GroupSuggestion, Card } from '@/features/boards/types/card';
 
 interface ColumnHeaderMenuProps {
     currentGrouping: GroupingCriteria;
     onGroupingChange: (criteria: GroupingCriteria) => void;
     disabled?: boolean;
     hasCards?: boolean;
+    // Grouping-suggestions panel (spec 044) — anchored to this same trigger button,
+    // independently of the grouping-mode dropdown below. Data/state stays owned by
+    // the caller (GroupableColumn.tsx); this component only owns the trigger and the
+    // panel's positioning/animation/dismissal.
+    suggestionsOpen?: boolean;
+    suggestions?: GroupSuggestion[];
+    suggestionCards?: Card[];
+    suggestionsLoading?: boolean;
+    suggestionsError?: string | null;
+    onAcceptSuggestion?: (suggestion: GroupSuggestion) => void;
+    onRejectSuggestion?: (suggestionId: string) => void;
+    onCloseSuggestions?: () => void;
 }
 
 /**
@@ -26,17 +40,56 @@ interface ColumnHeaderMenuProps {
  * dismissal (no Escape key, no viewport-aware positioning), a real gap against
  * FR-012's "dismissible via Escape and outside-click" requirement, now fixed by
  * construction via the shared hook.
+ *
+ * Note (spec 044, research.md §1): this file's own grouping-mode dropdown below still
+ * carries the pre-existing `floatingStyles` + Framer Motion `initial`/`animate`/`exit`
+ * single-node collision that feature 039 identified and explicitly deferred (out of
+ * that feature's scope). It is deliberately left unchanged here too — this feature's
+ * scope is the new suggestions panel, not a drive-by fix of the older dropdown.
  */
 const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     currentGrouping,
     onGroupingChange,
     disabled = false,
-    hasCards = true
+    hasCards = true,
+    suggestionsOpen = false,
+    suggestions = [],
+    suggestionCards = [],
+    suggestionsLoading = false,
+    suggestionsError = null,
+    onAcceptSuggestion,
+    onRejectSuggestion,
+    onCloseSuggestions,
 }) => {
     const { t } = useTranslation();
     const { open, setOpen, context, refs, floatingStyles, getReferenceProps, getFloatingProps } = useBoardMenuOverlay({
         placement: 'bottom-end',
     });
+
+    // Second, independent overlay anchored to the *same* trigger button (merged ref
+    // below) so the suggestions panel opens right next to it, like every other popup
+    // in the app — fixing the reported defect where it rendered pinned to the
+    // viewport's top-left corner (research.md §1). `open` is fully controlled by the
+    // caller (GroupableColumn.tsx owns when suggestions are being generated/shown);
+    // this instance's own `useClick` is intentionally never wired to the trigger
+    // button (only its `refs.setReference`/positioning is), so clicking the button
+    // opens the grouping-mode dropdown above, never this panel directly.
+    const suggestionsOverlay = useBoardMenuOverlay({
+        open: suggestionsOpen,
+        onOpenChange: (next) => {
+            if (!next) onCloseSuggestions?.();
+        },
+        placement: 'bottom-end',
+        role: 'dialog',
+    });
+
+    const setTriggerRef = useCallback(
+        (node: HTMLButtonElement | null) => {
+            refs.setReference(node);
+            suggestionsOverlay.refs.setReference(node);
+        },
+        [refs, suggestionsOverlay.refs]
+    );
 
     // Get grouping options dynamically to respond to language changes
     const groupingOptions = getGroupingOptions(t);
@@ -57,7 +110,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     return (
         <>
             <button
-                ref={refs.setReference}
+                ref={setTriggerRef}
                 {...getReferenceProps()}
                 className={`
                     flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium
@@ -118,6 +171,47 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
                                     </button>
                                 ))}
                             </motion.div>
+                        </FloatingFocusManager>
+                    )}
+                </AnimatePresence>
+            </FloatingPortal>
+
+            <FloatingPortal>
+                <AnimatePresence>
+                    {suggestionsOverlay.open && (
+                        <FloatingFocusManager context={suggestionsOverlay.context} modal={false}>
+                            {/* Positioning wrapper: carries Floating UI's `ref`/`style` (whose
+                                `transform` encodes the anchor offset), not a `motion.div` — Framer
+                                Motion's own `animate`/`exit` write their own `transform` onto
+                                whatever node they're applied to, which would silently overwrite
+                                Floating UI's positioning transform and pin the panel to the
+                                viewport's top-left corner (research.md §1). The entrance/exit
+                                animation lives on the nested `motion.div` below instead, matching
+                                FacilitatorMenu.tsx's already-correct split-node pattern. */}
+                            <div
+                                ref={suggestionsOverlay.refs.setFloating}
+                                style={suggestionsOverlay.floatingStyles}
+                                {...suggestionsOverlay.getFloatingProps()}
+                                aria-label={t('groupSuggestion.title')}
+                                className="z-[9999]"
+                            >
+                                <motion.div
+                                    initial={{ opacity: 0, transform: 'translateY(-4px) scale(0.97)' }}
+                                    animate={{ opacity: 1, transform: 'translateY(0px) scale(1)' }}
+                                    exit={{ opacity: 0, transform: 'translateY(-4px) scale(0.97)' }}
+                                    transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
+                                >
+                                    <GroupSuggestionModal
+                                        onClose={() => suggestionsOverlay.setOpen(false)}
+                                        suggestions={suggestions}
+                                        cards={suggestionCards}
+                                        onAcceptSuggestion={(s) => onAcceptSuggestion?.(s)}
+                                        onRejectSuggestion={(id) => onRejectSuggestion?.(id)}
+                                        loading={suggestionsLoading}
+                                        error={suggestionsError}
+                                    />
+                                </motion.div>
+                            </div>
                         </FloatingFocusManager>
                     )}
                 </AnimatePresence>

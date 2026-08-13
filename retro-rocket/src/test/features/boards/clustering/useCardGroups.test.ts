@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups';
-import { findSimilarCardGroups } from '@/features/boards/clustering/services/similarityService';
+import { findSemanticCardGroups } from '@/features/boards/clustering/services/semanticGroupingService';
 import { Card, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 
@@ -22,11 +22,22 @@ vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', (
     setGroupCollapse: (...args: unknown[]) => mockSetGroupCollapse(...args),
 }));
 
-vi.mock('@/features/boards/clustering/services/similarityService', () => ({
-    findSimilarCardGroups: vi.fn()
+vi.mock('@/features/boards/clustering/services/semanticGroupingService', () => ({
+    findSemanticCardGroups: vi.fn()
 }));
 
-const mockedSimilarityService = vi.mocked(findSimilarCardGroups);
+// The hook only ever passes `embeddingWorker.embed` through as an opaque function to
+// findSemanticCardGroups (mocked above) — it's never actually invoked in this file, so
+// a stub is enough to avoid instantiating a real Worker in jsdom.
+vi.mock('@/features/boards/clustering/hooks/useEmbeddingWorkerManager', () => ({
+    useEmbeddingWorkerManager: () => ({
+        embed: vi.fn(),
+        getState: () => ({ ready: false, loading: false, error: undefined }),
+        terminate: vi.fn(),
+    }),
+}));
+
+const mockedSemanticGroupingService = vi.mocked(findSemanticCardGroups);
 
 describe('useCardGroups', () => {
     const mockCards: Card[] = [
@@ -212,31 +223,43 @@ describe('useCardGroups', () => {
         });
     });
 
-    describe('Similarity detection', () => {
-        it('should find group suggestions', () => {
+    describe('AI-based suggestion detection (spec 044)', () => {
+        it('should find group suggestions asynchronously, delegating to findSemanticCardGroups', async () => {
             const mockSuggestions: GroupSuggestion[] = [
                 {
                     id: 'suggestion-1',
                     cardIds: ['card-1', 'card-2'],
                     similarity: 0.8,
-                    reason: 'Similar content',
-                    algorithm: 'combined'
                 }
             ];
 
-            mockedSimilarityService.mockReturnValue(mockSuggestions);
+            mockedSemanticGroupingService.mockResolvedValue(mockSuggestions);
 
             const { result } = renderHook(() =>
                 useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
-            const suggestions = result.current.findSuggestions({ threshold: 0.7 });
+            const suggestionsPromise = result.current.findSuggestions({ threshold: 0.7 });
+            expect(suggestionsPromise).toBeInstanceOf(Promise);
+
+            const suggestions = await suggestionsPromise;
 
             expect(suggestions).toEqual(mockSuggestions);
-            expect(mockedSimilarityService).toHaveBeenCalledWith(
+            expect(mockedSemanticGroupingService).toHaveBeenCalledWith(
                 result.current.ungroupedCards,
+                expect.any(Function),
                 { threshold: 0.7 }
             );
+        });
+
+        it('propagates a rejection from findSemanticCardGroups (e.g. AI unavailable) rather than swallowing it', async () => {
+            mockedSemanticGroupingService.mockRejectedValue(new Error('Embedding model unavailable'));
+
+            const { result } = renderHook(() =>
+                useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
+            );
+
+            await expect(result.current.findSuggestions()).rejects.toThrow('Embedding model unavailable');
         });
 
         it('should accept a suggestion and create group', async () => {
@@ -250,8 +273,6 @@ describe('useCardGroups', () => {
                 id: 'suggestion-1',
                 cardIds: ['card-1', 'card-2', 'card-3'],
                 similarity: 0.8,
-                reason: 'Similar content',
-                algorithm: 'combined'
             };
 
             let groupId: string = '';
@@ -272,8 +293,6 @@ describe('useCardGroups', () => {
                 id: 'suggestion-1',
                 cardIds: ['card-1'],
                 similarity: 0.8,
-                reason: 'Similar content',
-                algorithm: 'combined'
             };
 
             await act(async () => {
