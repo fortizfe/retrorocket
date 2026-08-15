@@ -7,6 +7,21 @@ import type { EntityChangeEvent } from '@/features/boards/retrospective/services
 const mockGetBoardState = vi.fn();
 const mockJoinBoard = vi.fn();
 const mockConnectRealtimeClient = vi.fn();
+const mockSignOut = vi.fn();
+const mockOnHiddenFor = vi.fn();
+
+vi.mock('@/lib/contexts/useUserContext', () => ({
+    useAuthContext: () => ({ signOut: mockSignOut }),
+}));
+
+// documentVisibility.ts's own 120s hidden-then-fire timing logic is already fully
+// unit-tested in isolation (documentVisibility.test.ts) — here we only need to verify
+// this hook wires onHidden/onResume to pause()/resume() correctly, so the collaborator
+// is mocked rather than driven through real fake timers (which don't mix safely with
+// renderHook's internal act()/microtask flushing).
+vi.mock('@/features/boards/retrospective/services/documentVisibility', () => ({
+    onHiddenFor: (...args: unknown[]) => mockOnHiddenFor(...args),
+}));
 
 vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', async () => {
     const actual = await vi.importActual<typeof import('@/features/boards/retrospective/services/backendRetrospectiveClient')>(
@@ -169,7 +184,8 @@ describe('applyTypingStatusChange', () => {
 describe('useRetrospectiveRealtimeSync', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockConnectRealtimeClient.mockImplementation(() => ({ close: vi.fn() }));
+        mockConnectRealtimeClient.mockImplementation(() => ({ close: vi.fn(), pause: vi.fn(), resume: vi.fn() }));
+        mockOnHiddenFor.mockImplementation(() => vi.fn());
     });
 
     it('starts in a loading state and calls getBoardState + joinBoard via the realtime client onConnect', async () => {
@@ -296,5 +312,89 @@ describe('useRetrospectiveRealtimeSync', () => {
 
         onEvent({ type: 'entity_change', entity: 'typingStatus', op: 'deleted', id: 'r1_u2_col1' });
         await waitFor(() => expect(result.current.typingStatuses).toHaveLength(0));
+    });
+
+    // 045-idle-connection-cleanup
+    it('sets notFound=true when the realtime connection reports a terminal notFound reason (US2/FR-003)', async () => {
+        mockGetBoardState.mockResolvedValue(baseState());
+        mockJoinBoard.mockResolvedValue({});
+
+        const { result } = renderHook(() => useRetrospectiveRealtimeSync('r1'));
+        const { onConnect, onTerminal } = mockConnectRealtimeClient.mock.calls[0][1] as {
+            onConnect: () => Promise<void>;
+            onTerminal: (reason: 'unauthenticated' | 'notFound') => void;
+        };
+        await onConnect();
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        onTerminal('notFound');
+        await waitFor(() => expect(result.current.notFound).toBe(true));
+    });
+
+    it('signs the user out when the realtime connection reports a terminal unauthenticated reason (US5/FR-007)', async () => {
+        mockGetBoardState.mockResolvedValue(baseState());
+        mockJoinBoard.mockResolvedValue({});
+
+        renderHook(() => useRetrospectiveRealtimeSync('r1'));
+        const { onConnect, onTerminal } = mockConnectRealtimeClient.mock.calls[0][1] as {
+            onConnect: () => Promise<void>;
+            onTerminal: (reason: 'unauthenticated' | 'notFound') => void;
+        };
+        await onConnect();
+
+        onTerminal('unauthenticated');
+        expect(mockSignOut).toHaveBeenCalledTimes(1);
+    });
+
+    it('sets connectionLost=true when the retry budget is exhausted, and retryConnection() clears it and resumes (US2/FR-004)', async () => {
+        const resume = vi.fn();
+        mockConnectRealtimeClient.mockReturnValue({ close: vi.fn(), pause: vi.fn(), resume });
+        mockGetBoardState.mockResolvedValue(baseState());
+        mockJoinBoard.mockResolvedValue({});
+
+        const { result } = renderHook(() => useRetrospectiveRealtimeSync('r1'));
+        const { onConnect, onRetryExhausted } = mockConnectRealtimeClient.mock.calls[0][1] as {
+            onConnect: () => Promise<void>;
+            onRetryExhausted: () => void;
+        };
+        await onConnect();
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        onRetryExhausted();
+        await waitFor(() => expect(result.current.connectionLost).toBe(true));
+
+        result.current.retryConnection();
+        await waitFor(() => expect(result.current.connectionLost).toBe(false));
+        expect(resume).toHaveBeenCalledTimes(1);
+    });
+
+    it('wires documentVisibility\'s onHidden/onResume callbacks to pause()/resume() on the realtime client (US1)', async () => {
+        const pause = vi.fn();
+        const resume = vi.fn();
+        mockConnectRealtimeClient.mockReturnValue({ close: vi.fn(), pause, resume });
+        mockGetBoardState.mockResolvedValue(baseState());
+        mockJoinBoard.mockResolvedValue({});
+
+        renderHook(() => useRetrospectiveRealtimeSync('r1'));
+
+        expect(mockOnHiddenFor).toHaveBeenCalledWith(120_000, expect.objectContaining({ onHidden: expect.any(Function), onResume: expect.any(Function) }));
+        const { onHidden, onResume } = mockOnHiddenFor.mock.calls[0][1] as { onHidden: () => void; onResume: () => void };
+
+        onHidden();
+        expect(pause).toHaveBeenCalledTimes(1);
+
+        onResume();
+        expect(resume).toHaveBeenCalledTimes(1);
+    });
+
+    it('unsubscribes from documentVisibility on unmount', () => {
+        const unsubscribeVisibility = vi.fn();
+        mockOnHiddenFor.mockReturnValue(unsubscribeVisibility);
+        mockGetBoardState.mockResolvedValue(baseState());
+        mockJoinBoard.mockResolvedValue({});
+
+        const { unmount } = renderHook(() => useRetrospectiveRealtimeSync('r1'));
+        unmount();
+        expect(unsubscribeVisibility).toHaveBeenCalledTimes(1);
     });
 });

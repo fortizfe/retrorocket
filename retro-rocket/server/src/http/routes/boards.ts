@@ -29,8 +29,12 @@ interface AuthedSession {
 }
 
 async function requireSession(req: Request, deps: BoardsRouterDeps): Promise<AuthedSession> {
-    const session = await deps.sessionService.verify(readCookie(req, SESSION_COOKIE) ?? '', deps.clock.nowSeconds());
-    if (!session) throw new AppError('unauthenticated', 'Sign-in required', 401);
+    const now = deps.clock.nowSeconds();
+    const session = await deps.sessionService.verify(readCookie(req, SESSION_COOKIE) ?? '', now);
+    // 045-idle-connection-cleanup, US5/FR-007: a session past its soft TTL is rejected
+    // the same way an invalid one is, even though it's still within its absolute TTL —
+    // recoverable via the client's existing silent-refresh flow for a present user.
+    if (!session || !session.isActive(now)) throw new AppError('unauthenticated', 'Sign-in required', 401);
     return session.data as unknown as AuthedSession;
 }
 

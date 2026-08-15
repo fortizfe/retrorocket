@@ -9,6 +9,11 @@ const DEFAULT_REDIS_OP_TIMEOUT_MS = 3000;
  * protocol.md's Failure semantics recommends 10-30s; using the low end so recovery is
  * noticed promptly without hammering a still-unreachable Redis). */
 const DEFAULT_RECOVERY_RETRY_MS = 10_000;
+/** Fixed via /speckit-clarify (045-idle-connection-cleanup, FR-006) — mirrors
+ * FirestoreRealtimeGatewayAdapter's own TEARDOWN_GRACE_MS for the Redis-coordinated
+ * variant: how long ownership/subscription/listeners are kept alive with zero local
+ * connections before actually releasing them. */
+const TEARDOWN_GRACE_MS = 30_000;
 
 type BoardMode = 'connecting' | 'owner' | 'subscriber' | 'direct';
 
@@ -18,6 +23,9 @@ interface CoordinatedBoardState {
     firestoreListeners: FirestoreBoardListenerSet | undefined;
     subscribed: boolean;
     ticker: ReturnType<typeof setInterval>;
+    /** Set while connections.size === 0 and teardown is pending (US4); cleared/
+     * cancelled if a new connection registers before it fires. */
+    pendingTeardown?: ReturnType<typeof setTimeout>;
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -94,6 +102,14 @@ export class CoordinatedRealtimeGatewayAdapter implements RealtimeGatewayPort {
             };
             this.boards.set(retrospectiveId, state);
             void this.reconcile(retrospectiveId);
+        } else if (state.pendingTeardown !== undefined) {
+            // 045-idle-connection-cleanup, US4: a new connection arrived within the
+            // grace window — cancel the pending teardown and restart the ticker
+            // (paused while there were zero connections). Ownership/subscription/
+            // listeners were never released, so no fresh reconcile is required.
+            clearTimeout(state.pendingTeardown);
+            state.pendingTeardown = undefined;
+            state.ticker = setInterval(() => void this.reconcile(retrospectiveId), this.tickIntervalMs);
         }
         state.connections.add(connection);
     }
@@ -103,14 +119,20 @@ export class CoordinatedRealtimeGatewayAdapter implements RealtimeGatewayPort {
         const state = this.boards.get(retrospectiveId);
         if (!state) return;
         state.connections.delete(connection);
-        if (state.connections.size > 0) return;
+        if (state.connections.size > 0 || state.pendingTeardown !== undefined) return;
 
+        // 045-idle-connection-cleanup, US4/FR-006: pause reconciliation (nothing to
+        // reconcile with zero local connections) but keep ownership/subscription/
+        // listeners alive for a brief grace period in case this is just a
+        // micro-reconnect, instead of releasing everything immediately.
         clearInterval(state.ticker);
-        this.stopFirestoreListeners(state);
-        if (state.subscribed) void this.redisCoordinator.unsubscribe(retrospectiveId);
-        if (state.mode === 'owner') void this.redisCoordinator.release(retrospectiveId);
-        this.failOpen.clear(retrospectiveId);
-        this.boards.delete(retrospectiveId);
+        state.pendingTeardown = setTimeout(() => {
+            this.stopFirestoreListeners(state);
+            if (state.subscribed) void this.redisCoordinator.unsubscribe(retrospectiveId);
+            if (state.mode === 'owner') void this.redisCoordinator.release(retrospectiveId);
+            this.failOpen.clear(retrospectiveId);
+            this.boards.delete(retrospectiveId);
+        }, TEARDOWN_GRACE_MS);
     }
 
     /** Runs once immediately on first registration, then every tickIntervalMs while

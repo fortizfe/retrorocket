@@ -13,6 +13,9 @@ import { inMemoryProfilePort } from '../../application/use-cases/profile/profile
  * `sub`), boards routes also read `session.user.displayName` for createdByName/joiner
  * name, so this fake includes a full PublicUser projection.
  */
+/** `isActive` defaults to true (045-idle-connection-cleanup, US5) so every existing
+ * test keeps representing a healthy, active session unless it explicitly opts out via
+ * `overrides.sessionService`. */
 function fakeSessionServiceWithUser(): SessionServicePort {
     return {
         issue: vi.fn(),
@@ -24,6 +27,7 @@ function fakeSessionServiceWithUser(): SessionServicePort {
                     sub: uid,
                     user: { uid, email: `${uid}@example.com`, displayName: `User ${uid}`, photoURL: null, providers: ['google'] },
                 },
+                isActive: () => true,
             } as never;
         }),
         refresh: vi.fn(),
