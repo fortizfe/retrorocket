@@ -437,6 +437,28 @@ describe('ColumnHeaderMenu', () => {
         });
     });
 
+    describe('Grouping-Mode Menu Positioning (spec 045)', () => {
+        it('keeps the Floating UI positioning node separate from the Framer Motion entrance/exit node (research.md §1) so the panel cannot lose its anchor position', async () => {
+            const user = userEvent.setup();
+            render(<ColumnHeaderMenu {...defaultProps} />);
+
+            await user.click(screen.getByRole('button'));
+
+            const panel = screen.getByRole('menu', { name: 'retrospective.grouping.menuLabel' });
+            // The node Floating UI positions (carries its computed inline `position`) must
+            // not be the same node Framer Motion animates via `initial`/`animate`/`exit` —
+            // otherwise Framer Motion's own `transform` silently overwrites Floating UI's
+            // positioning `transform`, pinning the panel to the viewport's top-left corner
+            // instead of its trigger button (the exact defect this feature fixes).
+            expect(panel.style.position).toBeTruthy();
+            expect(panel.hasAttribute('initial')).toBe(false);
+            expect(panel.hasAttribute('animate')).toBe(false);
+            expect(panel.hasAttribute('exit')).toBe(false);
+            // The entrance/exit animation must still happen, just on a nested node.
+            expect(panel.querySelector('[animate]')).not.toBeNull();
+        });
+    });
+
     describe('Edge Cases', () => {
         it('should handle missing onGroupingChange prop gracefully', async () => {
             const user = userEvent.setup();

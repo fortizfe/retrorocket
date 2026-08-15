@@ -1690,6 +1690,53 @@ test('the grouping-suggestions panel opens anchored to its trigger button, not p
     await page.keyboard.press('Escape');
 });
 
+// spec 045-fix-column-grouping-dropdown-position: the grouping-mode dropdown (None /
+// By author / By color / Suggestions) previously rendered pinned to the viewport's
+// top-left corner (Framer Motion's `y`/`scale` animation overwriting Floating UI's
+// positioning `transform` on the same node, research.md §1) instead of anchored to
+// the same trigger button whose suggestions panel spec 044 already fixed above.
+test('the grouping-mode dropdown opens anchored to its trigger button, not pinned to the top-left corner (spec 045)', async ({ page, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner41@example.com', 'E2E Retro Owner 41', 'E2E Grouping Dropdown Anchor Board');
+    // COLUMN_ORDER is ['helped', 'hindered', 'improve'] — seed the last-rendered
+    // column so its trigger sits away from the top-left of the board.
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Tarjeta de ejemplo para agrupación', column: 'improve' } });
+
+    await signInAs(page, 'e2e-retro-owner41@example.com', 'E2E Retro Owner 41');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Grouping Dropdown Anchor Board')).toBeVisible({ timeout: 30_000 });
+
+    const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).last();
+    await expect(trigger).toBeVisible({ timeout: 10_000 });
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox).not.toBeNull();
+    expect(triggerBox!.x).toBeGreaterThan(300); // away from the top-left corner
+
+    await trigger.click();
+    const panel = page.getByRole('menu', { name: 'Opciones de agrupación' });
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    // The reported defect: the panel rendered pinned at the viewport's top-left corner
+    // regardless of the trigger's real position.
+    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(panel).not.toBeVisible();
+
+    // Viewport-edge flip/shift: shrink the viewport so the rightmost column's trigger
+    // sits near the right edge, then confirm the panel still renders fully anchored.
+    await page.setViewportSize({ width: 700, height: 700 });
+    await trigger.click();
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+
+    // Scroll while open — autoUpdate must keep the panel anchored to the trigger's
+    // current on-screen position, not a stale one.
+    await page.mouse.wheel(0, 200);
+    await expect(panel).toBeVisible();
+    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+
+    await page.keyboard.press('Escape');
+});
+
 // spec 044-ai-card-grouping, US2 edge case: the on-device model host is unreachable —
 // the panel must show a clear "unavailable" message (FR-008), never fall back to any
 // other computation, and never look identical to the "no suggestions found" empty
