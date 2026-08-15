@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { connectRealtimeClient, type EntityChangeEvent } from '../services/backendRealtimeClient';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import { useAuthContext } from '@/lib/contexts/useUserContext';
+import { connectRealtimeClient, type EntityChangeEvent, type RealtimeClient } from '../services/backendRealtimeClient';
+import { onHiddenFor } from '../services/documentVisibility';
 import {
     BackendRequestError,
     getBoardState,
@@ -12,6 +16,10 @@ import {
     type Participant,
     type RetrospectiveState,
 } from '../services/backendRetrospectiveClient';
+
+/** Time a backgrounded tab is given before its realtime connection is paused
+ * (045-idle-connection-cleanup, FR-001, fixed via /speckit-clarify — not configurable). */
+const BACKGROUND_GRACE_MS = 120_000;
 
 /**
  * The single hook owning this screen's board state (US1): fetches full state + joins
@@ -30,6 +38,15 @@ export interface RetrospectiveRealtimeSync {
      * response (data-model.md's typingStatus is a short-lived, WS-only signal), so
      * tracked as its own slice alongside `board` rather than through applyEntityChange. */
     typingStatuses: TypingStatusEntry[];
+    /** True once the automatic reconnect budget has been exhausted after a prolonged
+     * network failure (045-idle-connection-cleanup, US2/FR-004) — distinct from
+     * `notFound`/`error`, since the board may still be perfectly valid and cached data
+     * (`board`) remains showable; only live updates are paused until retryConnection()
+     * is called. */
+    connectionLost: boolean;
+    /** Manually retries the realtime connection after `connectionLost` — resets the
+     * automatic retry budget and reconnects immediately. */
+    retryConnection: () => void;
 }
 
 export interface TypingStatusEntry {
@@ -172,13 +189,17 @@ function messageOf(error: unknown): string {
 }
 
 export function useRetrospectiveRealtimeSync(retrospectiveId: string | undefined): RetrospectiveRealtimeSync {
+    const { t } = useTranslation();
+    const { signOut } = useAuthContext();
     const [board, setBoard] = useState<RetrospectiveState | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [notFound, setNotFound] = useState(false);
+    const [connectionLost, setConnectionLost] = useState(false);
     const [typingStatuses, setTypingStatuses] = useState<TypingStatusEntry[]>([]);
     const boardRef = useRef<RetrospectiveState | null>(null);
     const typingStatusesRef = useRef<TypingStatusEntry[]>([]);
+    const clientRef = useRef<RealtimeClient | null>(null);
 
     useEffect(() => {
         if (!retrospectiveId) return undefined;
@@ -191,6 +212,7 @@ export function useRetrospectiveRealtimeSync(retrospectiveId: string | undefined
         setLoading(true);
         setError(null);
         setNotFound(false);
+        setConnectionLost(false);
 
         async function resync(): Promise<void> {
             try {
@@ -241,13 +263,64 @@ export function useRetrospectiveRealtimeSync(retrospectiveId: string | undefined
                 boardRef.current = next;
                 setBoard(next);
             },
+            // 045-idle-connection-cleanup, US2/FR-003: the server's own definitive
+            // rejections never auto-retry. A 404 reuses the existing "board deleted"
+            // full-page state (notFound); a 401 (soft session TTL elapsed, or the
+            // session became invalid mid-session) signs the user out so the app's
+            // existing AuthWrapper redirect-to-login takes over, instead of a silent
+            // retry loop against a session that will never be accepted again.
+            onTerminal: (reason) => {
+                if (cancelled) return;
+                if (reason === 'notFound') {
+                    setNotFound(true);
+                    return;
+                }
+                toast.error(t('auth.sessionExpired'));
+                void signOut();
+            },
+            // US2/FR-004: the 5-minute automatic-retry budget was exhausted. Cached
+            // board data (if any) stays visible — only live updates are paused until
+            // the user retries manually via retryConnection().
+            onRetryExhausted: () => {
+                if (cancelled) return;
+                setConnectionLost(true);
+            },
+        });
+        clientRef.current = client;
+
+        // 045-idle-connection-cleanup, US1/FR-001/FR-002: pause the connection once the
+        // tab has been backgrounded for the fixed grace period, and resume it the
+        // instant the tab is foregrounded again — resync() (wired as onConnect above)
+        // runs on that resume exactly like any other reconnect.
+        const unsubscribeVisibility = onHiddenFor(BACKGROUND_GRACE_MS, {
+            onHidden: () => client.pause(),
+            onResume: () => client.resume(),
         });
 
         return () => {
             cancelled = true;
+            unsubscribeVisibility();
+            clientRef.current = null;
             client.close();
         };
-    }, [retrospectiveId]);
+        // `t` (react-i18next's translation function) is intentionally omitted: it is
+        // only used inside the onTerminal callback for a one-off toast message, and
+        // including it would re-run this effect (tearing down and reopening the
+        // realtime connection) on every language change or re-render where its
+        // reference isn't stable — not a reason to reconnect.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [retrospectiveId, signOut]);
 
-    return { board, loading, error, notFound, typingStatuses };
+    return {
+        board,
+        loading,
+        error,
+        notFound,
+        typingStatuses,
+        connectionLost,
+        retryConnection: () => {
+            setConnectionLost(false);
+            clientRef.current?.resume();
+        },
+    };
 }

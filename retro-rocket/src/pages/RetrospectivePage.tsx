@@ -18,7 +18,15 @@ const RetrospectivePageContent: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
 
-    const { board, loading: retroLoading, error: retroError, notFound, typingStatuses } = useRetrospectiveRealtimeSync(id);
+    const {
+        board,
+        loading: retroLoading,
+        error: retroError,
+        notFound,
+        typingStatuses,
+        connectionLost,
+        retryConnection,
+    } = useRetrospectiveRealtimeSync(id);
     const { fullName, isReady } = useCurrentUser();
 
     // Board/participant/columns state now comes from the backend-mediated
@@ -74,6 +82,23 @@ const RetrospectivePageContent: React.FC = () => {
         );
     }
 
+    // 045-idle-connection-cleanup, US2/FR-004: the automatic retry budget was
+    // exhausted and the board never loaded successfully — distinct from `notFound`
+    // (the board is presumably fine, just unreachable right now) and from a one-off
+    // load error, so it gets its own retry action instead of "back to dashboard".
+    if (connectionLost && !retrospective) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 flex items-center justify-center">
+                <div className="bg-surface-raised rounded-lg shadow-lg p-8 max-w-md text-center">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4">
+                        {t('errors.network')}
+                    </h2>
+                    <Button onClick={retryConnection}>{t('common.retry')}</Button>
+                </div>
+            </div>
+        );
+    }
+
     // Error state (load failure)
     if (retroError || !retrospective) {
         return (
@@ -101,6 +126,20 @@ const RetrospectivePageContent: React.FC = () => {
 
             {/* Main Content Area */}
             <div className="container mx-auto px-2 pt-6 pb-6">
+                {/* 045-idle-connection-cleanup, US2/FR-004: cached board data stays
+                    visible while the connection is lost — this banner persists (no
+                    auto-dismiss) since re-establishing live updates requires the
+                    explicit action it offers, per WCAG 2.1 AA guidance against relying
+                    on a transient toast for a required action. */}
+                {connectionLost && (
+                    <div
+                        role="alert"
+                        className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+                    >
+                        <span>{t('errors.network')}</span>
+                        <Button onClick={retryConnection}>{t('common.retry')}</Button>
+                    </div>
+                )}
                 {/* Main Board */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

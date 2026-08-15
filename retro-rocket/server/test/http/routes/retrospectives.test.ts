@@ -73,6 +73,22 @@ describe('GET /api/retrospectives/:id', () => {
         expect(res.status).toBe(401);
     });
 
+    // 045-idle-connection-cleanup, US5/FR-007.
+    it('401s for a session past its soft TTL, even though it is cryptographically valid', async () => {
+        const { app } = buildRetrospectiveTestApp({
+            retrospectives: [board()],
+            overrides: {
+                sessionService: {
+                    issue: vi.fn(),
+                    verify: vi.fn(async () => ({ data: { sub: 'u1' }, isActive: () => false }) as never),
+                    refresh: vi.fn(),
+                },
+            },
+        });
+        const res = await request(app).get('/api/retrospectives/r1').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(401);
+    });
+
     it('404s for a nonexistent board', async () => {
         const { app } = buildRetrospectiveTestApp();
         const res = await request(app).get('/api/retrospectives/missing').set('Cookie', sessionCookieFor('u1'));

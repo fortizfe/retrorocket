@@ -16,7 +16,10 @@ function fixedClock() {
     return { nowSeconds: () => 0 };
 }
 
-/** Mirrors boardsTestApp.ts's fakeSessionServiceWithUser — routes read session.user.displayName. */
+/** Mirrors boardsTestApp.ts's fakeSessionServiceWithUser — routes read session.user.displayName.
+ * `isActive` defaults to true (045-idle-connection-cleanup, US5) so every existing test
+ * keeps representing a healthy, active session unless it explicitly opts out via
+ * `overrides.sessionService`. */
 function fakeSessionServiceWithUser(): SessionServicePort {
     return {
         issue: vi.fn(),
@@ -28,6 +31,7 @@ function fakeSessionServiceWithUser(): SessionServicePort {
                     sub: uid,
                     user: { uid, email: `${uid}@example.com`, displayName: `User ${uid}`, photoURL: null, providers: ['google'] },
                 },
+                isActive: () => true,
             } as never;
         }),
         refresh: vi.fn(),

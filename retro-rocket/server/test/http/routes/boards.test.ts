@@ -49,6 +49,21 @@ describe('GET /api/boards', () => {
         const res = await request(app).get('/api/boards');
         expect(res.status).toBe(401);
     });
+
+    // 045-idle-connection-cleanup, US5/FR-007.
+    it('401s for a session past its soft TTL, even though it is cryptographically valid', async () => {
+        const { app } = buildBoardsTestApp({
+            overrides: {
+                sessionService: {
+                    issue: vi.fn(),
+                    verify: vi.fn(async () => ({ data: { sub: 'u1' }, isActive: () => false }) as never),
+                    refresh: vi.fn(),
+                },
+            },
+        });
+        const res = await request(app).get('/api/boards').set('Cookie', sessionCookieFor('u1'));
+        expect(res.status).toBe(401);
+    });
 });
 
 describe('POST /api/boards', () => {

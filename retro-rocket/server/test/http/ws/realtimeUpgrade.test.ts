@@ -2,18 +2,18 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import WebSocket from 'ws';
-import { attachRealtimeUpgrade, type RealtimeUpgradeDeps } from '../../../src/http/ws/realtimeUpgrade';
+import { attachRealtimeUpgrade, HeartbeatMonitor, type RealtimeUpgradeDeps } from '../../../src/http/ws/realtimeUpgrade';
 import type { SessionServicePort } from '../../../src/application/ports';
 import type { RealtimeGatewayPort } from '../../../src/application/ports/realtime';
 import type { RetrospectiveDTO } from '../../../src/application/ports/retrospective';
 
-function fakeSessionService(validTokens: Record<string, string> = { 'session-u1': 'u1' }): SessionServicePort {
+function fakeSessionService(validTokens: Record<string, string> = { 'session-u1': 'u1' }, activeTokens?: Set<string>): SessionServicePort {
     return {
         issue: vi.fn(),
         verify: vi.fn(async (token: string) => {
             const uid = validTokens[token];
             if (!uid) return null;
-            return { data: { sub: uid } } as never;
+            return { data: { sub: uid }, isActive: () => !activeTokens || activeTokens.has(token) } as never;
         }),
         refresh: vi.fn(),
     };
@@ -148,5 +148,89 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
         // after the client observes its own close event — give it a moment to settle.
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         expect(gateway.unregister).toHaveBeenCalledTimes(1);
+    });
+
+    // 045-idle-connection-cleanup, US5/FR-007.
+    it('closes with 4401 when the session is cryptographically valid but past its soft TTL', async () => {
+        const { server, url } = await startServer({
+            sessionService: fakeSessionService({ 'session-u1': 'u1' }, new Set()), // no token is "active"
+            clock: { nowSeconds: () => 0 },
+            realtimeGateway: fakeGateway(),
+            retrospectiveBoardPort: fakeBoardPort(),
+        });
+        activeServer = server;
+
+        const ws = new WebSocket(`${url}/api/retrospectives/board-1/live`, { headers: { Cookie: 'rr_session=session-u1' } });
+        const code = await new Promise<number>((resolve) => ws.on('close', (c) => resolve(c)));
+        expect(code).toBe(4401);
+    });
+
+    // 045-idle-connection-cleanup, US3/FR-005: the server-side protocol-level liveness
+    // sweep. The termination *decision* logic is fully covered by the HeartbeatMonitor
+    // unit tests below (no real socket needed there). This integration test instead
+    // proves the wiring around it doesn't produce false positives — a real, normally-
+    // responding `ws` client (which auto-replies to protocol pings, like every real
+    // client/browser) must NOT be terminated across several heartbeat intervals. A true
+    // "client goes silent" integration test was attempted with `ws.pause()` but proved
+    // unreliable (Node's `close` event did not fire deterministically on the paused
+    // socket even after the server called `terminate()`), so it was dropped rather than
+    // leave a flaky/hanging test in the suite — HeartbeatMonitor's own tests already
+    // prove the termination logic is correct.
+    describe('server-side heartbeat sweep', () => {
+        it('keeps a connection that responds normally to pings alive past several heartbeat intervals', async () => {
+            const gateway = fakeGateway();
+            const { server, url } = await startServer({
+                sessionService: fakeSessionService(),
+                clock: { nowSeconds: () => 0 },
+                realtimeGateway: gateway,
+                retrospectiveBoardPort: fakeBoardPort(),
+                heartbeatIntervalMs: 20,
+                maxMissedHeartbeats: 2,
+            });
+            activeServer = server;
+
+            const ws = new WebSocket(`${url}/api/retrospectives/board-1/live`, { headers: { Cookie: 'rr_session=session-u1' } });
+            await new Promise<void>((resolve) => ws.on('open', () => resolve()));
+            // A normal `ws` client auto-responds to protocol pings — no explicit
+            // handling needed here for that; just wait past several intervals.
+            await new Promise<void>((resolve) => setTimeout(resolve, 120));
+            expect(gateway.unregister).not.toHaveBeenCalled();
+            ws.close();
+        });
+    });
+});
+
+describe('HeartbeatMonitor', () => {
+    it('sends a ping (returns false) on the first tick', () => {
+        const monitor = new HeartbeatMonitor(2);
+        expect(monitor.tick()).toBe(false);
+    });
+
+    it('does not terminate after a single missed pong (below the threshold)', () => {
+        const monitor = new HeartbeatMonitor(2);
+        monitor.tick(); // ping #1 sent
+        expect(monitor.tick()).toBe(false); // 1 missed so far, ping #2 sent
+    });
+
+    it('terminates once consecutive missed pongs reach the threshold', () => {
+        const monitor = new HeartbeatMonitor(2);
+        monitor.tick(); // ping #1
+        monitor.tick(); // 1 missed, ping #2
+        expect(monitor.tick()).toBe(true); // 2 missed — terminate
+    });
+
+    it('a pong resets the missed count, so a single subsequent silence does not terminate', () => {
+        const monitor = new HeartbeatMonitor(2);
+        monitor.tick(); // ping #1
+        monitor.tick(); // 1 missed, ping #2
+        monitor.onPong();
+        expect(monitor.tick()).toBe(false); // fresh streak, ping #3
+        expect(monitor.tick()).toBe(false); // 1 missed, ping #4
+    });
+
+    it('respects a threshold of 1 (terminate on the very first missed pong)', () => {
+        const monitor = new HeartbeatMonitor(1);
+        monitor.tick(); // ping #1
+        expect(monitor.tick()).toBe(true); // 1 missed already meets the threshold
     });
 });

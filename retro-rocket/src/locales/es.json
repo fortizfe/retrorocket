@@ -876,6 +876,7 @@
     "wrapper": {
       "verifying": "Verificando autenticación..."
     },
+    "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
     "errors": {
       "invalid_oauth_state": "No pudimos verificar tu inicio de sesión. Vuelve a intentarlo.",
       "email_not_verified": "El correo de esa cuenta no está verificado por el proveedor.",

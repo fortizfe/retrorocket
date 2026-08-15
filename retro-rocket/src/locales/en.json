@@ -855,6 +855,7 @@
     "wrapper": {
       "verifying": "Verifying authentication..."
     },
+    "sessionExpired": "Your session has expired. Please sign in again.",
     "errors": {
       "invalid_oauth_state": "We could not verify your sign-in. Please try again.",
       "email_not_verified": "The email on that account is not verified by the provider.",

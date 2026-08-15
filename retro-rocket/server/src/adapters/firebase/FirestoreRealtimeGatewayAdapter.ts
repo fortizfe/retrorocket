@@ -196,9 +196,18 @@ async function sweepStaleTyping(db: Firestore, retrospectiveId: string): Promise
     await batch.commit();
 }
 
+/** Fixed via /speckit-clarify (045-idle-connection-cleanup, FR-006) — how long a
+ * board's listeners are kept alive with zero connections before actually tearing them
+ * down, so a reconnect within this window reuses them instead of paying the full
+ * re-attach cost. Not user/env-configurable. */
+const TEARDOWN_GRACE_MS = 30_000;
+
 interface BoardWatch {
     connections: Set<RealtimeConnection>;
     listeners: FirestoreBoardListenerSet;
+    /** Set while connections.size === 0 and teardown is pending (045-idle-connection-
+     * cleanup, US4); cleared/cancelled if a new connection registers before it fires. */
+    pendingTeardown?: ReturnType<typeof setTimeout>;
 }
 
 /**
@@ -223,17 +232,29 @@ export class FirestoreRealtimeGatewayAdapter implements RealtimeGatewayPort {
             });
             watch = { connections: new Set(), listeners };
             this.boards.set(retrospectiveId, watch);
+        } else if (watch.pendingTeardown !== undefined) {
+            // A new connection arrived within the grace window (US4) — cancel the
+            // pending teardown and reuse the still-live listeners rather than
+            // rebuilding them.
+            clearTimeout(watch.pendingTeardown);
+            watch.pendingTeardown = undefined;
         }
         watch.connections.add(connection);
     }
 
     unregister(connection: RealtimeConnection): void {
-        const watch = this.boards.get(connection.retrospectiveId);
+        const { retrospectiveId } = connection;
+        const watch = this.boards.get(retrospectiveId);
         if (!watch) return;
         watch.connections.delete(connection);
-        if (watch.connections.size === 0) {
-            watch.listeners.unsubscribe();
-            this.boards.delete(connection.retrospectiveId);
+        if (watch.connections.size === 0 && watch.pendingTeardown === undefined) {
+            // 045-idle-connection-cleanup, US4/FR-006: don't tear down immediately —
+            // give a brief grace period in case this was just a micro-reconnect, so the
+            // board's listeners survive it instead of being rebuilt from scratch.
+            watch.pendingTeardown = setTimeout(() => {
+                watch.listeners.unsubscribe();
+                this.boards.delete(retrospectiveId);
+            }, TEARDOWN_GRACE_MS);
         }
     }
 
