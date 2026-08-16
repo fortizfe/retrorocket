@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
     Plus,
     Users
@@ -208,7 +209,11 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 setSuggestions([]);
             }
         } catch (error) {
+            // spec 046, FR-007a: surface a visible error rather than silently losing
+            // the suggestion — the suggestion stays in the list (not removed above)
+            // so the facilitator can retry.
             console.error('Error accepting suggestion:', error);
+            toast.error(t('groupSuggestion.acceptError'));
         }
     };
 

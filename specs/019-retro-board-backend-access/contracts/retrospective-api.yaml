@@ -217,6 +217,7 @@ paths:
       responses:
         "201": { description: Created group, content: { application/json: { schema: { $ref: "#/components/schemas/CardGroup" } } } }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /groups/{groupId}:
     patch:

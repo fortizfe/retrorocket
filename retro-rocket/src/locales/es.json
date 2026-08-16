@@ -524,7 +524,8 @@
     "similarityMedium": "Media",
     "similarityLow": "Baja",
     "unavailableTitle": "Análisis de IA no disponible",
-    "unavailableBody": "No pudimos analizar tus tarjetas en este momento. Inténtalo de nuevo en unos instantes."
+    "unavailableBody": "No pudimos analizar tus tarjetas en este momento. Inténtalo de nuevo en unos instantes.",
+    "acceptError": "No pudimos crear ese grupo. Inténtalo de nuevo."
   },
   "datePicker": {
     "placeholder": "Seleccionar fecha",

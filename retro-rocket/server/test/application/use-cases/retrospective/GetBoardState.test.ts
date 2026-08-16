@@ -56,4 +56,34 @@ describe('getBoardState', () => {
         const store = createRetrospectiveFakeStore();
         await expect(getBoardState({ ...store }, { retrospectiveId: 'missing', uid: 'u1' })).rejects.toThrow(NotFoundError);
     });
+
+    // spec 046, FR-009/SC-005: a group persisted before the fix (or by any other bug)
+    // with a `column` that doesn't match its head card's actual column must be
+    // self-healed on the very next board load — both in the response and in storage,
+    // so it stays fixed on every subsequent load too, not just this one.
+    it("repairs a group's column to match its head card's actual column, and persists the correction (spec 046, FR-009)", async () => {
+        const store = createRetrospectiveFakeStore({
+            retrospectives: [board()],
+            cards: [{ id: 'c1', content: 'x', column: 'col1', createdBy: 'u1', createdAt: new Date(), updatedAt: new Date(), retrospectiveId: 'r1', votes: 0, likes: [], reactions: [], order: 0 }],
+            groups: [{ id: 'g1', retrospectiveId: 'r1', column: '', headCardId: 'c1', memberCardIds: [], isCollapsed: false, createdAt: new Date(), createdBy: 'u1', order: 0 }],
+        });
+
+        const result = await getBoardState({ ...store }, { retrospectiveId: 'r1', uid: 'u1' });
+        expect(result.groups).toHaveLength(1);
+        expect(result.groups[0].column).toBe('col1');
+
+        const persisted = await store.cardGroupPort.listGroups('r1');
+        expect(persisted[0].column).toBe('col1');
+    });
+
+    it("leaves an already-correct group's column untouched (no unnecessary repair)", async () => {
+        const store = createRetrospectiveFakeStore({
+            retrospectives: [board()],
+            cards: [{ id: 'c1', content: 'x', column: 'col1', createdBy: 'u1', createdAt: new Date(), updatedAt: new Date(), retrospectiveId: 'r1', votes: 0, likes: [], reactions: [], order: 0 }],
+            groups: [{ id: 'g1', retrospectiveId: 'r1', column: 'col1', headCardId: 'c1', memberCardIds: [], isCollapsed: false, createdAt: new Date(), createdBy: 'u1', order: 0 }],
+        });
+
+        const result = await getBoardState({ ...store }, { retrospectiveId: 'r1', uid: 'u1' });
+        expect(result.groups[0].column).toBe('col1');
+    });
 });

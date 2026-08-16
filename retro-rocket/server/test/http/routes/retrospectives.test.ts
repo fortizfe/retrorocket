@@ -383,7 +383,26 @@ describe('POST /api/retrospectives/:id/groups', () => {
             .set('Cookie', sessionCookieFor('u1'))
             .send({ headCardId: 'c1', memberCardIds: ['c2'] });
         expect(res.status).toBe(201);
-        expect(res.body).toMatchObject({ headCardId: 'c1', memberCardIds: ['c2'] });
+        expect(res.body).toMatchObject({ headCardId: 'c1', memberCardIds: ['c2'], column: 'col1' });
+    });
+
+    it("derives the group's column from the head card even if a different value is sent (spec 046, FR-003)", async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        const res = await request(app)
+            .post('/api/retrospectives/r1/groups')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ headCardId: 'c1', memberCardIds: ['c2'], column: 'not-the-real-column' });
+        expect(res.status).toBe(201);
+        expect(res.body.column).toBe('col1');
+    });
+
+    it('404s when headCardId does not correspond to an existing card (spec 046, FR-003)', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c2' })] });
+        const res = await request(app)
+            .post('/api/retrospectives/r1/groups')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ headCardId: 'does-not-exist', memberCardIds: ['c2'] });
+        expect(res.status).toBe(404);
     });
 });
 

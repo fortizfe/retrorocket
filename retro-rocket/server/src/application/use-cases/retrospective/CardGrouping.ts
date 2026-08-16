@@ -1,22 +1,27 @@
-import type { CardGroupDTO, CardGroupPort } from '../../ports/cards';
+import type { CardGroupDTO, CardGroupPort, CardPort } from '../../ports/cards';
 import type { ColumnGroupingStates, RetrospectiveBoardPort } from '../../ports/retrospective';
-import { AppError } from '../../../domain/errors';
+import { AppError, NotFoundError } from '../../../domain/errors';
 
 export interface CreateCardGroupParams {
     retrospectiveId: string;
-    column: string;
     headCardId: string;
     memberCardIds: string[];
     title?: string;
     createdBy: string;
 }
 
-/** POST /api/retrospectives/:id/groups — FR-011. */
-export async function createCardGroup(deps: { cardGroupPort: CardGroupPort }, params: CreateCardGroupParams): Promise<CardGroupDTO> {
+/** POST /api/retrospectives/:id/groups — FR-011. A group's `column` is always derived
+ * from its head card's actual column (spec 046, FR-003) — never accepted from the
+ * caller — so it can never drift from where its member cards actually live. */
+export async function createCardGroup(deps: { cardGroupPort: CardGroupPort; cardPort: CardPort }, params: CreateCardGroupParams): Promise<CardGroupDTO> {
     if (params.memberCardIds.length === 0) {
         throw new AppError('invalid_request', 'At least one member card is required to create a group', 400);
     }
-    return deps.cardGroupPort.createGroup(params);
+    const headCard = await deps.cardPort.getCard(params.headCardId);
+    if (!headCard) {
+        throw new NotFoundError('Card not found');
+    }
+    return deps.cardGroupPort.createGroup({ ...params, column: headCard.column });
 }
 
 export interface DisbandCardGroupParams {

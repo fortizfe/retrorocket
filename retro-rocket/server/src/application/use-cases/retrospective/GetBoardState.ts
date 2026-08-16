@@ -46,7 +46,7 @@ export async function getBoardState(deps: GetBoardStateDeps, params: GetBoardSta
 
     const isFacilitator = board.createdBy === params.uid;
 
-    const [columns, cards, groups, actionItems, participants, timer, sentimentResults, myFacilitatorNotes] = await Promise.all([
+    const [columns, cards, rawGroups, actionItems, participants, timer, sentimentResults, myFacilitatorNotes] = await Promise.all([
         deps.retrospectiveBoardPort.listColumns(params.retrospectiveId),
         deps.cardPort.listCards(params.retrospectiveId),
         deps.cardGroupPort.listGroups(params.retrospectiveId),
@@ -56,6 +56,24 @@ export async function getBoardState(deps: GetBoardStateDeps, params: GetBoardSta
         deps.sentimentResultPort.listResults(params.retrospectiveId),
         isFacilitator ? deps.facilitatorNotePort.listNotesForFacilitator(params.retrospectiveId, params.uid) : Promise.resolve([]),
     ]);
+
+    // Self-heal (spec 046, FR-009/SC-005): a group whose persisted `column` no longer
+    // matches its head card's actual column (e.g. groups formed before this fix
+    // shipped, which always persisted `column: ''`) is corrected here, on the very
+    // next board load, and the correction is persisted — not just reflected in this
+    // one response — so every subsequent load and every other reader converges on the
+    // right value without a separate migration step.
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    const groups = await Promise.all(
+        rawGroups.map(async (group) => {
+            const headCard = cardsById.get(group.headCardId);
+            if (!headCard || headCard.column === group.column) {
+                return group;
+            }
+            await deps.cardGroupPort.repairGroupColumn(group.id, headCard.column);
+            return { ...group, column: headCard.column };
+        }),
+    );
 
     return { ...board, isFacilitator, columns, cards, groups, actionItems, participants, timer, myFacilitatorNotes, sentimentResults };
 }
