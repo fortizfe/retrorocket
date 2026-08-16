@@ -431,6 +431,55 @@ test('grouping cards, adding/removing a member, and disbanding propagate live to
     await contextB.close();
 });
 
+// spec 047-suggested-grouping-refinements, US2: switching a column's grouping mode
+// away from 'suggestions' must dissolve every group in that column (FR-008) and let
+// its cards re-sort per the newly selected mode (FR-009) — this is a client-side
+// reaction to a real dropdown click, not something a raw column-grouping PATCH alone
+// would trigger, so it's driven through the actual UI rather than the API-only
+// pattern the "column-grouping preference propagates live" test above uses.
+test('switching a column away from suggested grouping dissolves its accepted group and re-sorts its cards (spec 047)', async ({ page, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner42@example.com', 'E2E Retro Owner 42', 'E2E Mode Switch Teardown Board');
+    const createHead = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Teardown Head Card', column: 'helped' } });
+    const { id: headId } = (await createHead.json()) as { id: string };
+    const createMember = await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Teardown Member Card', column: 'helped' } });
+    const { id: memberId } = (await createMember.json()) as { id: string };
+
+    // Put the column in 'suggestions' mode and create a group exactly as accepting a
+    // real suggestion would leave it — the teardown logic doesn't care how the group
+    // was formed, only that the column's mode is currently 'suggestions'.
+    const toSuggestionsRes = await request.patch(`/api/retrospectives/${boardId}/column-grouping`, {
+        data: { helped: { criteria: 'suggestions', activeGroups: [] } },
+    });
+    expect(toSuggestionsRes.ok()).toBeTruthy();
+    const createGroupRes = await request.post(`/api/retrospectives/${boardId}/groups`, {
+        data: { column: 'helped', headCardId: headId, memberCardIds: [memberId], title: 'Teardown Group' },
+    });
+    expect(createGroupRes.ok()).toBeTruthy();
+    const { id: groupId } = (await createGroupRes.json()) as { id: string };
+
+    await signInAs(page, 'e2e-retro-owner42@example.com', 'E2E Retro Owner 42');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Mode Switch Teardown Board')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Teardown Group')).toBeVisible({ timeout: 10_000 });
+
+    const trigger = page.getByRole('button', { name: 'Opciones de agrupación' }).first();
+    await trigger.click();
+    await page.getByText('Sin agrupación', { exact: true }).click();
+
+    // The group heading disappears and both former member cards render individually.
+    await expect(page.getByText('Teardown Group')).not.toBeVisible({ timeout: 10_000 });
+    await expect(cardByContent(page, 'Teardown Head Card')).toBeVisible();
+    await expect(cardByContent(page, 'Teardown Member Card')).toBeVisible();
+
+    // Persistence check: the group was actually disbanded server-side (FR-008), not
+    // just hidden client-side.
+    await expect.poll(async () => {
+        const stateRes = await request.get(`/api/retrospectives/${boardId}`);
+        const state = await stateRes.json() as { groups?: { id: string }[] };
+        return state.groups?.some(g => g.id === groupId) ?? false;
+    }, { timeout: 10_000 }).toBe(false);
+});
+
 // spec 020-user-display-name-fix: group-by-user headers must show each author's
 // display name, sorted alphabetically, and never the raw Firebase uid — regression
 // coverage for the bug where the group heading (and the per-card author label)
@@ -1826,18 +1875,28 @@ test('AI-based grouping proposes semantically similar cards together, excludes u
     await expect(panel.getByText('Deberíamos coordinarnos mejor con los demás equipos')).toBeVisible();
     await expect(panel.getByText('El servidor de CI tarda demasiado en arrancar')).not.toBeVisible();
 
+    // spec 047, US1: the proposed group carries a suggested title, editable inline
+    // right here in the panel (FR-001/FR-002) — edit it before accepting.
+    const titleInput = panel.getByLabel('Título del grupo').first();
+    await expect(titleInput).toBeVisible();
+    await expect(titleInput).not.toHaveValue('');
+    await titleInput.fill('Comunicación entre equipos');
+
     await acceptButton.click();
     await expect(panel).not.toBeVisible({ timeout: 10_000 });
 
     // Persistence check: confirm a real CardGroup was created containing the two
     // similar cards, via the same REST API the "grouping cards..." test already uses.
     const stateRes = await request.get(`/api/retrospectives/${boardId}`);
-    const state = await stateRes.json() as { groups?: { headCardId: string; memberCardIds: string[] }[] };
+    const state = await stateRes.json() as { groups?: { headCardId: string; memberCardIds: string[]; title?: string }[] };
     const persistedGroup = state.groups?.find(
         g => [g.headCardId, ...g.memberCardIds].includes(similarAId) && [g.headCardId, ...g.memberCardIds].includes(similarBId)
     );
     expect(persistedGroup).toBeDefined();
     expect([persistedGroup!.headCardId, ...persistedGroup!.memberCardIds]).not.toContain(unrelatedId);
+    // spec 047, US1 (FR-004): the edited title, not the original AI suggestion, is
+    // what got persisted.
+    expect(persistedGroup!.title).toBe('Comunicación entre equipos');
 
     // SC-004 (clarified: up to 25 cards, a few seconds) — measured on a second,
     // now-warm request in a different column so the model is no longer cold-starting.

@@ -230,6 +230,7 @@ describe('useCardGroups', () => {
                     id: 'suggestion-1',
                     cardIds: ['card-1', 'card-2'],
                     similarity: 0.8,
+                    suggestedTitle: 'Suggested title',
                 }
             ];
 
@@ -262,7 +263,7 @@ describe('useCardGroups', () => {
             await expect(result.current.findSuggestions()).rejects.toThrow('Embedding model unavailable');
         });
 
-        it('should accept a suggestion and create group', async () => {
+        it('should accept a suggestion and create group, passing the suggestion\'s title through as customTitle (spec 047 FR-004)', async () => {
             mockCreateCardGroup.mockResolvedValue({ id: 'suggestion-group-id' });
 
             const { result } = renderHook(() =>
@@ -273,6 +274,7 @@ describe('useCardGroups', () => {
                 id: 'suggestion-1',
                 cardIds: ['card-1', 'card-2', 'card-3'],
                 similarity: 0.8,
+                suggestedTitle: 'Standup runs long',
             };
 
             let groupId: string = '';
@@ -281,7 +283,7 @@ describe('useCardGroups', () => {
             });
 
             expect(groupId).toBe('suggestion-group-id');
-            expect(mockCreateCardGroup).toHaveBeenCalledWith('retro-1', { headCardId: 'card-1', memberCardIds: ['card-2', 'card-3'], title: undefined });
+            expect(mockCreateCardGroup).toHaveBeenCalledWith('retro-1', { headCardId: 'card-1', memberCardIds: ['card-2', 'card-3'], title: 'Standup runs long' });
         });
 
         it('should reject suggestion with insufficient cards', async () => {
@@ -293,6 +295,7 @@ describe('useCardGroups', () => {
                 id: 'suggestion-1',
                 cardIds: ['card-1'],
                 similarity: 0.8,
+                suggestedTitle: 'Title',
             };
 
             await act(async () => {

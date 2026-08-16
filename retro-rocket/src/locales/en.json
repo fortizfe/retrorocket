@@ -268,7 +268,8 @@
       "automaticSuggestionsBySimilarity": "Automatic suggestions by similarity",
       "unknownAuthor": "Unknown author",
       "menuTrigger": "Group cards",
-      "menuLabel": "Grouping options"
+      "menuLabel": "Grouping options",
+      "disbandOnSwitchError": "Some groups couldn't be dissolved. Please try again."
     },
     "groupCard": {
       "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",
@@ -965,6 +966,8 @@
     "similarityLow": "Low",
     "unavailableTitle": "AI analysis unavailable",
     "unavailableBody": "We couldn't analyze your cards right now. Please try again in a moment.",
-    "acceptError": "We couldn't create that group. Please try again."
+    "acceptError": "We couldn't create that group. Please try again.",
+    "titleInputLabel": "Group title",
+    "titleInputPlaceholder": "Group title"
   }
 }

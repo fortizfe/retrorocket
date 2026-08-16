@@ -148,7 +148,7 @@ export const useCardGroups = ({
         async (suggestion: GroupSuggestion): Promise<string> => {
             if (suggestion.cardIds.length < 2) throw new Error('Suggestion must have at least 2 cards');
             const [headCardId, ...memberCardIds] = suggestion.cardIds;
-            return createGroup(headCardId, memberCardIds);
+            return createGroup(headCardId, memberCardIds, suggestion.suggestedTitle);
         },
         [createGroup],
     );
