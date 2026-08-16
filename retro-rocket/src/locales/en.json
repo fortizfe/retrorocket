@@ -964,6 +964,7 @@
     "similarityMedium": "Medium",
     "similarityLow": "Low",
     "unavailableTitle": "AI analysis unavailable",
-    "unavailableBody": "We couldn't analyze your cards right now. Please try again in a moment."
+    "unavailableBody": "We couldn't analyze your cards right now. Please try again in a moment.",
+    "acceptError": "We couldn't create that group. Please try again."
   }
 }

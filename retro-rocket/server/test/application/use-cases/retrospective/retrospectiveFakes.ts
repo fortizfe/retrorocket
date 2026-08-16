@@ -381,6 +381,10 @@ export function createRetrospectiveFakeStore(seed: {
             const group = groups.get(groupId);
             return group ? { ...group } : null;
         },
+        async repairGroupColumn(groupId, column) {
+            const group = requireGroup(groupId);
+            group.column = column;
+        },
     };
 
     const actionItemPort: ActionItemPort = {

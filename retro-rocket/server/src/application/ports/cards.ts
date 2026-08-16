@@ -112,4 +112,7 @@ export interface CardGroupPort {
     removeCardFromGroup(groupId: string, cardId: string): Promise<CardGroupDTO | null>;
     setGroupCollapse(groupId: string, isCollapsed: boolean): Promise<CardGroupDTO>;
     getGroup(groupId: string): Promise<CardGroupDTO | null>;
+    /** Corrects a group's column association (self-heal repair, spec 046 FR-009) — an
+     * internal primitive, not HTTP-exposed. */
+    repairGroupColumn(groupId: string, column: string): Promise<void>;
 }

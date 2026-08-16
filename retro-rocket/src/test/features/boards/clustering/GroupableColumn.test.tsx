@@ -1,7 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { vi, describe, it, beforeEach, expect, type Mock } from 'vitest';
+import toast from 'react-hot-toast';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
 import { Card, CardGroup } from '@/features/boards/types/card';
 import { ColumnConfig } from '@/features/boards/types/retrospective';
@@ -628,6 +629,44 @@ describe('GroupableColumn', () => {
             await user.click(screen.getByTestId('suggestion-0'));
 
             await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2']));
+        });
+
+        it('shows an error toast and keeps the suggestion when onGroupCreate fails (spec 046, FR-007a)', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            const mockOnGroupCreate = vi.fn().mockRejectedValue(new Error('network error'));
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+            await user.click(screen.getByTestId('suggestion-0'));
+
+            await waitFor(() => expect(toast.error as Mock).toHaveBeenCalledWith('groupSuggestion.acceptError'));
+            expect(screen.getByTestId('suggestion-0')).toBeInTheDocument();
+            expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument();
+        });
+
+        it('rejecting or closing suggestions never touches cards or groups (spec 046, FR-006)', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+
+            await user.click(screen.getByTestId('reject-suggestion-0'));
+            await waitFor(() => expect(screen.queryByTestId('suggestion-0')).not.toBeInTheDocument());
+
+            await user.click(screen.getByText('Close'));
+            await waitFor(() => expect(screen.queryByTestId('group-suggestion-modal')).not.toBeInTheDocument());
+
+            expect(defaultProps.onCardUpdate).not.toHaveBeenCalled();
+            expect(defaultProps.onCardDelete).not.toHaveBeenCalled();
+            expect(defaultProps.onGroupCreate).not.toHaveBeenCalled();
+            expect(defaultProps.onGroupDisband).not.toHaveBeenCalled();
+            expect(defaultProps.onCardRemoveFromGroup).not.toHaveBeenCalled();
         });
 
         it('closing the suggestions panel clears its state', async () => {

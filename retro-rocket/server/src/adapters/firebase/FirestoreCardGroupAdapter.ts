@@ -178,4 +178,11 @@ export class FirestoreCardGroupAdapter implements CardGroupPort {
         const updated = await groupRef.get();
         return toCardGroup(updated.id, updated.data()!);
     }
+
+    /** Corrects a group's column association (self-heal repair, spec 046 FR-009) —
+     * called by GetBoardState when a group's persisted column no longer matches its
+     * head card's actual column. */
+    async repairGroupColumn(groupId: string, column: string): Promise<void> {
+        await this.db.collection(GROUPS).doc(groupId).update({ column, updatedAt: FieldValue.serverTimestamp() });
+    }
 }

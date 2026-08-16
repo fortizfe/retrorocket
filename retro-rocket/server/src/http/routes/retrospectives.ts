@@ -307,12 +307,11 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
 
     router.post('/api/retrospectives/:id/groups', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
-        const body = req.body as { headCardId?: unknown; memberCardIds?: unknown; title?: unknown; column?: unknown };
+        const body = req.body as { headCardId?: unknown; memberCardIds?: unknown; title?: unknown };
         const created = await createCardGroup(
-            { cardGroupPort: deps.cardGroupPort },
+            { cardGroupPort: deps.cardGroupPort, cardPort: deps.cardPort },
             {
                 retrospectiveId: String(req.params.id),
-                column: typeof body.column === 'string' ? body.column : '',
                 headCardId: String(body.headCardId ?? ''),
                 memberCardIds: Array.isArray(body.memberCardIds) ? (body.memberCardIds as string[]) : [],
                 title: typeof body.title === 'string' ? body.title : undefined,
