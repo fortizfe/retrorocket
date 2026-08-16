@@ -1,4 +1,5 @@
 import { Card, GroupSuggestion } from '@/features/boards/types/card';
+import { suggestGroupTitle } from '@/features/boards/clustering/services/groupTitleService';
 
 /**
  * Requests a batch of embedding vectors, one per input card, paired by `cardId` — the
@@ -110,6 +111,9 @@ export async function findSemanticCardGroups(
                 id: `suggestion_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
                 cardIds: similarCards.map(card => card.id),
                 similarity: comparisons > 0 ? totalSimilarity / comparisons : 0,
+                // spec 047 FR-001/FR-001a: derived synchronously, in-process — ready
+                // together with the group itself, no extra async round-trip.
+                suggestedTitle: suggestGroupTitle(similarCards),
             });
 
             similarCards.forEach(card => processedCards.add(card.id));

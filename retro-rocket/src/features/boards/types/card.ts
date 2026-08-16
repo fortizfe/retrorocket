@@ -54,6 +54,7 @@ export interface GroupSuggestion {
     id: string;
     cardIds: string[];
     similarity: number;      // Cosine similarity between card embeddings, clamped to [0, 1]
+    suggestedTitle: string;  // Short (<=35 char), non-empty, AI-derived title (spec 047)
 }
 
 // Card group entity

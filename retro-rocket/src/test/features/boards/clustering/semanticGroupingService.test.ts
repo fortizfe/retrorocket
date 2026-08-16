@@ -62,6 +62,21 @@ describe('findSemanticCardGroups (ai-grouping-service-contract.md)', () => {
         expect(new Set(suggestions[0].cardIds)).toEqual(new Set(['a', 'b']));
     });
 
+    it('populates a non-empty, <=35-char suggestedTitle on every returned suggestion (spec 047 FR-001)', async () => {
+        const cards = [
+            makeCard({ id: 'a', content: 'necesitamos mejorar la comunicación del equipo' }),
+            makeCard({ id: 'b', content: 'deberíamos comunicarnos mejor como equipo' }),
+        ];
+        const fetcher = fakeFetcher({ a: [1, 0], b: [0.99, 0.01] });
+
+        const suggestions = await findSemanticCardGroups(cards, fetcher, { threshold: 0.8, minGroupSize: 2 });
+
+        expect(suggestions).toHaveLength(1);
+        expect(typeof suggestions[0].suggestedTitle).toBe('string');
+        expect(suggestions[0].suggestedTitle.length).toBeGreaterThan(0);
+        expect(suggestions[0].suggestedTitle.length).toBeLessThanOrEqual(35);
+    });
+
     it('does not group cards on clearly unrelated topics', async () => {
         const cards = [
             makeCard({ id: 'a', content: 'topic one' }),

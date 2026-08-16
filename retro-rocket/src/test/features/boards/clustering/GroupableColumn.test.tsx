@@ -139,8 +139,8 @@ vi.mock('@/features/boards/clustering/components/ColumnHeaderMenu', () => ({
 }));
 
 vi.mock('@/features/boards/clustering/components/GroupedCardList', () => ({
-    default: ({ cards, ...props }: any) => (
-        <div data-testid="grouped-card-list" {...props}>
+    default: ({ cards, groupBy }: any) => (
+        <div data-testid="grouped-card-list" data-group-by={groupBy}>
             {cards?.map((card: any) => (
                 <div key={card.id} data-testid={`card-${card.id}`}>
                     Card: {card.content}
@@ -167,13 +167,26 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
     }),
 }));
 
+// Real React state backing this mock (rather than a static return value) so that
+// calling setGroupingCriteria actually re-renders GroupableColumn with the updated
+// criteria on the next getColumnState() read — needed for spec 047 US2's mode-switch
+// teardown tests, which depend on reading the *previous* criteria at the moment of
+// a real transition (e.g. suggestions -> none), not a hardcoded constant.
 vi.mock('@/features/boards/clustering/hooks/useColumnGrouping', () => ({
-    useColumnGrouping: () => ({
-        getColumnState: vi.fn(() => ({ criteria: 'none', previousState: null })),
-        setGroupingCriteria: vi.fn(),
-        processCards: vi.fn((cards) => cards),
-        restorePreviousState: vi.fn(),
-    }),
+    useColumnGrouping: () => {
+        const [criteriaByColumn, setCriteriaByColumn] = React.useState<Record<string, string>>({});
+        return {
+            getColumnState: (columnId: string) => ({
+                criteria: criteriaByColumn[columnId] ?? 'none',
+                previousState: null,
+            }),
+            setGroupingCriteria: (columnId: string, criteria: string) => {
+                setCriteriaByColumn(prev => ({ ...prev, [columnId]: criteria }));
+            },
+            processCards: (cards: any) => cards,
+            restorePreviousState: vi.fn(),
+        };
+    },
 }));
 
 vi.mock('@/lib/utils/cardColors', () => ({
@@ -583,13 +596,13 @@ describe('GroupableColumn', () => {
             expect(screen.getByTestId('group-suggestion-modal')).toBeInTheDocument();
             expect(screen.getByTestId('suggestions-loading')).toBeInTheDocument();
 
-            resolveSuggestions([{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }]);
+            resolveSuggestions([{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Suggested title' }]);
             await waitFor(() => expect(screen.queryByTestId('suggestions-loading')).not.toBeInTheDocument());
         });
 
         it('awaits the async onSuggestionGenerate and shows the resulting suggestions', async () => {
             const user = userEvent.setup();
-            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Suggested title' }];
             const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
 
@@ -619,7 +632,7 @@ describe('GroupableColumn', () => {
 
         it('accepting a suggestion creates a group via onGroupCreate', async () => {
             const user = userEvent.setup();
-            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Some title' }];
             const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
             const mockOnGroupCreate = vi.fn().mockResolvedValue('new-group-id');
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
@@ -628,12 +641,42 @@ describe('GroupableColumn', () => {
             await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
             await user.click(screen.getByTestId('suggestion-0'));
 
-            await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2']));
+            await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2'], 'Some title'));
+        });
+
+        it('accepting a suggestion with a non-empty title passes it through as the group\'s customTitle (spec 047 FR-004)', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Standup runs long' }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            const mockOnGroupCreate = vi.fn().mockResolvedValue('new-group-id');
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+            await user.click(screen.getByTestId('suggestion-0'));
+
+            await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2'], 'Standup runs long'));
+        });
+
+        it('accepting a suggestion whose title was cleared to blank falls back to a computed "Group N" title (spec 047 FR-005)', async () => {
+            // defaultProps.groups already contains one existing group in column 'helped'
+            // (mockGroups), so the next accepted group should be numbered "Group 2".
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: '   ' }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            const mockOnGroupCreate = vi.fn().mockResolvedValue('new-group-id');
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+            await user.click(screen.getByTestId('suggestion-0'));
+
+            await waitFor(() => expect(mockOnGroupCreate).toHaveBeenCalledWith('card-1', ['card-2'], 'groupSuggestion.group 2'));
         });
 
         it('shows an error toast and keeps the suggestion when onGroupCreate fails (spec 046, FR-007a)', async () => {
             const user = userEvent.setup();
-            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Suggested title' }];
             const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
             const mockOnGroupCreate = vi.fn().mockRejectedValue(new Error('network error'));
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} onGroupCreate={mockOnGroupCreate} />);
@@ -649,7 +692,7 @@ describe('GroupableColumn', () => {
 
         it('rejecting or closing suggestions never touches cards or groups (spec 046, FR-006)', async () => {
             const user = userEvent.setup();
-            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Suggested title' }];
             const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
 
@@ -671,7 +714,7 @@ describe('GroupableColumn', () => {
 
         it('closing the suggestions panel clears its state', async () => {
             const user = userEvent.setup();
-            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8 }];
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Suggested title' }];
             const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
 
@@ -680,6 +723,106 @@ describe('GroupableColumn', () => {
 
             await user.click(screen.getByText('Close'));
             await waitFor(() => expect(screen.queryByTestId('group-suggestion-modal')).not.toBeInTheDocument());
+        });
+    });
+
+    describe('Mode-switch teardown (spec 047, US2)', () => {
+        it('switching away from suggestions to "no grouping" disbands every existing group and re-sorts remaining cards per "none" (FR-008/FR-009)', async () => {
+            const user = userEvent.setup();
+            const mockOnGroupDisband = vi.fn().mockResolvedValue(undefined);
+            const { rerender } = render(<GroupableColumn {...defaultProps} onGroupDisband={mockOnGroupDisband} />);
+
+            // Real transition into 'suggestions' first, via the stateful mock, so the
+            // component's own read of "previous criteria" genuinely reflects it.
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(mockOnGroupDisband).toHaveBeenCalledTimes(1));
+            expect(mockOnGroupDisband).toHaveBeenCalledWith('group-1');
+            await waitFor(() => expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'none'));
+
+            // Simulate the parent applying the realtime-synced result of the disband.
+            rerender(<GroupableColumn {...defaultProps} onGroupDisband={mockOnGroupDisband} groups={[]} />);
+            expect(screen.queryByTestId('group-card')).not.toBeInTheDocument();
+        });
+
+        it('switching away from suggestions to "group by user" disbands every existing group and re-sorts remaining cards per "user" (FR-008/FR-009)', async () => {
+            const user = userEvent.setup();
+            const mockOnGroupDisband = vi.fn().mockResolvedValue(undefined);
+            render(<GroupableColumn {...defaultProps} onGroupDisband={mockOnGroupDisband} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+
+            await user.click(screen.getByText('Group by User'));
+
+            await waitFor(() => expect(mockOnGroupDisband).toHaveBeenCalledTimes(1));
+            expect(mockOnGroupDisband).toHaveBeenCalledWith('group-1');
+            await waitFor(() => expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'user'));
+        });
+
+        it('discards pending, un-actioned suggestions and closes the panel when switching away from suggestions (FR-011)', async () => {
+            const user = userEvent.setup();
+            const mockSuggestions = [{ id: 's1', cardIds: ['card-1', 'card-2'], similarity: 0.8, suggestedTitle: 'Pending suggestion' }];
+            const mockOnSuggestionGenerate = vi.fn().mockResolvedValue(mockSuggestions);
+            render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByTestId('suggestion-0')).toBeInTheDocument());
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(screen.queryByTestId('group-suggestion-modal')).not.toBeInTheDocument());
+            expect(screen.queryByTestId('suggestion-0')).not.toBeInTheDocument();
+        });
+
+        it('does not call onGroupDisband when switching away from suggestions and the column has no accepted groups', async () => {
+            const user = userEvent.setup();
+            const mockOnGroupDisband = vi.fn();
+            render(<GroupableColumn {...defaultProps} groups={[]} onGroupDisband={mockOnGroupDisband} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+            await user.click(screen.getByText('No Grouping'));
+            await waitFor(() => expect(screen.getByText('Current: none')).toBeInTheDocument());
+
+            expect(mockOnGroupDisband).not.toHaveBeenCalled();
+        });
+
+        it('does not call onGroupDisband when switching between two non-suggestions modes (FR-013)', async () => {
+            const user = userEvent.setup();
+            const mockOnGroupDisband = vi.fn();
+            // Initial mocked criteria is 'none' (useColumnGrouping mock default) — go
+            // straight to 'user', never touching 'suggestions'.
+            render(<GroupableColumn {...defaultProps} onGroupDisband={mockOnGroupDisband} />);
+
+            await user.click(screen.getByText('Group by User'));
+            await waitFor(() => expect(screen.getByText('Current: user')).toBeInTheDocument());
+
+            expect(mockOnGroupDisband).not.toHaveBeenCalled();
+        });
+
+        it('attempts every disband even if one rejects, and shows a visible error toast without blocking the others (research.md §4)', async () => {
+            const user = userEvent.setup();
+            const twoGroups: CardGroup[] = [
+                mockGroups[0],
+                { ...mockGroups[0], id: 'group-2', headCardId: 'card-2', memberCardIds: [] },
+            ];
+            const mockOnGroupDisband = vi.fn((groupId: string) =>
+                groupId === 'group-1' ? Promise.reject(new Error('network error')) : Promise.resolve()
+            );
+            render(<GroupableColumn {...defaultProps} groups={twoGroups} onGroupDisband={mockOnGroupDisband} />);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+            await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(mockOnGroupDisband).toHaveBeenCalledTimes(2));
+            expect(mockOnGroupDisband).toHaveBeenCalledWith('group-1');
+            expect(mockOnGroupDisband).toHaveBeenCalledWith('group-2');
+            await waitFor(() => expect(toast.error as Mock).toHaveBeenCalledWith('retrospective.grouping.disbandOnSwitchError'));
         });
     });
 

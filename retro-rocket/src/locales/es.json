@@ -326,7 +326,8 @@
       "automaticSuggestionsBySimilarity": "Sugerencias automáticas por similitud",
       "unknownAuthor": "Sin autor",
       "menuTrigger": "Agrupar tarjetas",
-      "menuLabel": "Opciones de agrupación"
+      "menuLabel": "Opciones de agrupación",
+      "disbandOnSwitchError": "No se pudieron disolver algunos grupos. Inténtalo de nuevo."
     },
     "facilitator": {
       "menu": "Facilitador",
@@ -525,7 +526,9 @@
     "similarityLow": "Baja",
     "unavailableTitle": "Análisis de IA no disponible",
     "unavailableBody": "No pudimos analizar tus tarjetas en este momento. Inténtalo de nuevo en unos instantes.",
-    "acceptError": "No pudimos crear ese grupo. Inténtalo de nuevo."
+    "acceptError": "No pudimos crear ese grupo. Inténtalo de nuevo.",
+    "titleInputLabel": "Título del grupo",
+    "titleInputPlaceholder": "Título del grupo"
   },
   "datePicker": {
     "placeholder": "Seleccionar fecha",

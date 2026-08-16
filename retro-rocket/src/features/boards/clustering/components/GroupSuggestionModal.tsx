@@ -47,6 +47,9 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
 }) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(null);
     const [previewMode, setPreviewMode] = useState<{ [key: string]: boolean }>({});
+    // spec 047: per-suggestion inline title edits, keyed by suggestion.id so editing
+    // or rejecting one suggestion never affects another's title (FR-006/FR-007).
+    const [titleEdits, setTitleEdits] = useState<{ [suggestionId: string]: string }>({});
 
     const { t } = useLanguage();
 
@@ -71,13 +74,34 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
         }));
     };
 
+    // The current title shown for a suggestion — the user's in-progress edit if any,
+    // otherwise the original AI-suggested title (FR-004).
+    const titleFor = (suggestion: GroupSuggestion): string =>
+        titleEdits[suggestion.id] ?? suggestion.suggestedTitle;
+
+    const handleTitleChange = (suggestionId: string, value: string) => {
+        setTitleEdits(prev => ({ ...prev, [suggestionId]: value }));
+    };
+
+    const clearTitleEdit = (suggestionId: string) => {
+        setTitleEdits(prev => {
+            const { [suggestionId]: _removed, ...rest } = prev;
+            return rest;
+        });
+    };
+
     const handleAccept = (suggestion: GroupSuggestion) => {
-        onAcceptSuggestion(suggestion);
+        // Carries the current (edited-or-original) title along on the suggestion
+        // object itself — the caller (GroupableColumn) reads suggestion.suggestedTitle
+        // to resolve what the created group's title should be (FR-004/FR-005).
+        onAcceptSuggestion({ ...suggestion, suggestedTitle: titleFor(suggestion) });
+        clearTitleEdit(suggestion.id);
         setSelectedSuggestion(null);
     };
 
     const handleReject = (suggestionId: string) => {
         onRejectSuggestion(suggestionId);
+        clearTitleEdit(suggestionId);
         setSelectedSuggestion(null);
     };
 
@@ -189,6 +213,24 @@ export const GroupSuggestionModal: React.FC<GroupSuggestionModalProps> = ({
                                                     )}
                                                 </button>
                                             </div>
+                                        </div>
+
+                                        {/* Inline-editable suggested title (spec 047, FR-001/FR-002/FR-003) */}
+                                        <div className="mt-3">
+                                            <label htmlFor={`suggestion-title-${suggestion.id}`} className="sr-only">
+                                                {t('groupSuggestion.titleInputLabel')}
+                                            </label>
+                                            <input
+                                                id={`suggestion-title-${suggestion.id}`}
+                                                data-testid={`suggestion-title-input-${suggestion.id}`}
+                                                type="text"
+                                                value={titleFor(suggestion)}
+                                                onChange={(e) => handleTitleChange(suggestion.id, e.target.value)}
+                                                maxLength={35}
+                                                aria-label={t('groupSuggestion.titleInputLabel')}
+                                                placeholder={t('groupSuggestion.titleInputPlaceholder')}
+                                                className="w-full text-sm font-medium text-text-primary bg-surface border border-border-default rounded-lg px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                            />
                                         </div>
                                     </div>
 

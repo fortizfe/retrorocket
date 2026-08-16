@@ -198,7 +198,16 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const handleAcceptSuggestion = async (suggestion: GroupSuggestion) => {
         try {
             const [headCardId, ...memberCardIds] = suggestion.cardIds;
-            await onGroupCreate(headCardId, memberCardIds);
+            // spec 047 FR-004/FR-005: suggestion.suggestedTitle is already the current
+            // (edited-or-original) title as shown in the panel (GroupSuggestionModal
+            // resolves that before calling onAcceptSuggestion). If it was cleared to
+            // blank, fall back to a numbered "Group N" label, matching the panel's own
+            // existing "Group 1"/"Group 2" numbering convention (research.md §5).
+            const trimmedTitle = suggestion.suggestedTitle.trim();
+            const resolvedTitle = trimmedTitle.length > 0
+                ? trimmedTitle
+                : `${t('groupSuggestion.group')} ${columnGroups.length + 1}`;
+            await onGroupCreate(headCardId, memberCardIds, resolvedTitle);
 
             // Remove accepted suggestion from list
             setSuggestions(prev => prev.filter(s => s.id !== suggestion.id));
@@ -219,6 +228,29 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     const handleRejectSuggestion = (suggestionId: string) => {
         setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+    };
+
+    // spec 047, US2 (FR-008/FR-009/FR-011): when a column's mode changes away from
+    // 'suggestions', every group in that column formed by accepting a suggestion must
+    // be dissolved so its cards fall back to individual, ungrouped cards and get
+    // re-sorted per the newly selected mode — and any pending, un-actioned suggestions
+    // must be discarded along with it. Reuses the existing disband operation
+    // (onGroupDisband) as its only mechanism; no new persistence path.
+    const handleGroupingModeTeardown = async () => {
+        setShowSuggestions(false);
+        setSuggestions([]);
+        setSuggestionsError(null);
+
+        if (columnGroups.length === 0) return;
+
+        const results = await Promise.allSettled(columnGroups.map(group => onGroupDisband(group.id)));
+        const anyFailed = results.some(result => result.status === 'rejected');
+        if (anyFailed) {
+            results.forEach(result => {
+                if (result.status === 'rejected') console.error('Failed to disband group on mode switch:', result.reason);
+            });
+            toast.error(t('retrospective.grouping.disbandOnSwitchError'));
+        }
     };
 
     const handleCloseSuggestions = () => {
@@ -273,11 +305,14 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     <ColumnHeaderMenu
                         currentGrouping={columnState.criteria}
                         onGroupingChange={(criteria: GroupingCriteria) => {
+                            const previousCriteria = columnState.criteria;
                             setGroupingCriteria(column.id, criteria);
 
                             // Handle special grouping modes
                             if (criteria === 'suggestions') {
                                 handleGenerateSuggestions();
+                            } else if (previousCriteria === 'suggestions') {
+                                handleGroupingModeTeardown();
                             }
                         }}
                         hasCards={true}
