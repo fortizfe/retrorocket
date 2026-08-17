@@ -29,8 +29,8 @@ interface UseCardGroupsReturn {
     removeFromGroup: (cardId: string) => Promise<void>;
     toggleGroupCollapse: (groupId: string) => Promise<void>;
 
-    // AI-based grouping suggestions (spec 044)
-    findSuggestions: (config?: Partial<GroupingConfig>) => Promise<GroupSuggestion[]>;
+    // AI-based grouping suggestions (spec 044), scoped to a single column (spec 049)
+    findSuggestions: (columnId: string, config?: Partial<GroupingConfig>) => Promise<GroupSuggestion[]>;
     acceptSuggestion: (suggestion: GroupSuggestion) => Promise<string>;
 
     // Helper functions
@@ -139,9 +139,11 @@ export const useCardGroups = ({
     );
 
     const findSuggestions = useCallback(
-        (config?: Partial<GroupingConfig>): Promise<GroupSuggestion[]> =>
-            findSemanticCardGroups(ungroupedCards, embeddingWorker.embed, config),
-        [ungroupedCards, embeddingWorker.embed],
+        (columnId: string, config?: Partial<GroupingConfig>): Promise<GroupSuggestion[]> => {
+            const columnUngroupedCards = cards.filter((card) => card.column === columnId && !card.groupId);
+            return findSemanticCardGroups(columnUngroupedCards, embeddingWorker.embed, config);
+        },
+        [cards, embeddingWorker.embed],
     );
 
     const acceptSuggestion = useCallback(
