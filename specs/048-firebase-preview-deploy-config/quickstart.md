@@ -2,6 +2,10 @@
 
 This is the live verification User Story 3 / FR-009 require — there is no automated test suite for this feature (research.md, Testing). Run this after applying the configuration in [contracts/](./contracts/).
 
+## Known blocker (as of 2026-08-17, deliberately deferred by the user)
+
+This project's Vercel Deployment Protection is currently set to `prod_deployment_urls_and_all_previews` — **every** preview URL redirects an unauthenticated visitor to a Vercel login before any of the scenarios below can even begin. This is a Vercel project access-control setting, not something this feature's Preview environment variables touch. Until it's changed (or you're logged into this project's Vercel team), Scenarios 1–5 below can only be run by someone with team access. See spec.md's Edge Cases for the full note.
+
 ## Prerequisites
 
 - All items in [contracts/firebase-staging-project-checklist.md](./contracts/firebase-staging-project-checklist.md) are checked off.
