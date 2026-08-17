@@ -1653,6 +1653,17 @@ async function isAnchoredToTrigger(panel: import('@playwright/test').Locator, tr
     return (touchesBelow || touchesAbove) && horizontallyOverlapsOrNear;
 }
 
+/** Polling wrapper around isAnchoredToTrigger — Floating UI's `autoUpdate` recomputes
+ * the panel's position asynchronously (via rAF/IntersectionObserver, in response to a
+ * scroll/resize), not synchronously within the event that triggered it. A single
+ * immediate boundingBox() read right after a scroll/resize can observe the panel's
+ * pre-update position and fail spuriously even though the app is behaving correctly —
+ * observed intermittently in CI. This polls the same check for up to 2s instead of
+ * reading it exactly once. */
+async function expectAnchoredToTrigger(panel: import('@playwright/test').Locator, trigger: import('@playwright/test').Locator): Promise<void> {
+    await expect.poll(() => isAnchoredToTrigger(panel, trigger), { timeout: 2_000 }).toBe(true);
+}
+
 test('the options menu and the facilitator menu open anchored to their trigger button, not pinned to the top-left corner', async ({ page, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner16@example.com', 'E2E Retro Owner 16', 'E2E Menu Anchor Board');
     await signInAs(page, 'e2e-retro-owner16@example.com', 'E2E Retro Owner 16');
@@ -1664,7 +1675,7 @@ test('the options menu and the facilitator menu open anchored to their trigger b
     await optionsTrigger.click();
     const optionsPanel = page.getByRole('menu', { name: 'Opciones', exact: true });
     await expect(optionsPanel).toBeVisible();
-    expect(await isAnchoredToTrigger(optionsPanel, optionsTrigger)).toBe(true);
+    await expectAnchoredToTrigger(optionsPanel, optionsTrigger);
     await page.keyboard.press('Escape');
     await expect(optionsPanel).not.toBeVisible();
 
@@ -1673,7 +1684,7 @@ test('the options menu and the facilitator menu open anchored to their trigger b
     await facilitatorTrigger.click();
     const facilitatorPanel = page.getByRole('dialog', { name: 'Controles de Facilitador' });
     await expect(facilitatorPanel).toBeVisible();
-    expect(await isAnchoredToTrigger(facilitatorPanel, facilitatorTrigger)).toBe(true);
+    await expectAnchoredToTrigger(facilitatorPanel, facilitatorTrigger);
     await page.keyboard.press('Escape');
     await expect(facilitatorPanel).not.toBeVisible();
 
@@ -1683,7 +1694,7 @@ test('the options menu and the facilitator menu open anchored to their trigger b
     await page.setViewportSize({ width: 900, height: 700 });
     await optionsTrigger.click();
     await expect(optionsPanel).toBeVisible();
-    expect(await isAnchoredToTrigger(optionsPanel, optionsTrigger)).toBe(true);
+    await expectAnchoredToTrigger(optionsPanel, optionsTrigger);
     await page.keyboard.press('Escape');
 });
 
@@ -1717,7 +1728,7 @@ test('the grouping-suggestions panel opens anchored to its trigger button, not p
     // The reported defect: the panel rendered pinned at the viewport's top-left corner
     // regardless of the trigger's real position. isAnchoredToTrigger asserts the panel
     // touches the trigger's edge instead (research.md §1).
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     await page.keyboard.press('Escape');
     await expect(panel).not.toBeVisible();
@@ -1728,13 +1739,13 @@ test('the grouping-suggestions panel opens anchored to its trigger button, not p
     await trigger.click();
     await page.getByText('Agrupaciones sugeridas', { exact: true }).click();
     await expect(panel).toBeVisible({ timeout: 15_000 });
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     // Scroll while open — autoUpdate must keep the panel anchored to the trigger's
     // current on-screen position, not a stale one.
     await page.mouse.wheel(0, 200);
     await expect(panel).toBeVisible();
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     await page.keyboard.press('Escape');
 });
@@ -1765,7 +1776,7 @@ test('the grouping-mode dropdown opens anchored to its trigger button, not pinne
     await expect(panel).toBeVisible({ timeout: 10_000 });
     // The reported defect: the panel rendered pinned at the viewport's top-left corner
     // regardless of the trigger's real position.
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     await page.keyboard.press('Escape');
     await expect(panel).not.toBeVisible();
@@ -1775,13 +1786,13 @@ test('the grouping-mode dropdown opens anchored to its trigger button, not pinne
     await page.setViewportSize({ width: 700, height: 700 });
     await trigger.click();
     await expect(panel).toBeVisible({ timeout: 10_000 });
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     // Scroll while open — autoUpdate must keep the panel anchored to the trigger's
     // current on-screen position, not a stale one.
     await page.mouse.wheel(0, 200);
     await expect(panel).toBeVisible();
-    expect(await isAnchoredToTrigger(panel, trigger)).toBe(true);
+    await expectAnchoredToTrigger(panel, trigger);
 
     await page.keyboard.press('Escape');
 });

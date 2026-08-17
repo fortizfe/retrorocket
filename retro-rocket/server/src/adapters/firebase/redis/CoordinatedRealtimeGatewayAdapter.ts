@@ -128,8 +128,19 @@ export class CoordinatedRealtimeGatewayAdapter implements RealtimeGatewayPort {
         clearInterval(state.ticker);
         state.pendingTeardown = setTimeout(() => {
             this.stopFirestoreListeners(state);
-            if (state.subscribed) void this.redisCoordinator.unsubscribe(retrospectiveId);
-            if (state.mode === 'owner') void this.redisCoordinator.release(retrospectiveId);
+            // Best-effort: the board's state is being discarded either way (line below),
+            // so a rejection here (e.g. the shared Redis connection cycling/closing under
+            // load) has nothing left to fail open *into* — unlike every other Redis call
+            // in this class, .catch() here is a deliberate no-op, not a mode switch. Safe
+            // to swallow: a failed unsubscribe just leaves a harmless stale subscription
+            // (cleaned up on the client's own reconnect), and a failed release is covered
+            // by the ownership lease's own PX TTL (RedisBoardCoordinationAdapter) expiring
+            // it naturally. Previously bare `void`, which turned any rejection into an
+            // unhandled promise rejection — observed destabilizing the concurrent-session
+            // E2E spec's own test run when 10 simultaneous unregister/register cycles hit
+            // this path at once.
+            if (state.subscribed) this.redisCoordinator.unsubscribe(retrospectiveId).catch(() => {});
+            if (state.mode === 'owner') this.redisCoordinator.release(retrospectiveId).catch(() => {});
             this.failOpen.clear(retrospectiveId);
             this.boards.delete(retrospectiveId);
         }, TEARDOWN_GRACE_MS);
