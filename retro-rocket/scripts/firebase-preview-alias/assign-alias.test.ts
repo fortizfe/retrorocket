@@ -50,23 +50,68 @@ describe('assign-alias.mjs run()', () => {
         vi.restoreAllMocks();
     });
 
-    describe('compute subcommand', () => {
-        it('exits 1 when --pr is missing', async () => {
-            const exitCode = await run(['compute']);
-            expect(exitCode).toBe(1);
+    describe('set-redirect subcommand', () => {
+        it('exits 1 when --pr, --branch, or --token is missing', async () => {
+            expect(await run(['set-redirect', '--branch', 'b', '--token', 't'])).toBe(1);
+            expect(await run(['set-redirect', '--pr', '7', '--token', 't'])).toBe(1);
+            expect(await run(['set-redirect', '--pr', '7', '--branch', 'b'])).toBe(1);
+            expect(execFileSync).not.toHaveBeenCalled();
         });
 
-        it('prints the computed slot and OAUTH_REDIRECT_BASE_URL and exits 0', async () => {
+        it('removes any existing branch-scoped override, adds the computed one, and exits 0', async () => {
+            vi.mocked(execFileSync).mockReturnValue(Buffer.from(''));
             const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
-            const exitCode = await run(['compute', '--pr', '7']);
+            const exitCode = await run(['set-redirect', '--pr', '7', '--branch', 'feat/x', '--token', 'secret-token']);
 
             expect(exitCode).toBe(0);
+            expect(execFileSync).toHaveBeenNthCalledWith(1, 'vercel', [
+                'env',
+                'rm',
+                'OAUTH_REDIRECT_BASE_URL',
+                'preview',
+                'feat/x',
+                '--yes',
+                '--token',
+                'secret-token',
+            ]);
+            expect(execFileSync).toHaveBeenNthCalledWith(
+                2,
+                'vercel',
+                ['env', 'add', 'OAUTH_REDIRECT_BASE_URL', 'preview', 'feat/x', '--token', 'secret-token'],
+                { input: 'https://retro-rocket-pr-slot-3.vercel.app' },
+            );
             expect(logSpy).toHaveBeenCalledWith('slot=3');
             expect(logSpy).toHaveBeenCalledWith(
                 'OAUTH_REDIRECT_BASE_URL=https://retro-rocket-pr-slot-3.vercel.app',
             );
-            expect(execFileSync).not.toHaveBeenCalled();
+        });
+
+        it('tolerates the remove call failing (nothing to remove on a first deploy) and still adds', async () => {
+            vi.mocked(execFileSync)
+                .mockImplementationOnce(() => {
+                    throw new Error('not found');
+                })
+                .mockReturnValueOnce(Buffer.from(''));
+
+            const exitCode = await run(['set-redirect', '--pr', '7', '--branch', 'feat/x', '--token', 'secret-token']);
+
+            expect(exitCode).toBe(0);
+            expect(execFileSync).toHaveBeenCalledTimes(2);
+        });
+
+        it('exits 1 (without swallowing the error) when the add call fails', async () => {
+            vi.mocked(execFileSync)
+                .mockImplementationOnce(() => Buffer.from('')) // rm succeeds
+                .mockImplementationOnce(() => {
+                    throw new Error('add failed');
+                });
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+            const exitCode = await run(['set-redirect', '--pr', '7', '--branch', 'feat/x', '--token', 'secret-token']);
+
+            expect(exitCode).toBe(1);
+            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('add failed'));
         });
     });
 

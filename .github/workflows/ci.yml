@@ -150,25 +150,37 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel preview environment
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      # 048, US2: overrides OAUTH_REDIRECT_BASE_URL with this PR's assigned alias-slot
-      # address (specs/048-firebase-preview-deploy-config/contracts/pr-preview-alias-cli.md)
-      # — a build-time-only override on top of what `vercel pull` just wrote, since the
-      # persisted Vercel-stored Preview value can't vary per PR.
-      - name: Assign PR Preview Alias Slot (compute)
+      # 048, US2: sets this PR's assigned alias-slot address as a real, branch-scoped
+      # Vercel-stored Preview environment variable (specs/048-firebase-preview-deploy-
+      # config/contracts/pr-preview-alias-cli.md) — MUST happen before `vercel pull`.
+      # A Vercel Function's runtime environment is injected by Vercel's platform from
+      # its own stored project config at deploy time; a local .env-file edit before
+      # `vercel build` has no effect on the deployed function (confirmed live,
+      # 2026-08-17 — an earlier version of this step tried exactly that and silently
+      # never worked, despite passing CI).
+      - name: Assign PR Preview Alias Slot (set redirect URL)
         run: |
-          node retro-rocket/scripts/firebase-preview-alias/assign-alias.mjs compute --pr ${{ github.event.pull_request.number }} \
-            | grep '^OAUTH_REDIRECT_BASE_URL=' >> .vercel/.env.preview.local
+          node retro-rocket/scripts/firebase-preview-alias/assign-alias.mjs set-redirect \
+            --pr ${{ github.event.pull_request.number }} \
+            --branch ${{ github.head_ref }} \
+            --token ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Pull Vercel preview environment
+        run: vercel pull --yes --environment=preview --git-branch=${{ github.head_ref }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build preview artifacts
         run: vercel build
 
+      # --meta githubDeployment=1 --meta githubCommitRef links this CLI-triggered
+      # deployment to its PR branch server-side — required for the branch-scoped
+      # OAUTH_REDIRECT_BASE_URL override above to actually apply at runtime (confirmed
+      # live: without it, the deployment resolves as branch-less and only the
+      # unscoped Preview value — if any — would apply). See Vercel's own guidance:
+      # https://vercel.com/kb/guide/branch-variables-and-domains-not-linked-to-cli-deployments
       - name: Deploy preview to Vercel
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} -m githubDeployment=1 -m githubCommitRef=${{ github.head_ref }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # 048, US2: repoints this PR's alias-slot at the deployment just published, so the
