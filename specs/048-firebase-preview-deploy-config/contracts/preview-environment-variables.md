@@ -17,14 +17,14 @@ This fixes the complete set of environment variables the application reads at bu
 
 ## Backend (server-only — MUST NOT be `VITE_`-prefixed)
 
-| Variable | Consumer | Preview value | Status before this feature |
-|---|---|---|---|
-| `SESSION_SIGNING_KEY` | `server/src/http/auth-wiring.ts`, `mcp-wiring.ts` | New, Preview-dedicated key | Missing (Production-only) |
-| `FIREBASE_SERVICE_ACCOUNT` | `server/src/http/auth-wiring.ts` (`getFirebaseAuth`) | Service-account JSON scoped to `retrorocket-staging` with custom-token-minting rights | Missing (Production-only) |
-| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | `server/src/http/auth-wiring.ts` | Staging (or shared) Google OAuth Client credentials | Missing (Production-only) |
-| `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | `server/src/http/auth-wiring.ts` | Existing values | Already present for Preview |
-| `OAUTH_REDIRECT_BASE_URL` | `server/src/http/auth-wiring.ts`, `mcp-wiring.ts` | Per-deploy, from the assigned PR Preview Alias Slot — **not** a static Vercel-stored Preview value | Missing, and not settable as a single static value (see [pr-preview-alias-cli.md](./pr-preview-alias-cli.md)) |
-| `AUTH_TEST_MODE` | `server/src/config/env.ts`, mounts `/api/auth/test-login` | MUST stay unset/`false` in Preview | Not evaluated by this feature — out of scope; mounting a credential-less login bypass on a publicly reachable preview URL is a security regression this feature must not introduce |
+| Variable | Consumer | Preview value | Status before this feature | Status after this feature |
+|---|---|---|---|---|
+| `SESSION_SIGNING_KEY` | `server/src/http/auth-wiring.ts`, `mcp-wiring.ts` | New, Preview-dedicated key | Missing (Production-only) | **Set** — fresh 64-byte random key (T010) |
+| `FIREBASE_SERVICE_ACCOUNT` | `server/src/http/auth-wiring.ts` (`getFirebaseAuth`) | Service-account JSON scoped to `retrorocket-staging` with custom-token-minting rights | Missing (Production-only) | **Set** — key generated for the existing default `firebase-adminsdk-fbsvc@retrorocket-staging.iam.gserviceaccount.com` (T011) |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | `server/src/http/auth-wiring.ts` | Dedicated staging Google OAuth Client credentials | Missing (Production-only) | **Set** — dedicated `retro-rocket-preview` Google OAuth Client created by the user, not a reuse of production's (T012) |
+| `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | `server/src/http/auth-wiring.ts` | Existing values | Already present for Preview | **Unchanged** — verified still present (T013); functional validity confirmed by live sign-in (T019) |
+| `OAUTH_REDIRECT_BASE_URL` | `server/src/http/auth-wiring.ts`, `mcp-wiring.ts` | Per-deploy, from the assigned PR Preview Alias Slot — **not** a static Vercel-stored Preview value | Missing, and not settable as a single static value (see [pr-preview-alias-cli.md](./pr-preview-alias-cli.md)) | **Implemented** — injected per-deploy by `ci.yml`'s `deploy-preview` job via `assign-alias.mjs compute` (T017) |
+| `AUTH_TEST_MODE` | `server/src/config/env.ts`, mounts `/api/auth/test-login` | MUST stay unset/`false` in Preview | Not evaluated by this feature — out of scope; mounting a credential-less login bypass on a publicly reachable preview URL is a security regression this feature must not introduce | **Confirmed unset** — absent from Vercel entirely (`vercel env ls`), no regression introduced |
 
 ## Unaffected (verify only, no change)
 

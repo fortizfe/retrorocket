@@ -160,7 +160,7 @@ jobs:
       - name: Assign PR Preview Alias Slot (compute)
         run: |
           node retro-rocket/scripts/firebase-preview-alias/assign-alias.mjs compute --pr ${{ github.event.pull_request.number }} \
-            | grep '^OAUTH_REDIRECT_BASE_URL=' >> retro-rocket/.vercel/.env.preview.local
+            | grep '^OAUTH_REDIRECT_BASE_URL=' >> .vercel/.env.preview.local
 
       - name: Build preview artifacts
         run: vercel build
