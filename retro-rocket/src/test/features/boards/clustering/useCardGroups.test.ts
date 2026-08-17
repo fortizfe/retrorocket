@@ -240,7 +240,7 @@ describe('useCardGroups', () => {
                 useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
-            const suggestionsPromise = result.current.findSuggestions({ threshold: 0.7 });
+            const suggestionsPromise = result.current.findSuggestions('helped', { threshold: 0.7 });
             expect(suggestionsPromise).toBeInstanceOf(Promise);
 
             const suggestions = await suggestionsPromise;
@@ -260,7 +260,88 @@ describe('useCardGroups', () => {
                 useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1' })
             );
 
-            await expect(result.current.findSuggestions()).rejects.toThrow('Embedding model unavailable');
+            await expect(result.current.findSuggestions('helped')).rejects.toThrow('Embedding model unavailable');
+        });
+
+        // spec 049: pressing suggested-grouping on one column must not analyze any
+        // other column's cards. `crossColumnCards` adds an ungrouped 'hindered' card
+        // (card-4) alongside the shared `mockCards` fixture (card-1/card-2 'helped'
+        // ungrouped, card-3 'hindered' already grouped) as a local addition, rather
+        // than mutating `mockCards` itself, so the other describe blocks' assertions
+        // about `mockCards`' exact shape (e.g. 'should separate grouped and ungrouped
+        // cards') stay unaffected.
+        describe('column scoping (spec 049)', () => {
+            const card4: Card = {
+                id: 'card-4',
+                content: 'Test card 4',
+                column: 'hindered' as ColumnType,
+                createdBy: 'user-1',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                retrospectiveId: 'retro-1'
+            };
+            const crossColumnCards: Card[] = [...mockCards, card4];
+
+            it('passes only the requested column\'s own ungrouped cards to findSemanticCardGroups', async () => {
+                mockedSemanticGroupingService.mockResolvedValue([]);
+
+                const { result } = renderHook(() =>
+                    useCardGroups({ retrospectiveId: 'retro-1', cards: crossColumnCards, currentUser: 'user-1' })
+                );
+
+                await result.current.findSuggestions('helped', { threshold: 0.7 });
+
+                const [calledCards] = mockedSemanticGroupingService.mock.calls[0];
+                expect(calledCards.map(c => c.id).sort()).toEqual(['card-1', 'card-2']);
+            });
+
+            it('scopes to a different column independently, excluding every other column\'s cards', async () => {
+                mockedSemanticGroupingService.mockResolvedValue([]);
+
+                const { result } = renderHook(() =>
+                    useCardGroups({ retrospectiveId: 'retro-1', cards: crossColumnCards, currentUser: 'user-1' })
+                );
+
+                await result.current.findSuggestions('hindered', { threshold: 0.7 });
+
+                const [calledCards] = mockedSemanticGroupingService.mock.calls[0];
+                // card-3 is excluded too: it belongs to 'hindered' but is already grouped.
+                expect(calledCards.map(c => c.id)).toEqual(['card-4']);
+            });
+
+            it('passes an empty array, never falling back to another column\'s cards, when the requested column has no eligible cards', async () => {
+                mockedSemanticGroupingService.mockResolvedValue([]);
+
+                const { result } = renderHook(() =>
+                    useCardGroups({ retrospectiveId: 'retro-1', cards: crossColumnCards, currentUser: 'user-1' })
+                );
+
+                await result.current.findSuggestions('nonexistent-column', { threshold: 0.7 });
+
+                const [calledCards] = mockedSemanticGroupingService.mock.calls[0];
+                expect(calledCards).toEqual([]);
+            });
+
+            it('computes two independently-triggered columns\' suggestions without either leaking into the other (spec 049 FR-007)', async () => {
+                mockedSemanticGroupingService
+                    .mockResolvedValueOnce([])
+                    .mockResolvedValueOnce([]);
+
+                const { result } = renderHook(() =>
+                    useCardGroups({ retrospectiveId: 'retro-1', cards: crossColumnCards, currentUser: 'user-1' })
+                );
+
+                await result.current.findSuggestions('helped', { threshold: 0.7 });
+                await result.current.findSuggestions('hindered', { threshold: 0.7 });
+
+                const [helpedCallCards] = mockedSemanticGroupingService.mock.calls[0];
+                const [hinderedCallCards] = mockedSemanticGroupingService.mock.calls[1];
+
+                expect(helpedCallCards.map(c => c.id).sort()).toEqual(['card-1', 'card-2']);
+                expect(hinderedCallCards.map(c => c.id)).toEqual(['card-4']);
+                // Neither call's input includes the other column's cards.
+                expect(helpedCallCards.some(c => hinderedCallCards.includes(c))).toBe(false);
+            });
         });
 
         it('should accept a suggestion and create group, passing the suggestion\'s title through as customTitle (spec 047 FR-004)', async () => {

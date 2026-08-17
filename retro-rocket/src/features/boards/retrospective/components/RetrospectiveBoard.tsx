@@ -291,7 +291,7 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     onGroupDisband={disbandGroup}
                                     onGroupToggleCollapse={toggleGroupCollapse}
                                     onCardRemoveFromGroup={removeFromGroup}
-                                    onSuggestionGenerate={() => findSuggestions({
+                                    onSuggestionGenerate={() => findSuggestions(column.id, {
                                         // 0.6 was tuned for the removed blended
                                         // Levenshtein/Jaccard text score; cosine
                                         // similarity between sentence embeddings behaves

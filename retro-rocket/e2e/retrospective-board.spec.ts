@@ -1933,3 +1933,58 @@ test('AI-based grouping proposes semantically similar cards together, excludes u
     // show up as tens of seconds, not a marginal overshoot.
     expect(elapsedMs).toBeLessThan(15_000);
 });
+
+// spec 049-column-scoped-suggested-grouping: triggering suggested grouping on one
+// column must only analyze and only surface suggestions for that column's own cards
+// — a prior bug ran the analysis over every column's ungrouped cards at once. Seeds
+// two columns with clearly distinct topics and confirms the panel opened via the
+// 'helped' column's trigger never surfaces 'improve'-column content, and the
+// 'improve' column itself is left completely undisturbed (no panel of its own, no
+// change to its visible card content).
+test('suggested grouping triggered on one column only analyzes that column, leaving other columns untouched (spec 049)', async ({ page, request }) => {
+    test.setTimeout(150_000);
+
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner43@example.com', 'E2E Retro Owner 43', 'E2E Column-Scoped Suggestions Board');
+
+    // 'helped' column (index 0): two cards on the same standup-related topic.
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'El daily se alarga demasiado cada mañana', column: 'helped' } });
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: 'Perdemos mucho tiempo en la reunión diaria', column: 'helped' } });
+
+    // 'improve' column (index 2): unrelated content that must never appear in
+    // 'helped'-triggered suggestions, and must remain untouched by the trigger.
+    const improveCardAContent = 'El pipeline de despliegue falla de forma intermitente';
+    const improveCardBContent = 'Necesitamos más cobertura de tests end-to-end';
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: improveCardAContent, column: 'improve' } });
+    await request.post(`/api/retrospectives/${boardId}/cards`, { data: { content: improveCardBContent, column: 'improve' } });
+
+    await signInAs(page, 'e2e-retro-owner43@example.com', 'E2E Retro Owner 43');
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Column-Scoped Suggestions Board')).toBeVisible({ timeout: 30_000 });
+
+    // Baseline: both 'improve' cards visible before triggering anything on 'helped'.
+    await expect(page.getByText(improveCardAContent)).toBeVisible();
+    await expect(page.getByText(improveCardBContent)).toBeVisible();
+
+    const helpedTrigger = page.getByRole('button', { name: 'Opciones de agrupación' }).first();
+    await helpedTrigger.click();
+    await page.getByText('Agrupaciones sugeridas', { exact: true }).click();
+
+    const panel = page.getByRole('dialog', { name: 'Sugerencias de Agrupación' });
+    await expect(panel).toBeVisible({ timeout: 15_000 });
+    await expect(panel.getByText(/Grupo 1|No se encontraron sugerencias/)).toBeVisible({ timeout: 90_000 });
+
+    // Exactly one suggestions panel exists on the page — no other column opened one.
+    await expect(page.getByRole('dialog', { name: 'Sugerencias de Agrupación' })).toHaveCount(1);
+
+    const previewToggle = panel.getByLabel(/Mostrar tarjetas/).first();
+    if (await previewToggle.isVisible().catch(() => false)) await previewToggle.click();
+
+    // The panel never surfaces 'improve'-column content.
+    await expect(panel.getByText(improveCardAContent)).not.toBeVisible();
+    await expect(panel.getByText(improveCardBContent)).not.toBeVisible();
+
+    // 'improve' column itself is untouched: its cards are still visible, unchanged,
+    // outside of the (helped-only) suggestions panel.
+    await expect(page.getByText(improveCardAContent)).toBeVisible();
+    await expect(page.getByText(improveCardBContent)).toBeVisible();
+});
