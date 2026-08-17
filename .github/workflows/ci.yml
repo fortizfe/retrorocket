@@ -153,6 +153,15 @@ jobs:
       - name: Pull Vercel preview environment
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
+      # 048, US2: overrides OAUTH_REDIRECT_BASE_URL with this PR's assigned alias-slot
+      # address (specs/048-firebase-preview-deploy-config/contracts/pr-preview-alias-cli.md)
+      # — a build-time-only override on top of what `vercel pull` just wrote, since the
+      # persisted Vercel-stored Preview value can't vary per PR.
+      - name: Assign PR Preview Alias Slot (compute)
+        run: |
+          node retro-rocket/scripts/firebase-preview-alias/assign-alias.mjs compute --pr ${{ github.event.pull_request.number }} \
+            | grep '^OAUTH_REDIRECT_BASE_URL=' >> retro-rocket/.vercel/.env.preview.local
+
       - name: Build preview artifacts
         run: vercel build
 
@@ -161,6 +170,18 @@ jobs:
         run: |
           url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # 048, US2: repoints this PR's alias-slot at the deployment just published, so the
+      # redirect URIs registered once in the Google/GitHub OAuth consoles
+      # (contracts/pr-preview-alias-cli.md "One-time manual setup") keep resolving to the
+      # newest build. A failed `vercel alias set` fails this step — no special-case
+      # swallowing, matching how 008's sync-domain.mjs treats a failed domain sync.
+      - name: Assign PR Preview Alias Slot (alias)
+        run: |
+          node retro-rocket/scripts/firebase-preview-alias/assign-alias.mjs alias \
+            --pr ${{ github.event.pull_request.number }} \
+            --url ${{ steps.deploy.outputs.url }} \
+            --token ${{ secrets.VERCEL_TOKEN }}
 
       - name: Comment preview URL on pull request
         if: always() && steps.deploy.outputs.url != ''
