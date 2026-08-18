@@ -114,6 +114,14 @@ export const CONTRAST_PAIRINGS: ContrastPairing[] = [
     { fg: 'warning-fg', bg: 'warning-bg', kind: 'text' },
     { fg: 'error-fg', bg: 'error-bg', kind: 'text' },
     { fg: 'info-fg', bg: 'info-bg', kind: 'text' },
+    // Status foreground rendered directly on a neutral surface, not its own
+    // status background — e.g. inline "Linked" status text or a validation
+    // error message inside a settings-row/card (spec 050 Direction B; see
+    // tasks.md T011). (≥4.5:1)
+    { fg: 'success-fg', bg: 'surface', kind: 'text' },
+    { fg: 'success-fg', bg: 'surface-raised', kind: 'text' },
+    { fg: 'error-fg', bg: 'surface', kind: 'text' },
+    { fg: 'error-fg', bg: 'surface-raised', kind: 'text' },
     // Non-text: control boundaries & focus ring (≥3:1)
     { fg: 'border-strong', bg: 'surface', kind: 'nonText' },
     { fg: 'border-strong', bg: 'surface-raised', kind: 'nonText' },

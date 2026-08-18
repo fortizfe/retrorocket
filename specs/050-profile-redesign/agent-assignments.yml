@@ -1,0 +1,152 @@
+# Agent Assignments
+# Feature: Mi Perfil (Profile) Redesign (Apple HIG-Inspired)
+# Generated: 2026-08-17T17:15:12Z
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/** — new endpoints, use-cases, Firebase/Firestore/Redis access, session/auth, WebSocket handling, or anything touching the domain/application/adapters/http layering. Also use when asked to design or review backend architecture, ports/adapters boundaries, or Vercel deployment/build configuration for the server."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, and especially anything involving visual design, layout, or motion/animation. Masters Apple Human Interface Guidelines design principles and MUST use this project's installed Apple-design skill package to make design/motion decisions rather than ad hoc judgment. Enforces WCAG 2.1 AA on every surface it touches."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature or bug fix needs tests written before implementation, whenever test coverage is unclear, and for building/running/debugging the full test suite — Vitest unit/component tests (frontend and server), Playwright E2E, accessibility (axe-core/WCAG 2.1 AA) scans, and the architecture guard tests. Use also to design a test plan for a new spec-kit feature, to diagnose flaky/failing tests, or to verify a change hasn't dropped coverage before merge."
+
+assignments:
+  T001:
+    agent: "qa-agent"
+    reason: "Establishes the type-check/lint/coverage/E2E baseline — QA's coverage-gate and baseline-recording responsibility"
+  T002:
+    agent: "frontend-agent"
+    reason: "Dev-only prototype route scaffold in src/App.tsx — React routing/scaffold work"
+  T003:
+    agent: "frontend-agent"
+    reason: "Draft Visual Direction A — Apple HIG design candidate, frontend-agent's mandated design process"
+  T004:
+    agent: "frontend-agent"
+    reason: "Draft Visual Direction B — Apple HIG design candidate"
+  T005:
+    agent: "frontend-agent"
+    reason: "Draft Visual Direction C — Apple HIG design candidate"
+  T006:
+    agent: "frontend-agent"
+    reason: "Wires the three prototypes into the T002 scaffold — same component/route work"
+  T007:
+    agent: "frontend-agent"
+    reason: "Records its own candidate directions in data-model.md's Visual Direction table"
+  T008:
+    agent: "frontend-agent"
+    reason: "Produces the Product Owner Decision Artifact — Apple HIG comparison deliverable"
+  T009:
+    agent: "frontend-agent"
+    reason: "Product-owner review checkpoint; frontend-agent owns the artifact and the direction record"
+  T010:
+    agent: "frontend-agent"
+    reason: "Deletes non-selected prototypes and removes the scaffold it built in T002/T006"
+  T011:
+    agent: "frontend-agent"
+    reason: "Design token / WCAG contrast-pairing additions — frontend-agent owns tokens.ts/contrast.ts"
+  T012:
+    agent: "qa-agent"
+    reason: "New page-level test written test-first, per constitution Principle I (TDD)"
+  T013:
+    agent: "qa-agent"
+    reason: "Updates Playwright E2E assertions in e2e/profile.spec.ts"
+  T014:
+    agent: "frontend-agent"
+    reason: "Rebuilds Profile.tsx's identity header per the selected direction"
+  T015:
+    agent: "frontend-agent"
+    reason: "Rebuilds email/member-since display and fixes the hardcoded-locale bug (UI + i18n)"
+  T016:
+    agent: "frontend-agent"
+    reason: "Rebuilds the loading/error states for the profile-data fetch"
+  T017:
+    agent: "frontend-agent"
+    reason: "Motion decision via the animate skill — frontend-agent's mandated process"
+  T018:
+    agent: "qa-agent"
+    reason: "Updates UserProfileForm.test.tsx unit/component tests"
+  T019:
+    agent: "qa-agent"
+    reason: "Updates Playwright E2E assertions for edit-display-name"
+  T020:
+    agent: "qa-agent"
+    reason: "Updates Landing.test.tsx for the isFirstTime rendering path"
+  T021:
+    agent: "frontend-agent"
+    reason: "Rebuilds UserProfileForm.tsx per the selected direction"
+  T022:
+    agent: "frontend-agent"
+    reason: "Motion decision for save success/error feedback"
+  T023:
+    agent: "qa-agent"
+    reason: "Regression verification of Landing.tsx's first-time-setup path against existing E2E coverage"
+  T024:
+    agent: "qa-agent"
+    reason: "Updates LinkedProvidersCard.test.tsx"
+  T025:
+    agent: "qa-agent"
+    reason: "Updates ConnectedAppsCard.test.tsx"
+  T026:
+    agent: "qa-agent"
+    reason: "New accessibility test written test-first for the FR-007 disabled-placeholder fix"
+  T027:
+    agent: "qa-agent"
+    reason: "Updates Playwright E2E assertions for sign-out/providers/connected-apps"
+  T028:
+    agent: "frontend-agent"
+    reason: "Rebuilds the sign-out control per the selected direction"
+  T029:
+    agent: "frontend-agent"
+    reason: "Rebuilds LinkedProvidersCard.tsx per the selected direction"
+  T030:
+    agent: "frontend-agent"
+    reason: "Rebuilds ConnectedAppsCard.tsx per the selected direction"
+  T031:
+    agent: "frontend-agent"
+    reason: "Implements the FR-007 accessible disabled-state fix — WCAG 2.1 AA implementation"
+  T032:
+    agent: "frontend-agent"
+    reason: "Motion decision for revoke/link transition feedback"
+  T033:
+    agent: "qa-agent"
+    reason: "Extends the axe-core WCAG 2.1 AA scan in e2e/accessibility.spec.ts"
+  T034:
+    agent: "qa-agent"
+    reason: "Accessibility assertion for the disabled placeholders (SC-007)"
+  T035:
+    agent: "qa-agent"
+    reason: "Responsive-viewport E2E checks"
+  T036:
+    agent: "qa-agent"
+    reason: "Keyboard-only operability E2E test"
+  T037:
+    agent: "frontend-agent"
+    reason: "Verifies/fixes token contrast — frontend-agent owns the token system"
+  T038:
+    agent: "frontend-agent"
+    reason: "Runs the review-animations skill critique pass — Apple design skill ownership"
+  T039:
+    agent: "frontend-agent"
+    reason: "Verifies i18next key coverage — frontend-agent owns the locale files"
+  T040:
+    agent: "frontend-agent"
+    reason: "Reconciles en.json/es.json copy — locale file ownership"
+  T041:
+    agent: "qa-agent"
+    reason: "Runs the functional-parity-contract.md verification procedure and records the result"
+  T042:
+    agent: "qa-agent"
+    reason: "Runs the accessibility-interaction-contract.md checklist end-to-end"
+  T043:
+    agent: "frontend-agent"
+    reason: "Produces design-review.md — structured Apple HIG design review"
+  T044:
+    agent: "qa-agent"
+    reason: "Runs quickstart.md end-to-end and records the validation run"
+  T045:
+    agent: "qa-agent"
+    reason: "Final regression sweep across type-check/lint/coverage/E2E"

@@ -205,6 +205,23 @@ describe('Landing — supporting sections preserve all content-inventory categor
 });
 
 /**
+ * Reveals the display-name field, clicking the "Edit" control first if the
+ * rebuilt `UserProfileForm` (050-profile-redesign T021) gates it behind one —
+ * a no-op against today's pre-rebuild component, which renders the field
+ * directly. Mirrors the equivalent helper in
+ * src/test/features/auth/UserProfileForm.test.tsx (T018) so this file's
+ * first-time-setup coverage keeps validating correctly whichever structure
+ * T021 lands on, per research.md §4.
+ */
+function getDisplayNameField() {
+    const existing = screen.queryByLabelText('auth.userProfileForm.displayName', { exact: false });
+    if (existing) return existing as HTMLInputElement;
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }));
+    return screen.getByLabelText('auth.userProfileForm.displayName', { exact: false }) as HTMLInputElement;
+}
+
+/**
  * Feature 029 US3 (T030): the first-time profile-setup view (the
  * `showProfileForm` branch, reached right after a first sign-in) must be
  * restyled onto the new design system — no leftover legacy gradient
@@ -239,6 +256,43 @@ describe('Landing — first-time profile setup uses the new design system', () =
         const wrapper = container.firstElementChild as HTMLElement;
         expect(wrapper.className).toContain('bg-surface');
         expect(wrapper.className).not.toContain('bg-gradient-to-br');
+    });
+
+    /**
+     * 050-profile-redesign T020: regression net for the full first-time-setup
+     * submit flow through Landing.tsx's `handleProfileSave` (FR-009) —
+     * previously only the form's *appearance* after sign-in was asserted
+     * above, never that submitting it actually reaches `updateDisplayName`
+     * and un-mounts the form afterward. `UserProfileForm.test.tsx` (T018)
+     * covers the save/validation/error contract in isolation; this is the
+     * integration point specific to Landing's `isFirstTime={true}` wiring
+     * that only this file can verify, and must keep passing unchanged once
+     * T021 rebuilds `UserProfileForm.tsx`.
+     */
+    it('submits the first-time display name to updateDisplayName and returns to the marketing page on success', async () => {
+        mockUser = { uid: 'new-user-1' };
+        mockUserProfile = { displayName: '' };
+        mockUpdateDisplayName.mockClear();
+        renderAt('/');
+        fireEvent.click(screen.getByRole('button', { name: /google/i }));
+
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'auth.userProfileForm.continue' })).toBeInTheDocument();
+        });
+
+        const field = getDisplayNameField();
+        fireEvent.change(field, { target: { value: 'First Time User' } });
+        fireEvent.click(screen.getByRole('button', { name: 'auth.userProfileForm.continue' }));
+
+        await waitFor(() => {
+            expect(mockUpdateDisplayName).toHaveBeenCalledWith('First Time User');
+        });
+        // handleProfileSave flips showProfileForm back to false on success, so the
+        // profile form unmounts and the normal marketing hero reappears.
+        await waitFor(() => {
+            expect(screen.queryByRole('button', { name: 'auth.userProfileForm.continue' })).not.toBeInTheDocument();
+        });
+        expect(screen.getByTestId('landing-hero')).toBeInTheDocument();
     });
 });
 

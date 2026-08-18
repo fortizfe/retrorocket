@@ -1,8 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { signInWithGoogle, createBoard, createBoardViaApi } from './fixtures/auth-helpers';
+import { signInWithGoogle, signInAs, createBoard, createBoardViaApi } from './fixtures/auth-helpers';
 import { addCardToFirstColumn, cardByContent, openReactionPicker } from './fixtures/board';
 import { registerAndConnectMcpClient, revokeMcpConnectionsForClient } from './fixtures/mcp';
+import { getDisplayNameInput } from './fixtures/profile';
 
 /**
  * WCAG 2.1 AA audit gate (FR-013 / SC-003).
@@ -215,6 +216,120 @@ for (const theme of THEMES) {
         await expectNoViolations(page, `/perfil error state (${theme})`);
     });
 }
+
+// --- Profile View State variants: loading, and the display-name saving/save-error
+// states (both themes) — spec 050-profile-redesign T033, data-model.md's `Profile View
+// State`/`Editable Field Operation State`, contracts/accessibility-interaction-contract.md.
+// `loaded` (above, "Dashboard & Profile...") and `error` (immediately above) were already
+// covered before this feature; this closes the remaining variants the contract requires.
+
+for (const theme of THEMES) {
+    test(`Profile loading state has no WCAG 2.1 AA violations (${theme})`, async ({ page, context }) => {
+        await forceTheme(page, theme);
+        await signInWithGoogle(page, context);
+        // Sign-in's own initial load already resolved GET /api/profile once (populating
+        // UserContext); intercept it now so the *next* fetch — triggered by the full
+        // browser navigation to /perfil below — stays pending long enough to scan, same
+        // technique as the Dashboard/Board loading-state scans above.
+        await page.route('**/api/profile', async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await route.continue();
+        });
+
+        await page.goto('/perfil');
+        await applyThemeClass(page, theme);
+        // AuthWrapper.tsx (not Profile.tsx's own inner `if (!userProfile)` branch) is
+        // what's actually visible here: it gates rendering Profile's children on a single
+        // combined `loading` flag that only flips false once BOTH session-establishment
+        // AND the profile fetch resolve together (UserContext.tsx's bootstrap effect sets
+        // `userData` and `coreState.loading:false` in the same synchronous block on
+        // success) — so there is no point during a normal navigation where AuthWrapper has
+        // already let Profile's children render but `userProfile` is still null. Profile's
+        // own loading branch is real and does independently satisfy FR-010/data-model.md's
+        // Profile View State — exercised directly (context mocked past AuthWrapper) by
+        // Profile.test.tsx — but it isn't reachable end-to-end via this navigation path
+        // under the current architecture. This scan therefore verifies the branch a real
+        // visitor actually sees during this window: AuthWrapper's own loading UI.
+        await expect(page.getByText('Verificando autenticación...')).toBeVisible();
+        await expectNoViolations(page, `/perfil loading state (${theme})`);
+    });
+
+    test(`Profile display-name saving state has no WCAG 2.1 AA violations (${theme})`, async ({ page }) => {
+        await forceTheme(page, theme);
+        // A dedicated identity, not the shared TEST_USER_EMAIL account: this test edits
+        // the display name, and the PATCH below is deliberately left pending past the
+        // test's own lifetime (never resolved), so reusing the shared account could leave
+        // it in an ambiguous state for specs that run later in this suite's single shared
+        // emulator session.
+        const email = `e2e-a11y-profile-saving-${theme}@example.com`;
+        await signInAs(page, email, `A11y Saving User ${theme}`);
+        await page.goto('/perfil');
+        await applyThemeClass(page, theme);
+
+        const nameInput = await getDisplayNameInput(page);
+        await nameInput.fill(`Saving State Name ${theme}`);
+
+        // Hold the PATCH open so the inline "Guardando..." state stays visible long
+        // enough to scan (never resolved — the test ends before this fires).
+        await page.route('**/api/profile', async (route) => {
+            if (route.request().method() === 'PATCH') {
+                await new Promise((resolve) => setTimeout(resolve, 5000));
+            }
+            return route.continue();
+        });
+        await page.getByRole('button', { name: 'Guardar cambios' }).click();
+        await expect(page.getByText('Guardando...')).toBeVisible();
+        await expectNoViolations(page, `/perfil display-name saving state (${theme})`);
+    });
+
+    test(`Profile display-name save-error state has no WCAG 2.1 AA violations (${theme})`, async ({ page }) => {
+        await forceTheme(page, theme);
+        const email = `e2e-a11y-profile-saveerror-${theme}@example.com`;
+        await signInAs(page, email, `A11y Save Error User ${theme}`);
+        await page.goto('/perfil');
+        await applyThemeClass(page, theme);
+
+        const nameInput = await getDisplayNameInput(page);
+        await nameInput.fill(`Save Error Name ${theme}`);
+
+        await page.route('**/api/profile', (route) => {
+            if (route.request().method() === 'PATCH') return route.abort('failed');
+            return route.continue();
+        });
+        await page.getByRole('button', { name: 'Guardar cambios' }).click();
+        await expect(page.getByText('Ocurrió un error al guardar tu nombre. Inténtalo de nuevo.')).toBeVisible({
+            timeout: 15_000,
+        });
+        await expectNoViolations(page, `/perfil display-name save-error state (${theme})`);
+    });
+}
+
+// --- Disabled account-action placeholders announced as unavailable, not merely
+// visually muted — spec 050-profile-redesign T034, SC-007, FR-007. A dedicated
+// DOM-level assertion, not folded into the loaded-state axe scan above: axe-core's own
+// aria-describedby-related rules only confirm a referenced id resolves to *some* element
+// in the DOM, not that the resolved element is visible and carries non-empty "not yet
+// available" text — this checks the actual SC-007 contract directly, end-to-end against
+// the real rendered app (data-model.md's `Account Action Placeholder` validation rules).
+
+test('the disabled "Exportar Datos"/"Eliminar Cuenta" placeholders are announced as unavailable to assistive technology, in every automated run (SC-007)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await page.goto('/perfil');
+
+    for (const name of ['Exportar Datos', 'Eliminar Cuenta']) {
+        const button = page.getByRole('button', { name, exact: true });
+        await expect(button).toBeVisible();
+        await expect(button).toBeDisabled();
+
+        const describedBy = await button.getAttribute('aria-describedby');
+        expect(describedBy, `"${name}" button has an aria-describedby association`).toBeTruthy();
+
+        const description = page.locator(`#${describedBy}`);
+        await expect(description).toBeVisible();
+        const text = (await description.textContent())?.trim() ?? '';
+        expect(text.length, `"${name}" button's aria-describedby resolves to non-empty visible text`).toBeGreaterThan(0);
+    }
+});
 
 // --- Dashboard List State variants (both themes) — spec 031 FR-018/SC-003 ---
 // data-model.md's "List State" entity: loaded (scanned above), loading,
@@ -1258,4 +1373,130 @@ test('opening the color picker and selecting a color complete with prefers-reduc
     await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(card).toHaveClass(/bg-blue-50/);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Mi Perfil keyboard-only operability — spec 050-profile-redesign, T036,
+// contracts/accessibility-interaction-contract.md: "edit/save display name, sign out,
+// link a provider, revoke a connected app ... Tab to reach, Enter/Space to activate,
+// with no mouse involved." No `.click()`/`.tap()` appears anywhere below — only
+// `.focus()`, `.press('Tab'|'Shift+Tab'|'Enter')`, and `page.keyboard.type()` (real
+// per-character key events, unlike `.fill()`, which sets the DOM value programmatically
+// without dispatching keyboard events).
+//
+// `.focus()` reaches each target directly (this file's own established idiom for
+// scattered controls — see "board menu triggers and card actions are visibly indicated
+// via keyboard focus" above) rather than blind sequential Tabbing through an unspecified
+// order; each target is then round-tripped through a real Tab/Shift+Tab pair, which is
+// necessary for Chromium's `:focus-visible` keyboard-input flag and also proves the
+// element is genuinely reachable within the page's tab order, not merely focusable via
+// script.
+//
+// Split into four separate tests rather than one: sign-out and provider-linking both
+// end with a real full-page navigation (session end / OAuth redirect respectively),
+// which would prevent continuing to exercise the remaining capabilities on the same
+// page afterward. Each test gets Playwright's own fresh page/context by default, so
+// splitting introduces no ordering dependency between them.
+// ═══════════════════════════════════════════════════════════════════════════
+
+test('editing and saving the display name on Mi Perfil is keyboard-only operable', async ({ page }) => {
+    // A dedicated identity: this test permanently renames whoever it signs in as, and
+    // every other spec in this suite's single shared emulator run reuses TEST_USER_EMAIL.
+    const email = `e2e-a11y-kbd-name-${Date.now()}@example.com`;
+    const displayName = 'A11y Keyboard Name User';
+    await signInAs(page, email, displayName);
+    await page.goto('/perfil');
+    await expect(page.getByRole('heading', { name: 'Mi Perfil' })).toBeVisible();
+
+    // Reach the persistent "Editar" control and activate it with Enter.
+    const editButton = page.getByRole('button', { name: 'Editar' });
+    await editButton.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(editButton).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    // UserProfileForm.tsx moves focus into the field itself once the inline form opens
+    // (T021's imperative focus effect) — confirms the reveal is keyboard-reachable too,
+    // not just its trigger.
+    const nameInput = page.getByLabel('Nombre a mostrar', { exact: false });
+    await expect(nameInput).toBeFocused();
+
+    // Replace the field's contents via real keyboard input only (select-all, then type).
+    await page.keyboard.press('Control+a');
+    const newName = `Renamed via Keyboard ${Date.now()}`;
+    await page.keyboard.type(newName);
+
+    // Tab to the Save button and activate with Enter.
+    const saveButton = page.getByRole('button', { name: 'Guardar cambios' });
+    await saveButton.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByText('Nombre guardado')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(newName).first()).toBeVisible();
+});
+
+test('revoking a connected app on Mi Perfil is keyboard-only operable', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    // Seeding a connection uses registerAndConnectMcpClient's real consent-screen click
+    // (a setup step, not the interaction under test — the same precedent this file
+    // already uses elsewhere, e.g. createBoard()/addCardToFirstColumn() ahead of the
+    // board keyboard-operability tests above). Only the revoke action itself, below, is
+    // keyboard-only.
+    const clientName = `A11y Keyboard Revoke Client ${Date.now()}`;
+    await registerAndConnectMcpClient(page, clientName);
+    await page.goto('/perfil');
+
+    const revokeButton = page.getByRole('button', { name: `Revocar ${clientName}` });
+    await revokeButton.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(revokeButton).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByText(clientName)).toHaveCount(0, { timeout: 15_000 });
+});
+
+test('linking a provider on Mi Perfil is keyboard-only operable, up to triggering the OAuth redirect', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await page.goto('/perfil');
+
+    // startLinkProvider() is a synchronous window.location.assign to this app's own
+    // /api/auth/link/:provider endpoint, which itself 302-redirects to the real
+    // provider's consent screen — per the task's own scope ("up to triggering the
+    // redirect — you don't need to complete the OAuth flow"), intercept that first
+    // same-origin hop and fulfill it locally instead of letting the browser actually
+    // leave for github.com. This proves the keyboard activation reached and triggered
+    // the real redirect flow without depending on an external provider's UI.
+    let linkRequestUrl: string | null = null;
+    await page.route('**/api/auth/link/github**', async (route) => {
+        linkRequestUrl = route.request().url();
+        await route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>link-redirect-stub</body></html>' });
+    });
+
+    // GitHub is the only provider the shared TEST_USER_EMAIL account hasn't linked
+    // (profile.spec.ts's own regression test relies on the same fact).
+    const githubRow = page.getByRole('listitem').filter({ hasText: 'GitHub' });
+    const linkButton = githubRow.getByRole('button', { name: 'Vincular' });
+    await linkButton.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(linkButton).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect.poll(() => linkRequestUrl, { timeout: 10_000 }).toContain('/api/auth/link/github');
+});
+
+test('signing out from Mi Perfil is keyboard-only operable', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await page.goto('/perfil');
+
+    const signOutButton = page.getByRole('button', { name: 'Cerrar Sesión' });
+    await signOutButton.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(signOutButton).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByText('Continuar con Google', { exact: true })).toBeVisible({ timeout: 15_000 });
 });
