@@ -123,7 +123,11 @@
     "next": "Next",
     "create": "Create",
     "back": "Back",
-    "step": "Step {{current}} of {{total}}"
+    "step": "Step {{current}} of {{total}}",
+    "anonymous": {
+      "label": "Anonymous board",
+      "description": "Hide card authors' names from all participants. You can change this later from the facilitator menu."
+    }
   },
   "retrospective": {
     "columns": {
@@ -334,6 +338,13 @@
       "controlsCardTitle": "Configuration",
       "showActionItems": "Show action items",
       "showActionItemsDesc": "Control whether the action items column is visible to participants",
+      "anonymity": {
+        "label": "Anonymous mode",
+        "description": "Hide participant names from cards for everyone on the board",
+        "enable": "Enable anonymous mode",
+        "disable": "Disable anonymous mode",
+        "error": "Couldn't update anonymous mode. Please try again."
+      },
       "configureTime": "Configure time",
       "create": "Create",
       "quickTimers": "Quick Timers",
@@ -504,6 +515,10 @@
     "board": {
       "loading": "Loading retrospective...",
       "loadError": "Could not load cards"
+    },
+    "anonymous": {
+      "indicator": "Anonymous board",
+      "indicatorDescription": "Card authors are hidden from every participant while this board is anonymous."
     }
   },
   "datePicker": {

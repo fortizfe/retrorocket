@@ -94,6 +94,20 @@ describe('GET /api/retrospectives/:id', () => {
         const res = await request(app).get('/api/retrospectives/missing').set('Cookie', sessionCookieFor('u1'));
         expect(res.status).toBe(404);
     });
+
+    // 051-anonymous-board-mode, anonymity-api-contract.md: the board-state response
+    // gains isAnonymous alongside columnGroupingStates, defaulting to false.
+    it('includes isAnonymous in the response body, reflecting the board record', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board({ isAnonymous: false })] });
+        const res = await request(app).get('/api/retrospectives/r1').set('Cookie', sessionCookieFor('u1'));
+        expect(res.body.isAnonymous).toBe(false);
+    });
+
+    it('includes isAnonymous: true in the response body for an anonymous board', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board({ isAnonymous: true })] });
+        const res = await request(app).get('/api/retrospectives/r1').set('Cookie', sessionCookieFor('u1'));
+        expect(res.body.isAnonymous).toBe(true);
+    });
 });
 
 // US3, research.md §1: the WebSocket reconnect flow's REST resync (backendRealtimeClient.ts —
@@ -482,6 +496,36 @@ describe('PUT /api/retrospectives/:id/timer', () => {
         const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
         const res = await request(app).put('/api/retrospectives/r1/timer').set('Cookie', sessionCookieFor('someone-else')).send({ duration: 300 });
         expect(res.status).toBe(403);
+    });
+});
+
+// 051-anonymous-board-mode, US3, T045 (red phase): PUT /api/retrospectives/:id/anonymity
+// does not exist yet (T051) — supertest requests below hit Express's 404 fallback
+// today, so every assertion here is expected to fail until the route is added.
+describe('PUT /api/retrospectives/:id/anonymity', () => {
+    it('401s without a session cookie', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
+        const res = await request(app).put('/api/retrospectives/r1/anonymity').send({ isAnonymous: true });
+        expect(res.status).toBe(401);
+    });
+
+    it('403s for a non-facilitator', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
+        const res = await request(app).put('/api/retrospectives/r1/anonymity').set('Cookie', sessionCookieFor('someone-else')).send({ isAnonymous: true });
+        expect(res.status).toBe(403);
+    });
+
+    it('400s when isAnonymous is not a boolean', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
+        const res = await request(app).put('/api/retrospectives/r1/anonymity').set('Cookie', sessionCookieFor('facilitator-uid')).send({ isAnonymous: 'yes' });
+        expect(res.status).toBe(400);
+    });
+
+    it('200s with the updated value for the facilitator', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()] });
+        const res = await request(app).put('/api/retrospectives/r1/anonymity').set('Cookie', sessionCookieFor('facilitator-uid')).send({ isAnonymous: true });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ id: 'r1', isAnonymous: true });
     });
 });
 

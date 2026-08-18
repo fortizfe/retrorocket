@@ -8,6 +8,7 @@ export interface Retrospective {
   updatedAt: Date;
   participantCount: number;
   isActive: boolean;
+  isAnonymous: boolean;
 }
 
 export interface RetrospectiveCard {

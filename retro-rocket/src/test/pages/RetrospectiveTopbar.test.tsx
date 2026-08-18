@@ -132,6 +132,46 @@ describe('RetrospectiveTopbar', () => {
         expect(screen.getByTestId('facilitator-menu-mount')).toBeInTheDocument();
     });
 
+    // spec 051-anonymous-board-mode, US2 (FR-013, SC-007), T031: a persistent,
+    // clearly visible indicator of the board's current anonymity state, shown to
+    // every participant (not facilitator-gated) — anonymity-ui-behavior-contract.md's
+    // "Persistent anonymity indicator" table requires a text label as the primary
+    // signal, not color/icon alone (constitution Principle VIII).
+    describe('Anonymous board indicator (spec 051-anonymous-board-mode, US2, T031)', () => {
+        it('shows a text-based anonymity indicator when the board is anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { ...retrospective, isAnonymous: true }, participants, timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<RetrospectiveTopbar />);
+
+            expect(screen.getByText('retrospective.anonymous.indicator')).toBeInTheDocument();
+        });
+
+        it('shows the indicator to a non-facilitator participant too (no role-based exception)', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { ...retrospective, isAnonymous: true }, participants, timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<RetrospectiveTopbar />);
+
+            expect(screen.getByText('retrospective.anonymous.indicator')).toBeInTheDocument();
+        });
+
+        it('does not show the anonymity indicator when the board is not anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: true,
+                retrospective: { ...retrospective, isAnonymous: false }, participants, timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<RetrospectiveTopbar />);
+
+            expect(screen.queryByText('retrospective.anonymous.indicator')).not.toBeInTheDocument();
+        });
+    });
+
     describe('options menu — desktop (Direction B "Adaptive Sheet", feature 036)', () => {
         beforeEach(() => {
             mockUseBoardData.mockReturnValue({

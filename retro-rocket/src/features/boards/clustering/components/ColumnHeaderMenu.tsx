@@ -20,6 +20,9 @@ interface ColumnHeaderMenuProps {
     onGroupingChange: (criteria: GroupingCriteria) => void;
     disabled?: boolean;
     hasCards?: boolean;
+    // spec 051-anonymous-board-mode, US2 (FR-004, SC-003): hides the "group by
+    // user" option entirely (not merely disabled) while the board is anonymous.
+    excludeUserGrouping?: boolean;
     // Grouping-suggestions panel (spec 044) — anchored to this same trigger button,
     // independently of the grouping-mode dropdown below. Data/state stays owned by
     // the caller (GroupableColumn.tsx); this component only owns the trigger and the
@@ -56,6 +59,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     onGroupingChange,
     disabled = false,
     hasCards = true,
+    excludeUserGrouping = false,
     suggestionsOpen = false,
     suggestions = [],
     suggestionCards = [],
@@ -96,7 +100,7 @@ const ColumnHeaderMenu: React.FC<ColumnHeaderMenuProps> = ({
     );
 
     // Get grouping options dynamically to respond to language changes
-    const groupingOptions = getGroupingOptions(t);
+    const groupingOptions = getGroupingOptions(t, excludeUserGrouping);
 
     const handleGroupingSelect = (criteria: GroupingCriteria) => {
         onGroupingChange(criteria);

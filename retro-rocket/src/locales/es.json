@@ -124,7 +124,11 @@
     "next": "Siguiente",
     "create": "Crear",
     "back": "Atrás",
-    "step": "Paso {{current}} de {{total}}"
+    "step": "Paso {{current}} de {{total}}",
+    "anonymous": {
+      "label": "Tablero anónimo",
+      "description": "Oculta los nombres de los autores de las tarjetas para todos los participantes. Puedes cambiarlo más tarde desde el menú de facilitador."
+    }
   },
   "retrospective": {
     "columns": {
@@ -335,6 +339,13 @@
       "controlsCardTitle": "Configuración",
       "showActionItems": "Mostrar elementos de acción",
       "showActionItemsDesc": "Controla si la columna de elementos de acción está visible para los participantes",
+      "anonymity": {
+        "label": "Modo anónimo",
+        "description": "Oculta los nombres de los participantes en las tarjetas para todo el tablero",
+        "enable": "Activar modo anónimo",
+        "disable": "Desactivar modo anónimo",
+        "error": "No se pudo actualizar el modo anónimo. Inténtalo de nuevo."
+      },
       "configureTime": "Configurar tiempo",
       "create": "Crear",
       "quickTimers": "Temporizadores rápidos",
@@ -505,6 +516,10 @@
     "board": {
       "loading": "Cargando retrospectiva...",
       "loadError": "No se pudieron cargar las tarjetas"
+    },
+    "anonymous": {
+      "indicator": "Tablero anónimo",
+      "indicatorDescription": "Los nombres de los autores de las tarjetas están ocultos para todos los participantes mientras este tablero sea anónimo."
     }
   },
   "groupSuggestion": {

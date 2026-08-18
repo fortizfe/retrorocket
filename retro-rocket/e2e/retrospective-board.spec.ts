@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { FieldValue } from 'firebase-admin/firestore';
 import { signInWithGoogle, signInAs, createBoard, createBoardViaApi } from './fixtures/auth-helpers';
 import { getEmulatorFirestore } from './fixtures/firestoreAdmin';
 import { addCardToFirstColumn, cardByContent } from './fixtures/board';
@@ -1987,4 +1988,171 @@ test('suggested grouping triggered on one column only analyzes that column, leav
     // outside of the (helped-only) suggestions panel.
     await expect(page.getByText(improveCardAContent)).toBeVisible();
     await expect(page.getByText(improveCardBContent)).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// spec 051-anonymous-board-mode, User Story 3 (T056): the facilitator switches
+// a live board's anonymity mode from the Controls tab of the facilitator menu,
+// and the change propagates to every connected participant over the existing
+// realtime channel — no reload — per quickstart.md §4 and spec.md US3
+// Acceptance Scenarios 1-4 (FR-008–FR-011, SC-004).
+// ---------------------------------------------------------------------------
+test('the facilitator toggles anonymity live: author names and "group by user" disappear/reappear for a second participant without reloading, and the control is invisible to that participant (spec 051)', async ({ browser, request }) => {
+    const facilitatorEmail = 'e2e-anon-facilitator51@example.com';
+    const facilitatorName = 'E2E Anon Facilitator';
+    const participantEmail = 'e2e-anon-participant51@example.com';
+    const participantName = 'E2E Anon Participant';
+    const boardTitle = 'E2E Anonymity Toggle Live Board';
+
+    // A non-anonymous board (the default), owned by the facilitator identity, with
+    // one card from each of two participants — the two-context pattern established
+    // in concurrent-board-session.spec.ts / the tests above in this file.
+    const boardId = await createBoardViaApi(request, facilitatorEmail, facilitatorName, boardTitle);
+    const facilitatorCardRes = await request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Facilitator Anon Test Card', column: 'helped' },
+    });
+    expect(facilitatorCardRes.ok()).toBeTruthy();
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    // The facilitator must be the board's actual owner (uid === retrospective.createdBy)
+    // for the anonymity control to render at all — signInAs, not signInWithGoogle's
+    // fixed shared account (same gotcha noted on the timer test above).
+    await signInAs(pageA, facilitatorEmail, facilitatorName);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText(boardTitle)).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, participantEmail, participantName);
+    const participantCardRes = await pageB.request.post(`/api/retrospectives/${boardId}/cards`, {
+        data: { content: 'Participant Anon Test Card', column: 'helped' },
+    });
+    expect(participantCardRes.ok()).toBeTruthy();
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText(boardTitle)).toBeVisible({ timeout: 30_000 });
+
+    // A non-facilitator never sees the facilitator menu's entry button at all
+    // (FR-011) — not merely a disabled/hidden anonymity control inside it.
+    await expect(pageB.getByRole('button', { name: 'Controles de Facilitador' })).toHaveCount(0);
+
+    // Scoped to the board content area, not the whole page: the topbar's live
+    // participant-presence list (spec Assumptions: "distinct concept from card
+    // authorship... not affected by this feature") legitimately keeps showing both
+    // display names regardless of the board's anonymity setting, so a page-wide
+    // text search for a display name would find a false positive there.
+    const boardMainB = pageB.locator('main');
+
+    // Baseline (non-anonymous): the column's default grouping is 'user'
+    // (DEFAULT_GROUPING_STATE), so both authors' display names already appear as
+    // group headings, and the anonymity indicator is absent.
+    const facilitatorHeading = pageB.getByRole('heading', { name: facilitatorName });
+    const participantHeading = pageB.getByRole('heading', { name: participantName });
+    await expect(facilitatorHeading).toBeVisible({ timeout: 10_000 });
+    await expect(participantHeading).toBeVisible({ timeout: 10_000 });
+    await expect(pageB.getByText('Tablero anónimo')).toHaveCount(0);
+
+    const groupingTriggerB = pageB.getByRole('button', { name: 'Opciones de agrupación' }).first();
+    await groupingTriggerB.click();
+    await expect(pageB.getByText('Agrupar por usuario', { exact: true })).toBeVisible();
+    await pageB.keyboard.press('Escape');
+
+    // From A (facilitator): open the facilitator menu — it opens directly on the
+    // Controls tab (its default) — and switch the anonymity toggle on.
+    await pageA.getByRole('button', { name: 'Controles de Facilitador' }).click();
+    const anonymityToggleA = pageA.getByTestId('anonymity-toggle');
+    await expect(anonymityToggleA).toBeVisible({ timeout: 10_000 });
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Activar modo anónimo');
+    await anonymityToggleA.click();
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Desactivar modo anónimo');
+
+    // In B's session, without any reload: author names disappear everywhere (both
+    // the group heading and each card's own author label), the persistent
+    // anonymity indicator appears, and the column that was grouped by user falls
+    // back to ungrouped with "group by user" no longer offered (FR-010) — all
+    // within a few seconds (SC-004).
+    await expect(pageB.getByText('Tablero anónimo')).toBeVisible({ timeout: 5_000 });
+    await expect(boardMainB.getByText(facilitatorName, { exact: true })).toHaveCount(0, { timeout: 5_000 });
+    await expect(boardMainB.getByText(participantName, { exact: true })).toHaveCount(0, { timeout: 5_000 });
+    await expect(facilitatorHeading).not.toBeVisible();
+    await expect(participantHeading).not.toBeVisible();
+
+    await groupingTriggerB.click();
+    await expect(pageB.getByText('Agrupar por usuario', { exact: true })).toHaveCount(0);
+    await expect(pageB.getByText('Sin agrupación', { exact: true })).toBeVisible();
+    await expect(pageB.getByText('Agrupaciones sugeridas', { exact: true })).toBeVisible();
+    await pageB.keyboard.press('Escape');
+
+    // From A: switch back to non-anonymous.
+    await anonymityToggleA.click();
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Activar modo anónimo');
+
+    // In B's session, without any reload: author names and the indicator's absence
+    // return, and — with no action from B — the same column automatically shows
+    // grouped by user again (its saved criteria was never overwritten server-side,
+    // only display-overridden while the board was anonymous — research.md §5).
+    await expect(pageB.getByText('Tablero anónimo')).toHaveCount(0, { timeout: 5_000 });
+    await expect(facilitatorHeading).toBeVisible({ timeout: 5_000 });
+    await expect(participantHeading).toBeVisible({ timeout: 5_000 });
+
+    await groupingTriggerB.click();
+    await expect(pageB.getByText('Agrupar por usuario', { exact: true })).toBeVisible();
+    await pageB.keyboard.press('Escape');
+
+    // A non-facilitator also can't drive the change directly against the API
+    // (FR-011, defense in depth beyond the UI simply never rendering the control).
+    const directPutRes = await pageB.request.put(`/api/retrospectives/${boardId}/anonymity`, {
+        data: { isAnonymous: true },
+    });
+    expect(directPutRes.status()).toBe(403);
+
+    await contextA.close();
+    await contextB.close();
+});
+
+// 051-anonymous-board-mode, Polish (T058): a board whose Firestore document predates
+// this feature — no `isAnonymous` field at all, not even `false` — must still be read
+// and displayed as non-anonymous end-to-end: author names shown, "group by user"
+// offered, no anonymous-mode indicator, with no migration step run (spec.md
+// Clarification / FR-002, quickstart.md §6). server/test/adapters/firebase/
+// FirestoreRetrospectiveBoardAdapter.test.ts (T002) already covers toRetrospective()'s
+// `isAnonymous ?? false` fallback as a pure-function unit test in isolation; this proves
+// the same fallback holds through the real adapter, route, realtime sync, and UI when
+// exercised against a genuinely field-less document in the Firestore emulator — not
+// createBoard()'s own explicit `isAnonymous: false` write (every board created through
+// the API, including via createBoardViaApi, always has the field present and false,
+// which would not exercise the fallback at all).
+test('a board with no isAnonymous field (predates this feature) reads and displays as non-anonymous end-to-end', async ({ page, context, request }) => {
+    const boardId = await createBoardViaApi(
+        request,
+        'e2e-legacy-anon-owner51@example.com',
+        'E2E Legacy Anon Owner',
+        'E2E Legacy No-Anonymity-Field Board',
+    );
+
+    // Simulate a pre-051 board: strip the field entirely (not merely set it to
+    // false) — createBoard() always writes `isAnonymous: false` explicitly, so only an
+    // admin-SDK FieldValue.delete() reproduces genuine field absence.
+    const db = getEmulatorFirestore();
+    await db.collection('retrospectives').doc(boardId).update({ isAnonymous: FieldValue.delete() });
+    const strippedSnap = await db.collection('retrospectives').doc(boardId).get();
+    expect(strippedSnap.data()).not.toHaveProperty('isAnonymous');
+
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${boardId}`);
+    await expect(page.getByText('E2E Legacy No-Anonymity-Field Board')).toBeVisible({ timeout: 30_000 });
+
+    // No anonymous-mode indicator.
+    await expect(page.getByText('Tablero anónimo')).toHaveCount(0);
+
+    // A card shows its author's name exactly as on any other non-anonymous board.
+    await addCardToFirstColumn(page, 'Legacy field-less board card');
+    await expect(cardByContent(page, 'Legacy field-less board card').getByText('E2E Google User')).toBeVisible();
+
+    // "group by user" remains offered (not hidden, as it would be if the board were
+    // ever mistakenly treated as anonymous).
+    const groupingTrigger = page.getByRole('button', { name: 'Opciones de agrupación' }).first();
+    await groupingTrigger.click();
+    await expect(page.getByText('Agrupar por usuario', { exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
 });

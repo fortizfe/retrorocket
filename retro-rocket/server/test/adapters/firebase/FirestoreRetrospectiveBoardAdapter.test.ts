@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { toDate, toRetrospective, toParticipant, toTimer, chunk } from '../../../src/adapters/firebase/FirestoreRetrospectiveBoardAdapter';
+import type { Firestore } from 'firebase-admin/firestore';
+import { toDate, toRetrospective, toParticipant, toTimer, chunk, FirestoreRetrospectiveBoardAdapter } from '../../../src/adapters/firebase/FirestoreRetrospectiveBoardAdapter';
+import { ForbiddenError } from '../../../src/domain/errors';
 
 // FirestoreRetrospectiveBoardAdapter's query/write composition (getRetrospective, join's
 // idempotency, timer control's facilitator-only guard, renameParticipantsForUser's fan-out)
@@ -41,6 +43,18 @@ describe('toRetrospective', () => {
     it('preserves a present columnGroupingStates value', () => {
         const withGrouping = { ...data, columnGroupingStates: { col1: { criteria: 'user', activeGroups: ['g1'] } } };
         expect(toRetrospective('r1', withGrouping).columnGroupingStates).toEqual({ col1: { criteria: 'user', activeGroups: ['g1'] } });
+    });
+
+    // 051-anonymous-board-mode, data-model.md: isAnonymous defaults to false for
+    // boards written before this field existed, mirroring the columnGroupingStates
+    // gap-fallback pattern above.
+    it('defaults isAnonymous to false when absent (data-model.md gap)', () => {
+        expect(toRetrospective('r1', data).isAnonymous).toBe(false);
+    });
+
+    it('preserves a present isAnonymous value', () => {
+        const withAnonymous = { ...data, isAnonymous: true };
+        expect(toRetrospective('r1', withAnonymous).isAnonymous).toBe(true);
     });
 });
 
@@ -90,5 +104,75 @@ describe('toTimer', () => {
             updatedAt: new Date(),
         };
         expect(toTimer('r1', data)).toMatchObject({ retrospectiveId: 'r1', duration: 300, isRunning: false });
+    });
+});
+
+// 051-anonymous-board-mode, US3, T043 (red phase): setAnonymous() does not exist on
+// FirestoreRetrospectiveBoardAdapter yet (T048/T049) — this deliberately deviates from
+// this file's stated "no dedicated Firestore mock, pure-helpers-only" convention above,
+// because setAnonymous's facilitator-only guard + persist-and-return behavior (unlike
+// toDate/toRetrospective/toParticipant/chunk) cannot be expressed as a pure function: it
+// needs to read one doc (requireFacilitator) and write it back. A tiny in-memory
+// Firestore-chain fake (collection().doc().get()/update()/set()) is introduced here,
+// scoped to only this describe block, to make that testable without a real emulator.
+function createFakeDb(seed: Record<string, Record<string, unknown>>): Firestore {
+    const store = new Map<string, Record<string, unknown>>(Object.entries(seed).map(([key, value]) => [key, { ...value }]));
+    return {
+        collection: (name: string) => ({
+            doc: (id: string) => {
+                const key = `${name}/${id}`;
+                return {
+                    get: async () => ({
+                        exists: store.has(key),
+                        data: () => store.get(key),
+                    }),
+                    update: async (updates: Record<string, unknown>) => {
+                        store.set(key, { ...(store.get(key) ?? {}), ...updates });
+                    },
+                    set: async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+                        store.set(key, opts?.merge ? { ...(store.get(key) ?? {}), ...data } : data);
+                    },
+                };
+            },
+        }),
+    } as unknown as Firestore;
+}
+
+describe('FirestoreRetrospectiveBoardAdapter.setAnonymous (T043, not yet implemented)', () => {
+    it('throws ForbiddenError when uid is not the board facilitator', async () => {
+        const db = createFakeDb({
+            'retrospectives/r1': {
+                title: 'Sprint 12 Retro',
+                createdBy: 'facilitator-uid',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                participantCount: 1,
+                isActive: true,
+            },
+        });
+        const adapter = new FirestoreRetrospectiveBoardAdapter(db);
+
+        await expect(adapter.setAnonymous('r1', 'someone-else', true)).rejects.toThrow(ForbiddenError);
+    });
+
+    it('persists and returns the new isAnonymous value when uid is the facilitator', async () => {
+        const db = createFakeDb({
+            'retrospectives/r1': {
+                title: 'Sprint 12 Retro',
+                createdBy: 'facilitator-uid',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                participantCount: 1,
+                isActive: true,
+                isAnonymous: false,
+            },
+        });
+        const adapter = new FirestoreRetrospectiveBoardAdapter(db);
+
+        const result = await adapter.setAnonymous('r1', 'facilitator-uid', true);
+        expect(result).toMatchObject({ id: 'r1', isAnonymous: true });
+
+        const refetched = await adapter.getRetrospective('r1');
+        expect(refetched?.isAnonymous).toBe(true);
     });
 });

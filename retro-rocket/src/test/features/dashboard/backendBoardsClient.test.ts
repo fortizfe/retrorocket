@@ -61,6 +61,19 @@ describe('backendBoardsClient', () => {
             vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(false, 400, { error: { message: 'Invalid template ID: nope' } })));
             await expect(createBoard({ templateId: 'default', title: 'X', locale: 'en' })).rejects.toThrow('Invalid template ID: nope');
         });
+
+        // 051-anonymous-board-mode, T019 (contracts/anonymity-api-contract.md "Extended
+        // endpoint: POST /api/boards"): isAnonymous must be included in the POST body
+        // when the caller provides it.
+        it('includes isAnonymous: true in the request body when provided', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 201, { boardId: 'b1' }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await createBoard({ templateId: 'default', title: 'New', locale: 'en', isAnonymous: true });
+
+            const [, requestInit] = fetchMock.mock.calls[0];
+            expect(JSON.parse((requestInit as RequestInit).body as string)).toMatchObject({ isAnonymous: true });
+        });
     });
 
     describe('joinBoard', () => {

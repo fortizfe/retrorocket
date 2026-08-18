@@ -1,0 +1,210 @@
+# Agent Assignments
+# Feature: 051-anonymous-board-mode
+# Generated: 2026-08-18T07:51:12Z
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/**."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/**."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature needs tests written before implementation, and for Vitest/Playwright/accessibility coverage."
+
+assignments:
+  T001:
+    agent: "default"
+    reason: "Environment/dev-server verification, no code change, no specialized agent needed"
+
+  # Foundational
+  T002:
+    agent: "qa-agent"
+    reason: "Failing test first (TDD) for FirestoreRetrospectiveBoardAdapter default fallback"
+  T003:
+    agent: "backend-agent"
+    reason: "server/src/application/ports/retrospective.ts — DTO field"
+  T004:
+    agent: "backend-agent"
+    reason: "server/src/adapters/firebase/FirestoreRetrospectiveBoardAdapter.ts"
+  T005:
+    agent: "qa-agent"
+    reason: "Failing test first for GetBoardState use-case"
+  T006:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/retrospective/GetBoardState.ts"
+  T007:
+    agent: "qa-agent"
+    reason: "Failing test first for GET /api/retrospectives/:id response shape"
+  T008:
+    agent: "backend-agent"
+    reason: "server/src/http/routes/retrospectives.ts — serializeBoardState()"
+  T009:
+    agent: "qa-agent"
+    reason: "Failing test first for frontend RetrospectiveState/DTO round-trip"
+  T010:
+    agent: "frontend-agent"
+    reason: "src/features/boards/retrospective/services/backendRetrospectiveClient.ts"
+  T011:
+    agent: "qa-agent"
+    reason: "Failing test first for parseRetrospectiveFields()"
+  T012:
+    agent: "frontend-agent"
+    reason: "src/features/boards/retrospective/hooks/useRetrospectiveRealtimeSync.ts"
+  T013:
+    agent: "frontend-agent"
+    reason: "src/features/boards/types/retrospective.ts"
+  T014:
+    agent: "qa-agent"
+    reason: "Failing test first for RetrospectivePage's board→Retrospective mapping"
+  T015:
+    agent: "frontend-agent"
+    reason: "src/pages/RetrospectivePage.tsx"
+
+  # User Story 1 — Create as Anonymous or Named
+  T016:
+    agent: "qa-agent"
+    reason: "Failing tests first for FirestoreBoardsAdapter.createBoard()"
+  T017:
+    agent: "qa-agent"
+    reason: "Failing test first for CreateBoard use-case"
+  T018:
+    agent: "qa-agent"
+    reason: "Failing test first for POST /api/boards route"
+  T019:
+    agent: "qa-agent"
+    reason: "Failing test first for backendBoardsClient.createBoard()"
+  T020:
+    agent: "qa-agent"
+    reason: "New failing test file for CreateBoardFlow toggle"
+  T021:
+    agent: "backend-agent"
+    reason: "server/src/application/ports/boards.ts"
+  T022:
+    agent: "backend-agent"
+    reason: "server/src/adapters/firebase/FirestoreBoardsAdapter.ts"
+  T023:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/boards/CreateBoard.ts"
+  T024:
+    agent: "backend-agent"
+    reason: "server/src/http/routes/boards.ts"
+  T025:
+    agent: "frontend-agent"
+    reason: "src/features/dashboard/services/backendBoardsClient.ts"
+  T026:
+    agent: "frontend-agent"
+    reason: "src/features/create-board/components/CreateBoardFlow.tsx"
+  T027:
+    agent: "frontend-agent"
+    reason: "src/locales/{en,es}.json — i18n keys, frontend-owned"
+
+  # User Story 2 — Participate in an Anonymous Board
+  T028:
+    agent: "qa-agent"
+    reason: "Failing test first for CardHeader author gating"
+  T029:
+    agent: "qa-agent"
+    reason: "Failing test first for getGroupingOptions() exclusion"
+  T030:
+    agent: "qa-agent"
+    reason: "Failing test first for GroupableColumn display-time override"
+  T031:
+    agent: "qa-agent"
+    reason: "Failing test first for RetrospectiveTopbar indicator"
+  T032:
+    agent: "qa-agent"
+    reason: "Failing tests first for txt/docx/pdf export author omission"
+  T033:
+    agent: "qa-agent"
+    reason: "Failing test first for unifiedExportService passthrough"
+  T034:
+    agent: "frontend-agent"
+    reason: "src/features/boards/retrospective/components/CardHeader.tsx + DraggableCard.tsx"
+  T035:
+    agent: "frontend-agent"
+    reason: "src/features/boards/types/columnGrouping.ts"
+  T036:
+    agent: "frontend-agent"
+    reason: "src/features/boards/clustering/components/GroupableColumn.tsx"
+  T037:
+    agent: "frontend-agent"
+    reason: "src/features/boards/retrospective/components/RetrospectiveTopbar.tsx"
+  T038:
+    agent: "frontend-agent"
+    reason: "src/features/boards/export/services/txtExportService.ts"
+  T039:
+    agent: "frontend-agent"
+    reason: "src/features/boards/export/services/docxExportService.ts"
+  T040:
+    agent: "frontend-agent"
+    reason: "src/features/boards/export/services/pdfExportService.ts"
+  T041:
+    agent: "frontend-agent"
+    reason: "src/features/boards/export/services/unifiedExportService.ts"
+  T042:
+    agent: "frontend-agent"
+    reason: "src/locales/{en,es}.json — i18n keys, frontend-owned"
+
+  # User Story 3 — Facilitator Toggles Anonymity Mid-Retrospective
+  T043:
+    agent: "qa-agent"
+    reason: "Failing tests first for setAnonymous() facilitator authorization"
+  T044:
+    agent: "qa-agent"
+    reason: "New failing test file for the Anonymity use-case"
+  T045:
+    agent: "qa-agent"
+    reason: "Failing tests first for PUT /api/retrospectives/:id/anonymity"
+  T046:
+    agent: "qa-agent"
+    reason: "Failing test first for backendRetrospectiveClient.setAnonymity()"
+  T047:
+    agent: "qa-agent"
+    reason: "Failing tests first for ControlsTab facilitator-gated toggle"
+  T048:
+    agent: "backend-agent"
+    reason: "server/src/application/ports/retrospective.ts — new port method"
+  T049:
+    agent: "backend-agent"
+    reason: "server/src/adapters/firebase/FirestoreRetrospectiveBoardAdapter.ts"
+  T050:
+    agent: "backend-agent"
+    reason: "New server/src/application/use-cases/retrospective/Anonymity.ts"
+  T051:
+    agent: "backend-agent"
+    reason: "server/src/http/routes/retrospectives.ts — new PUT route"
+  T052:
+    agent: "frontend-agent"
+    reason: "src/features/boards/retrospective/services/backendRetrospectiveClient.ts"
+  T053:
+    agent: "frontend-agent"
+    reason: "src/features/boards/facilitator/components/ControlsTab.tsx"
+  T054:
+    agent: "frontend-agent"
+    reason: "src/features/boards/countdown/components/FacilitatorMenu.tsx"
+  T055:
+    agent: "frontend-agent"
+    reason: "src/locales/{en,es}.json — i18n keys, frontend-owned"
+  T056:
+    agent: "qa-agent"
+    reason: "e2e/retrospective-board.spec.ts — Playwright, qa-agent-owned surface"
+
+  # Polish & Cross-Cutting
+  T057:
+    agent: "qa-agent"
+    reason: "e2e/board-creation.spec.ts — Playwright"
+  T058:
+    agent: "qa-agent"
+    reason: "server/test/adapters/firebase/FirestoreRetrospectiveBoardAdapter.test.ts — legacy-default coverage"
+  T059:
+    agent: "qa-agent"
+    reason: "Cross-cutting quickstart.md validation across the full stack"
+  T060:
+    agent: "qa-agent"
+    reason: "Full suite run + coverage threshold verification, explicitly qa-agent-owned"
+  T061:
+    agent: "qa-agent"
+    reason: "WCAG 2.1 AA accessibility spot-check, explicitly qa-agent-owned"

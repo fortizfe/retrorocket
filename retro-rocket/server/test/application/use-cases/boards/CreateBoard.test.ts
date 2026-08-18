@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createBoard } from '../../../../src/application/use-cases/boards/CreateBoard';
 import { inMemoryBoardsPort } from './boardsFakes';
 import { AppError } from '../../../../src/domain/errors';
@@ -36,5 +36,33 @@ describe('createBoard', () => {
         await expect(
             createBoard({ boardsPort }, { templateId: 'default', title: '   ', locale: 'en', createdBy: 'u1', createdByName: 'U' }),
         ).rejects.toThrow(AppError);
+    });
+
+    // 051-anonymous-board-mode, T017: the adapter (not this use-case) is responsible
+    // for defaulting an omitted isAnonymous to false (data-model.md) — this use-case's
+    // only job is to pass whatever the caller provided straight through unchanged.
+    it('passes isAnonymous through unchanged to boardsPort.createBoard when provided', async () => {
+        const boardsPort = inMemoryBoardsPort();
+        const createBoardSpy = vi.spyOn(boardsPort, 'createBoard');
+
+        await createBoard(
+            { boardsPort },
+            { templateId: 'default', title: 'X', locale: 'en', createdBy: 'u1', createdByName: 'U', isAnonymous: true },
+        );
+
+        expect(createBoardSpy).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: true }));
+    });
+
+    it('leaves isAnonymous undefined on boardsPort.createBoard when the caller omits it', async () => {
+        const boardsPort = inMemoryBoardsPort();
+        const createBoardSpy = vi.spyOn(boardsPort, 'createBoard');
+
+        await createBoard(
+            { boardsPort },
+            { templateId: 'default', title: 'X', locale: 'en', createdBy: 'u1', createdByName: 'U' },
+        );
+
+        expect(createBoardSpy).toHaveBeenCalledTimes(1);
+        expect(createBoardSpy.mock.calls[0][0].isAnonymous).toBeUndefined();
     });
 });

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { signInWithGoogle, createBoard } from './fixtures/auth-helpers';
-import { expectNoHorizontalOverflow } from './fixtures/board';
+import { signInWithGoogle, createBoard, TEST_USER_DISPLAY_NAME } from './fixtures/auth-helpers';
+import { expectNoHorizontalOverflow, addCardToFirstColumn, cardByContent } from './fixtures/board';
 import { blockFirestoreRequests } from './fixtures/network';
 
 /** Critical flow: an authenticated user creates a new retrospective board. */
@@ -83,3 +83,52 @@ for (const [templateLabel, title] of [
         await expect(page.getByText(title)).toBeVisible();
     });
 }
+
+// 051-anonymous-board-mode, User Story 1 (T057): the create-board flow's "details"
+// step offers an anonymity checkbox defaulted off; a board created without touching it
+// opens non-anonymous (author names shown as today), and a board created with the
+// checkbox switched on opens already anonymous (no author names, the persistent
+// indicator visible) — quickstart.md §2, spec.md US1 Acceptance Scenarios 1-3
+// (FR-001, FR-002, SC-001).
+test('the create-board anonymity checkbox defaults off, and switching it on creates a board that opens already anonymous', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+
+    // --- Board 1: reach the "details" step and leave the checkbox at its default. ---
+    await page.getByText('Nuevo Tablero', { exact: true }).click();
+    await page.getByText('Siguiente', { exact: true }).click();
+
+    const anonymityCheckbox = page.locator('#boardIsAnonymous');
+    await expect(anonymityCheckbox).toBeVisible();
+    await expect(anonymityCheckbox).not.toBeChecked();
+
+    const namedTitle = `E2E Non-Anonymous Board ${Date.now()}`;
+    await page.locator('#boardTitle').fill(namedTitle);
+    await page.getByRole('button', { name: 'Crear', exact: true }).click();
+    await page.waitForURL(/\/retro\//, { timeout: 30_000 });
+    await expect(page.getByText(namedTitle)).toBeVisible();
+
+    // Not anonymous: no persistent indicator, and a card shows its author's name
+    // exactly as today.
+    await expect(page.getByText('Tablero anónimo')).toHaveCount(0);
+    await addCardToFirstColumn(page, 'Named board card');
+    await expect(cardByContent(page, 'Named board card').getByText(TEST_USER_DISPLAY_NAME)).toBeVisible();
+
+    // --- Board 2: switch the checkbox on before creating. ---
+    await page.goto('/dashboard');
+    await page.getByText('Nuevo Tablero', { exact: true }).click();
+    await page.getByText('Siguiente', { exact: true }).click();
+
+    const anonTitle = `E2E Anonymous Board ${Date.now()}`;
+    await page.locator('#boardTitle').fill(anonTitle);
+    await page.locator('#boardIsAnonymous').check();
+    await expect(page.locator('#boardIsAnonymous')).toBeChecked();
+    await page.getByRole('button', { name: 'Crear', exact: true }).click();
+    await page.waitForURL(/\/retro\//, { timeout: 30_000 });
+    await expect(page.getByText(anonTitle)).toBeVisible();
+
+    // Opens already anonymous: the persistent indicator is visible from the start, and
+    // a newly added card shows no author name at all.
+    await expect(page.getByText('Tablero anónimo')).toBeVisible({ timeout: 10_000 });
+    await addCardToFirstColumn(page, 'Anonymous board card');
+    await expect(cardByContent(page, 'Anonymous board card').getByText(TEST_USER_DISPLAY_NAME)).toHaveCount(0);
+});

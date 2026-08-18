@@ -24,7 +24,8 @@ import { resolveDisplayName } from '@/lib/utils/cardHelpers';
  * directly — the surrounding `createRetrospectivePDF` document tree is otherwise only
  * exercised end-to-end via `exportRetrospectiveToPdf` (022, FR-005, SC-001).
  */
-export function buildCardAuthorLine(card: Pick<Card, 'createdBy' | 'createdByName'>, participants: Participant[] | undefined): string {
+export function buildCardAuthorLine(card: Pick<Card, 'createdBy' | 'createdByName'>, participants: Participant[] | undefined, isAnonymous?: boolean): string {
+    if (isAnonymous) return '';
     return `ℹ️ Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, 'Anónimo')}`;
 }
 
@@ -600,9 +601,11 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
             React.createElement(View, { key: 'footer', style: styles.cardFooter }, [
                 React.createElement(View, { key: 'meta', style: styles.cardMeta }, [
                     React.createElement(View, { key: 'left', style: styles.cardMetaLeft }, [
-                        React.createElement(Text, { key: 'author' },
-                            buildCardAuthorLine(card, data.participants)
-                        ),
+                        ...(data.retrospective.isAnonymous ? [] : [
+                            React.createElement(Text, { key: 'author' },
+                                buildCardAuthorLine(card, data.participants, data.retrospective.isAnonymous)
+                            )
+                        ]),
                         React.createElement(Text, { key: 'votes' },
                             `🗳️ Votos: ${card.likes?.length ?? 0}`
                         )

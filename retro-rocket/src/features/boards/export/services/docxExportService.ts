@@ -647,13 +647,13 @@ export class DocxExportService {
 
             // Add groups first
             columnGroups.forEach(group => {
-                sections.push(...this.createGroupSection(group, cards, options, sentimentResults, participants));
+                sections.push(...this.createGroupSection(group, cards, options, sentimentResults, participants, retrospective.isAnonymous));
             });
 
             // Add ungrouped cards
             const ungroupedCards = columnCards.filter(card => !card.groupId);
             ungroupedCards.forEach(card => {
-                sections.push(...this.createCardSection(card, false, false, options, sentimentResults, participants));
+                sections.push(...this.createCardSection(card, false, false, options, sentimentResults, participants, retrospective.isAnonymous));
             });
         });
 
@@ -693,7 +693,8 @@ export class DocxExportService {
         allCards: Card[],
         options: DocxExportOptions,
         sentimentResults?: Map<string, SentimentResult>,
-        participants?: Participant[]
+        participants?: Participant[],
+        isAnonymous?: boolean
     ): Paragraph[] {
         const groupCards = allCards.filter(card =>
             card.id === group.headCardId || group.memberCardIds.includes(card.id)
@@ -748,12 +749,12 @@ export class DocxExportService {
 
         // Add head card first
         if (headCard) {
-            sections.push(...this.createCardSection(headCard, true, true, options, sentimentResults, participants));
+            sections.push(...this.createCardSection(headCard, true, true, options, sentimentResults, participants, isAnonymous));
         }
 
         // Add member cards with indentation
         memberCards.forEach(card => {
-            sections.push(...this.createCardSection(card, true, false, options, sentimentResults, participants));
+            sections.push(...this.createCardSection(card, true, false, options, sentimentResults, participants, isAnonymous));
         });
 
         return sections;
@@ -768,7 +769,8 @@ export class DocxExportService {
         isHeadCard: boolean = false,
         options?: DocxExportOptions,
         sentimentResults?: Map<string, SentimentResult>,
-        participants?: Participant[]
+        participants?: Participant[],
+        isAnonymous?: boolean
     ): Paragraph[] {
         const sections: Paragraph[] = [];
         const cardColor = card.color ?? 'pastelWhite';
@@ -832,7 +834,7 @@ export class DocxExportService {
         sections.push(cardParagraph);
 
         // Card metadata in elegant format
-        const metadata = this.buildCardMetadata(card, participants);
+        const metadata = this.buildCardMetadata(card, participants, isAnonymous);
         if (metadata.length > 0) {
             sections.push(
                 new Paragraph({
@@ -900,10 +902,10 @@ export class DocxExportService {
     /**
      * Build card metadata string
      */
-    private buildCardMetadata(card: Card, participants?: Participant[]): string[] {
+    private buildCardMetadata(card: Card, participants?: Participant[], isAnonymous?: boolean): string[] {
         const metadata: string[] = [];
 
-        if (card.createdBy) {
+        if (!isAnonymous && card.createdBy) {
             metadata.push(`Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, 'Sin autor')}`);
         }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getBoardState, joinBoard, createCard, editCard, deleteCard, voteCard, toggleLike, setReaction, removeReaction, setTypingStatus, reorderCards, createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, saveColumnGroupingState, configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer, createNote, editNote, deleteNote, convertCardToActionItem, createActionItem, editActionItem, deleteActionItem, saveSentimentResult, saveSentimentOverride } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+import { getBoardState, joinBoard, createCard, editCard, deleteCard, voteCard, toggleLike, setReaction, removeReaction, setTypingStatus, reorderCards, createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, saveColumnGroupingState, configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer, setAnonymity, createNote, editNote, deleteNote, convertCardToActionItem, createActionItem, editActionItem, deleteActionItem, saveSentimentResult, saveSentimentOverride } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 function jsonResponse(ok: boolean, status: number, body: unknown): Response {
     return { ok, status, json: async () => body } as unknown as Response;
@@ -15,6 +15,7 @@ const boardStateDto = {
     participantCount: 1,
     isActive: true,
     columnGroupingStates: {},
+    isAnonymous: false,
     columns: [],
     cards: [],
     groups: [],
@@ -59,6 +60,20 @@ describe('backendRetrospectiveClient', () => {
         it('throws on a 401 (session expired)', async () => {
             vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(false, 401, { error: { message: 'Sign-in required' } })));
             await expect(getBoardState('r1')).rejects.toThrow('Sign-in required');
+        });
+
+        // 051-anonymous-board-mode: isAnonymous passes through the DTO -> RetrospectiveState
+        // mapping unchanged, the same way other board-level booleans (isActive) do.
+        it('passes isAnonymous through from the DTO', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 200, { ...boardStateDto, isAnonymous: true })));
+            const state = await getBoardState('r1');
+            expect(state.isAnonymous).toBe(true);
+        });
+
+        it('passes isAnonymous: false through from the DTO', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 200, { ...boardStateDto, isAnonymous: false })));
+            const state = await getBoardState('r1');
+            expect(state.isAnonymous).toBe(false);
         });
     });
 
@@ -424,6 +439,25 @@ describe('backendRetrospectiveClient', () => {
             await deleteTimer('r1');
 
             expect(fetchMock).toHaveBeenCalledWith('/api/retrospectives/r1/timer', { method: 'DELETE', credentials: 'include' });
+        });
+    });
+
+    // 051-anonymous-board-mode, US3, T046 (red phase): setAnonymity() is not exported
+    // by backendRetrospectiveClient.ts yet (T052) — the import above will fail to
+    // resolve until it exists, mirroring configureTimer's PUT-request assertion style.
+    describe('setAnonymity', () => {
+        it('PUTs to /api/retrospectives/:id/anonymity with the new isAnonymous value', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, { id: 'r1', isAnonymous: true }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await setAnonymity('r1', true);
+
+            expect(fetchMock).toHaveBeenCalledWith('/api/retrospectives/r1/anonymity', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isAnonymous: true }),
+            });
         });
     });
 

@@ -43,6 +43,7 @@ export function toRetrospective(id: string, data: FirebaseFirestore.DocumentData
         // Gap noted in data-model.md: persisted today but absent from the pre-019
         // Retrospective TS type — default to {} for boards that predate this field.
         columnGroupingStates: (data.columnGroupingStates as ColumnGroupingStates) ?? {},
+        isAnonymous: (data.isAnonymous as boolean) ?? false,
     };
 }
 
@@ -278,5 +279,13 @@ export class FirestoreRetrospectiveBoardAdapter implements RetrospectiveBoardPor
     async deleteTimer(retrospectiveId: string, uid: string): Promise<void> {
         await this.requireFacilitator(retrospectiveId, uid);
         await this.db.collection(COUNTDOWN_TIMERS).doc(retrospectiveId).delete();
+    }
+
+    async setAnonymous(retrospectiveId: string, uid: string, isAnonymous: boolean): Promise<RetrospectiveDTO> {
+        await this.requireFacilitator(retrospectiveId, uid);
+        const docRef = this.db.collection(RETROSPECTIVES).doc(retrospectiveId);
+        await docRef.update({ isAnonymous, updatedAt: FieldValue.serverTimestamp() });
+        const snap = await docRef.get();
+        return toRetrospective(retrospectiveId, snap.data()!);
     }
 }

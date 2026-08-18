@@ -2,7 +2,7 @@ import React from 'react';
 import { FloatingPortal, FloatingFocusManager } from '@floating-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Copy, Share2, ArrowLeft, Menu as MenuIcon } from 'lucide-react';
+import { Copy, Share2, ArrowLeft, Menu as MenuIcon, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImprovedExportPopover from '@/features/boards/export/components/ImprovedExportPopover';
 import BottomSheet from '@/lib/components/ui/BottomSheet';
@@ -188,6 +188,21 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
         exitItem,
     ];
 
+    // spec 051-anonymous-board-mode, US2 (FR-013, SC-007): a persistent, always-
+    // visible indicator of the board's current anonymity state, shown to every
+    // participant — never gated by isFacilitator. The text label is the primary
+    // signal (constitution Principle VIII, no color/icon alone); EyeOff is a purely
+    // decorative reinforcement alongside it.
+    const anonymityIndicator = retrospective?.isAnonymous ? (
+        <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-info-bg text-info-fg border border-info-fg/30 shrink-0"
+            title={t('retrospective.anonymous.indicatorDescription')}
+        >
+            <EyeOff className="w-3 h-3" aria-hidden="true" />
+            {t('retrospective.anonymous.indicator')}
+        </span>
+    ) : null;
+
     // If we don't have retrospective data yet, show a compact placeholder
     // so the top area is not empty (helps when Header is rendered outside route params)
     if (!retrospective) {
@@ -207,6 +222,12 @@ const RetrospectiveTopbar: React.FC<{ retrospectiveId?: string }> = ({ retrospec
 
     return (
         <>
+            {/* Rendered once, with no hidden/md:hidden gating of its own, so it stays
+                visible to every participant regardless of viewport — unlike the two
+                viewport-conditional blocks below it, this element has no viewport-
+                specific twin. */}
+            {anonymityIndicator}
+
             <div className="hidden md:flex items-center gap-4 flex-1 min-w-0">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="min-w-0">

@@ -25,7 +25,12 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
 }));
 
 vi.mock('@/features/boards/retrospective/components/RetrospectiveBoard', () => ({
-    default: () => <div data-testid="retrospective-board" />,
+    // Renders isAnonymous as a data attribute so tests can assert on the
+    // `retrospective` object mapped by RetrospectivePage without over-mocking
+    // the whole board component (051-anonymous-board-mode).
+    default: (props: any) => (
+        <div data-testid="retrospective-board" data-is-anonymous={String(props?.retrospective?.isAnonymous)} />
+    ),
 }));
 
 vi.mock('@/features/auth/components/AuthWrapper', () => ({
@@ -162,6 +167,18 @@ describe('RetrospectivePage', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('retrospective-board')).toBeInTheDocument();
+        });
+    });
+
+    // 051-anonymous-board-mode, data-model.md: the board -> Retrospective mapping in
+    // RetrospectivePage.tsx must forward isAnonymous, the same way it already forwards
+    // isActive/createdBy, so RetrospectiveBoard can gate author-label/grouping display.
+    it('forwards isAnonymous through to the Retrospective passed to RetrospectiveBoard', async () => {
+        setupMocks({ board: { ...mockBoard, isAnonymous: true } });
+        await renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByTestId('retrospective-board')).toHaveAttribute('data-is-anonymous', 'true');
         });
     });
 });

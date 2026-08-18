@@ -8,6 +8,7 @@ export interface CreateBoardParams {
     locale: 'es' | 'en';
     createdBy: string;
     createdByName: string;
+    isAnonymous?: boolean;
 }
 
 /** POST /api/boards (session-cookie-authenticated). */
@@ -30,5 +31,6 @@ export async function createBoard(
         createdBy: params.createdBy,
         createdByName: params.createdByName,
         locale: params.locale,
+        isAnonymous: params.isAnonymous,
     });
 }

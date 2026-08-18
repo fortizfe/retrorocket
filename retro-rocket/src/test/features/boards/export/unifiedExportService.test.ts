@@ -181,6 +181,39 @@ describe('UnifiedExportService.exportRetrospective', () => {
             });
         });
     });
+
+    // spec 051-anonymous-board-mode, US2 (FR-012), T033: whatever isAnonymous value
+    // is on the retrospective object passed into the unified export must be forwarded
+    // through to whichever format-specific export call it delegates to, so each
+    // service can omit the author line per anonymity-ui-behavior-contract.md.
+    describe('isAnonymous pass-through (spec 051-anonymous-board-mode, US2, T033)', () => {
+        it('forwards retrospective.isAnonymous=true through to the underlying pdf export call', async () => {
+            const anonymousData = { ...baseData, retrospective: { ...mockRetrospective, isAnonymous: true } };
+
+            await service.exportRetrospective(anonymousData, { ...baseOptions, format: 'pdf' });
+
+            const [calledData] = mockExportToPdf.mock.calls[0];
+            expect(calledData.retrospective.isAnonymous).toBe(true);
+        });
+
+        it('forwards retrospective.isAnonymous=false through to the underlying txt export call', async () => {
+            const nonAnonymousData = { ...baseData, retrospective: { ...mockRetrospective, isAnonymous: false } };
+
+            await service.exportRetrospective(nonAnonymousData, { ...baseOptions, format: 'txt' });
+
+            const [calledData] = mockExportToTxt.mock.calls[0];
+            expect(calledData.retrospective.isAnonymous).toBe(false);
+        });
+
+        it('forwards retrospective.isAnonymous=true through to the underlying docx export call', async () => {
+            const anonymousData = { ...baseData, retrospective: { ...mockRetrospective, isAnonymous: true } };
+
+            await service.exportRetrospective(anonymousData, { ...baseOptions, format: 'docx' });
+
+            const [calledData] = mockExportToDocx.mock.calls[0];
+            expect(calledData.retrospective.isAnonymous).toBe(true);
+        });
+    });
 });
 
 describe('UnifiedExportService.getAvailableFormats', () => {

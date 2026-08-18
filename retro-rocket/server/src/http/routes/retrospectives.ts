@@ -20,6 +20,7 @@ import { setTypingStatus } from '../../application/use-cases/retrospective/SetTy
 import { reorderCards } from '../../application/use-cases/retrospective/ReorderCards';
 import { createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, saveColumnGroupingState } from '../../application/use-cases/retrospective/CardGrouping';
 import { configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer } from '../../application/use-cases/retrospective/Timer';
+import { setAnonymity } from '../../application/use-cases/retrospective/Anonymity';
 import { createNote, editNote, deleteNote } from '../../application/use-cases/retrospective/FacilitatorNotes';
 import { convertCardToActionItem } from '../../application/use-cases/retrospective/ConvertCardToActionItem';
 import { createActionItem, editActionItem, deleteActionItem } from '../../application/use-cases/retrospective/ActionItems';
@@ -148,6 +149,7 @@ function serializeBoardState(state: import('../../application/use-cases/retrospe
         updatedAt: state.updatedAt.toISOString(),
         participantCount: state.participantCount,
         isActive: state.isActive,
+        isAnonymous: state.isAnonymous,
         columnGroupingStates: state.columnGroupingStates,
         columns: state.columns.map(serializeColumn),
         cards: state.cards.map(serializeCard),
@@ -356,6 +358,20 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
         const states = req.body as import('../../application/ports/retrospective').ColumnGroupingStates;
         await saveColumnGroupingState({ retrospectiveBoardPort: deps.retrospectiveBoardPort }, { retrospectiveId: String(req.params.id), states });
         res.status(204).end();
+    });
+
+    router.put('/api/retrospectives/:id/anonymity', async (req: Request, res: Response) => {
+        const session = await requireSession(req, deps);
+        await requireFacilitator(deps, String(req.params.id), session.sub);
+        const body = req.body as { isAnonymous?: unknown };
+        if (typeof body.isAnonymous !== 'boolean') {
+            throw new AppError('invalid_request', 'isAnonymous must be a boolean', 400);
+        }
+        const updated = await setAnonymity(
+            { retrospectiveBoardPort: deps.retrospectiveBoardPort },
+            { retrospectiveId: String(req.params.id), uid: session.sub, isAnonymous: body.isAnonymous },
+        );
+        res.status(200).json({ id: updated.id, isAnonymous: updated.isAnonymous });
     });
 
     router.put('/api/retrospectives/:id/timer', async (req: Request, res: Response) => {

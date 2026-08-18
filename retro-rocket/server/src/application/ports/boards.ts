@@ -29,6 +29,8 @@ export interface CreateBoardInput {
     createdBy: string; // uid
     createdByName: string;
     locale: 'es' | 'en';
+    /** True when the board is created in anonymous mode. Defaults to false downstream when omitted. */
+    isAnonymous?: boolean;
 }
 
 export interface BoardsPort {

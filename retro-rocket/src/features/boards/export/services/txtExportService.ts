@@ -208,7 +208,7 @@ export class TxtExportService {
     /**
      * Create elegant card display
      */
-    private createCardDisplay(card: Card, index: number, options: TxtExportOptions, sentimentResults?: Map<string, SentimentResult>, participants?: Participant[]): string[] {
+    private createCardDisplay(card: Card, index: number, options: TxtExportOptions, sentimentResults?: Map<string, SentimentResult>, participants?: Participant[], isAnonymous?: boolean): string[] {
         const lines: string[] = [];
         const cardNumber = (index + 1).toString().padStart(2, '0');
         const content = card.content?.trim() || '[Sin contenido]';
@@ -223,7 +223,7 @@ export class TxtExportService {
         });
 
         // Metadata section
-        const metadata = this.buildCardMetadata(card, options, participants);
+        const metadata = this.buildCardMetadata(card, options, participants, isAnonymous);
         if (metadata.length > 0 || (options.includeSentimentBadges && sentimentResults)) {
             lines.push('├' + '─'.repeat(52) + '┤');
 
@@ -468,7 +468,7 @@ export class TxtExportService {
 
             // Cards
             columnCards.forEach((card, index) => {
-                lines.push(...this.createCardDisplay(card, index, options, data.sentimentResults, data.participants));
+                lines.push(...this.createCardDisplay(card, index, options, data.sentimentResults, data.participants, data.retrospective.isAnonymous));
             });
 
             lines.push('');
@@ -736,11 +736,11 @@ export class TxtExportService {
     /**
      * Build card metadata based on options
      */
-    private buildCardMetadata(card: Card, options: TxtExportOptions, participants?: Participant[]): string[] {
+    private buildCardMetadata(card: Card, options: TxtExportOptions, participants?: Participant[], isAnonymous?: boolean): string[] {
         const metadata: string[] = [];
 
-        // Author
-        if (options.includeCardAuthors && card.createdBy?.trim()) {
+        // Author (omitted entirely for anonymous retrospectives)
+        if (!isAnonymous && options.includeCardAuthors && card.createdBy?.trim()) {
             metadata.push(`Autor: ${resolveDisplayName(card.createdBy, card.createdByName, participants, UNKNOWN_AUTHOR_LABEL)}`);
         }
 

@@ -353,6 +353,48 @@ describe('TxtExportService', () => {
         });
     });
 
+    // spec 051-anonymous-board-mode, US2 (FR-012, SC-006), T032: an anonymous board's
+    // export must omit the "Autor: ..." line while keeping the rest of each card's
+    // content (text, votes, likes) — anonymity-ui-behavior-contract.md's "Exports"
+    // table. The export reflects whatever isAnonymous value is on the retrospective
+    // object passed in, not a separate option.
+    describe('Anonymous board mode (spec 051-anonymous-board-mode, US2, T032)', () => {
+        it('omits the "Autor:" line when the retrospective is anonymous, while keeping the rest of the card content', async () => {
+            const anonymousData: RetrospectiveTxtData = {
+                ...mockData,
+                retrospective: { ...mockData.retrospective, isAnonymous: true } as RetrospectiveTxtData['retrospective'],
+            };
+            const options: TxtExportOptions = { includeCardAuthors: true };
+
+            await service.exportRetrospective(anonymousData, options);
+
+            const saveAsCall = vi.mocked(saveAs).mock.calls[0];
+            const blob = saveAsCall[0] as Blob;
+            const content = await blob.text();
+
+            expect(content).not.toContain('Autor:');
+            expect(content).toContain('Test card content');
+            expect(content).toContain('Another test card');
+        });
+
+        it('still includes the "Autor:" line when the retrospective is not anonymous (control, regression)', async () => {
+            const nonAnonymousData: RetrospectiveTxtData = {
+                ...mockData,
+                retrospective: { ...mockData.retrospective, isAnonymous: false } as RetrospectiveTxtData['retrospective'],
+            };
+            const options: TxtExportOptions = { includeCardAuthors: true };
+
+            await service.exportRetrospective(nonAnonymousData, options);
+
+            const saveAsCall = vi.mocked(saveAs).mock.calls[0];
+            const blob = saveAsCall[0] as Blob;
+            const content = await blob.text();
+
+            expect(content).toContain('Autor: User 1');
+            expect(content).toContain('Autor: User 2');
+        });
+    });
+
     describe('exportRetrospectiveToTxt function', () => {
         it('should work as a standalone function', async () => {
             await exportRetrospectiveToTxt(mockData, { includeStatistics: true });

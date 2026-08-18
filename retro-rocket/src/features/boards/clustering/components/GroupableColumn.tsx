@@ -20,6 +20,7 @@ import { getCardStyling, getDefaultColor } from '@/lib/utils/cardColors';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
 import { GroupingCriteria, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 import { Participant } from '@/features/boards/types/participant';
+import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
 interface GroupableColumnProps {
     column: DynamicColumnConfig; // Changed from ColumnConfig to DynamicColumnConfig
@@ -103,6 +104,13 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     // Initialize grouping hook
     const { getColumnState, setGroupingCriteria, processCards, restorePreviousState } = useColumnGrouping(retrospectiveId, columnGroupingStates);
 
+    // spec 051-anonymous-board-mode, US2 (FR-004/FR-010, SC-003): GroupableColumn is
+    // a descendant of the same BoardDataContext.Provider DraggableCard reads from
+    // (research.md §6), so it reads the board's anonymity the same way rather than
+    // needing a new prop threaded from RetrospectiveBoard.tsx.
+    const { retrospective } = useBoardData();
+    const isAnonymousBoard = retrospective?.isAnonymous === true;
+
     // Filter cards and groups for this column
     const columnCards = cards.filter(card => card.column === column.id);
     const columnGroups = groups.filter(group => group.column === column.id);
@@ -111,10 +119,24 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     // Get current column grouping state
     const columnState = getColumnState(column.id);
 
+    // Display-time-only override (research.md §5): while the board is anonymous, a
+    // column persisted at 'user' grouping must render as an ungrouped list — but the
+    // persisted criteria itself must never be touched via setGroupingCriteria, so the
+    // saved 'user' choice reappears automatically the moment anonymity is turned back
+    // off. Never call setGroupingCriteria for this — it would persist to Firestore.
+    const displayGroupingCriteria: GroupingCriteria =
+        isAnonymousBoard && columnState.criteria === 'user' ? 'none' : columnState.criteria;
+
     // Process ungrouped cards with grouping - using useMemo to trigger re-render when state changes
     const processedUngroupedCards = React.useMemo(() => {
+        if (displayGroupingCriteria !== columnState.criteria) {
+            // Anonymity override in effect: mirror what 'none' grouping would produce,
+            // without asking the hook to re-derive from the (still 'user') persisted
+            // criteria.
+            return { ungrouped: ungroupedCards };
+        }
         return processCards(ungroupedCards, column.id, participants);
-    }, [processCards, ungroupedCards, column.id, participants]);
+    }, [processCards, ungroupedCards, column.id, participants, displayGroupingCriteria, columnState.criteria]);
 
     const handleCreateCard = async () => {
         if (!newCardContent.trim() || !currentUser) {
@@ -303,7 +325,8 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     competes with the title for space. */}
                 <div data-testid="column-header-row-controls" className="flex items-center gap-1">
                     <ColumnHeaderMenu
-                        currentGrouping={columnState.criteria}
+                        currentGrouping={displayGroupingCriteria}
+                        excludeUserGrouping={isAnonymousBoard}
                         onGroupingChange={(criteria: GroupingCriteria) => {
                             const previousCriteria = columnState.criteria;
                             setGroupingCriteria(column.id, criteria);
@@ -447,7 +470,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 {/* Ungrouped Cards with New Grouping */}
                 <GroupedCardList
                     groupedCards={processedUngroupedCards}
-                    groupBy={columnState.criteria}
+                    groupBy={displayGroupingCriteria}
                     onCardUpdate={onCardUpdate}
                     onCardDelete={onCardDelete}
                     onCardVote={onCardVote}
