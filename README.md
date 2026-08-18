@@ -19,6 +19,8 @@ follow-ups.
 - **Instant synchronization** of every change for all users.
 - **Participant presence**: stacked avatars with a compact display, an interactive
   popover with the full list, and live connection state (active vs. total).
+- **Live typing indicator**: see who's currently typing a card in real time
+  (identity is hidden automatically when the board is in Anonymous Mode).
 
 ### 📝 Cards & Board Templates
 - **Board templates**: **Default** (What helped / What hindered / What to improve),
@@ -30,9 +32,23 @@ follow-ups.
 - **Real-time editing**: edit and delete your own cards.
 - **Custom colors**: a pastel color palette for visual organization.
 
+### 🕶️ Anonymous Board Mode
+- **Choose at creation**: mark any new board — any template — as anonymous;
+  defaults to off.
+- **Hides authorship, not data**: no card shows who wrote it and the "group by
+  user" option disappears, while every other interaction (voting, editing,
+  dragging, exporting) behaves exactly as on a non-anonymous board. A
+  persistent indicator always shows the board's current mode to every
+  participant.
+- **Facilitator can toggle it live**: switch a board between anonymous and
+  non-anonymous at any point during the retrospective from the facilitator
+  menu — the change applies instantly to every connected participant, no
+  reload required.
+
 ### 🔗 Card Grouping & AI-Assisted Suggestions
 - **Manual grouping**: drag and drop a card onto another to form a group.
-- **Group suggestions**: assisted clustering proposes related cards to group together.
+- **Group suggestions**: AI-assisted clustering proposes related cards to
+  group together, each with an editable, AI-generated group title.
 - **Group heads & hierarchy**: designate a lead card; clear visual indentation.
 - **Group stats**: automatic counts of likes and participation per group.
 
@@ -54,9 +70,11 @@ follow-ups.
   (ONNX Runtime Web). **Card text never leaves the browser.**
 
 ### 📄 Export
-- **PDF** (via `@react-pdf/renderer`) and **DOCX** (via `docx`) exports.
+- **PDF** (via `@react-pdf/renderer`), **DOCX** (via `docx`), and **TXT** exports.
 - **Granular options**: choose whether to include participants, statistics, grouping
   details, and facilitator notes.
+- **Anonymous-aware**: exports generated from an anonymous board omit card author
+  names in all three formats, matching the live view.
 
 ### 🔌 MCP Connector for AI Assistants
 - **Connect your own AI assistant** (e.g. Claude) to your RetroRocket account using a
@@ -129,10 +147,15 @@ layout:
 
 ```text
 retro-rocket/
-├── .env.example                 # Environment variable template (VITE_*)
+├── .env.example                 # Environment variable template (VITE_* frontend +
+│                                 #   non-prefixed backend variables)
 ├── firestore.rules              # Firestore security rules
 ├── package.json                 # Scripts & dependencies
 ├── e2e/                         # Playwright E2E specs (+ fixtures)
+├── scripts/                     # Build scripts (e.g. bundle-backend.mjs)
+├── api/                         # Vercel serverless entrypoints for the backend
+├── server/                      # Hexagonal backend (Express + TypeScript) — see
+│                                 #   retro-rocket/server/README.md
 └── src/
     ├── App.tsx  main.tsx
     ├── features/                # Feature modules (feature-first)
@@ -140,11 +163,12 @@ retro-rocket/
     │   ├── create-board/        # Board creation & templates (boardTemplates.ts)
     │   ├── dashboard/           # Dashboard
     │   ├── dev-tools/           # Development utilities
+    │   ├── landing/             # Landing page sections & motion
     │   └── boards/
     │       ├── retrospective/   # Board, columns, cards
     │       ├── countdown/       # Facilitator countdown timer
     │       ├── facilitator/     # Facilitator tabs (notes, sentiment, team mood)
-    │       ├── export/          # PDF / DOCX export
+    │       ├── export/          # PDF / DOCX / TXT export
     │       ├── participants/    # Real-time participants
     │       ├── sentiment/       # On-device AI sentiment & team mood
     │       ├── clustering/      # Card grouping & suggestions
@@ -202,7 +226,8 @@ npm install
 ```bash
 cp .env.example .env
 ```
-Fill in your Firebase config (all variables use the **`VITE_`** prefix):
+`.env.example` has two blocks. Fill in the **`VITE_`**-prefixed frontend variables
+(your Firebase config):
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -213,10 +238,33 @@ VITE_FIREBASE_APP_ID=your_app_id
 # Optional — point the app at the local Firebase Emulator Suite (used by E2E):
 # VITE_USE_FIREBASE_EMULATOR=true
 ```
+...and the non-prefixed **backend** variables the hexagonal backend needs to run
+locally (session signing, OAuth apps, and the Firebase Admin service account) —
+see the comments in `.env.example` for how to obtain each one:
+```env
+SESSION_SIGNING_KEY=...
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+GITHUB_OAUTH_CLIENT_ID=...
+GITHUB_OAUTH_CLIENT_SECRET=...
+OAUTH_REDIRECT_BASE_URL=http://localhost:3000
+FIREBASE_SERVICE_ACCOUNT=...
+# Optional:
+# AUTH_TEST_MODE=true
+# BACKEND_VERSION=local
+# SERVER_PORT=3001
+```
 
 ### 4. Run in development
+The frontend proxies `/api/*` calls (including sign-in) to the backend dev
+server, so both must be running. The simplest way is one combined command:
 ```bash
-npm run dev
+npm run dev:all
+```
+Or, to see frontend and backend logs in separate terminals:
+```bash
+npm run dev          # terminal 1 — frontend (Vite)
+npm run dev:server   # terminal 2 — backend (Express, via vite-node)
 ```
 The app is available at `http://localhost:3000`.
 
@@ -235,6 +283,12 @@ restricted to **authenticated, non-anonymous** users across the RetroRocket
 collections (`retrospectives`, `participants`, `cards`, `groups`, `actionItems`,
 `sentimentResults`, `typingStatus`, `countdown_timers`); countdown timers are further
 restricted so only the retrospective creator can write them.
+
+> **Not to be confused with Anonymous Board Mode** (see Key Features above):
+> "anonymous" here refers to Firebase Authentication's anonymous sign-in, which
+> remains blocked by these rules. Anonymous Board Mode is a separate, purely
+> display-layer feature for authenticated users — it hides card authorship in
+> the UI and never touches these rules or how a user authenticates.
 
 > The snippet below is **illustrative** — always refer to `firestore.rules` as the
 > source of truth.
@@ -306,7 +360,9 @@ status) — never your retrospective data.
 2. **Pick a template**: Default (What helped / What hindered / What to improve),
    Mad-Sad-Glad, or Start-Stop-Continue — each includes an automatic **action items**
    column.
-3. Give it a title (and optional description), create it, and **share the link** with
+3. Optionally switch on **Anonymous Board Mode** (off by default) to hide card
+   authorship for every participant on this board.
+4. Give it a title (and optional description), create it, and **share the link** with
    your team.
 
 ### Join a retrospective
@@ -327,27 +383,35 @@ status) — never your retrospective data.
   exports.
 - **Team mood**: open the facilitator **Team** tab to see the AI sentiment analysis
   and the team-mood dashboard.
+- **Anonymous Board Mode**: toggle anonymity on or off at any point during the
+  retrospective from the facilitator menu; every connected participant's view
+  updates instantly.
 
 ### Export results
-- Export to **PDF** or **DOCX** from the retrospective header; use the options to
-  include participants, statistics, grouping details, and facilitator notes.
+- Export to **PDF**, **DOCX**, or **TXT** from the retrospective header; use the
+  options to include participants, statistics, grouping details, and facilitator
+  notes. Exports from an anonymous board omit card author names.
 
 ## 🧪 Testing, Quality & CI
 
 Run locally (from `retro-rocket/`):
 
 ```bash
-npm run type-check     # TypeScript (no emit)
-npm run lint           # ESLint
-npm run test           # Vitest (watch)
-npm run test:coverage  # Vitest with coverage thresholds
-npm run emulators      # Firebase Auth + Firestore emulators
-npm run e2e            # Playwright E2E against the emulator suite
+npm run type-check            # TypeScript (no emit) — frontend
+npm run type-check:server     # TypeScript (no emit) — backend
+npm run lint                  # ESLint
+npm run test                  # Vitest (watch) — frontend
+npm run test:coverage         # Vitest with coverage thresholds — frontend
+npm run test:server           # Vitest — backend
+npm run test:server:coverage  # Vitest with coverage thresholds — backend
+npm run emulators             # Firebase Auth + Firestore emulators
+npm run e2e                   # Playwright E2E against the emulator suite
 ```
 
 **Continuous Integration** (`.github/workflows/ci.yml`) runs on every pull request and
 push to `main`:
-- **Type-check, lint, and test with coverage** (Vitest coverage thresholds enforced)
+- **Type-check, lint, and test with coverage**, for both the **frontend and the
+  backend** as separate steps (Vitest coverage thresholds enforced on both)
 - **Playwright E2E** against the Firebase Emulator Suite
 - **CodeQL** static analysis
 - **Gated Vercel deploys** (preview per PR, production on `main`) and preview-domain
