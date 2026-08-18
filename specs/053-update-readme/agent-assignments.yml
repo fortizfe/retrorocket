@@ -1,0 +1,71 @@
+# Agent Assignments
+# Feature: 053-update-readme
+# Generated: 2026-08-18T15:06:27Z
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Scoped to retro-rocket/server/** and retro-rocket/api/**."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Scoped to retro-rocket/src/**."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Scoped to Vitest unit/component tests, Playwright E2E, accessibility scans, and coverage verification."
+
+assignments:
+  T001:
+    agent: "default"
+    reason: "Read-only fact-check of research.md against package.json/ci.yml/directory presence; no agent is scoped to this."
+  T002:
+    agent: "default"
+    reason: "Plain read of README.md to establish a section-by-section baseline; general task."
+  T003:
+    agent: "default"
+    reason: "Prose edit to README.md Key Features; not backend/frontend implementation code."
+  T004:
+    agent: "default"
+    reason: "Prose edit to README.md Key Features (Export bullet)."
+  T005:
+    agent: "default"
+    reason: "Prose edit to README.md Key Features (Card Grouping bullet)."
+  T006:
+    agent: "default"
+    reason: "Prose edit to README.md Key Features (Real-Time Collaboration bullet)."
+  T007:
+    agent: "default"
+    reason: "Prose edit to README.md Usage Guide (create/facilitator subsections)."
+  T008:
+    agent: "default"
+    reason: "Prose edit to README.md Usage Guide (export results subsection)."
+  T009:
+    agent: "default"
+    reason: "Codebase cross-check against Roadmap bullets plus a prose edit if any item shipped; no specialized agent fits a documentation-verification task."
+  T010:
+    agent: "default"
+    reason: "Prose edit to README.md Getting Started (env vars)."
+  T011:
+    agent: "default"
+    reason: "Prose edit to README.md Getting Started (dev server instructions)."
+  T012:
+    agent: "default"
+    reason: "Prose edit to README.md Project Architecture file tree."
+  T013:
+    agent: "default"
+    reason: "Prose edit to README.md Testing & CI (npm script list)."
+  T014:
+    agent: "default"
+    reason: "Prose edit to README.md Testing & CI (CI step bullets)."
+  T015:
+    agent: "default"
+    reason: "Prose edit to README.md Firestore Security Rules section."
+  T016:
+    agent: "default"
+    reason: "Manual content cross-check against the finished README; not an automated Vitest/Playwright/axe run, so qa-agent's scope does not apply."
+  T017:
+    agent: "default"
+    reason: "Live walkthrough of README instructions (clone, install, env, dev servers, sign-in). Considered qa-agent given the live sign-in verification, but qa-agent is scoped to automated test suites, not validating prose setup instructions end-to-end."
+  T018:
+    agent: "default"
+    reason: "Manual diff review of README.md against its pre-feature version for accuracy and preserved structure/tone."
