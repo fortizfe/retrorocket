@@ -539,7 +539,8 @@
   "typing": {
     "single": "{{username}} is typing",
     "double": "{{username1}} and {{username2}} are typing",
-    "multiple": "{{username}} and {{count}} more are typing"
+    "multiple": "{{username}} and {{count}} more are typing",
+    "anonymous": "A user is typing"
   },
   "colors": {
     "white": "White",

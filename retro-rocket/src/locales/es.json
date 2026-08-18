@@ -563,7 +563,8 @@
   "typing": {
     "single": "{{username}} está escribiendo",
     "double": "{{username1}} y {{username2}} están escribiendo",
-    "multiple": "{{username}} y {{count}} más están escribiendo"
+    "multiple": "{{username}} y {{count}} más están escribiendo",
+    "anonymous": "Un usuario está escribiendo"
   },
   "colors": {
     "white": "Blanco",
