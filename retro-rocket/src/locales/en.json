@@ -784,19 +784,38 @@
     "signOut": "Sign Out",
     "memberSince": "Member since",
     "primaryProvider": "Primary provider",
+    "identity": {
+      "avatarAlt": "{{name}}'s profile photo"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "loadMessage": "We couldn't load your profile. Please try again."
+    },
+    "accessSecurity": {
+      "heading": "Access & Security",
+      "description": "Control how you sign in and what has access to your account.",
+      "signOutDescription": "End your session on this device."
+    },
     "accountActions": {
       "title": "Account Actions",
+      "notAvailableLabel": "Not available yet",
       "exportData": {
         "title": "Export Data",
-        "description": "Download all your retrospective data",
-        "button": "Coming soon"
+        "description": "Download all your retrospective data"
       },
       "deleteAccount": {
         "title": "Delete Account",
-        "description": "Permanently delete your account and all data",
-        "button": "Delete"
+        "description": "Permanently delete your account and all data"
       }
     }
+  },
+  "linkedProviders": {
+    "heading": "Sign-in methods",
+    "description": "Manage the sign-in methods linked to your account.",
+    "statusLinked": "Linked",
+    "statusNotLinked": "Not linked",
+    "statusNotAvailable": "Not available yet",
+    "linkAction": "Link"
   },
   "mcpConnector": {
     "connectedApps": {
@@ -844,7 +863,11 @@
       "saving": "Saving...",
       "continue": "Continue",
       "saveChanges": "Save changes",
-      "editLaterNote": "You can edit this information from your profile at any time"
+      "editLaterNote": "You can edit this information from your profile at any time",
+      "blankNameError": "Display name cannot be empty",
+      "saveError": "Something went wrong saving your name. Please try again.",
+      "saveSuccess": "Name saved",
+      "avatarAlt": "{{name}}'s avatar"
     },
     "authButtonGroup": {
       "continueWithGoogle": "Continue with Google",

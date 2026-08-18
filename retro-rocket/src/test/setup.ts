@@ -138,6 +138,12 @@ vi.mock('framer-motion', () => ({
         aside: 'aside',
         ul: 'ul',
         li: 'li',
+        // 050-profile-redesign T018: ProfileDirectionB.tsx's IdentityPanel (the
+        // selected direction's build reference for the T021 UserProfileForm rebuild)
+        // wraps its reveal-on-Edit display-name form in `motion.form`/`AnimatePresence`.
+        // Mapped to the plain host element like every other motion.* tag above so that
+        // rebuild renders without crashing under this shared mock.
+        form: 'form',
     },
     AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
     // Renders a real DOM marker (rather than a no-op passthrough) so tests can

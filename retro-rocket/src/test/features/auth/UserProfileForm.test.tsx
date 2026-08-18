@@ -5,82 +5,60 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import UserProfileForm from '@/features/auth/components/UserProfileForm';
 import { UserProfile } from '@/features/auth/types/user';
 
-// Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-    motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    },
-}));
+/**
+ * Component test for the shared display-name-edit form (spec 050-profile-redesign,
+ * tasks.md T018, User Story 2 — "Edit My Display Name"). Written BEFORE the T021
+ * rebuild (constitution Principle I, TDD) — `UserProfileForm.tsx` at the time this
+ * file was written still has its pre-redesign structure (a persistent, always-editable
+ * input with no view/editing gate). data-model.md's `Editable Field Operation State`
+ * entity (`mode: view | editing | saving | saved | save-error`) governs both of this
+ * component's call sites — Mi Perfil (`isFirstTime={false}`) and the landing page's
+ * first-time setup (`isFirstTime={true}`) — and per `ProfileDirectionB.tsx` (the
+ * selected direction's build reference, `src/pages/__prototypes__/ProfileDirectionB.tsx`
+ * `IdentityPanel`), the rebuilt Mi Perfil usage may gate the input behind a persistent
+ * "Edit" control (`t('common.edit')`) rather than rendering it directly — T021 (a
+ * separate task) makes that call. `getDisplayNameField()` below is written to hold
+ * either way: it uses the field directly if already present, or reveals it via the
+ * "Edit" control first if the field is gated — so these assertions keep validating
+ * correctly whichever structure T021 lands on, per research.md §4.
+ *
+ * No local mocks for `react-i18next`/`framer-motion`/`lucide-react`/`Button`/`Input`:
+ * this file previously hand-rolled data-testid stand-ins for Button/Input (coupling
+ * assertions to exact mock internals) and its own English translation map (diverging
+ * from the rest of the suite's raw-i18n-key convention). It now relies on the same
+ * global mocks `src/test/pages/Profile.test.tsx` (T012) and `src/test/pages/
+ * Landing.test.tsx` already establish as this codebase's precedent for this kind of
+ * test: `src/test/setup.ts`'s react-i18next mock returns the raw translation key
+ * (`t: (key) => key`), and its framer-motion mock maps every `motion.*` tag used by
+ * this component tree (including `motion.form`, added alongside this change — see
+ * `src/test/setup.ts` — since `ProfileDirectionB.tsx`'s reference `IdentityPanel`
+ * wraps its reveal form in `motion.form`/`AnimatePresence`) to the plain host element,
+ * letting the real `Button`/`Input` components render with genuine accessible
+ * semantics (`getByLabelText`, `getByRole`) instead of testid stand-ins.
+ */
 
-// Mock the hooks
-vi.mock('@/lib/hooks/useLanguage', () => ({
-    useLanguage: () => ({
-        t: (key: string) => {
-            const translations: Record<string, string> = {
-                'auth.userProfileForm.welcome': 'Welcome!',
-                'auth.userProfileForm.welcomeSubtitle': 'Let\'s set up your profile',
-                'auth.userProfileForm.editProfile': 'Edit Profile',
-                'auth.userProfileForm.editProfileSubtitle': 'Update your profile information',
-                'auth.userProfileForm.email': 'Email',
-                'auth.userProfileForm.emailNotEditable': 'Email cannot be changed',
-                'auth.userProfileForm.displayName': 'Display Name',
-                'auth.userProfileForm.displayNamePlaceholder': 'Enter your display name',
-                'auth.userProfileForm.displayNameHelp': 'This is how others will see you',
-                'auth.userProfileForm.saving': 'Saving...',
-                'auth.userProfileForm.continue': 'Continue',
-                'auth.userProfileForm.saveChanges': 'Save Changes',
-                'auth.userProfileForm.editLaterNote': 'You can edit this later in settings',
-            };
-            return translations[key] || key;
-        },
-    }),
-}));
+// Raw i18n keys (src/test/setup.ts's react-i18next mock returns the key itself).
+const DISPLAY_NAME_LABEL_KEY = 'auth.userProfileForm.displayName';
+const EMAIL_LABEL_KEY = 'auth.userProfileForm.email';
+const SAVE_KEY = 'auth.userProfileForm.saveChanges';
+const CONTINUE_KEY = 'auth.userProfileForm.continue';
+const EDIT_KEY = 'common.edit';
 
-// Mock Lucide React icons
-vi.mock('lucide-react', () => ({
-    User: ({ className }: { className?: string }) => (
-        <div className={className} data-testid="user-icon">User Icon</div>
-    ),
-    Mail: ({ className }: { className?: string }) => (
-        <div className={className} data-testid="mail-icon">Mail Icon</div>
-    ),
-    Save: ({ className }: { className?: string }) => (
-        <div className={className} data-testid="save-icon">Save Icon</div>
-    ),
-}));
+/**
+ * Returns the display-name text field, revealing it first via the "Edit" control if
+ * the rebuilt component gates it (data-model.md's `mode`: `view` -> `editing`). A
+ * no-op against the pre-rebuild component, which renders the field directly.
+ */
+async function getDisplayNameField(
+    user: ReturnType<typeof userEvent.setup>,
+): Promise<HTMLInputElement> {
+    const existing = screen.queryByLabelText(DISPLAY_NAME_LABEL_KEY, { exact: false });
+    if (existing) return existing as HTMLInputElement;
 
-// Mock Button component
-vi.mock('@/lib/components/ui/Button', () => ({
-    default: ({ children, onClick, disabled, type, className, ...props }: any) => (
-        <button
-            type={type}
-            onClick={onClick}
-            disabled={disabled}
-            className={className}
-            data-testid="profile-button"
-            {...props}
-        >
-            {children}
-        </button>
-    ),
-}));
-
-// Mock Input component
-vi.mock('@/lib/components/ui/Input', () => ({
-    default: ({ onChange, value, disabled, type, placeholder, required, className, ...props }: any) => (
-        <input
-            type={type}
-            value={value}
-            onChange={onChange}
-            disabled={disabled}
-            placeholder={placeholder}
-            required={required}
-            className={className}
-            data-testid="profile-input"
-            {...props}
-        />
-    ),
-}));
+    const editButton = screen.getByRole('button', { name: EDIT_KEY });
+    await user.click(editButton);
+    return screen.getByLabelText(DISPLAY_NAME_LABEL_KEY, { exact: false }) as HTMLInputElement;
+}
 
 describe('UserProfileForm', () => {
     const mockUserProfile: UserProfile = {
@@ -95,392 +73,191 @@ describe('UserProfileForm', () => {
         updatedAt: new Date(),
     };
 
-    const defaultProps = {
-        userProfile: mockUserProfile,
-        onSave: vi.fn(),
-        isFirstTime: false,
-    };
-
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    describe('Basic Rendering', () => {
-        it('should render user profile form', () => {
-            render(<UserProfileForm {...defaultProps} />);
+    describe('Basic rendering', () => {
+        it('renders Mi Perfil copy when isFirstTime is false', () => {
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={vi.fn()} isFirstTime={false} />);
 
-            expect(screen.getByText('Edit Profile')).toBeInTheDocument();
-            expect(screen.getByText('Update your profile information')).toBeInTheDocument();
+            expect(screen.getByText('auth.userProfileForm.editProfile')).toBeInTheDocument();
         });
 
-        it('should render first time setup when isFirstTime is true', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={true} />);
+        it('renders first-time-setup copy when isFirstTime is true', () => {
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={vi.fn()} isFirstTime={true} />);
 
-            expect(screen.getByText('Welcome!')).toBeInTheDocument();
-            expect(screen.getByText('Let\'s set up your profile')).toBeInTheDocument();
-            expect(screen.getByText('Continue')).toBeInTheDocument();
+            expect(screen.getByText('auth.userProfileForm.welcome')).toBeInTheDocument();
         });
 
-        it('should render edit mode when isFirstTime is false', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={false} />);
-
-            expect(screen.getByText('Edit Profile')).toBeInTheDocument();
-            expect(screen.getByText('Save Changes')).toBeInTheDocument();
-        });
-
-        it('should apply custom className', () => {
+        it('applies a custom className to its root element', () => {
             const { container } = render(
-                <UserProfileForm {...defaultProps} className="custom-class" />
+                <UserProfileForm
+                    userProfile={mockUserProfile}
+                    onSave={vi.fn()}
+                    isFirstTime={false}
+                    className="custom-class"
+                />,
             );
 
-            expect(container.firstChild).toHaveClass('custom-class');
+            expect(container.firstElementChild).toHaveClass('custom-class');
+        });
+
+        it('does not crash when userProfile is null (both call sites keep it truthy today, but the prop type allows it)', () => {
+            expect(() =>
+                render(<UserProfileForm userProfile={null} onSave={vi.fn()} isFirstTime={false} />),
+            ).not.toThrow();
         });
     });
 
-    describe('User Profile Display', () => {
-        it('should display user email (disabled)', () => {
-            render(<UserProfileForm {...defaultProps} />);
+    describe('Read-only email (FR-002)', () => {
+        it('shows the user email as a disabled field', () => {
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={vi.fn()} isFirstTime={false} />);
 
-            const emailInputs = screen.getAllByTestId('profile-input');
-            const emailInput = emailInputs.find(input =>
-                (input as HTMLInputElement).value === 'test@example.com'
-            );
-
-            expect(emailInput).toBeInTheDocument();
-            expect(emailInput).toBeDisabled();
-        });
-
-        it('should display user display name in input', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).value === 'Test User'
-            );
-
-            expect(nameInput).toBeInTheDocument();
-            expect(nameInput).not.toBeDisabled();
-        });
-
-        it('should display user photo when available', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const photo = screen.getByAltText('Avatar');
-            expect(photo).toBeInTheDocument();
-            expect(photo).toHaveAttribute('src', 'https://example.com/photo.jpg');
-        });
-
-        it('should not display photo section when photoURL is not available', () => {
-            const userWithoutPhoto = { ...mockUserProfile, photoURL: null };
-            render(<UserProfileForm {...defaultProps} userProfile={userWithoutPhoto} />);
-
-            expect(screen.queryByAltText('Avatar')).not.toBeInTheDocument();
+            const emailField = screen.getByLabelText(EMAIL_LABEL_KEY, { exact: false });
+            expect(emailField).toHaveValue(mockUserProfile.email);
+            expect(emailField).toBeDisabled();
         });
     });
 
-    describe('Form Interactions', () => {
-        it('should update display name when user types', async () => {
+    /**
+     * Each block below runs the identical validation/save/error contract against both
+     * `isFirstTime={false}` (Mi Perfil) and `isFirstTime={true}` (landing first-time
+     * setup) — data-model.md: "Behavior and validation rules MUST be identical
+     * regardless of isFirstTime — only presentation/copy may differ." Previously only
+     * isFirstTime={false} (the default in `defaultProps`) was exercised by most of
+     * this suite; the isFirstTime={true} rendering had its own copy-only assertions
+     * ("First Time Setup UI") but never re-ran the validation/save/error scenarios.
+     */
+    describe.each([
+        { isFirstTime: false, label: 'Mi Perfil (isFirstTime=false)', saveKey: SAVE_KEY },
+        { isFirstTime: true, label: 'landing first-time setup (isFirstTime=true)', saveKey: CONTINUE_KEY },
+    ])('Validation, save, and error behavior — $label', ({ isFirstTime, saveKey }) => {
+        it('pre-fills the field with the current display name', async () => {
             const user = userEvent.setup();
-            render(<UserProfileForm {...defaultProps} />);
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={vi.fn()} isFirstTime={isFirstTime} />);
 
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).value === 'Test User'
-            ) as HTMLInputElement;
-
-            await user.clear(nameInput);
-            await user.type(nameInput, 'New Name');
-
-            expect(nameInput.value).toBe('New Name');
+            const field = await getDisplayNameField(user);
+            expect(field).toHaveValue(mockUserProfile.displayName);
+            expect(field).toHaveAttribute('required');
         });
 
-        it('should call onSave when form is submitted with valid name', async () => {
+        it('calls onSave with the trimmed display name on submit (FR-003)', async () => {
+            const user = userEvent.setup();
             const mockOnSave = vi.fn().mockResolvedValue(undefined);
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
 
-            const form = screen.getByTestId('profile-button').closest('form');
-            expect(form).toBeInTheDocument();
+            const field = await getDisplayNameField(user);
+            await user.clear(field);
+            await user.type(field, '  Trimmed Name  ');
+            fireEvent.submit(field.closest('form')!);
 
-            fireEvent.submit(form!);
-
-            await waitFor(() => {
-                expect(mockOnSave).toHaveBeenCalledWith('Test User');
-            });
+            await waitFor(() => expect(mockOnSave).toHaveBeenCalledWith('Trimmed Name'));
         });
 
-        it('should not call onSave when display name is empty', async () => {
+        it('rejects a blank display name before any onSave call (validationState=blank)', async () => {
+            const user = userEvent.setup();
             const mockOnSave = vi.fn();
             const userWithoutName = { ...mockUserProfile, displayName: '' };
-            render(<UserProfileForm {...defaultProps} userProfile={userWithoutName} onSave={mockOnSave} />);
+            render(<UserProfileForm userProfile={userWithoutName} onSave={mockOnSave} isFirstTime={isFirstTime} />);
 
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
+            const field = await getDisplayNameField(user);
+            fireEvent.submit(field.closest('form')!);
 
             expect(mockOnSave).not.toHaveBeenCalled();
         });
 
-        it('should not call onSave when display name is only whitespace', async () => {
+        it('rejects a whitespace-only display name before any onSave call (validationState=blank)', async () => {
             const user = userEvent.setup();
             const mockOnSave = vi.fn();
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
 
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).value === 'Test User'
-            ) as HTMLInputElement;
-
-            await user.clear(nameInput);
-            await user.type(nameInput, '   ');
-
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
+            const field = await getDisplayNameField(user);
+            await user.clear(field);
+            await user.type(field, '   ');
+            fireEvent.submit(field.closest('form')!);
 
             expect(mockOnSave).not.toHaveBeenCalled();
         });
-    });
 
-    describe('Loading State', () => {
-        it('should show loading state during save', async () => {
-            let resolvePromise: () => void;
+        it('shows a saving/loading indicator while the save is in flight and clears it afterward (FR-003)', async () => {
+            const user = userEvent.setup();
+            let resolveSave: () => void;
             const savePromise = new Promise<void>((resolve) => {
-                resolvePromise = resolve;
+                resolveSave = resolve;
             });
-
             const mockOnSave = vi.fn().mockReturnValue(savePromise);
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
 
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
+            const field = await getDisplayNameField(user);
+            const submitButton = screen.getByRole('button', { name: saveKey });
+            fireEvent.submit(field.closest('form')!);
 
-            // Should show loading text
-            expect(screen.getByText('Saving...')).toBeInTheDocument();
+            // The submit control must become non-interactive while the save is pending —
+            // this is the "saving/loading indicator" FR-003 requires, verified at the DOM
+            // level (disabled attribute) rather than by matching specific "Saving..."
+            // copy/markup, which is free to change with the rebuild.
+            await waitFor(() => expect(submitButton).toBeDisabled());
 
-            // Button should be disabled during loading
-            const button = screen.getByTestId('profile-button');
-            expect(button).toBeDisabled();
-
-            // Resolve the promise
-            resolvePromise!();
-
-            await waitFor(() => {
-                expect(mockOnSave).toHaveBeenCalled();
-            });
+            resolveSave!();
+            await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
+            await waitFor(() => expect(submitButton).not.toBeDisabled());
         });
 
-        it('should disable button when display name is empty', () => {
-            const userWithoutName = { ...mockUserProfile, displayName: '' };
-            render(<UserProfileForm {...defaultProps} userProfile={userWithoutName} />);
-
-            const button = screen.getByTestId('profile-button');
-            expect(button).toBeDisabled();
-        });
-
-        it('should enable button when display name has content', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const button = screen.getByTestId('profile-button');
-            expect(button).not.toBeDisabled();
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('should handle save errors gracefully', async () => {
-            const mockOnSave = vi.fn().mockRejectedValue(new Error('Save failed'));
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
-
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
-
-            await waitFor(() => {
-                expect(mockOnSave).toHaveBeenCalled();
-            });
-
-            expect(consoleSpy).toHaveBeenCalledWith('Error saving profile:', expect.any(Error));
-
-            consoleSpy.mockRestore();
-        });
-
-        it('should reset loading state after error', async () => {
-            const mockOnSave = vi.fn().mockRejectedValue(new Error('Save failed'));
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
-
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
-
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
-
-            await waitFor(() => {
-                expect(mockOnSave).toHaveBeenCalled();
-            });
-
-            // Should not show loading text after error
-            await waitFor(() => {
-                expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
-            });
-
-            consoleSpy.mockRestore();
-        });
-    });
-
-    describe('First Time Setup UI', () => {
-        it('should show welcome message and user icon for first time setup', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={true} />);
-
-            expect(screen.getByText('Welcome!')).toBeInTheDocument();
-            expect(screen.getAllByTestId('user-icon')).toHaveLength(2); // One in welcome section, one in form label
-        });
-
-        it('should show "Continue" button for first time setup', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={true} />);
-
-            expect(screen.getByText('Continue')).toBeInTheDocument();
-        });
-
-        it('should show edit later note for first time setup', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={true} />);
-
-            expect(screen.getByText('You can edit this later in settings')).toBeInTheDocument();
-        });
-
-        it('should not show edit later note for regular edit mode', () => {
-            render(<UserProfileForm {...defaultProps} isFirstTime={false} />);
-
-            expect(screen.queryByText('You can edit this later in settings')).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Form Labels and Help Text', () => {
-        it('should display email label and help text', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            expect(screen.getByText('Email')).toBeInTheDocument();
-            expect(screen.getByText('Email cannot be changed')).toBeInTheDocument();
-            expect(screen.getByTestId('mail-icon')).toBeInTheDocument();
-        });
-
-        it('should display display name label and help text', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            expect(screen.getByText('Display Name')).toBeInTheDocument();
-            expect(screen.getByText('This is how others will see you')).toBeInTheDocument();
-            expect(screen.getAllByTestId('user-icon')).toHaveLength(1);
-        });
-
-        it('should show save icon in button', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            expect(screen.getByTestId('save-icon')).toBeInTheDocument();
-        });
-    });
-
-    describe('Null User Profile', () => {
-        it('should handle null user profile gracefully', () => {
-            render(<UserProfileForm {...defaultProps} userProfile={null} />);
-
-            const emailInputs = screen.getAllByTestId('profile-input');
-            const emailInput = emailInputs.find(input =>
-                (input as HTMLInputElement).type === 'email'
-            );
-            const nameInput = emailInputs.find(input =>
-                (input as HTMLInputElement).type === 'text'
-            );
-
-            expect(emailInput).toHaveProperty('value', '');
-            expect(nameInput).toHaveProperty('value', '');
-        });
-
-        it('should not display photo when user profile is null', () => {
-            render(<UserProfileForm {...defaultProps} userProfile={null} />);
-
-            expect(screen.queryByAltText('Avatar')).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Input Validation', () => {
-        it('should require display name input', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).type === 'text'
-            );
-
-            expect(nameInput).toHaveAttribute('required');
-        });
-
-        it('should have correct input types', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const inputs = screen.getAllByTestId('profile-input');
-            const emailInput = inputs.find(input =>
-                (input as HTMLInputElement).value === 'test@example.com'
-            );
-            const nameInput = inputs.find(input =>
-                (input as HTMLInputElement).value === 'Test User'
-            );
-
-            expect(emailInput).toHaveAttribute('type', 'email');
-            expect(nameInput).toHaveAttribute('type', 'text');
-        });
-
-        it('should show placeholder text for display name', () => {
-            const userWithoutName = { ...mockUserProfile, displayName: '' };
-            render(<UserProfileForm {...defaultProps} userProfile={userWithoutName} />);
-
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).type === 'text'
-            );
-
-            expect(nameInput).toHaveAttribute('placeholder', 'Enter your display name');
-        });
-    });
-
-    describe('Accessibility', () => {
-        it('should have proper form structure', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const form = screen.getByTestId('profile-button').closest('form');
-            expect(form).toBeInTheDocument();
-        });
-
-        it('should have proper label associations', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            expect(screen.getByText('Email')).toBeInTheDocument();
-            expect(screen.getByText('Display Name')).toBeInTheDocument();
-        });
-
-        it('should have submit button with proper type', () => {
-            render(<UserProfileForm {...defaultProps} />);
-
-            const button = screen.getByTestId('profile-button');
-            expect(button).toHaveAttribute('type', 'submit');
-        });
-    });
-
-    describe('Data Trimming', () => {
-        it('should trim whitespace from display name before saving', async () => {
+        it('recovers cleanly after a successful save: no error indicator, control interactive again', async () => {
             const user = userEvent.setup();
             const mockOnSave = vi.fn().mockResolvedValue(undefined);
-            render(<UserProfileForm {...defaultProps} onSave={mockOnSave} />);
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
 
-            const nameInputs = screen.getAllByTestId('profile-input');
-            const nameInput = nameInputs.find(input =>
-                (input as HTMLInputElement).value === 'Test User'
-            ) as HTMLInputElement;
+            const field = await getDisplayNameField(user);
+            fireEvent.submit(field.closest('form')!);
 
-            await user.clear(nameInput);
-            await user.type(nameInput, '  Trimmed Name  ');
+            await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
+            expect(screen.queryAllByRole('alert')).toHaveLength(0);
+        });
 
-            const form = screen.getByTestId('profile-button').closest('form');
-            fireEvent.submit(form!);
+        it('handles a failed save without crashing and clears the saving indicator (FR-003)', async () => {
+            const user = userEvent.setup();
+            const mockOnSave = vi.fn().mockRejectedValue(new Error('Save failed'));
+            // Errors are expected here; this only silences the component's own
+            // console.error (if it still logs one) rather than asserting on it — that
+            // exact logging call is an implementation detail the rebuild is free to
+            // change, unlike the FR-003 behaviors this test does assert on.
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
-            await waitFor(() => {
-                expect(mockOnSave).toHaveBeenCalledWith('Trimmed Name');
-            });
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
+
+            const field = await getDisplayNameField(user);
+            const submitButton = screen.getByRole('button', { name: saveKey });
+            fireEvent.submit(field.closest('form')!);
+
+            await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
+            await waitFor(() => expect(submitButton).not.toBeDisabled());
+
+            consoleSpy.mockRestore();
+        });
+
+        it('never presents a rejected save value as a confirmed/saved name (FR-003, data-model.md save-error)', async () => {
+            const user = userEvent.setup();
+            const mockOnSave = vi.fn().mockRejectedValue(new Error('Save failed'));
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+            const rejectedName = 'Should Not Persist';
+
+            render(<UserProfileForm userProfile={mockUserProfile} onSave={mockOnSave} isFirstTime={isFirstTime} />);
+
+            const field = await getDisplayNameField(user);
+            await user.clear(field);
+            await user.type(field, rejectedName);
+            fireEvent.submit(field.closest('form')!);
+
+            await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
+
+            // The rejected value legitimately remains inside the field the user is still
+            // editing (queryByText doesn't match form-control values, so this only checks
+            // it was never rendered as separate, static "confirmed" text/heading/etc.).
+            expect(screen.queryByText(rejectedName)).not.toBeInTheDocument();
+
+            consoleSpy.mockRestore();
         });
     });
 });

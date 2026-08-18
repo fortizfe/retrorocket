@@ -808,19 +808,38 @@
     "signOut": "Cerrar Sesión",
     "memberSince": "Miembro desde",
     "primaryProvider": "Proveedor principal",
+    "identity": {
+      "avatarAlt": "Foto de perfil de {{name}}"
+    },
+    "error": {
+      "title": "Algo salió mal",
+      "loadMessage": "No pudimos cargar tu perfil. Inténtalo de nuevo."
+    },
+    "accessSecurity": {
+      "heading": "Acceso y seguridad",
+      "description": "Controla cómo inicias sesión y qué tiene acceso a tu cuenta.",
+      "signOutDescription": "Cierra tu sesión en este dispositivo."
+    },
     "accountActions": {
       "title": "Acciones de Cuenta",
+      "notAvailableLabel": "No disponible todavía",
       "exportData": {
         "title": "Exportar Datos",
-        "description": "Descarga todos tus datos de retrospectivas",
-        "button": "Próximamente"
+        "description": "Descarga todos tus datos de retrospectivas"
       },
       "deleteAccount": {
         "title": "Eliminar Cuenta",
-        "description": "Elimina permanentemente tu cuenta y todos los datos",
-        "button": "Eliminar"
+        "description": "Elimina permanentemente tu cuenta y todos los datos"
       }
     }
+  },
+  "linkedProviders": {
+    "heading": "Métodos de inicio de sesión",
+    "description": "Administra los métodos de inicio de sesión vinculados a tu cuenta.",
+    "statusLinked": "Vinculado",
+    "statusNotLinked": "No vinculado",
+    "statusNotAvailable": "No disponible todavía",
+    "linkAction": "Vincular"
   },
   "mcpConnector": {
     "connectedApps": {
@@ -868,7 +887,11 @@
       "saving": "Guardando...",
       "continue": "Continuar",
       "saveChanges": "Guardar cambios",
-      "editLaterNote": "Podrás editar esta información desde tu perfil en cualquier momento"
+      "editLaterNote": "Podrás editar esta información desde tu perfil en cualquier momento",
+      "blankNameError": "El nombre a mostrar no puede estar vacío",
+      "saveError": "Ocurrió un error al guardar tu nombre. Inténtalo de nuevo.",
+      "saveSuccess": "Nombre guardado",
+      "avatarAlt": "Avatar de {{name}}"
     },
     "authButtonGroup": {
       "continueWithGoogle": "Continuar con Google",

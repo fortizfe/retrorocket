@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { signInWithGoogle, signInAs, TEST_USER_DISPLAY_NAME, TEST_USER_EMAIL } from './fixtures/auth-helpers';
+import { getDisplayNameInput } from './fixtures/profile';
 
 /**
  * "Mi Perfil" critical flow (feature 018): view profile (incl. first-sign-in creation),
@@ -38,7 +39,12 @@ test('an existing user sees their correct profile fields, with zero direct Fireb
     await page.goto('/perfil');
     await expect(page.getByRole('heading', { name: 'Mi Perfil' })).toBeVisible();
     await expect(page.getByText(TEST_USER_DISPLAY_NAME).first()).toBeVisible();
-    await expect(page.getByText(TEST_USER_EMAIL)).toBeVisible();
+    // .first() (050-profile-redesign T013): Direction B's Identity section shows the
+    // read-only email as its own visible text row (data-model.md's parity requirement),
+    // which may coexist with UserProfileForm's own (non-text, input-value) rendering of
+    // the same email — .first() keeps this resilient to either structure without
+    // weakening the visibility assertion itself.
+    await expect(page.getByText(TEST_USER_EMAIL).first()).toBeVisible();
     await expect(page.getByText('Miembro desde')).toBeVisible();
 
     // 021, research.md §4: bootstrapSession() no longer calls signInWithCustomToken at
@@ -53,7 +59,8 @@ test('a brand-new user sees a correctly-defaulted profile on first load', async 
 
     await page.goto('/perfil');
     await expect(page.getByText(displayName).first()).toBeVisible();
-    await expect(page.getByText(email)).toBeVisible();
+    // .first() (050-profile-redesign T013) — see the matching comment above.
+    await expect(page.getByText(email).first()).toBeVisible();
     await expect(page.getByText('Google').first()).toBeVisible(); // primaryProvider, test-login always uses google
 });
 
@@ -89,7 +96,7 @@ test('editing the display name persists after reload, via the backend only', asy
     await page.goto('/perfil');
 
     const newName = `E2E Renamed ${Date.now()}`;
-    const nameInput = page.getByLabel('Nombre a mostrar', { exact: false });
+    const nameInput = await getDisplayNameInput(page);
     await nameInput.fill(newName);
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page.getByText('Nombre actualizado exitosamente')).toBeVisible({ timeout: 30_000 });
@@ -110,7 +117,7 @@ test('submitting a blank display name makes no network call', async ({ page, con
         return route.continue();
     });
 
-    const nameInput = page.getByLabel('Nombre a mostrar', { exact: false });
+    const nameInput = await getDisplayNameInput(page);
     await nameInput.fill('   ');
     // The Save button is disabled while the trimmed value is empty (UserProfileForm.tsx) —
     // clicking it (if even possible) must not fire a request.
@@ -131,7 +138,7 @@ test('a failed display-name save leaves the prior name displayed with a visible 
         return route.continue();
     });
 
-    const nameInput = page.getByLabel('Nombre a mostrar', { exact: false });
+    const nameInput = await getDisplayNameInput(page);
     await nameInput.fill('Should Not Persist');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
@@ -173,19 +180,61 @@ test('a failed sign-out shows a clear error, with no ambiguous half-signed-out s
 
 // ─── User Story 4: linked providers / connected AI assistants (regression) ─────
 
+/**
+ * Updated per 050-profile-redesign T027, ahead of the T029 rebuild of
+ * `LinkedProvidersCard.tsx` (per `ProfileDirectionB.tsx`'s `ProviderRow` — the
+ * selected direction's build reference).
+ *
+ * The section heading assertion ('Métodos de Inicio de Sesión') is dropped in favor
+ * of asserting the provider names themselves are visible: provider names are
+ * rendered literally ("Google"/"GitHub"), not translated, in both the current
+ * `LinkedProvidersCard.tsx` and `ProfileDirectionB.tsx` — durable across the
+ * redesign, whereas the section's own heading copy is not (it's currently
+ * hardcoded Spanish outside i18next at all — a gap tasks.md T005/data-model.md
+ * flags — so T029 is expected to introduce a translation key here, which would
+ * likely change or relocate this exact heading text; asserting on the provider
+ * names verifies the same underlying fact — "the linked-providers section
+ * rendered" — without depending on copy that's about to be authored for the
+ * first time).
+ *
+ * Updated again per T029's actual rebuild: `LinkedProvidersCard.tsx` now sources this
+ * section's copy through i18next (`linkedProviders.*`, es.json), as flagged above as
+ * likely. The linked-status caption text changed from the old hardcoded
+ * 'Vinculado y activo' to `linkedProviders.statusLinked` = 'Vinculado' (dropping
+ * "y activo" — the caption's own row already conveys "this is a linked provider" via
+ * its position/check icon, so the status text itself only needs to name the state, per
+ * data-model.md's "explicit status text, never color-only" requirement, not restate
+ * it twice). 'Vincular' (`linkedProviders.linkAction`) is unchanged — it's the same
+ * literal string the pre-rebuild component already used, carried forward verbatim.
+ */
 test('linked providers reflect the account and the connected-apps section renders, with no new Firebase calls', async ({ page, context }) => {
     const firestoreHits = trackFirestoreRequests(page);
     await signInWithGoogle(page, context);
     await page.goto('/perfil');
 
-    await expect(page.getByText('Métodos de Inicio de Sesión')).toBeVisible();
-    await expect(page.getByText('Vinculado y activo').first()).toBeVisible();
+    await expect(page.getByText('Google').first()).toBeVisible();
+    await expect(page.getByText('GitHub').first()).toBeVisible();
+    // Apple (spec 050 T029): previously entirely absent from the UI — now rendered as
+    // its own not-yet-available row (data-model.md's Linked Provider Row, FR-005).
+    await expect(page.getByText('Apple').first()).toBeVisible();
+
+    await expect(page.getByText('Vinculado').first()).toBeVisible();
     // GitHub is the only provider the test account hasn't linked — its "Vincular" button
     // is a full-page redirect to /api/auth/link/github (research.md §6, not re-tested
-    // end-to-end here since it requires a real provider consent screen).
-    await expect(page.getByRole('button', { name: 'Vincular' })).toBeVisible();
+    // end-to-end here since it requires a real provider consent screen). Scoped to
+    // GitHub's own row (050 T029): Apple's not-yet-available row also renders a
+    // (disabled) "Vincular" button — ProfileDirectionB.tsx's ProviderRow reuses the same
+    // link-action label for both the linkable and unavailable states, by design (the
+    // *disabled* attribute + its description communicate "not yet available", not a
+    // different label) — so an unscoped role query now matches two elements.
+    const githubRow = page.getByRole('listitem').filter({ hasText: 'GitHub' });
+    await expect(githubRow.getByRole('button', { name: 'Vincular' })).toBeVisible();
+    await expect(githubRow.getByRole('button', { name: 'Vincular' })).toBeEnabled();
 
-    // ConnectedAppsCard (feature 015) — connect/revoke's own full flow is covered by
+    // ConnectedAppsCard (feature 015) already sources this heading from i18next
+    // (`mcpConnector.connectedApps.title`), a key `ProfileDirectionB.tsx` reuses
+    // verbatim — durable across the T030 rebuild, unlike LinkedProvidersCard's
+    // currently-untranslated copy above. Connect/revoke's own full flow is covered by
     // mcp-connector.spec.ts; this only confirms the section still renders with no
     // regression now that userProfile is backend-sourced.
     await expect(page.getByText('Asistentes de IA conectados')).toBeVisible();
