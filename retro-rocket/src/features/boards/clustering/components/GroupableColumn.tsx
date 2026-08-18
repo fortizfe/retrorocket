@@ -435,6 +435,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 <TypingPreview
                     typingUsers={typingUsers}
                     className="mb-3"
+                    isAnonymous={isAnonymousBoard}
                 />
 
                 {/* Groups — AnimatePresence must directly parent this list for a disbanded

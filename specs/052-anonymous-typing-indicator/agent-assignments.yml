@@ -1,0 +1,65 @@
+# Agent Assignments
+# Feature: 052-anonymous-typing-indicator
+# Generated: 2026-08-18
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/** — new endpoints, use-cases, Firebase/Firestore/Redis access, session/auth, WebSocket handling, or anything touching the domain/application/adapters/http layering."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, and especially anything involving visual design, layout, or motion/animation. Enforces WCAG 2.1 AA on every surface it touches."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature or bug fix needs tests written before implementation, whenever test coverage is unclear, and for building/running/debugging the full test suite — Vitest unit/component tests (frontend and server), Playwright E2E, accessibility (axe-core/WCAG 2.1 AA) scans, and the architecture guard tests."
+
+assignments:
+  T001:
+    agent: "qa-agent"
+    reason: "Baseline test-suite check (npm test) before any code change"
+  T002:
+    agent: "qa-agent"
+    reason: "Failing test written before implementation (TDD), plus a local useLanguage mock for the test file"
+  T003:
+    agent: "frontend-agent"
+    reason: "Implementation change to src/lib/components/ui/TypingPreview.tsx"
+  T004:
+    agent: "qa-agent"
+    reason: "Failing tests for the isAnonymous=true branch, written before implementation"
+  T005:
+    agent: "qa-agent"
+    reason: "Extends a test-file mock and adds a failing test asserting prop-passing behavior"
+  T006:
+    agent: "frontend-agent"
+    reason: "User-facing text addition under src/locales, part of the UI feature"
+  T007:
+    agent: "frontend-agent"
+    reason: "Core UI component logic change in TypingPreview.tsx (anonymous branch, avatar suppression)"
+  T008:
+    agent: "frontend-agent"
+    reason: "UI component wiring in GroupableColumn.tsx (passes the new prop)"
+  T009:
+    agent: "qa-agent"
+    reason: "New Playwright E2E scenario authoring"
+  T010:
+    agent: "qa-agent"
+    reason: "Acceptance-scenario test authoring for the non-anonymous path"
+  T011:
+    agent: "qa-agent"
+    reason: "Runs and verifies existing E2E scenarios for regressions"
+  T012:
+    agent: "qa-agent"
+    reason: "Failing test for live prop update on re-render, written before verification"
+  T013:
+    agent: "frontend-agent"
+    reason: "Potential fix to GroupableColumn.tsx if the live-update test fails"
+  T014:
+    agent: "qa-agent"
+    reason: "Two-browser-context Playwright scenario authoring"
+  T015:
+    agent: "qa-agent"
+    reason: "Full-suite run (test, type-check, lint, e2e) and coverage-floor verification"
+  T016:
+    agent: "qa-agent"
+    reason: "Accessibility spot-check (WCAG 2.1 AA / axe-core) across themes"

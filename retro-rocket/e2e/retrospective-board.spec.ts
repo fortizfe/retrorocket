@@ -912,6 +912,149 @@ test('a typing indicator appears live for a second participant, stays visible wi
     await contextB.close();
 });
 
+// spec 052-anonymous-typing-indicator: on an anonymous board, the typing indicator
+// must show only the generic "Un usuario está escribiendo" string — never the
+// typist's real display name — proving there is no identity leak while a card is
+// being composed on an otherwise-anonymized board.
+test('on an anonymous board, the typing indicator shows the generic message with no participant name', async ({ browser, request }) => {
+    const boardId = await createBoardViaApi(request, 'e2e-retro-owner9b@example.com', 'E2E Retro Owner 9b', 'E2E Anonymous Typing Indicator Board');
+
+    // Flip the board anonymous before anyone navigates to it. `request` is still
+    // logged in as the board's owner from createBoardViaApi's internal test-login.
+    const anonymityRes = await request.put(`/api/retrospectives/${boardId}/anonymity`, {
+        data: { isAnonymous: true },
+    });
+    expect(anonymityRes.ok()).toBeTruthy();
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    await signInWithGoogle(pageA, contextA);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText('E2E Anonymous Typing Indicator Board')).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, 'e2e-retro-participant9b@example.com', 'E2E Retro Participant 9b');
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText('E2E Anonymous Typing Indicator Board')).toBeVisible({ timeout: 30_000 });
+
+    // Start typing on A without submitting — triggers POST /api/retrospectives/:id/typing.
+    const firstCardBtn = pageA.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtn.isVisible().catch(() => false)) {
+        await firstCardBtn.click();
+    } else {
+        await pageA.getByText('Agregar', { exact: true }).first().click();
+    }
+    await pageA.locator('textarea').first().fill('typing but not yet submitted');
+
+    // B sees the generic anonymous message, with A's real display name (signed in via
+    // signInWithGoogle, so TEST_USER_DISPLAY_NAME 'E2E Google User') nowhere in it —
+    // the direct regression check for identity leakage on an anonymous board.
+    await expect(visibleTypingText(pageB)).toBeVisible({ timeout: 10_000 });
+    const liveRegion = typingLiveRegion(pageB);
+    await expect(liveRegion).toHaveText('Un usuario está escribiendo');
+    expect(await liveRegion.innerText()).not.toContain('E2E Google User');
+
+    // A stops typing — the indicator clears for B, same as the non-anonymous case.
+    await pageA.locator('textarea').first().fill('');
+    await pageA.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(visibleTypingText(pageB)).not.toBeVisible({ timeout: 5_000 });
+
+    await contextA.close();
+    await contextB.close();
+});
+
+// spec 052-anonymous-typing-indicator, T014 (User Story 3): proves the typing
+// indicator's identity display updates live when a facilitator toggles a board's
+// anonymous mode — no reload, for a participant other than the facilitator — mirroring
+// the two-context facilitator-toggle pattern from the 051 "toggles anonymity live" test
+// above, but observing the typing indicator instead of author names/grouping.
+test('the facilitator toggles anonymous mode live: a typing indicator switches from named to generic and back for a second participant without reloading (spec 052 US3)', async ({ browser, request }) => {
+    const facilitatorEmail = 'e2e-anon-typing-facilitator52@example.com';
+    const facilitatorName = 'E2E Anon Typing Facilitator';
+    const participantEmail = 'e2e-anon-typing-participant52@example.com';
+    const participantName = 'E2E Anon Typing Participant';
+    const boardTitle = 'E2E Anonymous Typing Toggle Live Board';
+
+    // A non-anonymous board (the default), owned by the facilitator identity.
+    const boardId = await createBoardViaApi(request, facilitatorEmail, facilitatorName, boardTitle);
+
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    // The facilitator must be the board's actual owner (uid === retrospective.createdBy)
+    // for the anonymity control to render at all — signInAs, not signInWithGoogle's
+    // fixed shared account (same gotcha as the 051 anonymity-toggle test above).
+    await signInAs(pageA, facilitatorEmail, facilitatorName);
+    await pageA.goto(`/retro/${boardId}`);
+    await expect(pageA.getByText(boardTitle)).toBeVisible({ timeout: 30_000 });
+
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    await signInAs(pageB, participantEmail, participantName);
+    await pageB.goto(`/retro/${boardId}`);
+    await expect(pageB.getByText(boardTitle)).toBeVisible({ timeout: 30_000 });
+
+    // B starts typing in the first column, without submitting — triggers
+    // POST /api/retrospectives/:id/typing.
+    const firstCardBtnB = pageB.getByText('Agregar primera tarjeta').first();
+    if (await firstCardBtnB.isVisible().catch(() => false)) {
+        await firstCardBtnB.click();
+    } else {
+        await pageB.getByText('Agregar', { exact: true }).first().click();
+    }
+    const typingTextareaB = pageB.locator('textarea').first();
+    await typingTextareaB.fill('typing before the anonymity toggle');
+
+    // Baseline (board starts non-anonymous, the default): A sees B's real display name.
+    await expect(visibleTypingText(pageA)).toBeVisible({ timeout: 10_000 });
+    await expect(typingLiveRegion(pageA)).toHaveText(`${participantName} está escribiendo`);
+
+    // useTypingStatus (src/features/boards/retrospective/hooks/useTypingStatus.ts) gives
+    // B's own client a 3s inactivity grace period before it stops the typing signal on
+    // its own — every keystroke resets that local clock regardless of the separate
+    // 2s backend-write throttle. Poking B's textarea right before each step below keeps
+    // the signal alive across the toggle and its assertions without relying on one
+    // single continuous fill, mirroring how the flicker-regression test above samples
+    // across a window with periodic keystrokes.
+    await typingTextareaB.press('a');
+
+    // From A (facilitator): open the facilitator menu — it opens directly on the
+    // Controls tab (its default) — and switch the anonymity toggle on.
+    await pageA.getByRole('button', { name: 'Controles de Facilitador' }).click();
+    const anonymityToggleA = pageA.getByTestId('anonymity-toggle');
+    await expect(anonymityToggleA).toBeVisible({ timeout: 10_000 });
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Activar modo anónimo');
+
+    await typingTextareaB.press('a');
+    await anonymityToggleA.click();
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Desactivar modo anónimo');
+
+    // Without any reload of either page, A's still-active view of B's typing indicator
+    // switches to the generic anonymous message — a fairly tight timeout to prove this
+    // is a live update, not a fresh typing-start event. B's real display name must no
+    // longer appear in that region.
+    await typingTextareaB.press('a');
+    await expect(typingLiveRegion(pageA)).toHaveText('Un usuario está escribiendo', { timeout: 5_000 });
+    expect(await typingLiveRegion(pageA).innerText()).not.toContain(participantName);
+
+    // Toggle anonymous mode back OFF from A.
+    await typingTextareaB.press('a');
+    await anonymityToggleA.click();
+    await expect(anonymityToggleA).toHaveAttribute('aria-label', 'Activar modo anónimo');
+
+    // Without reload, the indicator reverts to showing B's real display name again.
+    await typingTextareaB.press('a');
+    await expect(typingLiveRegion(pageA)).toHaveText(`${participantName} está escribiendo`, { timeout: 5_000 });
+
+    // Cleanup: stop B's typing.
+    await typingTextareaB.fill('');
+    await pageB.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(visibleTypingText(pageA)).not.toBeVisible({ timeout: 5_000 });
+
+    await contextA.close();
+    await contextB.close();
+});
+
 test('typing indicator clears promptly for the other participant when the typer submits their card, without waiting the full grace period', async ({ browser, request }) => {
     const boardId = await createBoardViaApi(request, 'e2e-retro-owner30@example.com', 'E2E Retro Owner 30', 'E2E Typing Explicit Stop Board');
 
@@ -1184,6 +1327,19 @@ test('the typing indicator and its accessible live region introduce no new WCAG 
     });
     const results = await new AxeBuilder({ page: pageB }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+
+    // spec 052-anonymous-typing-indicator (T016 §6): the generic-message card swaps
+    // out the avatar cluster for plain text when the board goes anonymous — re-run
+    // the same scan against that state to confirm it introduces no violations either,
+    // not just the pre-existing named-typist card scanned above.
+    const anonymityRes = await request.put(`/api/retrospectives/${boardId}/anonymity`, {
+        data: { isAnonymous: true },
+    });
+    expect(anonymityRes.ok()).toBeTruthy();
+    await expect(typingLiveRegion(pageB)).toHaveText('Un usuario está escribiendo', { timeout: 10_000 });
+
+    const anonymousResults = await new AxeBuilder({ page: pageB }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    expect(anonymousResults.violations, JSON.stringify(anonymousResults.violations, null, 2)).toEqual([]);
 
     await contextA.close();
     await contextB.close();

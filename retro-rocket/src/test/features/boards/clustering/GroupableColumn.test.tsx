@@ -74,8 +74,12 @@ vi.mock('@/lib/components/ui/ColorPicker', () => ({
 }));
 
 vi.mock('@/lib/components/ui/TypingPreview', () => ({
-    default: ({ typingUsers }: any) => (
-        <div data-testid="typing-preview">
+    // feature 052-anonymous-typing-indicator, T005: also captures the `isAnonymous`
+    // prop GroupableColumn is expected to pass through (not yet wired up — T008),
+    // via `data-anonymous`, so tests can assert on it without depending on
+    // TypingPreview's own (separately covered) rendering logic.
+    default: ({ typingUsers, isAnonymous }: any) => (
+        <div data-testid="typing-preview" data-anonymous={String(isAnonymous)}>
             {typingUsers?.length > 0 && `${typingUsers.length} users typing`}
         </div>
     ),
@@ -1133,6 +1137,74 @@ describe('GroupableColumn', () => {
 
             const flag = screen.getByTestId('exclude-user-grouping').textContent;
             expect(flag === 'false' || flag === 'undefined').toBe(true);
+        });
+    });
+
+    // feature 052-anonymous-typing-indicator, T005 (US1): GroupableColumn does not
+    // pass `isAnonymous` to TypingPreview yet (that's T008) — RED until then.
+    describe('Typing preview anonymity (feature 052-anonymous-typing-indicator)', () => {
+        it('passes isAnonymous={true} to TypingPreview when the board is anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: true } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} />);
+
+            expect(screen.getByTestId('typing-preview')).toHaveAttribute('data-anonymous', 'true');
+        });
+
+        it('passes isAnonymous={false} to TypingPreview when the board is not anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} />);
+
+            expect(screen.getByTestId('typing-preview')).toHaveAttribute('data-anonymous', 'false');
+        });
+
+        // feature 052-anonymous-typing-indicator, T012 (US3/FR-006/SC-003): the two
+        // tests above only check the initial render. This proves the live-toggle case —
+        // that flipping the board's isAnonymous flag re-renders the SAME TypingPreview
+        // DOM node with an updated data-anonymous value, rather than requiring a fresh
+        // mount (i.e. a real prop update, matching "no reload required"). research.md §1
+        // predicts this needs no new production code beyond T008/T009's plumbing.
+        it('updates data-anonymous live on the same DOM node when the board toggles anonymous mode, without unmounting (User Story 3)', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            const { rerender } = render(<GroupableColumn {...defaultProps} />);
+            const nodeBeforeToggle = screen.getByTestId('typing-preview');
+            expect(nodeBeforeToggle).toHaveAttribute('data-anonymous', 'false');
+
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: true } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+            rerender(<GroupableColumn {...defaultProps} />);
+
+            const nodeAfterToggleOn = screen.getByTestId('typing-preview');
+            expect(nodeAfterToggleOn).toBe(nodeBeforeToggle);
+            expect(nodeAfterToggleOn).toHaveAttribute('data-anonymous', 'true');
+
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+            rerender(<GroupableColumn {...defaultProps} />);
+
+            const nodeAfterToggleOff = screen.getByTestId('typing-preview');
+            expect(nodeAfterToggleOff).toBe(nodeBeforeToggle);
+            expect(nodeAfterToggleOff).toHaveAttribute('data-anonymous', 'false');
         });
     });
 });

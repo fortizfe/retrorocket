@@ -2,21 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TypingIndicator } from '@/features/boards/types/typing';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface TypingPreviewProps {
     typingUsers: TypingIndicator[];
     className?: string;
+    isAnonymous: boolean;
 }
 
-function formatTypingText(typingUsers: TypingIndicator[]): string {
-    if (typingUsers.length === 0) {
+function formatTypingText(
+    typingUsers: TypingIndicator[],
+    t: (key: string, options?: Record<string, unknown>) => string,
+    isAnonymous: boolean
+): string {
+    if (isAnonymous && typingUsers.length > 0) {
+        return t('typing.anonymous');
+    } else if (typingUsers.length === 0) {
         return '';
     } else if (typingUsers.length === 1) {
-        return `${typingUsers[0].username} está escribiendo`;
+        return t('typing.single', { username: typingUsers[0].username });
     } else if (typingUsers.length === 2) {
-        return `${typingUsers[0].username} y ${typingUsers[1].username} están escribiendo`;
+        return t('typing.double', { username1: typingUsers[0].username, username2: typingUsers[1].username });
     } else {
-        return `${typingUsers[0].username} y ${typingUsers.length - 1} más están escribiendo`;
+        return t('typing.multiple', { username: typingUsers[0].username, count: typingUsers.length - 1 });
     }
 }
 
@@ -25,8 +33,11 @@ function formatTypingText(typingUsers: TypingIndicator[]): string {
  */
 const TypingPreview: React.FC<TypingPreviewProps> = ({
     typingUsers,
-    className = ''
+    className = '',
+    isAnonymous
 }) => {
+    const { t } = useLanguage();
+
     // Two-step transition to empty (feature 034, FR-013/Contract 4): AnimatePresence
     // freezes the *last-rendered* card for the length of its exit transition when
     // `typingUsers` drops to zero — long enough for a departing typist's name to stay
@@ -63,7 +74,7 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
     // than waiting on the visual card's exit transition.
     const liveRegion = (
         <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            {formatTypingText(typingUsers)}
+            {formatTypingText(typingUsers, t, isAnonymous)}
         </span>
     );
 
@@ -98,7 +109,10 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
         `}
             >
                 <div className="flex items-center space-x-2">
-                    {/* Animated avatars */}
+                    {/* Animated avatars (feature 052: hidden entirely on anonymous boards,
+                        since exposing a typist's initials/count contradicts the generic
+                        "A user is typing" text shown in that mode) */}
+                    {!isAnonymous && (
                     <div className="flex -space-x-1">
                         {displayedUsers.slice(0, 3).map((user, index) => (
                             <motion.div
@@ -140,11 +154,12 @@ const TypingPreview: React.FC<TypingPreviewProps> = ({
                             </motion.div>
                         )}
                     </div>
+                    )}
 
                     {/* Typing text with animated dots */}
                     <div className="flex items-center">
                         <span className="text-sm text-blue-700 font-medium">
-                            {formatTypingText(displayedUsers)}
+                            {formatTypingText(displayedUsers, t, isAnonymous)}
                         </span>
                         <TypingDots />
                     </div>
