@@ -84,4 +84,27 @@ describe('PdfExportService', () => {
             expect(line).not.toContain('departed-uid');
         });
     });
+
+    // spec 051-anonymous-board-mode, US2 (FR-012, SC-006), T032: an anonymous
+    // board's export must omit the author line entirely —
+    // anonymity-ui-behavior-contract.md's "Exports" table.
+    describe('buildCardAuthorLine anonymous board mode (spec 051-anonymous-board-mode, US2, T032)', () => {
+        it('returns an empty string when the board is anonymous, omitting the author line entirely', () => {
+            const card = makeCard({ createdBy: 'user-1', createdByName: 'Jane Smith' });
+            const participants = [makeParticipant()];
+
+            const line = buildCardAuthorLine(card, participants, true);
+
+            expect(line).toBe('');
+        });
+
+        it('still returns the author line when the board is not anonymous (control, regression)', () => {
+            const card = makeCard({ createdBy: 'user-1', createdByName: 'Jane Smith' });
+            const participants = [makeParticipant()];
+
+            const line = buildCardAuthorLine(card, participants, false);
+
+            expect(line).toContain('Jane Smith');
+        });
+    });
 });

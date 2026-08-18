@@ -146,6 +146,7 @@ export interface RetrospectiveState {
     updatedAt: Date;
     participantCount: number;
     isActive: boolean;
+    isAnonymous: boolean;
     columnGroupingStates: ColumnGroupingStates;
     columns: Column[];
     cards: Card[];
@@ -476,6 +477,15 @@ export async function resetTimer(retrospectiveId: string): Promise<CountdownTime
 /** DELETE /api/retrospectives/:id/timer — facilitator-only (FR-014). */
 export async function deleteTimer(retrospectiveId: string): Promise<void> {
     await requestJson<void>(`${RETROSPECTIVES}/${encodeURIComponent(retrospectiveId)}/timer`, 'DELETE');
+}
+
+// ---------------------------------------------------------------------------
+// 051-anonymous-board-mode, US3: facilitator toggles board-wide anonymity
+// ---------------------------------------------------------------------------
+
+/** PUT /api/retrospectives/:id/anonymity — facilitator-only. */
+export async function setAnonymity(retrospectiveId: string, isAnonymous: boolean): Promise<void> {
+    await requestJson<void>(`${RETROSPECTIVES}/${encodeURIComponent(retrospectiveId)}/anonymity`, 'PUT', { isAnonymous });
 }
 
 /** POST /api/retrospectives/:id/notes — private to the caller (FR-013). */

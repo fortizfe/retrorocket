@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
     Settings,
     Play,
@@ -15,9 +16,11 @@ import Button from '@/lib/components/ui/Button';
 import { useCountdown } from '@/features/boards/countdown/hooks/useCountdown';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import ActionColumnToggle from '@/features/boards/retrospective/components/ActionColumnToggle';
+import AnonymityToggle from '@/features/boards/retrospective/components/AnonymityToggle';
 import SettingsRow from '@/lib/components/ui/SettingsRow';
 import uiPreferencesStore from '@/lib/uiPreferencesStore';
-import type { CountdownTimer as CountdownTimerData } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
+import { setAnonymity, type CountdownTimer as CountdownTimerData } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 interface ControlsTabProps {
     retrospectiveId?: string;
@@ -37,6 +40,22 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
     }, []);
     const handleToggle = () => {
         uiPreferencesStore.setShowActionColumn(!uiPreferencesStore.getShowActionColumn());
+    };
+
+    // Board-wide anonymity toggle (051-anonymous-board-mode, US3) — facilitator-only.
+    // The displayed value is sourced straight from useBoardData()'s realtime-synced
+    // retrospective state, not local component state: no optimistic flip before the
+    // request resolves, and nothing to revert on failure since it was never changed
+    // locally in the first place.
+    const { isFacilitator, retrospective } = useBoardData();
+    const handleAnonymityToggle = async (next: boolean) => {
+        if (!retrospectiveId) return;
+        try {
+            await setAnonymity(retrospectiveId, next);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : t('retrospective.facilitator.anonymity.error');
+            toast.error(message);
+        }
     };
 
     // Timer logic - call hook unconditionally to respect hooks rules
@@ -133,6 +152,19 @@ const ControlsTab: React.FC<ControlsTabProps> = ({ retrospectiveId, timer: liveT
                             description={t('retrospective.facilitator.showActionItemsDesc')}
                             control={<ActionColumnToggle visible={showActionColumn} onToggle={handleToggle} />}
                         />
+
+                        {isFacilitator && (
+                            <SettingsRow
+                                label={t('retrospective.facilitator.anonymity.label')}
+                                description={t('retrospective.facilitator.anonymity.description')}
+                                control={(
+                                    <AnonymityToggle
+                                        isAnonymous={retrospective?.isAnonymous ?? false}
+                                        onToggle={handleAnonymityToggle}
+                                    />
+                                )}
+                            />
+                        )}
 
                         {/* Placeholder: additional settings (dropdowns, toggles) can be added here as SettingsRow instances */}
                     </div>

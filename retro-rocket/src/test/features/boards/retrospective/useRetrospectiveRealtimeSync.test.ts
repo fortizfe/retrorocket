@@ -117,6 +117,22 @@ describe('applyEntityChange', () => {
         expect(next.cards).toHaveLength(1);
     });
 
+    // 051-anonymous-board-mode, realtime-anonymity-contract.md: parseRetrospectiveFields()
+    // must include isAnonymous in its allowlist so it merges from a retrospective
+    // entity_change event, the same way columnGroupingStates already does above.
+    it('merges isAnonymous on an updated retrospective event', () => {
+        const existing = baseState({ isAnonymous: false });
+        const event: EntityChangeEvent = {
+            type: 'entity_change',
+            entity: 'retrospective',
+            op: 'updated',
+            id: 'r1',
+            data: { title: 'Retro', participantCount: 1, isActive: true, columnGroupingStates: {}, isAnonymous: true },
+        };
+        const next = applyEntityChange(existing, event);
+        expect(next.isAnonymous).toBe(true);
+    });
+
     it('is a no-op for typingStatus events (owned by a separate slice)', () => {
         const existing = baseState();
         const event: EntityChangeEvent = { type: 'entity_change', entity: 'typingStatus', op: 'created', id: 't1', data: {} };

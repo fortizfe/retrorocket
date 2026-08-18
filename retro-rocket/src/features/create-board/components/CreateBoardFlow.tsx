@@ -31,6 +31,8 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
     const [currentStep, setCurrentStep] = useState<Step>('template');
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('default');
     const [boardTitle, setBoardTitle] = useState('');
+    // Defaulted off per spec.md User Story 1 / FR-002 ("not anonymous" by default).
+    const [isAnonymous, setIsAnonymous] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const boardTitleInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +75,8 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
             const { boardId } = await createBoard({
                 templateId: selectedTemplate,
                 title: boardTitle.trim(),
-                locale: i18n.language as 'es' | 'en'
+                locale: i18n.language as 'es' | 'en',
+                isAnonymous
             });
 
             toast.success(t('success.created'));
@@ -81,6 +84,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
             // Reset form
             setBoardTitle('');
             setSelectedTemplate('default');
+            setIsAnonymous(false);
             setCurrentStep('template');
 
             // Call success callback or navigate
@@ -104,6 +108,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
         if (!isCreating) {
             setBoardTitle('');
             setSelectedTemplate('default');
+            setIsAnonymous(false);
             setCurrentStep('template');
             onClose();
         }
@@ -198,6 +203,26 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                         disabled={isCreating}
                                     />
                                 </div>
+
+                                <label
+                                    htmlFor="boardIsAnonymous"
+                                    className="flex items-start gap-3 rounded-lg border border-border-default p-3 cursor-pointer"
+                                >
+                                    <input
+                                        id="boardIsAnonymous"
+                                        type="checkbox"
+                                        checked={isAnonymous}
+                                        onChange={(e) => setIsAnonymous(e.target.checked)}
+                                        disabled={isCreating}
+                                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-border-strong accent-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    />
+                                    <span className="flex flex-col text-sm font-medium text-text-primary">
+                                        {t('createBoard.anonymous.label')}
+                                        <span className="block text-xs font-normal text-text-secondary mt-0.5">
+                                            {t('createBoard.anonymous.description')}
+                                        </span>
+                                    </span>
+                                </label>
                             </form>
                         </motion.div>
                     )}

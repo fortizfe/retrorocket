@@ -15,12 +15,15 @@ export interface ColumnGroupingState {
     activeGroups: string[]; // IDs of active groups
 }
 
-// Function to get translated grouping options
-export const getGroupingOptions = (t?: (key: string) => string): GroupingOption[] => {
+// Function to get translated grouping options. `excludeUserGrouping` (spec
+// 051-anonymous-board-mode, US2, FR-004/SC-003) omits the 'user' entry entirely
+// rather than merely disabling it — an anonymous board must not let a participant
+// even select "group by user" from the menu.
+export const getGroupingOptions = (t?: (key: string) => string, excludeUserGrouping = false): GroupingOption[] => {
     // If no translation function provided, use a fallback
     const translate = t || ((key: string) => key);
 
-    return [
+    const options: GroupingOption[] = [
         {
             value: 'none',
             label: translate('retrospective.grouping.noGrouping'),
@@ -40,6 +43,8 @@ export const getGroupingOptions = (t?: (key: string) => string): GroupingOption[
             description: translate('retrospective.grouping.automaticSuggestionsBySimilarity')
         }
     ];
+
+    return excludeUserGrouping ? options.filter(option => option.value !== 'user') : options;
 };
 
 // Available grouping options (for backward compatibility)

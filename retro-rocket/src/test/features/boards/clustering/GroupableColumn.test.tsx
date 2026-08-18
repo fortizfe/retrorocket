@@ -5,7 +5,8 @@ import { vi, describe, it, beforeEach, expect, type Mock } from 'vitest';
 import toast from 'react-hot-toast';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
 import { Card, CardGroup } from '@/features/boards/types/card';
-import { ColumnConfig } from '@/features/boards/types/retrospective';
+import { ColumnConfig, Retrospective } from '@/features/boards/types/retrospective';
+import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -100,9 +101,15 @@ vi.mock('@/features/boards/clustering/components/ColumnHeaderMenu', () => ({
         currentGrouping, onGroupingChange, hasCards, disabled,
         suggestionsOpen, suggestions, suggestionsLoading, suggestionsError,
         onAcceptSuggestion, onRejectSuggestion, onCloseSuggestions,
+        excludeUserGrouping,
     }: any) => (
         <div data-testid="column-header-menu">
             <span>Current: {currentGrouping}</span>
+            {/* spec 051-anonymous-board-mode, T030(c): exposes whatever GroupableColumn
+                passes for the "hide the user-grouping option while anonymous" flag
+                (FR-004), so tests can assert on it without depending on this menu's own
+                (separately covered) rendering logic. */}
+            <span data-testid="exclude-user-grouping">{String(excludeUserGrouping)}</span>
             <button onClick={() => onGroupingChange?.('user')}>Group by User</button>
             <button onClick={() => onGroupingChange?.('suggestions')}>Group by Suggestions</button>
             <button onClick={() => onGroupingChange?.('none')}>No Grouping</button>
@@ -172,15 +179,24 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
 // criteria on the next getColumnState() read — needed for spec 047 US2's mode-switch
 // teardown tests, which depend on reading the *previous* criteria at the moment of
 // a real transition (e.g. suggestions -> none), not a hardcoded constant.
+//
+// Seeds its initial per-column criteria from `columnGroupingStates` (the second
+// arg, mirroring the real hook's `initialState` param) so spec 051-anonymous-board-
+// mode's T030 tests can start a column already persisted at criteria: 'user'
+// without needing a simulated menu click first.
+const mockSetGroupingCriteria = vi.fn();
 vi.mock('@/features/boards/clustering/hooks/useColumnGrouping', () => ({
-    useColumnGrouping: () => {
-        const [criteriaByColumn, setCriteriaByColumn] = React.useState<Record<string, string>>({});
+    useColumnGrouping: (_retrospectiveId?: string, initialState?: Record<string, { criteria: string }>) => {
+        const [criteriaByColumn, setCriteriaByColumn] = React.useState<Record<string, string>>(
+            () => Object.fromEntries(Object.entries(initialState ?? {}).map(([columnId, state]) => [columnId, state.criteria]))
+        );
         return {
             getColumnState: (columnId: string) => ({
                 criteria: criteriaByColumn[columnId] ?? 'none',
                 previousState: null,
             }),
             setGroupingCriteria: (columnId: string, criteria: string) => {
+                mockSetGroupingCriteria(columnId, criteria);
                 setCriteriaByColumn(prev => ({ ...prev, [columnId]: criteria }));
             },
             processCards: (cards: any) => cards,
@@ -193,6 +209,16 @@ vi.mock('@/lib/utils/cardColors', () => ({
     getCardStyling: vi.fn(() => ({ bg: 'bg-blue-100', border: 'border-blue-200' })),
     getDefaultColor: vi.fn(() => 'pastelWhite'),
 }));
+
+// spec 051-anonymous-board-mode, US2, T030: GroupableColumn is a descendant of the
+// same BoardDataContext.Provider DraggableCard reads from (research.md §6), so it
+// reads the board's isAnonymous flag the same way rather than needing a new prop
+// threaded from RetrospectiveBoard.tsx.
+vi.mock('@/features/boards/retrospective/contexts/useBoardData', () => ({
+    useBoardData: vi.fn(),
+}));
+
+const mockUseBoardData = vi.mocked(useBoardData);
 
 describe('GroupableColumn', () => {
     const mockColumn: ColumnConfig = {
@@ -270,6 +296,14 @@ describe('GroupableColumn', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // Default: non-anonymous board, matching today's behavior for every test in
+        // this file that doesn't itself set an anonymous board (T030 tests override
+        // this per-test, after this beforeEach runs).
+        mockUseBoardData.mockReturnValue({
+            cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+            retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+            participants: [], timer: null, myFacilitatorNotes: [],
+        });
     });
 
     describe('Basic Rendering', () => {
@@ -1034,6 +1068,71 @@ describe('GroupableColumn', () => {
             render(<GroupableColumn {...defaultProps} onSuggestionGenerate={mockOnSuggestionGenerate} />);
 
             expect(screen.getByText('What went well?')).toBeInTheDocument();
+        });
+    });
+
+    // spec 051-anonymous-board-mode, US2 (FR-004, FR-010), T030: a column persisted
+    // at criteria 'user' must render as ungrouped while the board is anonymous — a
+    // display-time-only override (research.md §5) that must never write 'none' back
+    // through setGroupingCriteria, so the saved 'user' choice reappears automatically
+    // the moment the board goes non-anonymous again.
+    describe('Anonymous board mode (spec 051-anonymous-board-mode, US2, T030)', () => {
+        const persistedUserGrouping = {
+            helped: { criteria: 'user' as const, activeGroups: [] },
+        };
+
+        it('renders ungrouped and never calls setGroupingCriteria when the board is anonymous and the persisted criteria is "user"', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: true } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} columnGroupingStates={persistedUserGrouping} />);
+
+            expect(screen.getByText('Current: none')).toBeInTheDocument();
+            expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'none');
+            // The override is display-time only (research.md §5) — the persisted
+            // 'user' choice in columnGroupingStates must never be overwritten.
+            expect(mockSetGroupingCriteria).not.toHaveBeenCalled();
+        });
+
+        it('renders grouped by user when the board is not anonymous, with the same persisted criteria (regression)', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} columnGroupingStates={persistedUserGrouping} />);
+
+            expect(screen.getByText('Current: user')).toBeInTheDocument();
+            expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'user');
+        });
+
+        it('passes excludeUserGrouping to the grouping menu when the board is anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: true } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} />);
+
+            expect(screen.getByTestId('exclude-user-grouping')).toHaveTextContent('true');
+        });
+
+        it('does not pass excludeUserGrouping (falsy) to the grouping menu when the board is not anonymous', () => {
+            mockUseBoardData.mockReturnValue({
+                cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+                retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+                participants: [], timer: null, myFacilitatorNotes: [],
+            });
+
+            render(<GroupableColumn {...defaultProps} />);
+
+            const flag = screen.getByTestId('exclude-user-grouping').textContent;
+            expect(flag === 'false' || flag === 'undefined').toBe(true);
         });
     });
 });

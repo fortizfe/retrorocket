@@ -4,7 +4,8 @@ import {
     GroupingOption,
     ColumnGroupingState,
     ColumnGroupingStatesStore,
-    DEFAULT_GROUPING_STATE
+    DEFAULT_GROUPING_STATE,
+    getGroupingOptions
 } from '@/features/boards/types/columnGrouping';
 import { List, Users, Sparkles } from 'lucide-react';
 
@@ -339,6 +340,44 @@ describe('Column Grouping Types', () => {
             expect(getLabel('none')).toBe('No Grouping');
             expect(getLabel('user')).toBe('Group by User');
             expect(getLabel('suggestions')).toBe('Smart Suggestions');
+        });
+    });
+
+    // spec 051-anonymous-board-mode, US2 (FR-004, SC-003), T029: an anonymous board
+    // must hide the "group by user" option entirely (not merely disable it) from the
+    // grouping menu, per anonymity-ui-behavior-contract.md's "Group by user" table.
+    describe('getGroupingOptions()', () => {
+        it('includes all three options — none, user, suggestions — when excludeUserGrouping is omitted', () => {
+            const options = getGroupingOptions();
+            const values = options.map(o => o.value);
+
+            expect(values).toEqual(['none', 'user', 'suggestions']);
+        });
+
+        it('includes all three options when excludeUserGrouping is explicitly false', () => {
+            const options = getGroupingOptions(undefined, false);
+            const values = options.map(o => o.value);
+
+            expect(values).toContain('user');
+            expect(values).toEqual(['none', 'user', 'suggestions']);
+        });
+
+        it('omits the "user" entry entirely when excludeUserGrouping is true — not merely disabled', () => {
+            const options = getGroupingOptions(undefined, true);
+            const values = options.map(o => o.value);
+
+            expect(values).not.toContain('user');
+            expect(values).toEqual(['none', 'suggestions']);
+            expect(options).toHaveLength(2);
+        });
+
+        it('still translates labels normally when excludeUserGrouping is true', () => {
+            const t = (key: string) => `translated:${key}`;
+            const options = getGroupingOptions(t, true);
+
+            expect(options.map(o => o.value)).toEqual(['none', 'suggestions']);
+            expect(options[0].label).toBe('translated:retrospective.grouping.noGrouping');
+            expect(options[1].label).toBe('translated:retrospective.grouping.suggestedGroupings');
         });
     });
 });

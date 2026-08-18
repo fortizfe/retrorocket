@@ -111,7 +111,7 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
 
     router.post('/api/boards', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
-        const body = req.body as { templateId?: unknown; title?: unknown; locale?: unknown };
+        const body = req.body as { templateId?: unknown; title?: unknown; locale?: unknown; isAnonymous?: unknown };
 
         const result = await createBoard(
             { boardsPort: deps.boardsPort },
@@ -121,6 +121,7 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
                 locale: body.locale === 'en' ? 'en' : 'es',
                 createdBy: session.sub,
                 createdByName: await resolveDisplayName(deps, session),
+                isAnonymous: body.isAnonymous === true,
             },
         );
         res.status(201).json(result);

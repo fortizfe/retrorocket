@@ -45,6 +45,7 @@ const RetrospectivePageContent: React.FC = () => {
               updatedAt: board.updatedAt,
               participantCount: board.participantCount,
               isActive: board.isActive,
+              isAnonymous: board.isAnonymous,
           }
         : null;
     const participants = board?.participants ?? [];

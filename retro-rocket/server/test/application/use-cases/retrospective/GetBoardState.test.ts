@@ -86,4 +86,23 @@ describe('getBoardState', () => {
         const result = await getBoardState({ ...store }, { retrospectiveId: 'r1', uid: 'u1' });
         expect(result.groups[0].column).toBe('col1');
     });
+
+    // 051-anonymous-board-mode, anonymity-api-contract.md: GET /api/retrospectives/:id's
+    // board state must include isAnonymous, matching whatever the board port's
+    // getRetrospective() returns — this use-case spreads the whole board DTO
+    // (`{ ...board, isFacilitator, ... }`), so this locks in that passthrough contract
+    // explicitly rather than relying on it being incidental. NOTE: this test may
+    // already pass with zero production changes to GetBoardState.ts once the
+    // FirestoreRetrospectiveBoardAdapter's toRetrospective() default (adapter task)
+    // lands, since retrospectiveFakes.ts's getRetrospective() already defaults
+    // isAnonymous to false — it's written anyway to pin the contract down.
+    it('includes isAnonymous in the resolved board state, matching the board port', async () => {
+        const notAnonymous = createRetrospectiveFakeStore({ retrospectives: [board({ isAnonymous: false })] });
+        const resultFalse = await getBoardState({ ...notAnonymous }, { retrospectiveId: 'r1', uid: 'u1' });
+        expect(resultFalse.isAnonymous).toBe(false);
+
+        const anonymous = createRetrospectiveFakeStore({ retrospectives: [board({ isAnonymous: true })] });
+        const resultTrue = await getBoardState({ ...anonymous }, { retrospectiveId: 'r1', uid: 'u1' });
+        expect(resultTrue.isAnonymous).toBe(true);
+    });
 });

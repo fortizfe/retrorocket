@@ -23,6 +23,7 @@ export interface RetrospectiveDTO {
     participantCount: number;
     isActive: boolean;
     columnGroupingStates: ColumnGroupingStates;
+    isAnonymous: boolean;
 }
 
 export interface ColumnDTO {
@@ -71,6 +72,9 @@ export interface RetrospectiveBoardPort {
     pauseTimer(retrospectiveId: string, uid: string): Promise<CountdownTimerDTO>;
     resetTimer(retrospectiveId: string, uid: string): Promise<CountdownTimerDTO>;
     deleteTimer(retrospectiveId: string, uid: string): Promise<void>;
+
+    /** Throws ForbiddenError if uid isn't the facilitator. */
+    setAnonymous(retrospectiveId: string, uid: string, isAnonymous: boolean): Promise<RetrospectiveDTO>;
 }
 
 /** The `participants` collection's write side — 015's FirestoreRetrospectiveReadAdapter reads only. */

@@ -71,4 +71,30 @@ describe('DocxExportService', () => {
             expect(metadata.join(' ')).not.toContain('departed-uid');
         });
     });
+
+    // spec 051-anonymous-board-mode, US2 (FR-012, SC-006), T032: an anonymous
+    // board's export must omit the "Autor: ..." metadata line entirely —
+    // anonymity-ui-behavior-contract.md's "Exports" table.
+    describe('Anonymous board mode (spec 051-anonymous-board-mode, US2, T032)', () => {
+        it('omits the "Autor:" line when the board is anonymous', () => {
+            const service = new DocxExportService();
+            const card = makeCard({ createdBy: 'user-1', createdByName: 'Jane Smith' });
+            const participants = [makeParticipant()];
+
+            const metadata: string[] = (service as any).buildCardMetadata(card, participants, true);
+
+            expect(metadata.join(' ')).not.toContain('Autor:');
+            expect(metadata.join(' ')).not.toContain('Jane Smith');
+        });
+
+        it('still includes the "Autor:" line when the board is not anonymous (control, regression)', () => {
+            const service = new DocxExportService();
+            const card = makeCard({ createdBy: 'user-1', createdByName: 'Jane Smith' });
+            const participants = [makeParticipant()];
+
+            const metadata: string[] = (service as any).buildCardMetadata(card, participants, false);
+
+            expect(metadata).toContain('Autor: Jane Smith');
+        });
+    });
 });

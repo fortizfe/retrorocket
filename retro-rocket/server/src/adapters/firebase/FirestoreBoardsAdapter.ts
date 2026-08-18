@@ -99,6 +99,7 @@ export class FirestoreBoardsAdapter implements BoardsPort {
             // list/presence keeps working unchanged for newly created boards.
             participantCount: 1,
             isActive: true,
+            isAnonymous: input.isAnonymous ?? false,
         });
 
         const columns = getTemplateColumns(input.templateId);

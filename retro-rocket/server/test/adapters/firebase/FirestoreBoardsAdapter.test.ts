@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { toDate, toBoardSummary } from '../../../src/adapters/firebase/FirestoreBoardsAdapter';
+import type { Firestore } from 'firebase-admin/firestore';
+import { toDate, toBoardSummary, FirestoreBoardsAdapter } from '../../../src/adapters/firebase/FirestoreBoardsAdapter';
+import type { CreateBoardInput } from '../../../src/application/ports/boards';
 
 // FirestoreBoardsAdapter's query/write composition (listBoardsForUser's owned+joined
 // merge, createBoard's atomic WriteBatch, joinBoard's idempotency, rename/delete's
@@ -52,5 +54,87 @@ describe('toBoardSummary', () => {
         void _d;
         void _a;
         expect(toBoardSummary('b1', rest, 'owner-uid')).toMatchObject({ description: '', isActive: true });
+    });
+});
+
+// 051-anonymous-board-mode, T016: unlike the rest of this adapter, createBoard()'s
+// isAnonymous default (data-model.md: "always persisted as a concrete boolean") is a
+// piece of *write-composition* logic — not a pure mapping helper like toBoardSummary
+// above — so it isn't covered by the E2E suite's existing assertions on other written
+// fields. A minimal fake Firestore (collection/doc/batch.set/commit only — no real
+// FieldValue/query behavior) captures exactly the board document's write payload,
+// narrowly scoped to this one field rather than reintroducing a full Firestore mock.
+describe('createBoard — isAnonymous default (051-anonymous-board-mode, data-model.md)', () => {
+    function fakeDb() {
+        const setCalls: Array<{ data: FirebaseFirestore.DocumentData }> = [];
+        let autoId = 0;
+
+        function collectionRef(path: string): FirebaseFirestore.CollectionReference {
+            return {
+                doc(id?: string) {
+                    const docId = id ?? `auto-${++autoId}`;
+                    return docRef(`${path}/${docId}`, docId);
+                },
+            } as unknown as FirebaseFirestore.CollectionReference;
+        }
+
+        function docRef(path: string, id: string): FirebaseFirestore.DocumentReference {
+            return {
+                id,
+                collection(sub: string) {
+                    return collectionRef(`${path}/${sub}`);
+                },
+            } as unknown as FirebaseFirestore.DocumentReference;
+        }
+
+        const db = {
+            collection(name: string) {
+                return collectionRef(name);
+            },
+            batch() {
+                return {
+                    set(_ref: unknown, data: FirebaseFirestore.DocumentData) {
+                        setCalls.push({ data });
+                    },
+                    async commit() {},
+                } as unknown as FirebaseFirestore.WriteBatch;
+            },
+        } as unknown as Firestore;
+
+        return { db, setCalls };
+    }
+
+    function boardWriteOf(setCalls: Array<{ data: FirebaseFirestore.DocumentData }>) {
+        // The top-level board document is the only batch.set() call whose payload has
+        // a `title` — column and participant writes don't.
+        const call = setCalls.find((c) => 'title' in c.data);
+        if (!call) throw new Error('board document set() call not found');
+        return call.data;
+    }
+
+    const baseInput: CreateBoardInput = {
+        templateId: 'default',
+        title: 'Sprint Retro',
+        createdBy: 'u1',
+        createdByName: 'User One',
+        locale: 'en',
+    };
+
+    it('persists isAnonymous: false when input.isAnonymous is omitted', async () => {
+        const { db, setCalls } = fakeDb();
+        const adapter = new FirestoreBoardsAdapter(db);
+
+        await adapter.createBoard(baseInput);
+
+        expect(boardWriteOf(setCalls)).toMatchObject({ isAnonymous: false });
+    });
+
+    it('persists isAnonymous: true when input.isAnonymous is true', async () => {
+        const { db, setCalls } = fakeDb();
+        const adapter = new FirestoreBoardsAdapter(db);
+
+        await adapter.createBoard({ ...baseInput, isAnonymous: true });
+
+        expect(boardWriteOf(setCalls)).toMatchObject({ isAnonymous: true });
     });
 });

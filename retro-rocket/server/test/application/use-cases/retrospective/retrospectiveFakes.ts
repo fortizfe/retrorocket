@@ -31,6 +31,8 @@ export interface FakeRetrospectiveRecord {
     participantCount: number;
     isActive: boolean;
     columnGroupingStates: ColumnGroupingStates;
+    /** Optional in seed data — defaults to `false` on read, mirroring the real adapter's fallback (feature 051). */
+    isAnonymous?: boolean;
 }
 
 export interface RetrospectiveFakeStore {
@@ -79,7 +81,7 @@ export function createRetrospectiveFakeStore(seed: {
     const retrospectiveBoardPort: RetrospectiveBoardPort = {
         async getRetrospective(id) {
             const r = retrospectives.get(id);
-            return r ? { ...r } : null;
+            return r ? { ...r, isAnonymous: r.isAnonymous ?? false } : null;
         },
         async listColumns(retrospectiveId) {
             void retrospectiveId;
@@ -155,6 +157,20 @@ export function createRetrospectiveFakeStore(seed: {
             const board = requireBoard(retrospectiveId);
             if (board.createdBy !== uid) throw new ForbiddenError('Solo la persona facilitadora puede realizar esta acción');
             timers.delete(retrospectiveId);
+        },
+        // 051-anonymous-board-mode, US3 (T043-T045 red-phase support): mirrors
+        // configureTimer's facilitator-only guard. Added ahead of the real
+        // RetrospectiveBoardPort.setAnonymous/FirestoreRetrospectiveBoardAdapter
+        // implementation (T048/T049) so Anonymity.test.ts and the
+        // PUT /api/retrospectives/:id/anonymity route tests exercise real delegation
+        // semantics once those production pieces land, instead of only failing on a
+        // missing-module import. This is test-fixture code, not production code.
+        async setAnonymous(retrospectiveId, uid, isAnonymous) {
+            const board = requireBoard(retrospectiveId);
+            if (board.createdBy !== uid) throw new ForbiddenError('Solo la persona facilitadora puede realizar esta acción');
+            board.isAnonymous = isAnonymous;
+            board.updatedAt = new Date();
+            return { ...board, isAnonymous: board.isAnonymous ?? false };
         },
     };
 

@@ -22,6 +22,7 @@ export interface CreateBoardParams {
     templateId: 'default' | 'madSadGlad' | 'startStopContinue';
     title: string;
     locale: 'es' | 'en';
+    isAnonymous?: boolean;
 }
 
 interface BoardSummaryDTO {

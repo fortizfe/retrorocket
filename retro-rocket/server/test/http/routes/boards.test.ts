@@ -116,6 +116,34 @@ describe('POST /api/boards', () => {
         // profile's 'Configured Name' must win.
         expect(createBoardSpy).toHaveBeenCalledWith(expect.objectContaining({ createdByName: 'Configured Name' }));
     });
+
+    // 051-anonymous-board-mode, T018 (contracts/anonymity-api-contract.md "Extended
+    // endpoint: POST /api/boards"): isAnonymous is optional and, when present, must be
+    // forwarded through to the use-case/port unchanged.
+    it('accepts an optional isAnonymous boolean and forwards it through to the use-case/port', async () => {
+        const boardsPort = inMemoryBoardsPort();
+        const createBoardSpy = vi.spyOn(boardsPort, 'createBoard');
+        const { app } = buildBoardsTestApp({ overrides: { boardsPort } });
+
+        const res = await request(app)
+            .post('/api/boards')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ templateId: 'default', title: 'New Board', locale: 'en', isAnonymous: true });
+
+        expect(res.status).toBe(201);
+        expect(createBoardSpy).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: true }));
+    });
+
+    it('still succeeds (no validation error) when isAnonymous is omitted from the request body', async () => {
+        const { app } = buildBoardsTestApp();
+        const res = await request(app)
+            .post('/api/boards')
+            .set('Cookie', sessionCookieFor('u1'))
+            .send({ templateId: 'default', title: 'New Board', locale: 'en' });
+
+        expect(res.status).toBe(201);
+        expect(res.body.boardId).toBeTruthy();
+    });
 });
 
 describe('POST /api/boards/:id/join', () => {

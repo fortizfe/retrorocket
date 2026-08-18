@@ -178,6 +178,7 @@ function parseRetrospectiveFields(raw: Record<string, unknown>): Partial<Retrosp
         description: raw.description as string | undefined,
         participantCount: raw.participantCount as number,
         isActive: raw.isActive as boolean,
+        isAnonymous: raw.isAnonymous as boolean,
         columnGroupingStates: (raw.columnGroupingStates as RetrospectiveState['columnGroupingStates']) ?? {},
     };
     if (raw.updatedAt) fields.updatedAt = new Date(raw.updatedAt as string);

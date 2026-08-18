@@ -27,7 +27,7 @@ function fakeBoardPort(boards: Record<string, boolean> = { 'board-1': true }) {
     return {
         getRetrospective: vi.fn(async (id: string): Promise<RetrospectiveDTO | null> => {
             if (!boards[id]) return null;
-            return { id, title: 't', createdBy: 'owner', createdAt: new Date(), updatedAt: new Date(), participantCount: 1, isActive: true, columnGroupingStates: {} };
+            return { id, title: 't', createdBy: 'owner', createdAt: new Date(), updatedAt: new Date(), participantCount: 1, isActive: true, columnGroupingStates: {}, isAnonymous: false };
         }),
     };
 }

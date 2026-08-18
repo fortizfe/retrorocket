@@ -78,7 +78,14 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
         }
     }, [isEditing]);
     const { enabled, ready, getSentiment, shouldShowBadge, overrideSentiment } = useSentimentContext();
-    const { isFacilitator } = useBoardData();
+    const { isFacilitator, retrospective } = useBoardData();
+    // spec 051-anonymous-board-mode, US2 (FR-003, SC-002): while the board is
+    // anonymous, no participant's identity may be shown on any card — CardHeader
+    // stays a dumb renderer of whatever string it's given (see its own tests), so
+    // the gating lives here, at its only caller. `retrospective` is null only
+    // before the board has loaded / for boards that predate isAnonymous, both of
+    // which must keep today's behavior (author shown).
+    const isAnonymousBoard = retrospective?.isAnonymous === true;
     const sentimentResult = (enabled && ready) ? getSentiment(card.id) : undefined;
 
     // Calculate reactions directly from card data
@@ -252,7 +259,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                     {/* Header autor y sentimiento */}
                     <div className="flex items-center justify-between gap-2 mb-1">
                         <CardHeader
-                            author={resolveDisplayName(card.createdBy, card.createdByName, participants, t('retrospective.grouping.unknownAuthor'))}
+                            author={isAnonymousBoard ? '' : resolveDisplayName(card.createdBy, card.createdByName, participants, t('retrospective.grouping.unknownAuthor'))}
                             badge={sentimentBadge}
                         />
                         <div className="flex items-center gap-1 shrink-0">

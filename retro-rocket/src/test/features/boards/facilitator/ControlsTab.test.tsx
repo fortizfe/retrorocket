@@ -50,6 +50,27 @@ vi.mock('@/features/boards/countdown/hooks/useCountdown', () => ({
     useCountdown: (...args: unknown[]) => mockUseCountdown(...args),
 }));
 
+// 051-anonymous-board-mode, US3, T047 (red phase): ControlsTab does not call
+// useBoardData() or render an anonymity toggle yet (T053) — these mocks describe the
+// shape T053's implementation is expected to take (mirrors how useCountdown/
+// ActionColumnToggle are mocked above), following the UI behavior contract's
+// "Facilitator toggle control" section (facilitator-menu.tsx gating pattern).
+const mockUseBoardData = vi.fn();
+vi.mock('@/features/boards/retrospective/contexts/useBoardData', () => ({
+    useBoardData: () => mockUseBoardData(),
+}));
+
+const mockSetAnonymity = vi.fn();
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+    setAnonymity: (...args: unknown[]) => mockSetAnonymity(...args),
+}));
+
+vi.mock('@/features/boards/retrospective/components/AnonymityToggle', () => ({
+    default: ({ isAnonymous, onToggle }: any) => (
+        <button onClick={() => onToggle(!isAnonymous)} data-testid="anonymity-toggle">{isAnonymous ? 'on' : 'off'}</button>
+    ),
+}));
+
 describe('ControlsTab', () => {
     const startTimer = vi.fn();
     const pauseTimer = vi.fn();
@@ -61,6 +82,7 @@ describe('ControlsTab', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         uiPreferencesStore.setShowActionColumn(true);
+        mockUseBoardData.mockReturnValue({ isFacilitator: false, retrospective: { isAnonymous: false } });
     });
 
     it('shows the timer-creation form when no timer exists', () => {
@@ -159,5 +181,46 @@ describe('ControlsTab', () => {
         render(<ControlsTab timer={null} />);
 
         expect(screen.queryByText('retrospective.facilitator.countdown.create')).not.toBeInTheDocument();
+    });
+
+    describe('anonymity toggle (051, US3, T047 — not yet implemented)', () => {
+        beforeEach(() => {
+            mockUseCountdown.mockReturnValue({
+                timer: null,
+                countdownState: { timeRemaining: 0, totalDuration: 0, isRunning: false, isPaused: false, isFinished: false },
+                loading: false,
+                createTimer,
+                startTimer,
+                pauseTimer,
+                resetTimer,
+                deleteTimer,
+                formatTime,
+            });
+        });
+
+        it('renders the anonymity toggle reflecting the current isAnonymous value when the caller is the facilitator', () => {
+            mockUseBoardData.mockReturnValue({ isFacilitator: true, retrospective: { isAnonymous: true } });
+
+            render(<ControlsTab retrospectiveId="retro-1" timer={null} />);
+
+            expect(screen.getByTestId('anonymity-toggle')).toHaveTextContent('on');
+        });
+
+        it('does not render the anonymity toggle when the caller is not the facilitator', () => {
+            mockUseBoardData.mockReturnValue({ isFacilitator: false, retrospective: { isAnonymous: false } });
+
+            render(<ControlsTab retrospectiveId="retro-1" timer={null} />);
+
+            expect(screen.queryByTestId('anonymity-toggle')).not.toBeInTheDocument();
+        });
+
+        it('calls setAnonymity with the new value when the facilitator toggles it', () => {
+            mockUseBoardData.mockReturnValue({ isFacilitator: true, retrospective: { isAnonymous: false } });
+
+            render(<ControlsTab retrospectiveId="retro-1" timer={null} />);
+            fireEvent.click(screen.getByTestId('anonymity-toggle'));
+
+            expect(mockSetAnonymity).toHaveBeenCalledWith('retro-1', true);
+        });
     });
 });
