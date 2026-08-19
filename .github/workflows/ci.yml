@@ -103,10 +103,29 @@ jobs:
           java-version: '21'
 
       - name: Install dependencies
+        timeout-minutes: 5
         run: npm ci
 
+      # 2026-08-19: `--with-deps` shells out to `apt-get`, which has twice hung
+      # indefinitely on this job (once past a flaky azure.archive.ubuntu.com
+      # mirror, once immediately after fetching noble-security's InRelease) —
+      # a stalled-but-open TCP connection that apt's own timeout doesn't
+      # reliably catch. `timeout` forces each attempt to give up and retry
+      # rather than hang for 30+ minutes; `timeout-minutes` is a hard backstop
+      # in case a child process survives the `timeout` kill.
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt/3: installing Playwright browsers + OS deps..."
+            if timeout 240 npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed or timed out after 240s; retrying in 15s..."
+            sleep 15
+          done
+          echo "All 3 attempts failed."
+          exit 1
 
       - name: Run E2E suite against the Firebase Emulator Suite
         run: npm run e2e
