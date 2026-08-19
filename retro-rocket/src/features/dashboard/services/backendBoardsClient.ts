@@ -16,6 +16,14 @@ export interface BoardSummary {
     isActive: boolean;
     createdBy: string;
     isCreator: boolean;
+    // 055-retro-team-association: the team this board is associated with, if any.
+    // `null` (never omitted) so callers can distinguish "no team" from "not loaded yet".
+    teamId: string | null;
+    // 055-retro-team-association: the associated team's display name, resolved
+    // server-side (serializeBoard()). `null` whenever teamId is `null`, and also
+    // `null` outside the dashboard list endpoint (listBoardsForUser) by design —
+    // the team indicator is dashboard-only, never shown inside an open session.
+    teamName: string | null;
 }
 
 export interface CreateBoardParams {
@@ -23,6 +31,9 @@ export interface CreateBoardParams {
     title: string;
     locale: 'es' | 'en';
     isAnonymous?: boolean;
+    // 055-retro-team-association: optionally associate the new board with one of the
+    // creator's teams (spec.md FR-001). `null`/omitted means no team association.
+    teamId?: string | null;
 }
 
 interface BoardSummaryDTO {
@@ -36,6 +47,8 @@ interface BoardSummaryDTO {
     isActive: boolean;
     createdBy: string;
     isCreator: boolean;
+    teamId: string | null;
+    teamName: string | null;
 }
 
 const API = '/api/boards';

@@ -10,6 +10,9 @@ export interface FakeBoardRecord {
     participantCount: number;
     isActive: boolean;
     createdBy: string;
+    /** 055-retro-team-association: mirrors the real BoardSummary's teamId/teamName fields. */
+    teamId?: string | null;
+    teamName?: string | null;
 }
 
 export interface FakeMembership {
@@ -28,7 +31,7 @@ export function inMemoryBoardsPort(seed: FakeBoardRecord[] = [], participants: F
     let nextId = 1;
 
     function toSummary(b: FakeBoardRecord, uid: string): BoardSummary {
-        return { ...b, isCreator: b.createdBy === uid };
+        return { ...b, isCreator: b.createdBy === uid, teamId: b.teamId ?? null, teamName: b.teamName ?? null };
     }
 
     return {
@@ -54,6 +57,7 @@ export function inMemoryBoardsPort(seed: FakeBoardRecord[] = [], participants: F
                 participantCount: 1,
                 isActive: true,
                 createdBy: input.createdBy,
+                teamId: input.teamId ?? null,
             });
             return { boardId: id };
         },

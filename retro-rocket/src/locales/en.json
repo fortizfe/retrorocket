@@ -46,7 +46,12 @@
       "clearFilter": "Clear filter",
       "loadMore": "Load more boards",
       "backToTop": "Back to top",
-      "resultsCount": "{{count}} of {{total}} boards"
+      "resultsCount": "{{count}} of {{total}} boards",
+      "team": {
+        "label": "Filter by team",
+        "all": "All teams",
+        "noTeam": "No team"
+      }
     },
     "boardCard": {
       "deleteBoard": "Delete board?",
@@ -58,6 +63,7 @@
       "participants": "participants",
       "joined": "Joined",
       "creator": "Creator",
+      "team": "Team: {{name}}",
       "deleteTitle": "Delete board",
       "editTitle": "Edit board",
       "editBoard": "Edit board",
@@ -128,6 +134,10 @@
     "anonymous": {
       "label": "Anonymous board",
       "description": "Hide card authors' names from all participants. You can change this later from the facilitator menu."
+    },
+    "team": {
+      "label": "Team",
+      "noTeam": "No team"
     }
   },
   "retrospective": {

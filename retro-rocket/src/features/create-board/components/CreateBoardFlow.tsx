@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/lib/contexts/useUserContext';
 import BoardTemplateSelector from '@/features/create-board/components/BoardTemplateSelector';
 import { createBoard } from '@/features/dashboard/services/backendBoardsClient';
+import { useTeamsQuery } from '@/features/teams/hooks/useTeamsQuery';
 import { TemplateId } from '@/features/create-board/boardTemplates';
 import Button from '@/lib/components/ui/Button';
 import Input from '@/lib/components/ui/Input';
@@ -27,12 +28,20 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
     const { t, i18n } = useTranslation();
     const { user, userProfile } = useUser();
     const navigate = useNavigate();
+    // 055-retro-team-association, T011: the facilitator's teams, used to populate the
+    // optional team picker below. The hook (054-team-management, unmodified) fetches
+    // "my teams" on mount; when it returns 0 teams the picker is omitted entirely
+    // rather than shown disabled (spec.md FR-012).
+    const { teams } = useTeamsQuery();
 
     const [currentStep, setCurrentStep] = useState<Step>('template');
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('default');
     const [boardTitle, setBoardTitle] = useState('');
     // Defaulted off per spec.md User Story 1 / FR-002 ("not anonymous" by default).
     const [isAnonymous, setIsAnonymous] = useState(false);
+    // Defaulted to null (no team) per spec.md FR-012 — associating a board with a
+    // team is always optional, never forced.
+    const [teamId, setTeamId] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const boardTitleInputRef = useRef<HTMLInputElement>(null);
 
@@ -76,7 +85,8 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                 templateId: selectedTemplate,
                 title: boardTitle.trim(),
                 locale: i18n.language as 'es' | 'en',
-                isAnonymous
+                isAnonymous,
+                teamId
             });
 
             toast.success(t('success.created'));
@@ -85,6 +95,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
             setBoardTitle('');
             setSelectedTemplate('default');
             setIsAnonymous(false);
+            setTeamId(null);
             setCurrentStep('template');
 
             // Call success callback or navigate
@@ -109,6 +120,7 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
             setBoardTitle('');
             setSelectedTemplate('default');
             setIsAnonymous(false);
+            setTeamId(null);
             setCurrentStep('template');
             onClose();
         }
@@ -203,6 +215,34 @@ const CreateBoardFlow: React.FC<CreateBoardFlowProps> = ({
                                         disabled={isCreating}
                                     />
                                 </div>
+
+                                {/* 055-retro-team-association, T011/FR-012: omitted entirely (not
+                                    disabled) when the facilitator belongs to 0 teams, so the control
+                                    never forces a team-related decision on someone with no teams. */}
+                                {teams.length > 0 && (
+                                    <div>
+                                        <label
+                                            htmlFor="boardTeam"
+                                            className="block text-sm font-medium text-text-secondary mb-2"
+                                        >
+                                            {t('createBoard.team.label')}
+                                        </label>
+                                        <select
+                                            id="boardTeam"
+                                            value={teamId ?? ''}
+                                            onChange={(e) => setTeamId(e.target.value || null)}
+                                            disabled={isCreating}
+                                            className="block w-full rounded-lg border border-border-strong bg-surface-raised px-3 py-2 text-sm text-text-primary transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+                                        >
+                                            <option value="">{t('createBoard.team.noTeam')}</option>
+                                            {teams.map((team) => (
+                                                <option key={team.id} value={team.id}>
+                                                    {team.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 <label
                                     htmlFor="boardIsAnonymous"

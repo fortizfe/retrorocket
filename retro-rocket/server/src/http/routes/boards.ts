@@ -3,6 +3,7 @@ import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { BoardsPort } from '../../application/ports/boards';
 import type { ProfilePort } from '../../application/ports/profile';
+import type { TeamsPort } from '../../application/ports/teams';
 import type { PublicUser } from '../../domain/auth/types';
 import { AppError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
@@ -16,6 +17,7 @@ import { deleteBoard } from '../../application/use-cases/boards/DeleteBoard';
 export interface BoardsRouterDeps {
     boardsPort: BoardsPort;
     profilePort: ProfilePort;
+    teamsPort: Pick<TeamsPort, 'getMembership'>;
     sessionService: SessionServicePort;
     clock: ClockPort;
     /** Skips boardsLimiter, mirroring auth.ts's authLimiter. MUST be false in production —
@@ -72,6 +74,8 @@ function serializeBoard(board: import('../../application/ports/boards').BoardSum
         isActive: board.isActive,
         createdBy: board.createdBy,
         isCreator: board.isCreator,
+        teamId: board.teamId,
+        teamName: board.teamName,
     };
 }
 
@@ -111,10 +115,10 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
 
     router.post('/api/boards', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
-        const body = req.body as { templateId?: unknown; title?: unknown; locale?: unknown; isAnonymous?: unknown };
+        const body = req.body as { templateId?: unknown; title?: unknown; locale?: unknown; isAnonymous?: unknown; teamId?: unknown };
 
         const result = await createBoard(
-            { boardsPort: deps.boardsPort },
+            { boardsPort: deps.boardsPort, teamsPort: deps.teamsPort },
             {
                 templateId: typeof body.templateId === 'string' ? body.templateId : '',
                 title: typeof body.title === 'string' ? body.title : '',
@@ -122,6 +126,7 @@ export function boardsRouter(deps: BoardsRouterDeps): Router {
                 createdBy: session.sub,
                 createdByName: await resolveDisplayName(deps, session),
                 isAnonymous: body.isAnonymous === true,
+                teamId: typeof body.teamId === 'string' ? body.teamId : null,
             },
         );
         res.status(201).json(result);

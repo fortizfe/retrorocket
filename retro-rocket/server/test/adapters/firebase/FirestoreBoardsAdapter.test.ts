@@ -55,6 +55,20 @@ describe('toBoardSummary', () => {
         void _a;
         expect(toBoardSummary('b1', rest, 'owner-uid')).toMatchObject({ description: '', isActive: true });
     });
+
+    // 055-retro-team-association, T002 (data-model.md "Derived read shapes",
+    // contracts/boards-api-delta.md GET /api/boards): teamId is a raw passthrough of
+    // the stored Firestore field, defaulting to null for boards created before this
+    // feature shipped (FR-006) — mirrors the description/isActive default-handling
+    // tests directly above.
+    it('reads teamId from the Firestore document data when present', () => {
+        const withTeam = { ...data, teamId: 'team-1' };
+        expect(toBoardSummary('b1', withTeam, 'owner-uid')).toMatchObject({ id: 'b1', teamId: 'team-1' });
+    });
+
+    it('defaults teamId to null when absent from the Firestore document data', () => {
+        expect(toBoardSummary('b1', data, 'owner-uid')).toMatchObject({ id: 'b1', teamId: null });
+    });
 });
 
 // 051-anonymous-board-mode, T016: unlike the rest of this adapter, createBoard()'s

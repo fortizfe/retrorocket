@@ -3,7 +3,8 @@ import { Search, X, Type, Calendar, SortAsc, SortDesc } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import Input from '@/lib/components/ui/Input';
-import type { ScopeFilter, SortKey, SortDirection, BoardScopeCounts } from '@/features/dashboard/hooks/useBoardListQuery';
+import type { ScopeFilter, SortKey, SortDirection, BoardScopeCounts, TeamFilter } from '@/features/dashboard/hooks/useBoardListQuery';
+import type { TeamSummary } from '@/features/teams/types/team';
 
 /**
  * Search / scope-filter / sort toolbar for the "Mis Tableros" dashboard
@@ -23,6 +24,16 @@ export interface BoardControlsBarProps {
     sortDirection: SortDirection;
     onSortChange: (sortKey: SortKey, sortDirection: SortDirection) => void;
     counts: BoardScopeCounts;
+    /**
+     * 055-retro-team-association (US2): the viewing user's teams (from
+     * `useTeamsQuery()`), used to populate the team-filter `<select>` below.
+     * Options are derived from this list, never from counting the
+     * currently-displayed boards — a team with 0 matching boards still
+     * appears (spec.md's Clarifications).
+     */
+    teams: TeamSummary[];
+    teamFilter: TeamFilter;
+    onTeamFilterChange: (filter: TeamFilter) => void;
 }
 
 const SCOPE_OPTIONS: { value: ScopeFilter; labelKey: string }[] = [
@@ -40,6 +51,12 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
     sortDirection,
     onSortChange,
     counts,
+    // Defaulted defensively: pre-existing (pre-055) callers/tests exercising search/
+    // scope/sort behavior in isolation don't pass these, and the team-filter select
+    // must not crash render when they're omitted.
+    teams = [],
+    teamFilter = 'all',
+    onTeamFilterChange = () => {},
 }) => {
     const { t } = useTranslation();
     const segmentRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -131,6 +148,27 @@ const BoardControlsBar: React.FC<BoardControlsBarProps> = ({
                         );
                     })}
                 </div>
+
+                {/* Team filter — 055-retro-team-association (US2, FR-007-FR-009). A
+                    plain native <select> (role="combobox" is automatic), matching the
+                    sort controls' "no custom listbox" precedent, and reusing the same
+                    token classes as CreateBoardFlow's team picker (US1) for visual
+                    consistency between the two team-related controls. Grouped next to
+                    the scope segmented control since both narrow the same list. */}
+                <select
+                    value={teamFilter}
+                    onChange={(e) => onTeamFilterChange(e.target.value)}
+                    aria-label={t('dashboard.controls.team.label')}
+                    className="rounded-lg border border-border-default bg-surface px-3 py-1.5 text-xs font-medium text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:text-sm"
+                >
+                    <option value="all">{t('dashboard.controls.team.all')}</option>
+                    <option value="none">{t('dashboard.controls.team.noTeam')}</option>
+                    {teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                            {team.name}
+                        </option>
+                    ))}
+                </select>
 
                 {/* Sort controls */}
                 <div className="inline-flex items-center gap-1 rounded-lg border border-border-default bg-surface p-1">
