@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, User, LayoutGrid, LogOut, ChevronDown } from 'lucide-react';
+import { Rocket, User, LayoutGrid, Users, LogOut, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext, useUserProfileContext } from '@/lib/contexts/useUserContext';
 import { APP_NAME } from '@/lib/utils/constants';
@@ -112,6 +112,16 @@ const Header: React.FC = () => {
                                 <LayoutGrid className="w-4 h-4" />
                                 {t('header.myBoards')}
                             </Link>
+                            <Link
+                                to="/teams"
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActivePath('/teams')
+                                    ? 'bg-info-bg text-info-fg shadow-sm'
+                                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
+                                    }`}
+                            >
+                                <Users className="w-4 h-4" />
+                                {t('header.teams')}
+                            </Link>
                         </nav>
                     )}
 
@@ -212,6 +222,16 @@ const Header: React.FC = () => {
                                                 >
                                                     <LayoutGrid className="w-4 h-4" />
                                                     {t('header.myBoards')}
+                                                </Link>
+
+                                                {/* 'Teams' for all screen sizes inside menu (mirrors 'Mis tableros' above) */}
+                                                <Link
+                                                    to="/teams"
+                                                    onClick={() => setShowUserMenu(false)}
+                                                    className="flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-surface-raised transition-colors"
+                                                >
+                                                    <Users className="w-4 h-4" />
+                                                    {t('header.teams')}
                                                 </Link>
 
                                                 {/* Language selector rendered as menu rows to match other items */}

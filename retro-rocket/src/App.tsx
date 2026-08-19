@@ -13,6 +13,8 @@ import Loading from '@/lib/components/ui/Loading';
 const Landing = lazy(() => import('@/pages/Landing'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Profile = lazy(() => import('@/pages/Profile'));
+const Teams = lazy(() => import('@/pages/Teams'));
+const TeamDetail = lazy(() => import('@/pages/TeamDetail'));
 const RetrospectivePage = lazy(() => import('@/pages/RetrospectivePage'));
 const McpConsentScreen = lazy(() => import('@/features/auth/components/McpConsentScreen'));
 const ColorSystemTest = lazy(() => import('@/features/dev-tools/components/ColorSystemTest'));
@@ -34,6 +36,8 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/mis-tableros" element={<Dashboard />} />
               <Route path="/perfil" element={<Profile />} />
+              <Route path="/teams" element={<Teams />} />
+              <Route path="/teams/:id" element={<TeamDetail />} />
               <Route
                 path="/mcp/consent"
                 element={

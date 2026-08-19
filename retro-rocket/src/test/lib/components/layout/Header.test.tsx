@@ -23,6 +23,7 @@ vi.mock('react-i18next', () => ({
         t: (key: string) => {
             const translations: { [key: string]: string } = {
                 'header.myBoards': 'My Boards',
+                'header.teams': 'Teams',
                 'header.user': 'User',
                 'header.closeMenu': 'Close Menu',
                 'header.profile': 'Profile',
@@ -182,6 +183,13 @@ describe('Header Component', () => {
         it('should display My Boards link', () => {
             renderWithProviders(<Header />);
             expect(screen.getByText('My Boards')).toBeInTheDocument();
+        });
+
+        it('should display Teams link pointing to /teams', () => {
+            renderWithProviders(<Header />);
+            const teamsLink = screen.getByText('Teams').closest('a');
+            expect(teamsLink).toBeInTheDocument();
+            expect(teamsLink).toHaveAttribute('href', '/teams');
         });
 
         it('should display theme toggle', async () => {

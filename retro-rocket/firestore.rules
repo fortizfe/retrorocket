@@ -119,5 +119,19 @@ service cloud.firestore {
     match /mcpConnections/{connectionId} {
       allow read, write: if false;
     }
+
+    // Team management (feature 054): these two collections are read and written
+    // exclusively by the backend's Admin SDK (TeamsPort / FirestoreTeamsAdapter), which
+    // bypasses these rules by design. The rules below are explicit denies, not grants —
+    // no client (authenticated or not) may read or write them directly, since team
+    // membership/ownership invariants (exact-email lookup, no duplicate memberships,
+    // ownership auto-transfer, owner-only add/remove) can only be enforced server-side.
+    match /teams/{teamId} {
+      allow read, write: if false;
+    }
+
+    match /teamMemberships/{membershipId} {
+      allow read, write: if false;
+    }
   }
 }
