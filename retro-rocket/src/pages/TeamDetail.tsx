@@ -11,6 +11,7 @@ import { useTeamQuery } from '@/features/teams/hooks/useTeamQuery';
 import { useTeamMembershipActions } from '@/features/teams/hooks/useTeamMembershipActions';
 import AddMemberByEmailForm from '@/features/teams/components/AddMemberByEmailForm';
 import TeamMemberList from '@/features/teams/components/TeamMemberList';
+import TeamMetricsPanel from '@/features/teams/metrics/components/TeamMetricsPanel';
 
 /**
  * `/teams/:id` — single team detail (spec 054, User Story 2, T038). Fetches the team +
@@ -133,6 +134,8 @@ const TeamDetailPage: React.FC = () => {
                                 <p className="mt-1 text-sm text-text-secondary">{team.description}</p>
                             )}
                         </motion.header>
+
+                        <TeamMetricsPanel teamId={id ?? ''} />
 
                         {callerRole === 'owner' ? (
                             <section className="mb-6 rounded-xl border border-border-default bg-surface-raised p-4">

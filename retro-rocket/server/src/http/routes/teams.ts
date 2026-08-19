@@ -3,6 +3,7 @@ import { createRateLimiter } from '../middleware/rateLimiting';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { TeamMemberView, TeamRecord, TeamsPort, TeamSummary } from '../../application/ports/teams';
 import type { ProfilePort } from '../../application/ports/profile';
+import type { TeamMetricsPort, TeamMetricsSummary } from '../../application/ports/teamMetrics';
 import type { PublicUser } from '../../domain/auth/types';
 import { AppError } from '../../domain/errors';
 import { readCookie, SESSION_COOKIE } from '../cookies';
@@ -10,6 +11,7 @@ import { ensureUserProfile } from '../../application/use-cases/profile/EnsureUse
 import { createTeam } from '../../application/use-cases/teams/CreateTeam';
 import { listTeamsForUser } from '../../application/use-cases/teams/ListTeamsForUser';
 import { getTeamWithMembers } from '../../application/use-cases/teams/GetTeamWithMembers';
+import { getTeamMetrics } from '../../application/use-cases/teams/GetTeamMetrics';
 import { addTeamMember } from '../../application/use-cases/teams/AddTeamMember';
 import { removeTeamMember } from '../../application/use-cases/teams/RemoveTeamMember';
 import { leaveTeam } from '../../application/use-cases/teams/LeaveTeam';
@@ -17,6 +19,7 @@ import { leaveTeam } from '../../application/use-cases/teams/LeaveTeam';
 export interface TeamsRouterDeps {
     teamsPort: TeamsPort;
     profilePort: ProfilePort;
+    teamMetricsPort: TeamMetricsPort;
     sessionService: SessionServicePort;
     clock: ClockPort;
     /** Skips teamsLimiter, mirroring auth.ts's authLimiter. MUST be false in production —
@@ -101,6 +104,24 @@ function serializeTeamDetail(team: TeamRecord, members: TeamMemberView[]) {
     };
 }
 
+/** Serializes a TeamMetricsSummary for the wire, per contracts/team-metrics-api.md's
+ * GET /api/teams/:id/metrics shape (ISO dates, including each moodEvolution entry's
+ * createdAt). Mirrors serializeTeamDetail. */
+function serializeTeamMetrics(summary: TeamMetricsSummary) {
+    return {
+        teamId: summary.teamId,
+        retrospectiveCount: summary.retrospectiveCount,
+        averageParticipants: summary.averageParticipants,
+        actionItemsCreated: summary.actionItemsCreated,
+        moodEvolution: summary.moodEvolution.map((point) => ({
+            retrospectiveId: point.retrospectiveId,
+            retrospectiveTitle: point.retrospectiveTitle,
+            createdAt: point.createdAt.toISOString(),
+            moodScore: point.moodScore,
+        })),
+    };
+}
+
 /**
  * Team Management routes (feature 054): create/list/detail teams, manage membership.
  * Session-cookie authenticated, reusing 014-backend-auth-foundation's session service.
@@ -159,6 +180,18 @@ export function teamsRouter(deps: TeamsRouterDeps): Router {
             { teamId: String(req.params.id), requesterUid: session.sub },
         );
         res.status(200).json(serializeTeamDetail(detail.team, detail.members));
+    });
+
+    // 056-team-metrics-dashboard, T010 (contracts/team-metrics-api.md): aggregated,
+    // read-only retrospective metrics for one team, readable by any current member
+    // (owner or not) — same membership gate as GET /api/teams/:id.
+    router.get('/api/teams/:id/metrics', async (req: Request, res: Response) => {
+        const session = await requireSession(req, deps);
+        const summary = await getTeamMetrics(
+            { teamsPort: deps.teamsPort, teamMetricsPort: deps.teamMetricsPort },
+            { teamId: String(req.params.id), requesterUid: session.sub },
+        );
+        res.status(200).json(serializeTeamMetrics(summary));
     });
 
     // FR-003/FR-004/FR-006/FR-007/FR-008: owner-only, add an existing user by exact email.

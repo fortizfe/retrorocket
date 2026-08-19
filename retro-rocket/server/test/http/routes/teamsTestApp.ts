@@ -4,9 +4,22 @@ import { correlationId } from '../../../src/http/middleware/correlationId';
 import { errorHandler, notFoundHandler } from '../../../src/http/middleware/errorHandler';
 import { teamsRouter, type TeamsRouterDeps } from '../../../src/http/routes/teams';
 import type { SessionServicePort } from '../../../src/application/ports';
+import type { TeamMetricsPort, TeamMetricsSummary } from '../../../src/application/ports/teamMetrics';
 import { fixedClock } from '../../application/use-cases/mcp/mcpFakes';
 import { inMemoryTeamsPort, type FakeMembershipRecord, type FakeProfileRecord, type FakeTeamRecord } from '../../application/use-cases/teams/teamsFakes';
 import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
+
+/** Minimal fake for routes not covered by this test app's existing route tests yet
+ * (056-team-metrics-dashboard's GET /api/teams/:id/metrics) — kept trivial since no
+ * route-level test here exercises it; callers needing specific behavior should pass
+ * `overrides.teamMetricsPort`. */
+function fakeTeamMetricsPort(): TeamMetricsPort {
+    return {
+        async getTeamMetrics(teamId: string): Promise<TeamMetricsSummary> {
+            return { teamId, retrospectiveCount: 0, averageParticipants: 0, actionItemsCreated: 0, moodEvolution: [] };
+        },
+    };
+}
 
 /**
  * Mirrors boardsTestApp.ts's fakeSessionServiceWithUser — teams routes also read
@@ -42,6 +55,7 @@ export function buildTeamsTestApp(options: TeamsTestAppOptions = {}): { app: Exp
     const deps: TeamsRouterDeps = {
         teamsPort: inMemoryTeamsPort(options.teams ?? [], options.memberships ?? [], options.profiles ?? []),
         profilePort: inMemoryProfilePort([]),
+        teamMetricsPort: fakeTeamMetricsPort(),
         sessionService: fakeSessionServiceWithUser(),
         clock: fixedClock(),
         testMode: true,
