@@ -131,12 +131,48 @@ const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpda
                                 {board.description}
                             </span>
                         )}
+                        {/* 055-retro-team-association: dashboard-only team indicator (never shown
+                            inside an open session — see backendBoardsClient.ts's teamName comment).
+                            Deliberately NOT a flex item inside the metadata columns' `md:contents`
+                            grid below: that grid's other children (date/participants/role) are
+                            fixed-width table columns that must line up with the header row and
+                            with every sibling row, team or no team. A team name is variable-length
+                            free text, so giving it a fixed column either wastes space on the (most)
+                            rows without a team or truncates aggressively on the rows that have one
+                            — and an unconstrained-width column breaks the grid's alignment (the bug
+                            this comment is fixing). Grouping it here instead, under the title/
+                            description, follows Apple HIG's grouping-and-mapping principle: a team
+                            is descriptive metadata about *which board this is*, same family as the
+                            title and description above it, not a per-row tabular fact like the date
+                            or participant count. It can't misalign anything here because it never
+                            participates in the column flex layout, on any viewport width. Uses the
+                            `success` token pair (already used app-wide for a "linked/connected"
+                            status, e.g. LinkedProvidersCard) and a distinct Building2 icon so it's
+                            never confusable with the warning/info role badge in the columns below.
+                            Icon + visible text — never color alone (WCAG 2.1 AA). Rendered only
+                            when a team name is present, matching the locked BoardRow.test.tsx spec. */}
+                        {board.teamName && (
+                            <span
+                                data-testid="board-team-badge"
+                                title={t('dashboard.boardCard.team', { name: board.teamName })}
+                                aria-label={t('dashboard.boardCard.team', { name: board.teamName })}
+                                className="mt-1 inline-flex w-fit max-w-[12rem] items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success-fg"
+                            >
+                                <Building2 className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{board.teamName}</span>
+                            </span>
+                        )}
                     </button>
 
                     {/* Metadata columns — reflow into one wrapped row on mobile via
                         `md:contents`: at md+ each child becomes its own flex item in
                         the row above (real columns); below md they stay grouped under
-                        the title as a single wrapped line. Same markup, CSS-only. */}
+                        the title as a single wrapped line. Same markup, CSS-only. Fixed
+                        widths on every child (md:w-N and md:shrink-0) are load-bearing: they
+                        keep this row's columns pixel-aligned with the header row and with
+                        every sibling row. Never add a child here without a matching fixed
+                        width — see the team badge above for why it lives outside this grid
+                        instead. */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text-muted md:contents">
                         <span
                             data-testid="board-date"
@@ -159,24 +195,6 @@ const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpda
                             {board.isCreator ? <Crown className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
                             {board.isCreator ? t('dashboard.boardCard.creator') : t('dashboard.boardCard.joined')}
                         </span>
-                        {/* 055-retro-team-association: dashboard-only team indicator (never shown
-                            inside an open session — see backendBoardsClient.ts's teamName comment).
-                            Uses the `success` token pair (already used app-wide for a "linked/
-                            connected" status, e.g. LinkedProvidersCard) and a distinct Building2
-                            icon so it's never confusable with the warning/info role badge next to
-                            it. Icon + visible text — never color alone (WCAG 2.1 AA). Rendered only
-                            when a team name is present, matching the locked BoardRow.test.tsx spec. */}
-                        {board.teamName && (
-                            <span
-                                data-testid="board-team-badge"
-                                title={t('dashboard.boardCard.team', { name: board.teamName })}
-                                aria-label={t('dashboard.boardCard.team', { name: board.teamName })}
-                                className="inline-flex w-fit max-w-[9rem] items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success-fg md:max-w-[8rem] md:shrink-0"
-                            >
-                                <Building2 className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{board.teamName}</span>
-                            </span>
-                        )}
                     </div>
 
                     {/* Always-visible action cluster — never hover-gated (FR-015). */}
