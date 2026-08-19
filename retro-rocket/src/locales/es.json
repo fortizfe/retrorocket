@@ -1,6 +1,7 @@
 {
   "header": {
     "myBoards": "Mis Tableros",
+    "teams": "Equipos",
     "user": "Usuario",
     "closeMenu": "Cerrar menú",
     "closeLanguageSelector": "Cerrar selector de idioma",
@@ -1009,5 +1010,66 @@
       "plural": "notas"
     },
     "createFirst": "Crear primera nota"
+  },
+  "teams": {
+    "page": {
+      "title": "Equipos"
+    },
+    "detail": {
+      "title": "Equipo",
+      "backToTeams": "Volver a equipos",
+      "loadError": "No se pudo cargar este equipo.",
+      "readOnlyNotice": "Eres miembro de este equipo. Solo el propietario puede añadir o eliminar miembros."
+    },
+    "create": {
+      "modalTitle": "Nuevo equipo",
+      "nameLabel": "Nombre del equipo",
+      "namePlaceholder": "p. ej. Equipo de Plataforma",
+      "nameRequired": "El nombre del equipo es obligatorio",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "¿En qué trabaja este equipo?",
+      "submit": "Crear equipo",
+      "successToast": "Equipo creado",
+      "errorToast": "No se pudo crear el equipo"
+    },
+    "list": {
+      "title": "Tus equipos",
+      "createButton": "Nuevo equipo",
+      "emptyState": "Todavía no perteneces a ningún equipo.",
+      "emptyStateHint": "Crea un equipo para empezar a colaborar en retrospectivas con tus compañeros.",
+      "emptyStateCta": "Crea tu primer equipo",
+      "loadError": "No se pudieron cargar tus equipos.",
+      "ownerBadge": "Propietario",
+      "memberBadge": "Miembro",
+      "membersLabel": "miembros",
+      "viewTeam": "Ver equipo"
+    },
+    "members": {
+      "listLabel": "Miembros del equipo",
+      "you": "(tú)",
+      "addSectionTitle": "Añadir miembro",
+      "addLabel": "Correo electrónico",
+      "addPlaceholder": "nombre@ejemplo.com",
+      "addSubmit": "Añadir",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "emailInvalid": "Introduce un correo electrónico válido",
+      "addNotFoundError": "No se encontró ninguna cuenta de RetroRocket con ese correo",
+      "addDuplicateError": "Esta persona ya es miembro del equipo",
+      "addGenericError": "No se pudo añadir a este miembro",
+      "addSuccessToast": "Miembro añadido",
+      "remove": "Eliminar",
+      "removeAria": "Eliminar a {{name}} del equipo",
+      "removeConfirm": "¿Eliminar a {{name}} de este equipo?",
+      "removeSuccessToast": "Miembro eliminado",
+      "removeErrorToast": "No se pudo eliminar a este miembro",
+      "leave": "Abandonar",
+      "leaveAria": "Abandonar este equipo",
+      "leaveConfirm": "¿Abandonar este equipo?",
+      "leaveOwnerConfirm": "¿Abandonar este equipo? La propiedad pasará a {{name}}.",
+      "leaveSoleOwnerConfirm": "¿Abandonar este equipo? Eres el único miembro, así que el equipo quedará inactivo.",
+      "leaveSuccessToast": "Has abandonado el equipo",
+      "leaveErrorToast": "No se pudo abandonar el equipo",
+      "teamEmptiedToast": "Eras el último miembro: el equipo ahora está inactivo"
+    }
   }
 }

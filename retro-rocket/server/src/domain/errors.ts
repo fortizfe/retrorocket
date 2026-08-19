@@ -32,3 +32,10 @@ export class ForbiddenError extends AppError {
         this.name = 'ForbiddenError';
     }
 }
+
+export class ConflictError extends AppError {
+    constructor(message = 'Resource already exists') {
+        super('conflict', message, 409);
+        this.name = 'ConflictError';
+    }
+}

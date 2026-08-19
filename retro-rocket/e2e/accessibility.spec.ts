@@ -1500,3 +1500,71 @@ test('signing out from Mi Perfil is keyboard-only operable', async ({ page, cont
 
     await expect(page.getByText('Continuar con Google', { exact: true })).toBeVisible({ timeout: 15_000 });
 });
+
+// --- Teams: empty state (T045) and read-only roster view (T044) ------------
+// 054-team-management, T047 — closes the gap the rest of this file's own comments
+// establish as the pattern: every new state introduced by a feature needs its own
+// axe-core scan in both themes, not just the happy path. Neither /teams' zero-teams
+// empty state nor /teams/:id's non-owner read-only view had any WCAG coverage before
+// this task; both are newly built or newly text-bearing (the empty state's CTA, the
+// read-only notice) as of T044-T046, so an inherited pass from a differently-shaped
+// predecessor state can't be assumed.
+
+async function createTeamViaApiForA11y(page: Page, name: string): Promise<string> {
+    const res = await page.request.post('/api/teams', { data: { name } });
+    if (!res.ok()) {
+        throw new Error(`create team failed: ${res.status()} ${await res.text()}`);
+    }
+    const body = (await res.json()) as { teamId: string };
+    return body.teamId;
+}
+
+for (const theme of THEMES) {
+    test(`Teams overview zero-teams empty state has no WCAG 2.1 AA violations (${theme})`, async ({ page }) => {
+        await forceTheme(page, theme);
+        // A fresh, never-used identity per theme — genuinely zero team memberships,
+        // not an assumption about shared-account state (same rationale as
+        // team-management.spec.ts's own empty-state E2E test).
+        await signInAs(page, `e2e-a11y-teams-empty-${theme}@example.com`, `A11y Teams Empty ${theme}`);
+
+        await page.goto('/teams');
+        await applyThemeClass(page, theme);
+        await expect(page.getByText('Todavía no perteneces a ningún equipo.')).toBeVisible({ timeout: 15_000 });
+        await expectNoViolations(page, `/teams empty state (${theme})`);
+    });
+
+    test(`TeamDetail read-only roster view (non-owner member) has no WCAG 2.1 AA violations (${theme})`, async ({ browser }) => {
+        const ownerContext = await browser.newContext();
+        const ownerPage = await ownerContext.newPage();
+        const ownerEmail = `e2e-a11y-team-owner-${theme}@example.com`;
+        const memberEmail = `e2e-a11y-team-member-${theme}@example.com`;
+
+        // The member's own profile doc must exist before the owner can add them by
+        // email (findUserByEmail only matches profiles created by an actual login) —
+        // sign them in once first, in their own context, same as
+        // team-management.spec.ts's loginViaApi step.
+        const memberContext = await browser.newContext();
+        const memberPage = await memberContext.newPage();
+        await signInAs(memberPage, memberEmail, `A11y Team Member ${theme}`);
+
+        await signInAs(ownerPage, ownerEmail, `A11y Team Owner ${theme}`);
+        const teamId = await createTeamViaApiForA11y(ownerPage, `A11y Read-Only Roster ${theme}`);
+        const addRes = await ownerPage.request.post(`/api/teams/${teamId}/members`, { data: { email: memberEmail } });
+        if (!addRes.ok()) {
+            throw new Error(`add member failed: ${addRes.status()} ${await addRes.text()}`);
+        }
+        await ownerContext.close();
+
+        await forceTheme(memberPage, theme);
+        await memberPage.goto(`/teams/${teamId}`);
+        // Read-only notice (T044/T046) proves the non-owner branch actually rendered,
+        // not just that the page loaded.
+        await expect(
+            memberPage.getByText('Eres miembro de este equipo. Solo el propietario puede añadir o eliminar miembros.'),
+        ).toBeVisible({ timeout: 15_000 });
+        await applyThemeClass(memberPage, theme);
+        await expectNoViolations(memberPage, `/teams/:id read-only roster view (${theme})`);
+
+        await memberContext.close();
+    });
+}

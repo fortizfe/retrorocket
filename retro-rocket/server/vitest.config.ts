@@ -25,6 +25,7 @@ export default defineConfig({
                 'src/http/boards-wiring.ts',
                 'src/http/profile-wiring.ts',
                 'src/http/retrospective-wiring.ts',
+                'src/http/teams-wiring.ts',
                 'src/adapters/system.ts',
                 // 040, US3: CoordinatedRealtimeGatewayAdapter is thin orchestration glue
                 // over live ioredis + firebase-admin calls (register/unregister,

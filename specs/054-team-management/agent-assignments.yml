@@ -1,0 +1,173 @@
+# Agent Assignments
+# Feature: 054-team-management
+# Generated: 2026-08-19T06:54:52Z
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/** — new endpoints, use-cases, Firebase/Firestore/Redis access, session/auth, WebSocket handling, or anything touching the domain/application/adapters/http layering."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, and especially anything involving visual design, layout, or motion/animation. Enforces WCAG 2.1 AA on every surface it touches."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature or bug fix needs tests written before implementation, and for building/running/debugging the full test suite — Vitest unit/component tests, Playwright E2E, accessibility scans."
+
+assignments:
+  T001:
+    agent: "frontend-agent"
+    reason: "Locale files (src/locales/en.json, es.json) are frontend-owned"
+  T002:
+    agent: "backend-agent"
+    reason: "Firestore security rules / data-access configuration"
+  T003:
+    agent: "backend-agent"
+    reason: "server/src/application/ports/teams.ts — backend ports layer"
+  T004:
+    agent: "backend-agent"
+    reason: "server/src/adapters/firebase/FirestoreTeamsAdapter.ts — Firestore Admin SDK adapter"
+  T005:
+    agent: "backend-agent"
+    reason: "server/src/http/teams-wiring.ts — dependency injection wiring"
+  T006:
+    agent: "backend-agent"
+    reason: "server/src/http/routes/teams.ts, app.ts, composition-root.ts — backend routing/wiring"
+  T007:
+    agent: "frontend-agent"
+    reason: "src/features/teams/types + services skeleton"
+  T008:
+    agent: "frontend-agent"
+    reason: "src/App.tsx routes + src/pages placeholders"
+  T009:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before CreateTeam implementation"
+  T010:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before ListTeamsForUser implementation"
+  T011:
+    agent: "qa-agent"
+    reason: "TDD: component test written before TeamCreateForm implementation"
+  T012:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/CreateTeam.ts"
+  T013:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/ListTeamsForUser.ts"
+  T014:
+    agent: "backend-agent"
+    reason: "POST/GET /api/teams endpoints in server/src/http/routes/teams.ts"
+  T015:
+    agent: "frontend-agent"
+    reason: "src/features/teams/services/backendTeamsClient.ts client functions"
+  T016:
+    agent: "frontend-agent"
+    reason: "src/features/teams/hooks/useTeamsQuery.ts"
+  T017:
+    agent: "frontend-agent"
+    reason: "TeamCreateForm component — UI + Apple-design/motion skill usage (Principle IX)"
+  T018:
+    agent: "frontend-agent"
+    reason: "src/pages/Teams.tsx page"
+  T019:
+    agent: "frontend-agent"
+    reason: "i18n keys in src/locales/en.json, es.json"
+  T020:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass — frontend-agent enforces this on every surface it builds"
+  T021:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before selectNextOwner implementation"
+  T022:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before AddTeamMember implementation"
+  T023:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before RemoveTeamMember implementation"
+  T024:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before LeaveTeam implementation"
+  T025:
+    agent: "qa-agent"
+    reason: "TDD: unit test written before GetTeamWithMembers implementation"
+  T026:
+    agent: "qa-agent"
+    reason: "Playwright E2E — qa-agent owns E2E coverage"
+  T027:
+    agent: "backend-agent"
+    reason: "server/src/domain/teams/selectNextOwner.ts"
+  T028:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/AddTeamMember.ts"
+  T029:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/RemoveTeamMember.ts"
+  T030:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/LeaveTeam.ts"
+  T031:
+    agent: "backend-agent"
+    reason: "server/src/application/use-cases/teams/GetTeamWithMembers.ts"
+  T032:
+    agent: "backend-agent"
+    reason: "Member endpoints in server/src/http/routes/teams.ts"
+  T033:
+    agent: "frontend-agent"
+    reason: "src/features/teams/services/backendTeamsClient.ts additions"
+  T034:
+    agent: "frontend-agent"
+    reason: "src/features/teams/hooks/useTeamQuery.ts"
+  T035:
+    agent: "frontend-agent"
+    reason: "src/features/teams/hooks/useTeamMembershipActions.ts"
+  T036:
+    agent: "frontend-agent"
+    reason: "AddMemberByEmailForm component — UI + Apple-design/motion skill usage (Principle IX)"
+  T037:
+    agent: "frontend-agent"
+    reason: "TeamMemberList component — UI + Apple-design/motion skill usage (Principle IX)"
+  T038:
+    agent: "frontend-agent"
+    reason: "src/pages/TeamDetail.tsx page"
+  T039:
+    agent: "frontend-agent"
+    reason: "i18n keys in src/locales/en.json, es.json"
+  T040:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass — frontend-agent enforces this on every surface it builds"
+  T041:
+    agent: "qa-agent"
+    reason: "TDD: component test written before the TeamDetail read-only branch"
+  T042:
+    agent: "qa-agent"
+    reason: "TDD: component test written before the Teams.tsx empty state"
+  T043:
+    agent: "qa-agent"
+    reason: "Playwright E2E — qa-agent owns E2E coverage"
+  T044:
+    agent: "frontend-agent"
+    reason: "src/pages/TeamDetail.tsx read-only branch"
+  T045:
+    agent: "frontend-agent"
+    reason: "src/pages/Teams.tsx empty-state view"
+  T046:
+    agent: "frontend-agent"
+    reason: "i18n keys in src/locales/en.json, es.json"
+  T047:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass — frontend-agent enforces this on every surface it builds"
+  T048:
+    agent: "qa-agent"
+    reason: "End-to-end verification of quickstart.md scenarios"
+  T049:
+    agent: "qa-agent"
+    reason: "Backend coverage threshold verification"
+  T050:
+    agent: "qa-agent"
+    reason: "Frontend coverage threshold verification"
+  T051:
+    agent: "frontend-agent"
+    reason: "Navigation UI — Apple-design/motion skill usage (Principle IX)"
+  T052:
+    agent: "default"
+    reason: "Cross-cutting type-check/lint across both backend and frontend stacks; no single specialized agent owns both"

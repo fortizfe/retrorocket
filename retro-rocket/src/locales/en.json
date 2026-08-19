@@ -1,6 +1,7 @@
 {
   "header": {
     "myBoards": "My Boards",
+    "teams": "Teams",
     "user": "User",
     "closeMenu": "Close menu",
     "closeLanguageSelector": "Close language selector",
@@ -1008,5 +1009,66 @@
     "acceptError": "We couldn't create that group. Please try again.",
     "titleInputLabel": "Group title",
     "titleInputPlaceholder": "Group title"
+  },
+  "teams": {
+    "page": {
+      "title": "Teams"
+    },
+    "detail": {
+      "title": "Team",
+      "backToTeams": "Back to teams",
+      "loadError": "Couldn't load this team.",
+      "readOnlyNotice": "You're a member of this team. Only the owner can add or remove members."
+    },
+    "create": {
+      "modalTitle": "New team",
+      "nameLabel": "Team name",
+      "namePlaceholder": "e.g. Platform Team",
+      "nameRequired": "Team name is required",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "What does this team work on?",
+      "submit": "Create team",
+      "successToast": "Team created",
+      "errorToast": "Couldn't create the team"
+    },
+    "list": {
+      "title": "Your teams",
+      "createButton": "New team",
+      "emptyState": "You don't belong to any teams yet.",
+      "emptyStateHint": "Create a team to start collaborating on retrospectives with your colleagues.",
+      "emptyStateCta": "Create your first team",
+      "loadError": "Couldn't load your teams.",
+      "ownerBadge": "Owner",
+      "memberBadge": "Member",
+      "membersLabel": "members",
+      "viewTeam": "View team"
+    },
+    "members": {
+      "listLabel": "Team members",
+      "you": "(you)",
+      "addSectionTitle": "Add a member",
+      "addLabel": "Email address",
+      "addPlaceholder": "name@example.com",
+      "addSubmit": "Add",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "addNotFoundError": "No RetroRocket account was found for this email",
+      "addDuplicateError": "This person is already a member of the team",
+      "addGenericError": "Couldn't add this member",
+      "addSuccessToast": "Member added",
+      "remove": "Remove",
+      "removeAria": "Remove {{name}} from the team",
+      "removeConfirm": "Remove {{name}} from this team?",
+      "removeSuccessToast": "Member removed",
+      "removeErrorToast": "Couldn't remove this member",
+      "leave": "Leave",
+      "leaveAria": "Leave this team",
+      "leaveConfirm": "Leave this team?",
+      "leaveOwnerConfirm": "Leave this team? Ownership will transfer to {{name}}.",
+      "leaveSoleOwnerConfirm": "Leave this team? You're the only member, so the team will become inactive.",
+      "leaveSuccessToast": "You left the team",
+      "leaveErrorToast": "Couldn't leave the team",
+      "teamEmptiedToast": "You were the last member — the team is now inactive"
+    }
   }
 }

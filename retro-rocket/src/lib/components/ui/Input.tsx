@@ -26,6 +26,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     // see spec 031 FR-018/EditRetrospectiveModal).
     const generatedId = useId();
     const inputId = id ?? (label ? generatedId : undefined);
+    // Generated regardless of whether `error` is currently set so the id is
+    // stable across renders (hooks can't be called conditionally) — only
+    // wired onto the DOM (via aria-describedby/the <p>'s id below) while an
+    // error is actually present.
+    const errorId = useId();
     const baseClasses = 'block w-full rounded-lg border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-surface';
 
     const variants = {
@@ -61,9 +66,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={inputClasses}
           {...props}
+          // Placed after the spread so an active error reliably wins over
+          // whatever the caller passed (or didn't) for these two — screen
+          // reader users get the same error signal sighted users get from
+          // the red border + text below, not a color-only cue.
+          aria-invalid={error ? true : props['aria-invalid']}
+          aria-describedby={error ? errorId : props['aria-describedby']}
         />
         {error && (
-          <p className="mt-1 text-sm text-error-fg">{error}</p>
+          <p id={errorId} role="alert" className="mt-1 text-sm text-error-fg">{error}</p>
         )}
         {helperText && !error && (
           <p className="mt-1 text-sm text-text-muted">{helperText}</p>

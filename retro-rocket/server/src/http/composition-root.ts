@@ -7,6 +7,7 @@ import { buildMcpDeps } from './mcp-wiring';
 import { buildBoardsDeps } from './boards-wiring';
 import { buildProfileDeps } from './profile-wiring';
 import { buildRetrospectiveDeps } from './retrospective-wiring';
+import { buildTeamsDeps } from './teams-wiring';
 import { attachRealtimeUpgrade } from './ws/realtimeUpgrade';
 
 /**
@@ -25,8 +26,9 @@ export function buildApp(source: NodeJS.ProcessEnv = process.env): http.Server {
     const boardsDeps = buildBoardsDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
     const profileDeps = buildProfileDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
     const retrospectiveDeps = buildRetrospectiveDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
+    const teamsDeps = buildTeamsDeps(source, config, observability.logger, authDeps?.sessionService) ?? undefined;
 
-    const app = createApp({ config, observability, authDeps, mcpDeps, boardsDeps, profileDeps, retrospectiveDeps });
+    const app = createApp({ config, observability, authDeps, mcpDeps, boardsDeps, profileDeps, retrospectiveDeps, teamsDeps });
     const server = http.createServer(app);
 
     if (retrospectiveDeps) {
