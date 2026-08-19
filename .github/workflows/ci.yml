@@ -103,10 +103,36 @@ jobs:
           java-version: '21'
 
       - name: Install dependencies
+        timeout-minutes: 5
         run: npm ci
 
+      # 2026-08-19: `--with-deps` shells out (via sudo) to `apt-get`, which has
+      # twice hung indefinitely on this job (once past a flaky
+      # azure.archive.ubuntu.com mirror, once immediately after fetching
+      # noble-security's InRelease) — a stalled-but-open TCP connection that
+      # apt's own timeout doesn't reliably catch. `timeout` kills the timed-out
+      # attempt, but sudo puts apt-get in its own session, so the SIGTERM
+      # doesn't reach it — confirmed live: the first retry attempt failed fast
+      # with "Could not get lock /var/lib/apt/lists/lock", held by the
+      # previous attempt's orphaned apt-get. So each retry explicitly kills
+      # any leftover apt/dpkg process and clears the lock files first.
+      # `timeout-minutes` is a hard backstop in case this cleanup itself stalls.
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 12
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt/3: installing Playwright browsers + OS deps..."
+            if timeout --kill-after=10 240 npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed or timed out after 240s; clearing any orphaned apt lock before retrying..."
+            sudo pkill -9 -f '(apt-get|dpkg)' || true
+            sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend
+            sudo dpkg --configure -a || true
+            sleep 15
+          done
+          echo "All 3 attempts failed."
+          exit 1
 
       - name: Run E2E suite against the Firebase Emulator Suite
         run: npm run e2e
