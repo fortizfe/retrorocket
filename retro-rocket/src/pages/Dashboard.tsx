@@ -14,7 +14,8 @@ import JoinRetrospectiveModal from '@/features/dashboard/components/JoinRetrospe
 import CreateBoardFlow from '@/features/create-board/components/CreateBoardFlow';
 import Button from '@/lib/components/ui/Button';
 import toast from 'react-hot-toast';
-import { useBoardListQuery, type ScopeFilter, type SortKey, type SortDirection } from '@/features/dashboard/hooks/useBoardListQuery';
+import { useBoardListQuery, type ScopeFilter, type SortKey, type SortDirection, type TeamFilter } from '@/features/dashboard/hooks/useBoardListQuery';
+import { useTeamsQuery } from '@/features/teams/hooks/useTeamsQuery';
 
 /**
  * "Mis Tableros" dashboard — spec 031's Apple HIG-inspired redesign,
@@ -45,10 +46,16 @@ const DashboardPage: React.FC = () => {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
+    const [teamFilter, setTeamFilter] = useState<TeamFilter>('all');
     const [sortKey, setSortKey] = useState<SortKey>('createdAt');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
+
+    // 055-retro-team-association (US2): the viewing user's teams, used to
+    // populate BoardControlsBar's team-filter <select>. Reused as-is from
+    // feature 054 — not modified here.
+    const { teams } = useTeamsQuery();
 
     const loadUserBoards = useCallback(async () => {
         if (!user) return;
@@ -80,12 +87,13 @@ const DashboardPage: React.FC = () => {
     // Reset to page 1 whenever the view of the data changes shape.
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, scopeFilter, sortKey, sortDirection]);
+    }, [searchQuery, scopeFilter, teamFilter, sortKey, sortDirection]);
 
     const { boards: sortedBoards, counts, isEmpty, isNoResults } = useBoardListQuery({
         boards,
         searchText: searchQuery,
         scopeFilter,
+        teamFilter,
         sortKey,
         sortDirection,
     });
@@ -114,6 +122,7 @@ const DashboardPage: React.FC = () => {
     const handleClearSearchAndFilters = () => {
         setSearchQuery('');
         setScopeFilter('all');
+        setTeamFilter('all');
     };
 
     const handleItemsPerPageChange = (value: number) => {
@@ -212,6 +221,9 @@ const DashboardPage: React.FC = () => {
                             sortDirection={sortDirection}
                             onSortChange={handleSortChange}
                             counts={counts}
+                            teams={teams}
+                            teamFilter={teamFilter}
+                            onTeamFilterChange={setTeamFilter}
                         />
 
                         {isNoResults ? (

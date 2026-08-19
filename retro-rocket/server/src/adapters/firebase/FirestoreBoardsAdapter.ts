@@ -5,6 +5,10 @@ import { getTemplateColumns } from '../../domain/boards/templates';
 
 const RETROSPECTIVES = 'retrospectives';
 const PARTICIPANTS = 'participants';
+// 055-retro-team-association, T024: same `teams` collection 054's FirestoreTeamsAdapter
+// writes to — read-only here, purely to resolve teamId -> name for the dashboard
+// (research.md item 1).
+const TEAMS = 'teams';
 const COLUMNS = 'columns';
 const GROUPS = 'groups';
 const ACTION_ITEMS = 'actionItems';
@@ -44,6 +48,11 @@ export function toBoardSummary(id: string, data: FirebaseFirestore.DocumentData,
         isActive: data.isActive ?? true,
         createdBy: data.createdBy,
         isCreator: data.createdBy === requesterUid,
+        // 055-retro-team-association, T005: raw passthrough of the stored field; team-name
+        // resolution (teamName) is a later task (T024) and intentionally stays null here
+        // per data-model.md's documented asymmetry between this helper and listBoardsForUser.
+        teamId: data.teamId ?? null,
+        teamName: null,
     };
 }
 
@@ -77,6 +86,26 @@ export class FirestoreBoardsAdapter implements BoardsPort {
             }
         }
 
+        // 055-retro-team-association, T024: second pass to resolve teamName for display
+        // (research.md item 1) — toBoardSummary itself has no async access to do this, so
+        // it stays a batched, chunked `teams` lookup here after the summaries are built.
+        const teamIds = [...new Set([...boards.values()].map((b) => b.teamId).filter((id): id is string => id !== null))];
+        if (teamIds.length > 0) {
+            const teamNames = new Map<string, string>();
+            for (let i = 0; i < teamIds.length; i += 30) {
+                const chunk = teamIds.slice(i, i + 30);
+                const snap = await this.db.collection(TEAMS).where('__name__', 'in', chunk).get();
+                for (const doc of snap.docs) {
+                    teamNames.set(doc.id, doc.data().name as string);
+                }
+            }
+            for (const [id, board] of boards) {
+                if (board.teamId !== null) {
+                    boards.set(id, { ...board, teamName: teamNames.get(board.teamId) ?? null });
+                }
+            }
+        }
+
         return [...boards.values()];
     }
 
@@ -100,6 +129,9 @@ export class FirestoreBoardsAdapter implements BoardsPort {
             participantCount: 1,
             isActive: true,
             isAnonymous: input.isAnonymous ?? false,
+            // 055-retro-team-association, T007: raw passthrough, defaulting to null when
+            // the caller omitted teamId (no team association), matching CreateBoardInput's doc.
+            teamId: input.teamId ?? null,
         });
 
         const columns = getTemplateColumns(input.templateId);

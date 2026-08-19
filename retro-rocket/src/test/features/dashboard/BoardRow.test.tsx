@@ -8,6 +8,13 @@ import toast from 'react-hot-toast';
 import BoardRow from '@/features/dashboard/components/BoardRow';
 import type { BoardSummary } from '@/features/dashboard/services/backendBoardsClient';
 
+// 055-retro-team-association, T023: `teamName` isn't part of the real `BoardSummary`
+// yet (that's T026's job, after the backend resolves it in T024/T025) — this local
+// extension lets fixtures carry it without a TS excess-property error, mirroring the
+// `BoardListQueryInputWithTeam` precedent in useBoardListQuery.test.ts. `teamId` is
+// already on `BoardSummary` (added by an earlier 055 task).
+type BoardSummaryWithTeam = BoardSummary & { teamName: string | null };
+
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
     BrowserRouter: ({ children }: any) => children,
@@ -89,7 +96,7 @@ describe('BoardRow', () => {
     const mockOnDeleted = vi.fn();
     const mockOnUpdated = vi.fn();
 
-    const defaultBoard: BoardSummary = {
+    const defaultBoard: BoardSummaryWithTeam = {
         id: 'board-1',
         title: 'Test Board',
         description: 'Test board description',
@@ -99,6 +106,8 @@ describe('BoardRow', () => {
         isActive: true,
         createdBy: 'user-1',
         isCreator: true,
+        teamId: null,
+        teamName: null,
     };
 
     const currentUserId = 'user-1';
@@ -160,6 +169,28 @@ describe('BoardRow', () => {
             renderRow({ ...defaultBoard, title: longTitle });
             const titleEl = screen.getByText(longTitle);
             expect(titleEl).toHaveAttribute('title', longTitle);
+        });
+    });
+
+    // 055-retro-team-association, T023: the dashboard board row must visibly show its
+    // associated team's name via a badge, resolved server-side. Not yet implemented —
+    // BoardRow.tsx has no notion of `board.teamName` at all, so these cases are
+    // expected to fail until T027 adds the badge. Assertion strategy for the next
+    // implementation task: render a `data-testid="board-team-badge"` element
+    // containing `board.teamName` as visible text, only when `board.teamName` is
+    // present — analogous to the existing Crown/UserPlus role badge above, which is
+    // likewise plain visible text with an icon (no color-only meaning).
+    describe('Team badge (T023, 055-retro-team-association)', () => {
+        it('renders a team badge showing the team name when board.teamId and board.teamName are both set', () => {
+            renderRow({ ...defaultBoard, teamId: 'team-a', teamName: 'Team Alpha' });
+            expect(screen.getByTestId('board-team-badge')).toBeInTheDocument();
+            expect(screen.getByText('Team Alpha')).toBeInTheDocument();
+        });
+
+        it('renders no team badge when board.teamId and board.teamName are null', () => {
+            renderRow({ ...defaultBoard, teamId: null, teamName: null });
+            expect(screen.queryByTestId('board-team-badge')).not.toBeInTheDocument();
+            expect(screen.queryByText('Team Alpha')).not.toBeInTheDocument();
         });
     });
 

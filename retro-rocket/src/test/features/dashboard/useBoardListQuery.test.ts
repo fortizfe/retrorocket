@@ -3,24 +3,33 @@ import { renderHook } from '@testing-library/react';
 import { useBoardListQuery } from '@/features/dashboard/hooks/useBoardListQuery';
 import type { BoardListQueryInput } from '@/features/dashboard/hooks/useBoardListQuery';
 
-function makeBoard(overrides: Partial<BoardListQueryInput> & { id: string }): BoardListQueryInput {
+// 055-retro-team-association, T015: `teamId` isn't part of `BoardListQueryInput` yet
+// (that's T017's job) — this local extension lets these fixtures carry it without a
+// TS excess-property error, while still exercising the not-yet-implemented `teamFilter`
+// param through the hook's public call signature below.
+type BoardListQueryInputWithTeam = BoardListQueryInput & { teamId?: string | null };
+
+function makeBoard(
+    overrides: Partial<BoardListQueryInputWithTeam> & { id: string }
+): BoardListQueryInputWithTeam {
     return {
         title: 'Untitled',
         description: '',
         createdAt: new Date('2026-01-01T00:00:00Z'),
         isCreator: true,
+        teamId: null,
         ...overrides,
     };
 }
 
 describe('useBoardListQuery', () => {
-    const boards: BoardListQueryInput[] = [
-        makeBoard({ id: '1', title: 'Sprint 12 Retro', description: 'Team alpha', createdAt: new Date('2026-01-03T00:00:00Z'), isCreator: true }),
-        makeBoard({ id: '2', title: 'Q1 Planning', description: 'Roadmap discussion', createdAt: new Date('2026-01-01T00:00:00Z'), isCreator: true }),
-        makeBoard({ id: '3', title: 'Bug Bash Retro', description: 'Team alpha bugs', createdAt: new Date('2026-01-02T00:00:00Z'), isCreator: false }),
+    const boards: BoardListQueryInputWithTeam[] = [
+        makeBoard({ id: '1', title: 'Sprint 12 Retro', description: 'Team alpha', createdAt: new Date('2026-01-03T00:00:00Z'), isCreator: true, teamId: 'team-a' }),
+        makeBoard({ id: '2', title: 'Q1 Planning', description: 'Roadmap discussion', createdAt: new Date('2026-01-01T00:00:00Z'), isCreator: true, teamId: null }),
+        makeBoard({ id: '3', title: 'Bug Bash Retro', description: 'Team alpha bugs', createdAt: new Date('2026-01-02T00:00:00Z'), isCreator: false, teamId: 'team-a' }),
     ];
 
-    function setup(overrides: Partial<{ searchText: string; scopeFilter: 'all' | 'created' | 'joined'; sortKey: 'name' | 'createdAt'; sortDirection: 'asc' | 'desc' }> = {}) {
+    function setup(overrides: Partial<{ searchText: string; scopeFilter: 'all' | 'created' | 'joined'; sortKey: 'name' | 'createdAt'; sortDirection: 'asc' | 'desc'; teamFilter: 'all' | 'none' | string }> = {}) {
         return renderHook(() =>
             useBoardListQuery({
                 boards,
@@ -102,5 +111,57 @@ describe('useBoardListQuery', () => {
         const { result } = setup();
         expect(result.current.isEmpty).toBe(false);
         expect(result.current.isNoResults).toBe(false);
+    });
+
+    // 055-retro-team-association, T015 (US2, FR-007-FR-009): `teamFilter` narrows the
+    // board list by `board.teamId`. Fixture teams: '1' and '3' → 'team-a', '2' → null.
+    describe('teamFilter (055 US2)', () => {
+        it('leaves the list unaffected by team when teamFilter is "all", same as omitting it entirely', () => {
+            const omitted = setup();
+            const explicitAll = setup({ teamFilter: 'all' });
+            expect(explicitAll.result.current.boards.map((b) => b.id)).toEqual(
+                omitted.result.current.boards.map((b) => b.id)
+            );
+            expect(explicitAll.result.current.boards.map((b) => b.id).sort()).toEqual(['1', '2', '3']);
+        });
+
+        it('filters to only boards whose teamId matches the selected team', () => {
+            const { result } = setup({ teamFilter: 'team-a' });
+            expect(result.current.boards.map((b) => b.id).sort()).toEqual(['1', '3']);
+        });
+
+        it('returns an empty list when filtered by a team none of the boards belong to', () => {
+            const { result } = setup({ teamFilter: 'team-z' });
+            expect(result.current.boards).toEqual([]);
+        });
+
+        it('filters to only boards with a null teamId when teamFilter is "none"', () => {
+            const { result } = setup({ teamFilter: 'none' });
+            expect(result.current.boards.map((b) => b.id)).toEqual(['2']);
+        });
+
+        it('combines teamFilter with searchText and scopeFilter, narrowing to boards matching every active filter', () => {
+            // A dedicated fixture (not the shared `boards`) so that searchText + scopeFilter
+            // ALONE would match more than one board — proving teamFilter does real narrowing
+            // work here, not just riding along on the other two filters' result.
+            const localBoards: BoardListQueryInputWithTeam[] = [
+                makeBoard({ id: 'a', title: 'Sprint Retro', isCreator: true, teamId: 'team-a' }),
+                makeBoard({ id: 'b', title: 'Bug Bash Retro', isCreator: false, teamId: 'team-a' }),
+                makeBoard({ id: 'c', title: 'Another Retro', isCreator: true, teamId: 'team-b' }),
+            ];
+            const { result } = renderHook(() =>
+                useBoardListQuery({
+                    boards: localBoards,
+                    searchText: 'retro',
+                    scopeFilter: 'created',
+                    teamFilter: 'team-a',
+                    sortKey: 'name',
+                    sortDirection: 'asc',
+                })
+            );
+            // Without team filtering, searchText 'retro' + scopeFilter 'created' alone would
+            // also match 'c' (team-b, isCreator: true) — only 'a' satisfies all three filters.
+            expect(result.current.boards.map((b) => b.id)).toEqual(['a']);
+        });
     });
 });

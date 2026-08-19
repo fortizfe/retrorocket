@@ -1,0 +1,119 @@
+# Agent Assignments
+# Feature: 055-retro-team-association
+# Generated: 2026-08-19T12:56:09Z
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/** — new endpoints, use-cases, Firebase/Firestore/Redis access, session/auth, WebSocket handling, or anything touching the domain/application/adapters/http layering. Also use when asked to design or review backend architecture, ports/adapters boundaries, or Vercel deployment/build configuration for the server."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, and especially anything involving visual design, layout, or motion/animation. Masters Apple Human Interface Guidelines design principles and MUST use this project's installed Apple-design skill package to make design/motion decisions rather than ad hoc judgment. Enforces WCAG 2.1 AA on every surface it touches."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature or bug fix needs tests written before implementation, whenever test coverage is unclear, and for building/running/debugging the full test suite — Vitest unit/component tests (frontend and server), Playwright E2E, accessibility (axe-core/WCAG 2.1 AA) scans, and the architecture guard tests. Use also to design a test plan for a new spec-kit feature, to diagnose flaky/failing tests, or to verify a change hasn't dropped coverage before merge."
+
+assignments:
+  T001:
+    agent: "backend-agent"
+    reason: "Extends BoardsPort types in server/src/application/ports/boards.ts"
+  T002:
+    agent: "qa-agent"
+    reason: "Test-first task (Vitest unit test) per constitution TDD"
+  T003:
+    agent: "qa-agent"
+    reason: "Test-first task (Vitest unit test) per constitution TDD"
+  T004:
+    agent: "qa-agent"
+    reason: "Test-first task (Testing Library component test) per constitution TDD"
+  T005:
+    agent: "backend-agent"
+    reason: "Edits server/src/adapters/firebase/FirestoreBoardsAdapter.ts"
+  T006:
+    agent: "backend-agent"
+    reason: "Edits server/src/application/use-cases/boards/CreateBoard.ts"
+  T007:
+    agent: "backend-agent"
+    reason: "Edits server/src/adapters/firebase/FirestoreBoardsAdapter.ts (same file as T005)"
+  T008:
+    agent: "backend-agent"
+    reason: "Edits server/src/http/routes/boards.ts"
+  T009:
+    agent: "backend-agent"
+    reason: "Edits server/src/http/boards-wiring.ts"
+  T010:
+    agent: "frontend-agent"
+    reason: "Edits src/features/dashboard/services/backendBoardsClient.ts"
+  T011:
+    agent: "frontend-agent"
+    reason: "Edits src/features/create-board/components/CreateBoardFlow.tsx, includes UI/visual design work"
+  T012:
+    agent: "frontend-agent"
+    reason: "Edits src/locales/en.json and src/locales/es.json"
+  T013:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass is frontend-agent's explicit mandate"
+  T014:
+    agent: "qa-agent"
+    reason: "Playwright E2E authoring"
+  T015:
+    agent: "qa-agent"
+    reason: "Test-first task (Vitest unit test) per constitution TDD"
+  T016:
+    agent: "qa-agent"
+    reason: "Test-first task (Testing Library component test) per constitution TDD"
+  T017:
+    agent: "frontend-agent"
+    reason: "Edits src/features/dashboard/hooks/useBoardListQuery.ts"
+  T018:
+    agent: "frontend-agent"
+    reason: "Edits src/features/dashboard/components/BoardControlsBar.tsx"
+  T019:
+    agent: "frontend-agent"
+    reason: "Edits src/pages/Dashboard.tsx"
+  T020:
+    agent: "frontend-agent"
+    reason: "Edits src/locales/en.json and src/locales/es.json"
+  T021:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass is frontend-agent's explicit mandate"
+  T022:
+    agent: "qa-agent"
+    reason: "Playwright E2E authoring"
+  T023:
+    agent: "qa-agent"
+    reason: "Test-first task (Testing Library component test) per constitution TDD"
+  T024:
+    agent: "backend-agent"
+    reason: "Edits server/src/adapters/firebase/FirestoreBoardsAdapter.ts"
+  T025:
+    agent: "backend-agent"
+    reason: "Edits server/src/http/routes/boards.ts"
+  T026:
+    agent: "frontend-agent"
+    reason: "Edits src/features/dashboard/services/backendBoardsClient.ts"
+  T027:
+    agent: "frontend-agent"
+    reason: "Edits src/features/dashboard/components/BoardRow.tsx, includes visual design work"
+  T028:
+    agent: "frontend-agent"
+    reason: "Edits src/locales/en.json and src/locales/es.json"
+  T029:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass is frontend-agent's explicit mandate"
+  T030:
+    agent: "qa-agent"
+    reason: "Playwright E2E authoring, including the FR-011 negative in-session-leak check"
+  T031:
+    agent: "qa-agent"
+    reason: "Whole-feature quickstart.md validation run"
+  T032:
+    agent: "qa-agent"
+    reason: "Backend coverage verification"
+  T033:
+    agent: "qa-agent"
+    reason: "Frontend coverage verification"
+  T034:
+    agent: "qa-agent"
+    reason: "Cross-cutting quality gate (type-check/lint), grouped with the other Polish verification tasks"

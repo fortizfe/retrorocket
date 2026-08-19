@@ -19,6 +19,10 @@ export interface BoardSummary {
     createdBy: string;
     /** true when createdBy equals the requesting user's uid. */
     isCreator: boolean;
+    /** The raw team reference, or null when the board has no team association (mirrors the stored Firestore field). */
+    teamId: string | null;
+    /** Resolved team display name. Only ever populated by listBoardsForUser; null from all other read paths. */
+    teamName: string | null;
 }
 
 export type BoardTemplateId = 'default' | 'madSadGlad' | 'startStopContinue';
@@ -31,6 +35,8 @@ export interface CreateBoardInput {
     locale: 'es' | 'en';
     /** True when the board is created in anonymous mode. Defaults to false downstream when omitted. */
     isAnonymous?: boolean;
+    /** The team the new board should be associated with. Omitted/null means no team, exactly like today. */
+    teamId?: string | null;
 }
 
 export interface BoardsPort {

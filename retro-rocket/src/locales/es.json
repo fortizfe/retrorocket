@@ -47,7 +47,12 @@
       "clearFilter": "Limpiar filtro",
       "loadMore": "Cargar más tableros",
       "backToTop": "Volver arriba",
-      "resultsCount": "{{count}} de {{total}} tableros"
+      "resultsCount": "{{count}} de {{total}} tableros",
+      "team": {
+        "label": "Filtrar por equipo",
+        "all": "Todos los equipos",
+        "noTeam": "Sin equipo"
+      }
     },
     "boardCard": {
       "deleteBoard": "¿Eliminar tablero?",
@@ -59,6 +64,7 @@
       "participants": "participantes",
       "joined": "Unido",
       "creator": "Creador",
+      "team": "Equipo: {{name}}",
       "deleteTitle": "Eliminar tablero",
       "editTitle": "Editar tablero",
       "editBoard": "Editar tablero",
@@ -129,6 +135,10 @@
     "anonymous": {
       "label": "Tablero anónimo",
       "description": "Oculta los nombres de los autores de las tarjetas para todos los participantes. Puedes cambiarlo más tarde desde el menú de facilitador."
+    },
+    "team": {
+      "label": "Equipo",
+      "noTeam": "Sin equipo"
     }
   },
   "retrospective": {

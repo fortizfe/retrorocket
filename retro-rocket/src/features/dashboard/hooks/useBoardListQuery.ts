@@ -9,6 +9,12 @@ import { useMemo } from 'react';
 export type ScopeFilter = 'all' | 'created' | 'joined';
 export type SortKey = 'name' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
+/**
+ * 055-retro-team-association (US2): 'all' is the default/no-op value (every
+ * board, regardless of team), 'none' matches only boards with `teamId ===
+ * null`, and any other string is matched exactly against `board.teamId`.
+ */
+export type TeamFilter = 'all' | 'none' | string;
 
 /** The minimal shape this hook needs from a board — callers may pass a richer type. */
 export interface BoardListQueryInput {
@@ -17,6 +23,8 @@ export interface BoardListQueryInput {
     description?: string;
     createdAt: Date;
     isCreator?: boolean;
+    /** The team this board is associated with, or null/undefined when unlinked (055, US1). */
+    teamId?: string | null;
 }
 
 export interface UseBoardListQueryParams<T extends BoardListQueryInput> {
@@ -25,6 +33,8 @@ export interface UseBoardListQueryParams<T extends BoardListQueryInput> {
     scopeFilter: ScopeFilter;
     sortKey: SortKey;
     sortDirection: SortDirection;
+    /** Defaults to 'all' (no-op) when omitted. */
+    teamFilter?: TeamFilter;
 }
 
 export interface BoardScopeCounts {
@@ -59,6 +69,7 @@ export function useBoardListQuery<T extends BoardListQueryInput>({
     scopeFilter,
     sortKey,
     sortDirection,
+    teamFilter = 'all',
 }: UseBoardListQueryParams<T>): UseBoardListQueryResult<T> {
     const counts = useMemo<BoardScopeCounts>(() => {
         let created = 0;
@@ -76,6 +87,12 @@ export function useBoardListQuery<T extends BoardListQueryInput>({
         if (scopeFilter !== 'all') {
             filtered = filtered.filter((board) =>
                 scopeFilter === 'created' ? board.isCreator === true : board.isCreator === false
+            );
+        }
+
+        if (teamFilter !== 'all') {
+            filtered = filtered.filter((board) =>
+                teamFilter === 'none' ? board.teamId === null : board.teamId === teamFilter
             );
         }
 
@@ -97,7 +114,7 @@ export function useBoardListQuery<T extends BoardListQueryInput>({
         });
 
         return sorted;
-    }, [boards, searchText, scopeFilter, sortKey, sortDirection]);
+    }, [boards, searchText, scopeFilter, teamFilter, sortKey, sortDirection]);
 
     return {
         boards: filteredAndSorted,

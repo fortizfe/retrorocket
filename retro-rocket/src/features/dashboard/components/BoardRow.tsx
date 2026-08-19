@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Users, ArrowRight, Crown, UserPlus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, ArrowRight, Crown, UserPlus, Building2, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 import Button from '@/lib/components/ui/Button';
@@ -159,6 +159,24 @@ const BoardRow: React.FC<BoardRowProps> = ({ board, index, currentUserId, onUpda
                             {board.isCreator ? <Crown className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
                             {board.isCreator ? t('dashboard.boardCard.creator') : t('dashboard.boardCard.joined')}
                         </span>
+                        {/* 055-retro-team-association: dashboard-only team indicator (never shown
+                            inside an open session — see backendBoardsClient.ts's teamName comment).
+                            Uses the `success` token pair (already used app-wide for a "linked/
+                            connected" status, e.g. LinkedProvidersCard) and a distinct Building2
+                            icon so it's never confusable with the warning/info role badge next to
+                            it. Icon + visible text — never color alone (WCAG 2.1 AA). Rendered only
+                            when a team name is present, matching the locked BoardRow.test.tsx spec. */}
+                        {board.teamName && (
+                            <span
+                                data-testid="board-team-badge"
+                                title={t('dashboard.boardCard.team', { name: board.teamName })}
+                                aria-label={t('dashboard.boardCard.team', { name: board.teamName })}
+                                className="inline-flex w-fit max-w-[9rem] items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success-fg md:max-w-[8rem] md:shrink-0"
+                            >
+                                <Building2 className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{board.teamName}</span>
+                            </span>
+                        )}
                     </div>
 
                     {/* Always-visible action cluster — never hover-gated (FR-015). */}

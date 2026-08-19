@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CreateBoardFlow from '@/features/create-board/components/CreateBoardFlow';
 import { createBoard } from '@/features/dashboard/services/backendBoardsClient';
+import { useTeamsQuery } from '@/features/teams/hooks/useTeamsQuery';
+import type { TeamSummary } from '@/features/teams/types/team';
 
 // 051-anonymous-board-mode, T020 (spec.md User Story 1 / FR-001, FR-002):
 //
@@ -35,7 +37,48 @@ vi.mock('@/features/dashboard/services/backendBoardsClient', () => ({
     createBoard: vi.fn(),
 }));
 
+// 055-retro-team-association, T004: useTeamsQuery (054, unmodified) is CreateBoardFlow's
+// eventual source for the team picker's options. Defaulted to "0 teams" here at the
+// module level so the pre-existing anonymity-toggle tests below keep working once
+// CreateBoardFlow actually calls this hook — individual team-association tests
+// override the return value with mockReturnValue before rendering.
+vi.mock('@/features/teams/hooks/useTeamsQuery', () => ({
+    useTeamsQuery: vi.fn(),
+}));
+
 const mockedCreateBoard = createBoard as unknown as ReturnType<typeof vi.fn>;
+const mockedUseTeamsQuery = useTeamsQuery as unknown as ReturnType<typeof vi.fn>;
+
+function teamsQueryResult(teams: TeamSummary[]) {
+    return { teams, loading: false, error: false, refetch: vi.fn() };
+}
+
+const sampleTeams: TeamSummary[] = [
+    {
+        id: 'team-1',
+        name: 'Team Alpha',
+        description: null,
+        ownerId: 'u1',
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        updatedAt: new Date('2026-01-01T00:00:00Z'),
+        memberCount: 3,
+        myRole: 'owner',
+    },
+    {
+        id: 'team-2',
+        name: 'Team Beta',
+        description: null,
+        ownerId: 'someone-else',
+        createdAt: new Date('2026-01-02T00:00:00Z'),
+        updatedAt: new Date('2026-01-02T00:00:00Z'),
+        memberCount: 5,
+        myRole: 'member',
+    },
+];
+
+beforeEach(() => {
+    mockedUseTeamsQuery.mockReturnValue(teamsQueryResult([]));
+});
 
 function goToDetailsStep() {
     render(<CreateBoardFlow isOpen onClose={vi.fn()} />);
@@ -86,5 +129,55 @@ describe('CreateBoardFlow — anonymity toggle (051-anonymous-board-mode, US1)',
 
         await waitFor(() => expect(mockedCreateBoard).toHaveBeenCalled());
         expect(mockedCreateBoard).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: true }));
+    });
+});
+
+// 055-retro-team-association, T004 (spec.md User Story 1, FR-001/FR-002/FR-012): a
+// facilitator who belongs to >=1 team sees a team picker on the "details" step and can
+// optionally associate the new board with one of their teams; a facilitator who belongs
+// to 0 teams is never shown (not just disabled) any team-related control, per FR-012 and
+// the edge case "must not force any team-related decision or block completion."
+describe('CreateBoardFlow — team association (055-retro-team-association, US1)', () => {
+    beforeEach(() => {
+        mockedCreateBoard.mockReset();
+        mockedCreateBoard.mockResolvedValue({ boardId: 'new-board-id' });
+    });
+
+    it('renders a team select on the details step, populated with the user\'s teams, when they belong to >=1 team', () => {
+        mockedUseTeamsQuery.mockReturnValue(teamsQueryResult(sampleTeams));
+        goToDetailsStep();
+
+        const select = screen.getByRole('combobox', { name: /team/i });
+        expect(select).toBeInTheDocument();
+        expect(screen.getByText('Team Alpha')).toBeInTheDocument();
+        expect(screen.getByText('Team Beta')).toBeInTheDocument();
+    });
+
+    it('does not render a team select when the user belongs to 0 teams', () => {
+        mockedUseTeamsQuery.mockReturnValue(teamsQueryResult([]));
+        goToDetailsStep();
+
+        expect(screen.queryByRole('combobox', { name: /team/i })).not.toBeInTheDocument();
+    });
+
+    it('includes the selected team\'s id in createBoard() params when a team is chosen', async () => {
+        mockedUseTeamsQuery.mockReturnValue(teamsQueryResult(sampleTeams));
+        goToDetailsStep();
+
+        fireEvent.change(screen.getByRole('combobox', { name: /team/i }), { target: { value: 'team-2' } });
+        fillTitleAndSubmit();
+
+        await waitFor(() => expect(mockedCreateBoard).toHaveBeenCalled());
+        expect(mockedCreateBoard).toHaveBeenCalledWith(expect.objectContaining({ teamId: 'team-2' }));
+    });
+
+    it('includes teamId: null in createBoard() params when no team is selected', async () => {
+        mockedUseTeamsQuery.mockReturnValue(teamsQueryResult(sampleTeams));
+        goToDetailsStep();
+
+        fillTitleAndSubmit();
+
+        await waitFor(() => expect(mockedCreateBoard).toHaveBeenCalled());
+        expect(mockedCreateBoard).toHaveBeenCalledWith(expect.objectContaining({ teamId: null }));
     });
 });
