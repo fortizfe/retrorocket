@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import AuthButtonGroup from '@/features/auth/components/AuthButtonGroup';
 import { AuthProviderType } from '@/features/auth/types/user';
@@ -73,6 +74,27 @@ const LandingHero: React.FC<LandingHeroProps> = ({ onProviderSignIn, loading }) 
                         <span aria-hidden="true">&middot;</span>
                         <CheckCircle className="h-4 w-4 text-success-fg" aria-hidden="true" />
                         <span>{t('landing.hero.cta.noLimits')}</span>
+                    </div>
+
+                    {/*
+                        Guide entry point (spec 057-getting-started-guide, FR-001,
+                        tasks.md T012). Deliberately a quiet text link — smaller
+                        type, muted color, no button chrome — so it reads as a
+                        secondary/tertiary action beneath the primary sign-in CTA
+                        above rather than competing with it, per the `apple-design`
+                        skill's clarity/deference principle (one dominant focal
+                        point per screen). Still meets Principle VIII: visible
+                        `focus-visible` ring, and text pairs with the icon rather
+                        than relying on color alone.
+                    */}
+                    <div className="mt-6 text-center">
+                        <Link
+                            to="/guide"
+                            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-text-muted underline-offset-4 transition-colors hover:text-text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        >
+                            <BookOpen className="h-4 w-4" aria-hidden="true" />
+                            {t('guide.entryPoint.label')}
+                        </Link>
                     </div>
                 </motion.div>
             </motion.div>

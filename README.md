@@ -9,6 +9,17 @@ follow-ups.
 
 ## ✨ Key Features
 
+### 🧭 In-App Getting Started Guide
+- **Learn the product without signing in**: a dedicated `/guide` page walks
+  through every feature below in plain, non-technical language — reachable
+  from a "Getting Started" link on the public landing page, and from the
+  header once you're signed in.
+- **Categorized, deep-linkable side menu**: 12 topics grouped into 9
+  categories (sign-in & profile, boards & templates, collaboration, cards &
+  colors, anonymous mode, facilitator tools, AI sentiment & team mood,
+  exporting, teams, and connecting an AI assistant), each with its own
+  shareable link.
+
 ### 🔐 Authentication
 - **Multiple providers**: sign in with **Google** or **GitHub**.
 - **Multi-provider profiles**: view and manage the sign-in methods linked to your

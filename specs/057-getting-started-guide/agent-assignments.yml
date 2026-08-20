@@ -1,0 +1,158 @@
+# Agent Assignments
+# Feature: 057-getting-started-guide
+# Generated: 2026-08-20
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/**."
+  - name: "docs-agent"
+    source: "project"
+    description: "Documentation expert for RetroRocket. Use PROACTIVELY to analyze a shipped or in-progress feature and write/maintain end-user-facing documentation — docs/*.md guides, README Key Features, spec-kit quickstart.md end-user framing."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, routing, i18n, and design/motion (Apple HIG)."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature needs tests written before implementation, and for building/running/debugging Vitest, Playwright E2E, and accessibility (axe-core/WCAG 2.1 AA) coverage."
+
+assignments:
+  T001:
+    agent: "frontend-agent"
+    reason: "New src/features/guide/ module scaffolding"
+  T002:
+    agent: "frontend-agent"
+    reason: "i18n locale file scaffolding (en.json), frontend-owned per constitution i18n standard"
+  T003:
+    agent: "frontend-agent"
+    reason: "i18n locale file scaffolding (es.json), frontend-owned per constitution i18n standard"
+  T004:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before Guide.tsx implementation"
+  T005:
+    agent: "frontend-agent"
+    reason: "New route page component, matches Dashboard.tsx/Teams.tsx convention"
+  T006:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before GuidePage shell implementation"
+  T007:
+    agent: "frontend-agent"
+    reason: "New layout shell component implementation"
+  T008:
+    agent: "frontend-agent"
+    reason: "React Router route registration in App.tsx"
+  T009:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before LandingHero entry-point implementation"
+  T010:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before Header.tsx entry-point implementation"
+  T011:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before GuidePage overview rendering implementation"
+  T012:
+    agent: "frontend-agent"
+    reason: "UI change to LandingHero.tsx entry point"
+  T013:
+    agent: "frontend-agent"
+    reason: "UI change to Header.tsx entry point"
+  T014:
+    agent: "frontend-agent"
+    reason: "New i18n keys across en.json/es.json, frontend-owned"
+  T015:
+    agent: "frontend-agent"
+    reason: "GuidePage.tsx rendering implementation"
+  T016:
+    agent: "frontend-agent"
+    reason: "GuidePage.tsx back-navigation affordance"
+  T017:
+    agent: "qa-agent"
+    reason: "Verification task with a test assertion confirming no-auth reachability"
+  T018:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before topic registry implementation"
+  T019:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before useActiveGuideTopic implementation"
+  T020:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before GuideSideNav implementation"
+  T021:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before GuideTopicContent implementation"
+  T022:
+    agent: "frontend-agent"
+    reason: "TypeScript types + data registry implementation in src/features/guide/content/"
+  T023:
+    agent: "frontend-agent"
+    reason: "New i18n keys (category/topic labels), frontend-owned"
+  T024:
+    agent: "frontend-agent"
+    reason: "React hook implementation"
+  T025:
+    agent: "frontend-agent"
+    reason: "New nav component with accessibility pattern (aria-current) implementation"
+  T026:
+    agent: "frontend-agent"
+    reason: "New content-rendering component implementation"
+  T027:
+    agent: "frontend-agent"
+    reason: "Component integration/wiring in GuidePage.tsx"
+  T028:
+    agent: "frontend-agent"
+    reason: "Nested route registration in App.tsx"
+  T029:
+    agent: "qa-agent"
+    reason: "Edge-case verification with a test assertion"
+  T030:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before body-content authoring"
+  T031:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before MCP external-link rendering"
+  T032:
+    agent: "docs-agent"
+    reason: "End-user, non-technical guide content authoring (English) — docs-agent's core specialty"
+  T033:
+    agent: "docs-agent"
+    reason: "End-user guide content authoring/localization (Spanish), matching docs/mcp-guia-usuario.md tone"
+  T034:
+    agent: "frontend-agent"
+    reason: "Code wiring: setting a data field and rendering a link in existing components"
+  T035:
+    agent: "docs-agent"
+    reason: "Docs-agent's non-negotiable discipline: verify guide content against actual shipped UI/behavior before publishing"
+  T036:
+    agent: "qa-agent"
+    reason: "TDD: write failing test before mobile collapse implementation"
+  T037:
+    agent: "qa-agent"
+    reason: "Accessibility/E2E test authoring for mobile viewport"
+  T038:
+    agent: "frontend-agent"
+    reason: "Constitution Principle IX: Apple-design skill package use for new UI/layout decisions"
+  T039:
+    agent: "frontend-agent"
+    reason: "Motion implementation per Principle IX (animate skill), component code"
+  T040:
+    agent: "frontend-agent"
+    reason: "Component behavior implementation"
+  T041:
+    agent: "qa-agent"
+    reason: "WCAG 2.1 AA accessibility test coverage, qa-agent's explicit remit"
+  T042:
+    agent: "qa-agent"
+    reason: "Coverage-floor gate ownership per Constitution Principle VI"
+  T043:
+    agent: "qa-agent"
+    reason: "Playwright E2E spec authoring"
+  T044:
+    agent: "docs-agent"
+    reason: "README Key Features section is explicitly docs-agent's owned surface"
+  T045:
+    agent: "frontend-agent"
+    reason: "Type-check/lint fixes on the feature's own frontend code"
+  T046:
+    agent: "qa-agent"
+    reason: "Manual end-to-end QA validation against quickstart.md scenarios"
