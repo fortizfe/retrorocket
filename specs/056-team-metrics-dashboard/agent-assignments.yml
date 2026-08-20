@@ -1,0 +1,131 @@
+# Agent Assignments
+# Feature: Team Retrospective Metrics Dashboard
+# Generated: 2026-08-19
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/** — new endpoints, use-cases, Firebase/Firestore/Redis access, session/auth, WebSocket handling, or anything touching the domain/application/adapters/http layering."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, pages, features, hooks, styling, and especially anything involving visual design, layout, or motion/animation. Enforces WCAG 2.1 AA on every surface it touches."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature or bug fix needs tests written before implementation, and for building/running/debugging the full test suite — Vitest unit/component tests (frontend and server), Playwright E2E, accessibility scans, and architecture guard tests."
+
+assignments:
+  T001:
+    agent: "backend-agent"
+    reason: "Defines TeamMetricsPort/TeamMetricsSummary in server/src/application/ports/ — backend ports/adapters boundary."
+  T002:
+    agent: "qa-agent"
+    reason: "TDD unit test written before its implementation (computeActivitySummary), in server/test/."
+  T003:
+    agent: "qa-agent"
+    reason: "TDD unit test written before its implementation (GetTeamMetrics use-case)."
+  T004:
+    agent: "qa-agent"
+    reason: "TDD hook test written before useTeamMetricsQuery's implementation."
+  T005:
+    agent: "qa-agent"
+    reason: "TDD component test written before ActivitySummary's implementation."
+  T006:
+    agent: "qa-agent"
+    reason: "TDD component test written before TeamMetricsPanel's implementation."
+  T007:
+    agent: "backend-agent"
+    reason: "Pure domain function in server/src/domain/teams/ — backend layering."
+  T008:
+    agent: "backend-agent"
+    reason: "Application use-case in server/src/application/use-cases/teams/."
+  T009:
+    agent: "backend-agent"
+    reason: "Firestore adapter implementation in server/src/adapters/firebase/."
+  T010:
+    agent: "backend-agent"
+    reason: "Express route addition in server/src/http/routes/teams.ts."
+  T011:
+    agent: "backend-agent"
+    reason: "Backend composition-root wiring in server/src/http/teams-wiring.ts."
+  T012:
+    agent: "frontend-agent"
+    reason: "Frontend API client + DTO types under src/features/teams/metrics/services/."
+  T013:
+    agent: "frontend-agent"
+    reason: "React hook under src/features/teams/metrics/hooks/."
+  T014:
+    agent: "frontend-agent"
+    reason: "React components with visual-design decisions (TeamMetricsPanel, ActivitySummary) — matches frontend-agent's Apple-design mandate."
+  T015:
+    agent: "frontend-agent"
+    reason: "Page integration in src/pages/TeamDetail.tsx."
+  T016:
+    agent: "frontend-agent"
+    reason: "i18n content in src/locales/{en,es}.json for the new panel/activity copy."
+  T017:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass — explicitly owned by frontend-agent's mandate."
+  T018:
+    agent: "qa-agent"
+    reason: "Playwright E2E authoring for quickstart.md Scenarios 1/3/5."
+  T019:
+    agent: "qa-agent"
+    reason: "TDD component test written before ActionItemsSummary's implementation."
+  T020:
+    agent: "backend-agent"
+    reason: "Extends the Firestore adapter's chunked actionItems aggregation."
+  T021:
+    agent: "frontend-agent"
+    reason: "React component (ActionItemsSummary) + panel integration."
+  T022:
+    agent: "frontend-agent"
+    reason: "i18n content in src/locales/{en,es}.json for the action-items copy."
+  T023:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass on ActionItemsSummary."
+  T024:
+    agent: "qa-agent"
+    reason: "Extends the Playwright E2E spec with the action-items assertion."
+  T025:
+    agent: "qa-agent"
+    reason: "TDD unit test (parity fixtures) written before the isConfident duplicate's implementation."
+  T026:
+    agent: "qa-agent"
+    reason: "TDD unit test (parity fixtures) written before the calculateMoodScore duplicate's implementation."
+  T027:
+    agent: "qa-agent"
+    reason: "TDD component test written before MoodEvolutionList's implementation."
+  T028:
+    agent: "backend-agent"
+    reason: "Pure domain function duplicate (isConfident) in server/src/domain/teams/."
+  T029:
+    agent: "backend-agent"
+    reason: "Pure domain function duplicate (calculateMoodScore) in server/src/domain/teams/."
+  T030:
+    agent: "backend-agent"
+    reason: "Extends the Firestore adapter's chunked sentimentResults aggregation and mood-scoring."
+  T031:
+    agent: "frontend-agent"
+    reason: "React component (MoodEvolutionList) with visual/motion trend-indicator design."
+  T032:
+    agent: "frontend-agent"
+    reason: "i18n content in src/locales/{en,es}.json for the mood section copy."
+  T033:
+    agent: "frontend-agent"
+    reason: "WCAG 2.1 AA pass on MoodEvolutionList, including the no-color-only requirement."
+  T034:
+    agent: "qa-agent"
+    reason: "Extends the Playwright E2E spec with the mood-evolution scenario."
+  T035:
+    agent: "qa-agent"
+    reason: "Full quickstart.md scenario run against the emulator — end-to-end verification."
+  T036:
+    agent: "qa-agent"
+    reason: "Backend coverage-threshold verification (npm run test:server:coverage)."
+  T037:
+    agent: "qa-agent"
+    reason: "Frontend coverage-threshold verification (npm run test:coverage)."
+  T038:
+    agent: "default"
+    reason: "Repo-wide type-check/lint spans both backend and frontend; not owned by a single specialist agent."

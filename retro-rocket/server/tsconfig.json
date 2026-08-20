@@ -19,7 +19,15 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@server/*": ["./src/*"]
+      "@server/*": ["./src/*"],
+      // 056-team-metrics-dashboard: type-resolution only, for server/test's parity
+      // fixtures that assert the server-side mood-scoring duplicates (src/domain/teams/
+      // {isConfident,moodScore}.ts) match the frontend originals they mirror
+      // (research.md item 5/8). Production code under server/src/domain/ must never use
+      // this alias — the whole point of the duplicates is to avoid a real cross-project
+      // dependency; only server/test/**/*.test.ts parity checks should ever import
+      // through it.
+      "@/*": ["../src/*"]
     }
   },
   "include": ["src", "test", "../api"]

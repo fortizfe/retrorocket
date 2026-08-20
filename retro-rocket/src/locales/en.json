@@ -1079,6 +1079,29 @@
       "leaveSuccessToast": "You left the team",
       "leaveErrorToast": "Couldn't leave the team",
       "teamEmptiedToast": "You were the last member — the team is now inactive"
+    },
+    "metrics": {
+      "panel": {
+        "title": "Activity",
+        "loadError": "Couldn't load this team's metrics."
+      },
+      "activity": {
+        "retrospectiveCountLabel": "Retrospectives",
+        "averageParticipantsLabel": "Avg. participants",
+        "emptyState": "No retrospectives yet — metrics will appear once this team runs its first one."
+      },
+      "actionItems": {
+        "actionItemsCreatedLabel": "Action items created"
+      },
+      "mood": {
+        "sectionLabel": "Mood evolution",
+        "no data": "No mood data",
+        "trend": {
+          "improving": "Improving",
+          "declining": "Declining",
+          "stable": "Steady"
+        }
+      }
     }
   }
 }

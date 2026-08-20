@@ -4,6 +4,7 @@ import type { LoggerPort } from '../application/ports/observability';
 import type { SessionServicePort } from '../application/ports';
 import type { TeamsRouterDeps } from './routes/teams';
 import { FirestoreTeamsAdapter } from '../adapters/firebase/FirestoreTeamsAdapter';
+import { FirestoreTeamMetricsAdapter } from '../adapters/firebase/FirestoreTeamMetricsAdapter';
 import { FirestoreProfileAdapter } from '../adapters/firebase/FirestoreProfileAdapter';
 import { SystemClock } from '../adapters/system';
 
@@ -30,6 +31,7 @@ export function buildTeamsDeps(
     return {
         teamsPort: new FirestoreTeamsAdapter(db),
         profilePort: new FirestoreProfileAdapter(db),
+        teamMetricsPort: new FirestoreTeamMetricsAdapter(db),
         sessionService,
         clock: new SystemClock(),
         testMode: config.authTestMode,
