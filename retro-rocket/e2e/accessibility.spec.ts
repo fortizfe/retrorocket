@@ -1568,3 +1568,30 @@ for (const theme of THEMES) {
         await memberContext.close();
     });
 }
+
+// --- Guide: overview and a topic page (both themes) — 057-getting-started-guide,
+// tasks.md T041 (Phase 7: Polish, Constitution Principle VIII, NON-NEGOTIABLE).
+// `/guide` and `/guide/:topicSlug` are public surfaces reachable without sign-in
+// (FR-002) — no auth fixture needed here, same rationale as the Landing scan at
+// the top of this file. Covers both the no-topic-selected overview state
+// (GuidePage.tsx's default branch) and a real topic page (GuideTopicContent.tsx),
+// so the side nav's category headings/links and the topic body/heading structure
+// are both exercised by axe, not just the overview shell.
+
+for (const theme of THEMES) {
+    test(`Guide overview has no WCAG 2.1 AA violations (${theme})`, async ({ page }) => {
+        await forceTheme(page, theme);
+        await page.goto('/guide');
+        await applyThemeClass(page, theme);
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        await expectNoViolations(page, `/guide overview (${theme})`);
+    });
+
+    test(`Guide topic page (Anonymous Mode) has no WCAG 2.1 AA violations (${theme})`, async ({ page }) => {
+        await forceTheme(page, theme);
+        await page.goto('/guide/anonymous-mode');
+        await applyThemeClass(page, theme);
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        await expectNoViolations(page, `/guide/anonymous-mode (${theme})`);
+    });
+}

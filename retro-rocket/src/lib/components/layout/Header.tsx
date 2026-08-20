@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, User, LayoutGrid, Users, LogOut, ChevronDown } from 'lucide-react';
+import { Rocket, User, LayoutGrid, Users, LogOut, ChevronDown, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthContext, useUserProfileContext } from '@/lib/contexts/useUserContext';
 import { APP_NAME } from '@/lib/utils/constants';
@@ -121,6 +121,26 @@ const Header: React.FC = () => {
                             >
                                 <Users className="w-4 h-4" />
                                 {t('header.teams')}
+                            </Link>
+                            {/*
+                                Guide entry point (spec 057-getting-started-guide,
+                                FR-001a, tasks.md T013). Placed alongside "My
+                                Boards"/"Teams" in this top-level nav landmark —
+                                not the account menu — because the guide is a
+                                navigation destination (a place you go), matching
+                                those two, rather than an account-management
+                                action. Same `isActivePath`-driven active-state
+                                styling and icon-link pattern as its siblings.
+                            */}
+                            <Link
+                                to="/guide"
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActivePath('/guide')
+                                    ? 'bg-info-bg text-info-fg shadow-sm'
+                                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
+                                    }`}
+                            >
+                                <BookOpen className="w-4 h-4" />
+                                {t('guide.entryPoint.label')}
                             </Link>
                         </nav>
                     )}

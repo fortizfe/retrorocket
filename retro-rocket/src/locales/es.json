@@ -829,6 +829,170 @@
       "copyright": "© 2025 {{appName}}. Hecho con ❤️ para equipos que buscan mejorar."
     }
   },
+  "guide": {
+    "entryPoint": {
+      "label": "Guía de uso"
+    },
+    "overview": {
+      "title": "Bienvenido a la guía de RetroRocket",
+      "description": "Aquí puedes aprender todo lo que RetroRocket puede hacer. Explora los temas del menú lateral para ver, paso a paso y en lenguaje sencillo, cómo funcionan los tableros, la colaboración y las herramientas de facilitador."
+    },
+    "navigation": {
+      "backToLanding": "Volver al inicio",
+      "backToApp": "Volver a mis tableros",
+      "topicsLabel": "Temas de la guía",
+      "toggleLabel": "Menú de temas"
+    },
+    "categories": {
+      "gettingStarted": "Primeros pasos",
+      "boardsAndCards": "Tableros y tarjetas",
+      "collaboration": "Colaboración",
+      "anonymousMode": "Modo anónimo",
+      "facilitatorTools": "Herramientas de facilitación",
+      "aiSentimentAndTeamMood": "Sentimiento IA y ánimo del equipo",
+      "exporting": "Exportación",
+      "teams": "Equipos",
+      "connectingAiAssistants": "Conexión con asistentes de IA"
+    },
+    "topics": {
+      "signInAndProfile": {
+        "title": "Iniciar sesión y gestionar tu perfil",
+        "summary": "Crea una cuenta, inicia sesión y gestiona la configuración de tu perfil.",
+        "body": [
+          "RetroRocket no usa contraseñas propias. Inicias sesión con una cuenta que ya tienes, usando Google o GitHub — el inicio de sesión con Apple llegará próximamente.",
+          "La primera vez que inicias sesión se te pedirá un nombre para mostrar. Es el nombre que tus compañeros verán junto a las tarjetas que escribas, así que elige uno que reconozcan.",
+          "Para ver o cambiar tu perfil más adelante, abre tu avatar en la esquina superior derecha y entra en tu página de perfil. Desde ahí puedes actualizar tu nombre en cualquier momento pulsando Editar junto a él.",
+          "Tu correo electrónico proviene de la cuenta con la que iniciaste sesión y no se puede cambiar dentro de RetroRocket.",
+          "En \"Acceso y seguridad\", dentro de tu página de perfil, puedes vincular un segundo proveedor de inicio de sesión (por ejemplo, añadir GitHub si empezaste con Google), para poder entrar a tu cuenta de cualquiera de las dos formas.",
+          "Esa misma sección también muestra los asistentes de IA que hayas conectado a tu cuenta — consulta el tema \"Conectar asistentes de IA\" para más detalles."
+        ]
+      },
+      "boardCreationAndTemplates": {
+        "title": "Crear tableros y usar plantillas",
+        "summary": "Empieza un tablero de retrospectiva desde cero o desde una plantilla lista para usar.",
+        "body": [
+          "Desde tu página de tableros, pulsa \"Crear tablero\" para iniciar una nueva retrospectiva.",
+          "El primer paso te pide elegir una plantilla: la forma de las columnas en las que tu equipo escribirá tarjetas. RetroRocket ofrece tres: la plantilla por defecto (Qué nos ayudó / Qué nos obstaculizó / Qué podemos mejorar), Mad-Sad-Glad y Start-Stop-Continue.",
+          "El segundo paso te pide un título para el tablero y te permite, de forma opcional, vincularlo a uno de tus equipos si perteneces a alguno — así los resultados de este tablero cuentan luego para las métricas de ese equipo.",
+          "Aquí también puedes activar el modo anónimo, para que las tarjetas no muestren quién las escribió. Consulta el tema \"Modo anónimo\" para saber qué cambia exactamente.",
+          "Al confirmar, el tablero se abre al momento y puedes empezar a añadir tarjetas. Para invitar a tus compañeros, comparte el enlace del tablero — al abrirlo se unen automáticamente, sin ningún paso adicional de \"unirse\"."
+        ]
+      },
+      "realTimeCollaboration": {
+        "title": "Colaboración en tiempo real",
+        "summary": "Observa cómo los cambios de tus compañeros aparecen en el tablero al instante.",
+        "body": [
+          "Todo lo que sucede en un tablero — una tarjeta nueva, una edición, un like, una reacción, un movimiento — aparece al instante en la pantalla de cada compañero conectado, sin necesidad de recargar la página.",
+          "Quién está en el tablero ahora mismo se muestra como un grupo de avatares; pasa el cursor o toca sobre él para ver exactamente quién está presente.",
+          "Cuando alguien está escribiendo una tarjeta, aparece brevemente un indicador de \"escribiendo\" en esa columna, así sabes que hay contenido nuevo en camino antes de que se publique.",
+          "Como las actualizaciones se comparten en tiempo real, una retrospectiva funciona igual de bien si el equipo está en la misma sala o conectado desde sitios distintos."
+        ]
+      },
+      "cardsAndColors": {
+        "title": "Tarjetas y colores",
+        "summary": "Añade, edita y colorea tarjetas para organizar el feedback de tu equipo.",
+        "body": [
+          "Para añadir una tarjeta, usa el control de añadir en la columna donde quieras escribir, redacta tu comentario y envíalo. Puedes usar saltos de línea y pegar enlaces — los enlaces se quedan clicables una vez publicados.",
+          "Cada tarjeta muestra siempre sus controles de editar y borrar, no solo al pasar el cursor por encima, así puedes corregir una errata o eliminar una tarjeta cuando lo necesites.",
+          "Solo quien creó una tarjeta puede editarla o borrarla — ni siquiera el facilitador del tablero puede editar o borrar una tarjeta de otra persona.",
+          "Cada tarjeta tiene un selector de color en su esquina superior. Úsalo para agrupar visualmente ideas relacionadas o destacar lo más importante — el color es cosa tuya y no cambia nada más de la tarjeta.",
+          "Las tarjetas se pueden arrastrar y soltar para reordenarlas dentro de una columna, usando el asa que aparece al pasar el cursor sobre la tarjeta."
+        ]
+      },
+      "likesAndReactions": {
+        "title": "Likes y reacciones",
+        "summary": "Reacciona a las tarjetas de tus compañeros para destacar lo más relevante.",
+        "body": [
+          "Cada tarjeta tiene un botón de Like (el icono \"+\"). Púlsalo para dar like y vuelve a pulsarlo para quitarlo — el contador se actualiza al instante para todo el mundo.",
+          "Al pasar el cursor o tocar el contador de likes puedes ver exactamente quién ha dado like a la tarjeta.",
+          "Además de los likes, puedes reaccionar a una tarjeta con un emoji: pulsa el icono de carita sonriente junto a la tarjeta para abrir el selector, explora las categorías y elige una reacción.",
+          "Solo puedes tener una reacción activa por tarjeta a la vez — elegir un emoji nuevo sustituye a tu reacción anterior, y volver a pulsar el mismo emoji la quita.",
+          "Las insignias de reacción muestran un contador por cada emoji; al pasar el cursor o tocar una insignia se ve quién ha reaccionado con ese emoji."
+        ]
+      },
+      "cardGrouping": {
+        "title": "Agrupar tarjetas",
+        "summary": "Agrupa tarjetas relacionadas para identificar temas de un vistazo.",
+        "body": [
+          "Cada columna tiene un menú de agrupación (el icono en su cabecera) que te permite cambiar cómo se muestran sus tarjetas.",
+          "\"Sin agrupación\" muestra las tarjetas como una lista normal, en su orden actual, sin ninguna agrupación aplicada.",
+          "\"Agrupar por usuario\" junta las tarjetas escritas por la misma persona, y es la opción por defecto en cada columna. Esta opción se oculta automáticamente en los tableros anónimos, porque revelaría quién escribió cada tarjeta — mientras el tablero es anónimo, esa columna muestra la lista sin agrupar, hasta que el modo anónimo se desactiva de nuevo.",
+          "\"Agrupaciones sugeridas\" le pide a la IA de RetroRocket que analice las tarjetas de la columna y proponga grupos de ideas parecidas o relacionadas, cada uno con un título sugerido y un porcentaje de similitud.",
+          "Para cada sugerencia puedes previsualizar las tarjetas que incluye, editar el título propuesto y decidir si crear el grupo o descartar la sugerencia — nada se agrupa automáticamente sin tu confirmación.",
+          "Una vez creado un grupo, puedes colapsarlo para ahorrar espacio, quitar tarjetas sueltas de él, o deshacer todo el grupo y devolver las tarjetas a su estado individual."
+        ]
+      },
+      "anonymousMode": {
+        "title": "Modo anónimo",
+        "summary": "Permite que los participantes contribuyan sin revelar su identidad.",
+        "body": [
+          "Al crear un tablero puedes activar el modo anónimo — por defecto está desactivado, así que la autoría es visible a menos que lo actives.",
+          "En un tablero anónimo, ninguna tarjeta muestra quién la escribió, para ningún participante — tampoco para el facilitador. Todo lo demás funciona exactamente igual: puedes seguir editando, borrando, dando like, reaccionando y moviendo tarjetas con normalidad.",
+          "Como la autoría queda oculta, la opción \"agrupar por usuario\" del menú de columna no se ofrece en un tablero anónimo — solo quedan disponibles \"sin agrupación\" y \"agrupaciones sugeridas\".",
+          "Un indicador siempre visible en el tablero muestra cuándo el modo anónimo está activo, así nunca hay que adivinarlo.",
+          "El facilitador puede activar o desactivar el modo anónimo en cualquier momento durante una retrospectiva en marcha, desde la pestaña Controles del menú de facilitador — la vista de cada participante conectado se actualiza al instante, sin recargar la página.",
+          "Cambiar el modo nunca modifica ni borra ningún dato — solo cambia lo que muestra la interfaz. Si una columna estaba agrupada por usuario antes de activar el modo anónimo, esa agrupación vuelve a aparecer automáticamente en cuanto se desactiva de nuevo."
+        ]
+      },
+      "facilitatorTools": {
+        "title": "Herramientas de facilitación",
+        "summary": "Guía la retrospectiva con temporizadores, notas y controles del tablero.",
+        "body": [
+          "Si creaste un tablero, eres su facilitador y tienes acceso a un menú de facilitador con herramientas adicionales que el resto de participantes no ve, organizadas en cuatro pestañas.",
+          "Controles: configura aquí un temporizador compartido — elige minutos y segundos y ponlo en marcha, y todos los participantes ven la misma cuenta atrás; puedes pausarlo, reiniciarlo o eliminarlo en cualquier momento. Esta pestaña también te permite mostrar u ocultar la columna de Elementos de acción, y activar o desactivar el modo anónimo del tablero (consulta el tema \"Modo anónimo\").",
+          "Sentimiento y Estado de ánimo del equipo: dos pestañas independientes para activar el análisis de sentimiento con IA y consultar el estado de ánimo general del equipo — lo explicamos en detalle en el tema \"Sentimiento con IA y estado de ánimo del equipo\".",
+          "Notas: un espacio privado para apuntar notas durante la sesión. Solo tú puedes verlas — nunca aparecen a otros participantes, ni siquiera a facilitadores de otros tableros.",
+          "Las cuatro pestañas viven en un único menú de facilitador, accesible desde la barra de herramientas del tablero mientras lo tienes abierto."
+        ]
+      },
+      "aiSentimentAndTeamMood": {
+        "title": "Sentimiento IA y ánimo del equipo",
+        "summary": "Consulta una lectura generada por IA del ánimo general de tu equipo.",
+        "body": [
+          "Como facilitador, puedes activar el análisis de sentimiento con IA para un tablero desde la pestaña Sentimiento del menú de facilitador.",
+          "Una vez activado, cada tarjeta se analiza automáticamente y recibe una pequeña insignia que indica si suena positiva, neutra o negativa.",
+          "Si la insignia de sentimiento de una tarjeta no te parece correcta, puedes pulsarla para cambiarla al siguiente valor — tu corrección es la que se usa a partir de ese momento.",
+          "La pestaña de Estado de ánimo del equipo convierte todo ese sentimiento por tarjeta en un informe general: una puntuación y una etiqueta de ánimo global (desde \"Excelente\" hasta \"Crítico\"), además de un desglose por columna.",
+          "El informe de estado de ánimo necesita una cantidad mínima de tarjetas analizadas para poder dar un resultado con sentido — con muy pocas tarjetas, avisará de que todavía no hay datos suficientes en lugar de adivinar."
+        ]
+      },
+      "exporting": {
+        "title": "Exportar tu retrospectiva",
+        "summary": "Descarga o comparte un resumen del tablero al finalizar la sesión.",
+        "body": [
+          "Cuando una retrospectiva esté lista para compartir o archivar, abre el menú de opciones del tablero y elige Exportar.",
+          "Elige un formato: PDF, DOCX (Word) o texto plano (TXT).",
+          "Puedes ponerle un título personalizado a la exportación y decidir si incluir el logo de RetroRocket.",
+          "Contenido opcional que puedes añadir: los elementos de acción y las estadísticas generales. Los participantes, los autores de las tarjetas, los likes y reacciones, los detalles de agrupación y el orden actual de las tarjetas se incluyen siempre.",
+          "Si eres el facilitador, tienes opciones adicionales que solo tú puedes activar: incluir tus notas privadas de facilitador, las insignias de sentimiento de las tarjetas y el análisis completo del estado de ánimo del equipo en la exportación.",
+          "Si el tablero está en modo anónimo, la exportación también omite los nombres de los autores, igual que en la vista en directo — sin importar en qué modo estuviera el tablero en exportaciones anteriores."
+        ]
+      },
+      "teamsAndMetrics": {
+        "title": "Equipos y métricas",
+        "summary": "Agrupa tableros bajo un equipo y sigue las métricas de retrospectivas a lo largo del tiempo.",
+        "body": [
+          "Los equipos te permiten agrupar tableros del mismo grupo de personas para ver cómo evolucionan vuestras retrospectivas a lo largo del tiempo.",
+          "Para crear un equipo, ve a Equipos desde la aplicación y pulsa \"Crear equipo\", dale un nombre y, si quieres, una descripción.",
+          "Como propietario del equipo, puedes añadir compañeros por su correo electrónico y eliminarlos más adelante; cualquier miembro puede abandonar el equipo por su cuenta.",
+          "Al crear un tablero nuevo puedes vincularlo, de forma opcional, a uno de tus equipos — solo se ofrecen los equipos a los que perteneces, y vincular un tablero a un equipo nunca es obligatorio.",
+          "Abre un equipo para ver su panel de métricas: cuántas retrospectivas ha realizado, la media de participantes, cuántos elementos de acción han salido de esas retrospectivas, y cómo ha evolucionado el estado de ánimo general del equipo de una retrospectiva a la siguiente."
+        ]
+      },
+      "connectingAiAssistants": {
+        "title": "Conectar asistentes de IA",
+        "summary": "Conecta un asistente de IA a RetroRocket mediante MCP para un resumen rápido.",
+        "body": [
+          "Puedes conectar un asistente de IA, como Claude, a tu cuenta de RetroRocket para que pueda leer tus retrospectivas directamente y ayudarte a redactar resúmenes o informes, sin que tengas que exportar y subir nada a mano.",
+          "La conexión es estrictamente de solo lectura: el asistente puede consultar tus tableros, pero nunca puede crear, editar ni borrar nada en RetroRocket.",
+          "Reutiliza tu inicio de sesión habitual de RetroRocket — no creas ninguna contraseña ni clave nueva — y puedes revocar su acceso en cualquier momento desde tu página de perfil.",
+          "Para la configuración paso a paso completa y cómo gestionar los asistentes conectados, consulta la guía dedicada enlazada más abajo."
+        ],
+        "externalLinkLabel": "Abrir la guía completa del conector MCP",
+        "externalLinkNewTabHint": "(se abre en una pestaña nueva)"
+      }
+    }
+  },
   "profile": {
     "title": "Mi Perfil",
     "subtitle": "Gestiona tu información personal y configuraciones de cuenta",

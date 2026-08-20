@@ -28,6 +28,13 @@ vi.mock('react-i18next', () => ({
                 'header.closeMenu': 'Close Menu',
                 'header.profile': 'Profile',
                 'header.signOut': 'Sign Out',
+                // spec-kit feature 057-getting-started-guide, tasks.md T010/T013
+                // (Phase 3, US1, FR-001a): the guide entry point reuses the
+                // `guide.entryPoint.label` key (also asserted in
+                // src/test/features/landing/LandingHero.test.tsx, T009), not a
+                // `header.*`-namespaced string — see that file's header comment
+                // for why the label is shared verbatim across both entry points.
+                'guide.entryPoint.label': 'Getting Started',
             };
             return translations[key] || key;
         },
@@ -386,6 +393,54 @@ describe('Header Component', () => {
 
             // Test passes if no errors occur
             expect(true).toBe(true);
+        });
+    });
+
+    /**
+     * spec-kit feature 057-getting-started-guide, tasks.md T010 (Phase 3:
+     * User Story 1 — TDD red step). `Header.tsx` does not yet render any
+     * guide entry point — T013 adds it to make this pass, per Constitution
+     * Principle I (NON-NEGOTIABLE TDD).
+     *
+     * Covers spec.md US1 Acceptance Scenario 3 / FR-001a: a signed-in user
+     * must be able to find and open the guide from inside the authenticated
+     * app (header or account menu), without signing out or returning to the
+     * landing page. This whole file already renders Header in the
+     * authenticated state by default (`useAuthContext`/`useUser` mocked
+     * above with `isAuthenticated: true`), matching Header.tsx's own
+     * behavior of returning `null` entirely when signed out (see the
+     * `if (!isAuthenticated) return null;` guard in Header.tsx) — no
+     * additional auth-state setup is needed for this test.
+     *
+     * Chosen location (documented per the task's instruction, since
+     * frontend-agent implements against exactly this assertion): a header
+     * *nav item*, alongside the existing "My Boards" (`LayoutGrid` icon,
+     * `/mis-tableros`) and "Teams" (`Users` icon, `/teams`) links in the
+     * `<nav className="hidden md:flex ...">` block — not the user/account
+     * menu. Reasoning: the guide is a navigation destination on par with
+     * "My Boards"/"Teams" (a place you go), not an account-management
+     * action like "Profile"/"Sign Out", so it belongs with the other
+     * top-level nav links for discoverability and consistency with the
+     * existing icon-link pattern. Uses the same `guide.entryPoint.label`
+     * i18n key as the landing page's entry point (T009/T012) — see this
+     * mock's `translations` map above.
+     */
+    describe('Guide Entry Point (spec 057 FR-001a, US1)', () => {
+        it('renders a guide entry point linking to /guide when authenticated', () => {
+            renderWithProviders(<Header />);
+
+            const guideLink = screen.getByText('Getting Started').closest('a');
+            expect(guideLink).toBeInTheDocument();
+            expect(guideLink).toHaveAttribute('href', '/guide');
+        });
+
+        it('renders the guide entry point alongside the My Boards / Teams nav links', () => {
+            renderWithProviders(<Header />);
+
+            const guideLink = screen.getByText('Getting Started').closest('a');
+            const teamsLink = screen.getByText('Teams').closest('a');
+            // Same nav landmark, not the (closed-by-default) user menu.
+            expect(guideLink?.closest('nav')).toBe(teamsLink?.closest('nav'));
         });
     });
 

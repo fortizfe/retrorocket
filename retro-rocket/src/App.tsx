@@ -11,6 +11,7 @@ import NotFound from '@/pages/NotFound';
 import Loading from '@/lib/components/ui/Loading';
 
 const Landing = lazy(() => import('@/pages/Landing'));
+const Guide = lazy(() => import('@/pages/Guide'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Teams = lazy(() => import('@/pages/Teams'));
@@ -33,6 +34,16 @@ const App: React.FC = () => {
           <Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={<Landing />} />
+              {/* Public, no-sign-in-required guide (spec 057, FR-002) — not
+                  wrapped in AuthWrapper at the route level, matching how
+                  "/" and "/dashboard" are registered here (unlike
+                  "/mcp/consent"'s explicit <AuthWrapper requireAuth={true}>). */}
+              <Route path="/guide" element={<Guide />} />
+              {/* Deep-linkable guide topics (spec 057, research.md Decision
+                  2) — Guide/GuidePage branches internally via
+                  useActiveGuideTopic(), so both routes render the same
+                  element. */}
+              <Route path="/guide/:topicSlug" element={<Guide />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/mis-tableros" element={<Dashboard />} />
               <Route path="/perfil" element={<Profile />} />

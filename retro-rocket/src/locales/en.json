@@ -805,6 +805,170 @@
       "copyright": "© 2025 {{appName}}. Made with ❤️ for teams looking to improve."
     }
   },
+  "guide": {
+    "entryPoint": {
+      "label": "Getting Started"
+    },
+    "overview": {
+      "title": "Welcome to the RetroRocket guide",
+      "description": "This is where you learn what RetroRocket can do. Browse the topics in the side menu to see, step by step and in plain language, how boards, collaboration, and facilitator tools work."
+    },
+    "navigation": {
+      "backToLanding": "Back to home",
+      "backToApp": "Back to my boards",
+      "topicsLabel": "Guide topics",
+      "toggleLabel": "Topics menu"
+    },
+    "categories": {
+      "gettingStarted": "Getting Started",
+      "boardsAndCards": "Boards & Cards",
+      "collaboration": "Collaboration",
+      "anonymousMode": "Anonymous Mode",
+      "facilitatorTools": "Facilitator Tools",
+      "aiSentimentAndTeamMood": "AI Sentiment & Team Mood",
+      "exporting": "Exporting",
+      "teams": "Teams",
+      "connectingAiAssistants": "Connecting AI Assistants"
+    },
+    "topics": {
+      "signInAndProfile": {
+        "title": "Signing in and managing your profile",
+        "summary": "Create an account, sign in, and manage your profile settings.",
+        "body": [
+          "RetroRocket doesn't use its own passwords. You sign in with an account you already have, using Google or GitHub — Apple sign-in is coming soon.",
+          "The first time you sign in, you'll be asked to set a display name. This is the name your teammates will see next to the cards you write, so pick something they'll recognize.",
+          "To view or change your profile later, open your avatar in the top-right corner and go to your profile page. From there you can update your display name at any time by clicking Edit next to it.",
+          "Your email address comes from the account you signed in with and can't be changed inside RetroRocket.",
+          "Under \"Access & Security\" on your profile page, you can link a second sign-in provider (for example, add GitHub if you originally signed in with Google), so you can get into your account either way.",
+          "That same section also lists any AI assistants you've connected to your account — see the \"Connecting AI Assistants\" topic for details on that."
+        ]
+      },
+      "boardCreationAndTemplates": {
+        "title": "Creating boards and using templates",
+        "summary": "Start a new retrospective board from scratch or from a ready-made template.",
+        "body": [
+          "From your boards page, click \"Create board\" to start a new retrospective.",
+          "The first step asks you to pick a template — the shape of the columns your team will write cards into. RetroRocket offers three: the default template (What helped / What hindered / What to improve), Mad-Sad-Glad, and Start-Stop-Continue.",
+          "The second step asks for a title for the board, and lets you optionally link it to one of your teams if you belong to any — this makes the board's results count toward that team's metrics later.",
+          "You can also switch the board to anonymous mode here, so cards won't show who wrote them. See the \"Anonymous Mode\" topic for what that changes.",
+          "Once you confirm, the board opens right away and you can start adding cards. To bring teammates in, share the board's link — opening it joins the board automatically, with no separate \"join\" step needed."
+        ]
+      },
+      "realTimeCollaboration": {
+        "title": "Real-time collaboration",
+        "summary": "See teammates' changes appear on the board instantly as they work.",
+        "body": [
+          "Everything that happens on a board — a new card, an edit, a like, a reaction, a move — appears on every connected teammate's screen instantly, with no need to refresh the page.",
+          "The people currently on the board are shown as a group of avatars; hover or tap it to see exactly who's present right now.",
+          "When someone is actively writing a card, a typing indicator briefly appears in that column, so you know new content is on its way before it's submitted.",
+          "Because updates are shared live, a retrospective works the same whether your team is together in one room or joining from different locations."
+        ]
+      },
+      "cardsAndColors": {
+        "title": "Cards and colors",
+        "summary": "Add, edit, and color-code cards to organize your team's feedback.",
+        "body": [
+          "To add a card, use the add-card control in the column you want to write in, type your feedback, and submit it. You can use line breaks and paste links — links stay clickable once posted.",
+          "Every card shows its edit and delete controls at all times, not just when you hover over it, so you can fix a typo or remove a card whenever you need to.",
+          "Only the person who created a card can edit or delete it — not even the board's facilitator can edit or delete someone else's card.",
+          "Each card has a color picker in its top corner. Use color to visually group related ideas or highlight what matters most — the color is entirely up to you and doesn't change anything else about the card.",
+          "Cards can be dragged and dropped to reorder them within a column, using the drag handle that appears when you hover over the card."
+        ]
+      },
+      "likesAndReactions": {
+        "title": "Likes and reactions",
+        "summary": "React to teammates' cards to highlight what resonates most.",
+        "body": [
+          "Every card has a Like button (the \"+\" icon). Click it to like a card, and click it again to remove your like — the count updates instantly for everyone.",
+          "Hovering or tapping the like count shows exactly who liked the card.",
+          "Beyond likes, you can react to a card with an emoji: click the smiley-face icon next to the card to open the emoji picker, browse the categories, and pick a reaction.",
+          "You can only have one emoji reaction active per card at a time — choosing a new emoji replaces your previous reaction, and selecting your current one again removes it.",
+          "Reaction badges show a running count per emoji; hovering or tapping a badge lists who reacted with it."
+        ]
+      },
+      "cardGrouping": {
+        "title": "Grouping cards",
+        "summary": "Cluster related cards together to spot themes at a glance.",
+        "body": [
+          "Each column has a grouping menu (the icon in the column's header) that lets you change how its cards are displayed.",
+          "\"No grouping\" shows cards as a plain list, in their current order, with no clustering applied.",
+          "\"Group by user\" clusters together the cards written by the same person, and is the default for every column. This option is hidden automatically on anonymous boards, since it would reveal who wrote what — an anonymous column shows the plain list instead, until anonymous mode is turned off again.",
+          "\"Suggested groupings\" asks RetroRocket's AI to scan the column's cards and propose clusters of similar or related ideas, each with a suggested title and a similarity score.",
+          "For every suggestion you can preview the cards it includes, edit the suggested title, and either create the group or discard the suggestion — nothing is grouped automatically without your confirmation.",
+          "Once a group exists, you can collapse it to save space, remove individual cards from it, or disband the whole group back into separate cards."
+        ]
+      },
+      "anonymousMode": {
+        "title": "Anonymous mode",
+        "summary": "Let participants contribute without revealing their identity.",
+        "body": [
+          "When creating a board, you can switch it to anonymous mode — it's off by default, so card authorship is visible unless you turn it on.",
+          "On an anonymous board, no card shows who wrote it, for any participant — including the facilitator. Everything else behaves exactly the same: you can still edit, delete, like, react to, and move cards normally.",
+          "Because authorship is hidden, the \"group by user\" option in the column menu isn't offered on an anonymous board — only \"no grouping\" and \"suggested groupings\" stay available.",
+          "A clearly visible indicator on the board always shows when anonymous mode is active, so it's never left to guesswork.",
+          "The facilitator can turn anonymous mode on or off at any point during a live retrospective, from the Controls tab of the facilitator menu — every connected participant's view updates immediately, with no reload needed.",
+          "Switching the mode never changes or deletes any data — it only changes what the interface shows. If a column was grouped by user before the board went anonymous, that grouping reappears automatically the moment anonymous mode is turned off again."
+        ]
+      },
+      "facilitatorTools": {
+        "title": "Facilitator tools",
+        "summary": "Guide the retrospective with timers, notes, and board controls.",
+        "body": [
+          "If you created a board, you're its facilitator, and you get access to a facilitator menu with extra tools other participants don't see, organized into four tabs.",
+          "Controls: set a shared timer here — pick a number of minutes and seconds and start it, and every participant sees the same running countdown; you can pause, restart, or delete it at any time. This tab also lets you show or hide the Action Items column and turn the board's anonymous mode on or off (see the \"Anonymous Mode\" topic).",
+          "Sentiment and Team Mood: two separate tabs to turn on AI sentiment analysis and review the team's overall mood — covered in detail in the \"AI Sentiment and Team Mood\" topic.",
+          "Notes: a private space to jot down notes during the session. Only you can see these — they never appear to other participants, not even to facilitators of other boards.",
+          "All four tabs live in one facilitator menu, reachable from the board's toolbar while you're viewing it."
+        ]
+      },
+      "aiSentimentAndTeamMood": {
+        "title": "AI sentiment and team mood",
+        "summary": "See an AI-generated read on your team's overall mood and sentiment.",
+        "body": [
+          "As facilitator, you can turn on AI sentiment analysis for a board from the Sentiment tab in the facilitator menu.",
+          "Once it's on, each card is analyzed automatically and gets a small badge showing whether it reads as positive, neutral, or negative.",
+          "If a sentiment badge looks wrong for a card, you can click it to cycle it to a different sentiment — your correction is what's used from then on.",
+          "The Team Mood tab turns all of that per-card sentiment into a single overall report: an overall mood score and label (from \"Excellent\" down to \"Critical\"), plus a breakdown by column.",
+          "The Team Mood report needs a minimum amount of analyzed content before it can produce a meaningful result — with very few cards, it will tell you there isn't enough data yet rather than guessing."
+        ]
+      },
+      "exporting": {
+        "title": "Exporting your retrospective",
+        "summary": "Download or share a summary of your board once the session ends.",
+        "body": [
+          "Once a retrospective is ready to share or archive, open the board's options menu and choose Export.",
+          "Pick a format: PDF, DOCX (Word), or plain text (TXT).",
+          "You can give the export a custom title and choose whether to include the RetroRocket logo.",
+          "Optional content you can add: action items and overall statistics. Participants, card authors, likes and reactions, grouping details, and the cards' current order are always included.",
+          "If you're the facilitator, you get extra options only you can enable: including your private facilitator notes, the cards' sentiment badges, and the full team mood analysis in the export.",
+          "If the board is in anonymous mode, the export leaves out author names too, exactly like the live view — no matter what mode the board was in for any earlier export."
+        ]
+      },
+      "teamsAndMetrics": {
+        "title": "Teams and metrics",
+        "summary": "Group boards under a team and track retrospective metrics over time.",
+        "body": [
+          "Teams let you group boards from the same group of people, so you can track how your retrospectives evolve over time.",
+          "To create a team, go to Teams in the app and click \"Create team\", then give it a name and, optionally, a description.",
+          "As the team's owner, you can add teammates by their email address and remove them later; any member can leave a team on their own.",
+          "When creating a new board, you can optionally link it to one of your teams — only teams you belong to are offered, and linking a board to a team is never required.",
+          "Open a team to see its metrics dashboard: how many retrospectives it has run, the average number of participants, how many action items have come out of those retrospectives, and how the team's overall mood has evolved from one retrospective to the next."
+        ]
+      },
+      "connectingAiAssistants": {
+        "title": "Connecting AI assistants",
+        "summary": "Connect an AI assistant to RetroRocket over MCP for a quick overview.",
+        "body": [
+          "You can connect an AI assistant, such as Claude, to your RetroRocket account so it can read your retrospectives directly and help you write summaries or reports — without you needing to export and upload anything by hand.",
+          "The connection is strictly read-only: the assistant can look at your boards, but it can never create, edit, or delete anything in RetroRocket.",
+          "It reuses your existing RetroRocket sign-in — you don't create a new password or key — and you can revoke its access at any time from your profile page.",
+          "For the full step-by-step setup and how to manage connected assistants, see the dedicated guide linked below."
+        ],
+        "externalLinkLabel": "Open the full MCP connector guide",
+        "externalLinkNewTabHint": "(opens in a new tab)"
+      }
+    }
+  },
   "profile": {
     "title": "My Profile",
     "subtitle": "Manage your personal information and account settings",
