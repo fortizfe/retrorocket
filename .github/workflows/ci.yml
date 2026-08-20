@@ -159,7 +159,12 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
+      # Checkout the PR head SHA, not the default pull_request merge ref: the
+      # synthetic merge commit's author is GitHub's own noreply email, which
+      # Vercel's deploy protection can't match to a GitHub account and blocks.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v5
         with:
