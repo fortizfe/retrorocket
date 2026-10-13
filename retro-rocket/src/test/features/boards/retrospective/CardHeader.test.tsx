@@ -88,6 +88,16 @@ vi.mock('@/features/boards/retrospective/components/CardMenu', () => ({
     default: () => <div data-testid="card-menu" />,
 }));
 
+// 058-card-owner-action-hub: DraggableCard's footer now renders
+// OwnerActionMenu (real implementation, built on @floating-ui/react and
+// cardColors' getAvailableColors/getColorConfig) instead of the old header
+// ColorPicker. This describe block only cares about author-display gating,
+// not the hub's own behaviour (covered by OwnerActionMenu.test.tsx), so it's
+// stubbed out the same way DraggableCard.test.tsx's own suite does.
+vi.mock('@/features/boards/retrospective/components/OwnerActionMenu', () => ({
+    default: () => <div data-testid="owner-action-menu" />,
+}));
+
 vi.mock('@/lib/utils/cardHelpers', async () => {
     const actual = await vi.importActual<typeof import('@/lib/utils/cardHelpers')>('@/lib/utils/cardHelpers');
     return {

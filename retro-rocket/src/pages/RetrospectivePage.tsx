@@ -27,7 +27,16 @@ const RetrospectivePageContent: React.FC = () => {
         connectionLost,
         retryConnection,
     } = useRetrospectiveRealtimeSync(id);
-    const { fullName, isReady } = useCurrentUser();
+    // 058-card-owner-action-hub, T036: `currentUser` must be the Firebase uid, never
+    // the display name — `card.createdBy`, `likes[].userId` and `reactions[].userId`
+    // are always uids (server-authoritative, `createdBy: session.sub`), so
+    // RetrospectiveBoard's `isOwner`/`hasUserLiked`/"mine" reaction checks (which all
+    // compare against this prop) were silently always-false in production when this
+    // was `fullName`. This page has no other use for a display name — `isReady`
+    // alone gates the loading state below, and display-name rendering elsewhere in
+    // the tree is sourced from RetrospectiveBoard's own separate `useCurrentUser()`
+    // call (`currentUsername`/`fullName`).
+    const { uid, isReady } = useCurrentUser();
 
     // Board/participant/columns state now comes from the backend-mediated
     // useRetrospectiveRealtimeSync hook (US1) — join is performed internally by that
@@ -149,7 +158,7 @@ const RetrospectivePageContent: React.FC = () => {
                 >
                     <RetrospectiveBoard
                         retrospective={retrospective}
-                        currentUser={fullName}
+                        currentUser={uid ?? undefined}
                         participants={participants || []}
                         cards={(board?.cards ?? []) as unknown as Card[]}
                         typingStatuses={typingStatuses}

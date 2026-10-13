@@ -5,7 +5,8 @@ import { resolve } from 'node:path';
 import twColors from 'tailwindcss/colors';
 import { CARD_COLORS } from '@/lib/utils/cardColors';
 import { contrastRatio } from '@/lib/theme/contrast';
-import { TOKENS } from '@/lib/theme/tokens';
+import { TOKENS, type TokenName } from '@/lib/theme/tokens';
+import { OWNER_TRIGGER_ICON_TOKEN } from '@/features/boards/retrospective/components/OwnerActionMenu';
 
 /**
  * WCAG 2.1 AA verification for the curated card-color swatch palette (FR-015).
@@ -93,6 +94,25 @@ function splitPair(classes: string): { light: string; dark: string } {
 const rgb = (channels: string) => channels; // contrastRatio accepts "r g b"
 const textPrimary = TOKENS['text-primary'];
 
+/**
+ * Maps a Tailwind text-color utility class (e.g. `text-text-secondary`) to its
+ * `TOKENS` entry (`text-secondary`), the same way this file already resolves
+ * `text-primary` for the card's own body text, above. Strips exactly the
+ * leading `text-` *utility* prefix — the remainder (`text-secondary`,
+ * `text-primary`, …) is itself a `TokenName`. Kept generic (not hardcoded to
+ * `text-secondary`) so it still resolves correctly if T028 changes
+ * `OWNER_TRIGGER_ICON_TOKEN` to `text-text-primary`.
+ */
+function tailwindTextClassToToken(cls: string): TokenName {
+    const tokenName = cls.replace(/^text-/, '') as TokenName;
+    if (!TOKENS[tokenName]) {
+        throw new Error(`Cannot resolve Tailwind text class "${cls}" to a known token`);
+    }
+    return tokenName;
+}
+
+const ownerTriggerIconToken = TOKENS[tailwindTextClassToToken(OWNER_TRIGGER_ICON_TOKEN)];
+
 describe('card swatch palette WCAG 2.1 AA', () => {
     it('every swatch has a dark background override in globals.css', () => {
         // Dark overrides are required because dark card text needs a dark fill;
@@ -119,6 +139,20 @@ describe('card swatch palette WCAG 2.1 AA', () => {
             });
             it('swatch text class meets 4.5:1 in dark', () => {
                 expect(contrastRatio(classToHex(text.dark), dbg)).toBeGreaterThanOrEqual(4.5);
+            });
+
+            // T024 (058-card-owner-action-hub, US3, FR-021, SC-004): the owner hub's
+            // always-visible trigger icon sits directly on the card background (no
+            // intervening surface), exactly like the card's own body text above — so
+            // it must clear the same 4.5:1 bar on every one of the 15 card colours, in
+            // both themes. `OWNER_TRIGGER_ICON_TOKEN` is imported from the real
+            // component (not duplicated here) so this assertion and the component
+            // cannot silently drift apart.
+            it('owner-trigger icon token meets 4.5:1 in light (FR-021, SC-004)', () => {
+                expect(contrastRatio(rgb(ownerTriggerIconToken.light), lbg)).toBeGreaterThanOrEqual(4.5);
+            });
+            it('owner-trigger icon token meets 4.5:1 in dark (FR-021, SC-004)', () => {
+                expect(contrastRatio(rgb(ownerTriggerIconToken.dark), dbg)).toBeGreaterThanOrEqual(4.5);
             });
         });
     }

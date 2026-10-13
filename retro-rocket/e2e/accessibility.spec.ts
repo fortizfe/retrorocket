@@ -1244,45 +1244,59 @@ test('the export window layout holds in English at both a narrow mobile and an u
     expect(sheetScrollWidth).toBeLessThanOrEqual(sheetClientWidth + 1); // +1: subpixel rounding
 });
 
-// --- Card color picker (spec 037): keyboard/touch operability, WCAG, and
-// reduced motion. Trigger reads its accessible name from the currently
-// applied color (colors.<slug>_aria, i18next); a brand-new card defaults to
-// the neutral color ("Seleccionar color blanco").
+// --- Card color picker (spec 037), retargeted by 058-card-owner-action-hub ---
+// 058 intentionally removed the always-visible header colour picker from
+// existing cards (T015, US1): colour on an existing card is now changed via
+// the owner action hub (trigger "Acciones de tarjeta" -> role="menu" ->
+// 15 `menuitemradio` swatches, same `colors.<slug>_aria` accessible names as
+// the old ColorPicker). The add-card form's own `ColorPicker`
+// (GroupableColumn.tsx "Agregar" form) is untouched by 058, so its tests are
+// kept as-is below, split out from the old combined tests for clarity.
 
-test('the color picker (trigger + panel) is keyboard-operable on an existing card and the add-card form', async ({ page, context }) => {
+test('the card owner action hub colour grid is keyboard-operable on an existing card (058: replaces the old header colour picker)', async ({ page, context }) => {
     await signInWithGoogle(page, context);
-    await createBoard(page, 'A11y Color Picker Keyboard Board');
+    await createBoard(page, 'A11y Owner Hub Colour Keyboard Board');
     await waitForBoardReady(page);
-    await addCardToFirstColumn(page, 'Color picker keyboard card');
-    const card = cardByContent(page, 'Color picker keyboard card');
+    await addCardToFirstColumn(page, 'Owner hub colour keyboard card');
+    const card = cardByContent(page, 'Owner hub colour keyboard card');
 
-    // Existing card: focus the trigger, open with Enter, arrow-navigate,
-    // select with Enter, and confirm the card's color actually changed. The
-    // trigger's accessible name tracks the card's *current* color, so it's
-    // re-queried by role rather than captured once by a name that goes
-    // stale the moment the color changes.
-    const trigger = card.getByRole('button', { name: 'Seleccionar color blanco', exact: true });
+    // The trigger's accessible name is fixed ("Acciones de tarjeta") — unlike
+    // the old ColorPicker trigger, it does NOT track the card's current
+    // colour, so it's queried once and reused safely across colour changes.
+    const trigger = card.getByRole('button', { name: 'Acciones de tarjeta', exact: true });
     await trigger.focus();
     await expect(trigger).toBeFocused();
     await page.keyboard.press('Enter');
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+    // Opening the panel focuses "Edit card" first (contract B-opening).
+    await expect(menu.getByRole('menuitem', { name: 'Editar tarjeta' })).toBeFocused();
 
+    // Down into the colour grid (white, index 0), right to blue (index 1),
+    // select with Enter, and confirm the card's colour actually changed.
+    await page.keyboard.press('ArrowDown');
+    await expect(menu.getByRole('menuitemradio', { name: 'Seleccionar color blanco', exact: true })).toBeFocused();
     await page.keyboard.press('ArrowRight');
+    await expect(menu.getByRole('menuitemradio', { name: 'Seleccionar color azul', exact: true })).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(dialog).toHaveCount(0);
+    await expect(menu).toHaveCount(0);
     await expect(card).toHaveClass(/bg-blue-50/);
+    await expect(trigger).toBeFocused();
 
-    // Escape dismisses without changing the color.
-    const triggerNowBlue = card.getByRole('button', { name: 'Seleccionar color azul', exact: true });
-    await triggerNowBlue.focus();
+    // Escape dismisses without changing the colour.
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('menu')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('menu')).toHaveCount(0);
     await expect(card).toHaveClass(/bg-blue-50/);
+    await expect(trigger).toBeFocused();
+});
 
-    // Add-card form: same trigger, reachable and operable identically.
+test('the add-card form colour picker is keyboard-operable (unchanged by 058-card-owner-action-hub)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Add Card Colour Keyboard Board');
+    await waitForBoardReady(page);
+
     // The "Agregar" label text is responsive-hidden below the `xl`
     // breakpoint (GroupableColumn.tsx) — target the button's accessible
     // name instead, which is present at every viewport width.
@@ -1295,33 +1309,52 @@ test('the color picker (trigger + panel) is keyboard-operable on an existing car
     await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-test('the color picker is reachable via touch, with no prior hover event, on an existing card and the add-card form', async ({ browser }) => {
+test('the card owner action hub trigger and colour swatches are reachable via touch, with no prior hover event, on an existing card (058: replaces the old header colour picker)', async ({ browser }) => {
     const context = await browser.newContext({ hasTouch: true });
     const page = await context.newPage();
     await signInWithGoogle(page, context);
 
     const createRes = await page.request.post('/api/boards', {
-        data: { templateId: 'default', title: 'A11y Color Picker Touch Board', locale: 'es' },
+        data: { templateId: 'default', title: 'A11y Owner Hub Touch Board', locale: 'es' },
     });
     expect(createRes.ok()).toBeTruthy();
     const { boardId } = (await createRes.json()) as { boardId: string };
     const cardRes = await page.request.post(`/api/retrospectives/${boardId}/cards`, {
-        data: { content: 'Color picker touch card', column: 'helped' },
+        data: { content: 'Owner hub touch card', column: 'helped' },
     });
     expect(cardRes.ok()).toBeTruthy();
 
     await page.goto(`/retro/${boardId}`);
     await page.setViewportSize(MOBILE_VIEWPORT);
     await waitForBoardReady(page);
-    const card = cardByContent(page, 'Color picker touch card');
+    const card = cardByContent(page, 'Owner hub touch card');
 
-    // No hover/pointer-enter event is fired before this tap — the trigger
-    // must already be visible and operable (FR-011a).
-    await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).tap();
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).tap();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    // No hover/pointer-enter event is fired before this tap — the trigger is
+    // always rendered (not hover-only), so it must already be operable.
+    await card.getByRole('button', { name: 'Acciones de tarjeta' }).tap();
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitemradio', { name: 'Seleccionar color azul', exact: true }).tap();
+    await expect(menu).toHaveCount(0);
     await expect(card).toHaveClass(/bg-blue-50/);
+
+    await context.close();
+});
+
+test('the add-card form colour picker is reachable via touch, with no prior hover event (unchanged by 058-card-owner-action-hub)', async ({ browser }) => {
+    const context = await browser.newContext({ hasTouch: true });
+    const page = await context.newPage();
+    await signInWithGoogle(page, context);
+
+    const createRes = await page.request.post('/api/boards', {
+        data: { templateId: 'default', title: 'A11y Add Card Colour Touch Board', locale: 'es' },
+    });
+    expect(createRes.ok()).toBeTruthy();
+    const { boardId } = (await createRes.json()) as { boardId: string };
+
+    await page.goto(`/retro/${boardId}`);
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await waitForBoardReady(page);
 
     // "Agregar"'s text label is responsive-hidden below the `xl` breakpoint
     // (GroupableColumn.tsx) — the mobile viewport here relies on the
@@ -1330,49 +1363,119 @@ test('the color picker is reachable via touch, with no prior hover event, on an 
     await page.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).first().tap();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     await context.close();
 });
 
-// --- Touch-viewport WCAG 2.1 AA coverage for the color picker (FR-009, SC-002) ---
-// No prior coverage exists at a touch viewport for this control — the
-// trigger was undiscoverable there before this feature (research.md §2).
+// --- Touch-viewport WCAG 2.1 AA coverage for the owner action hub panel
+// (FR-009, SC-002, 058-card-owner-action-hub) — retargeted from the old
+// ColorPicker touch-viewport scan, same guarantee (axe-clean open panel at a
+// narrow viewport, both themes), new UI. T026's own axe-scan test covers the
+// hub's three states at a standard viewport but not a touch one, so this is
+// not redundant with it.
 
 for (const theme of THEMES) {
-    test(`Color picker panel (open, on an existing card) has no WCAG 2.1 AA violations, touch viewport (${theme})`, async ({ browser }) => {
+    test(`the card owner action hub panel (open, on an existing card) has no WCAG 2.1 AA violations, touch viewport (${theme})`, async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
         await forceTheme(page, theme);
         await signInWithGoogle(page, context);
-        await createBoard(page, `A11y Color Picker Mobile ${theme}`);
+        await createBoard(page, `A11y Owner Hub Mobile ${theme}`);
         await page.setViewportSize(MOBILE_VIEWPORT);
         await waitForBoardReady(page);
         await applyThemeClass(page, theme);
-        await addCardToFirstColumn(page, `Color picker a11y card ${theme}`);
-        const card = cardByContent(page, `Color picker a11y card ${theme}`);
+        await addCardToFirstColumn(page, `Owner hub a11y mobile card ${theme}`);
+        const card = cardByContent(page, `Owner hub a11y mobile card ${theme}`);
 
-        await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).click();
-        await expect(page.getByRole('dialog')).toBeVisible();
-        await expectNoViolations(page, `color picker panel open, mobile viewport (${theme})`);
+        await card.getByRole('button', { name: 'Acciones de tarjeta' }).click();
+        await expect(page.getByRole('menu')).toBeVisible();
+        await expectNoViolations(page, `card owner action hub panel open, mobile viewport (${theme})`);
         await context.close();
     });
 }
 
-// --- Reduced motion (FR-010) ------------------------------------------------
+// --- Reduced motion (FR-010), retargeted by 058-card-owner-action-hub: the
+// owner hub's open->select-colour->close round trip must still complete
+// (not get stuck mid-animation) with prefers-reduced-motion. Overlaps in
+// spirit with card-owner-actions.spec.ts's own reduced-motion/layout-shift
+// case (T027), which asserts zero layout shift; this one keeps the original
+// spec-037 guarantee (the flow completes end to end) against the new UI.
 
-test('opening the color picker and selecting a color complete with prefers-reduced-motion enabled', async ({ page, context }) => {
+test('opening the card owner action hub and selecting a colour complete with prefers-reduced-motion enabled', async ({ page, context }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInWithGoogle(page, context);
-    await createBoard(page, 'A11y Color Picker Reduced Motion Board');
+    await createBoard(page, 'A11y Owner Hub Reduced Motion Board');
     await waitForBoardReady(page);
-    await addCardToFirstColumn(page, 'Reduced motion color card');
-    const card = cardByContent(page, 'Reduced motion color card');
+    await addCardToFirstColumn(page, 'Reduced motion owner hub card');
+    const card = cardByContent(page, 'Reduced motion owner hub card');
 
-    await card.getByRole('button', { name: 'Seleccionar color blanco', exact: true }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByRole('button', { name: 'Seleccionar color azul', exact: true }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await card.getByRole('button', { name: 'Acciones de tarjeta' }).click();
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitemradio', { name: 'Seleccionar color azul', exact: true }).click();
+    await expect(menu).toHaveCount(0);
     await expect(card).toHaveClass(/bg-blue-50/);
+});
+
+// --- Card owner action hub (058-card-owner-action-hub, T026): axe scans across
+// the hub's three states (closed/open/confirming delete), plus the trigger's
+// touch/pointer size targets at a narrow mobile and a standard desktop viewport
+// (SC-005, SC-007). ---
+
+test('the card owner action hub has no WCAG 2.1 AA violations closed, open, or confirming delete', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Owner Hub States Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Owner hub a11y card');
+    const card = cardByContent(page, 'Owner hub a11y card');
+    const trigger = card.getByRole('button', { name: 'Acciones de tarjeta' });
+    await expect(trigger).toBeVisible();
+
+    // Closed.
+    await expectNoViolations(page, 'owner action hub closed');
+
+    // Open (the item list: Edit, the 15-swatch colour grid, Delete).
+    await trigger.click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    await expectNoViolations(page, 'owner action hub open');
+
+    // Confirming delete.
+    await page.getByRole('menuitem', { name: 'Eliminar tarjeta' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Eliminar', exact: true })).toBeVisible();
+    await expectNoViolations(page, 'owner action hub confirming delete');
+
+    // Leave the card intact for test hygiene.
+    await page.getByRole('menuitem', { name: 'Cancelar', exact: true }).click();
+});
+
+test('the owner action hub trigger meets its touch/pointer size targets at 375px and 1280px (SC-005)', async ({ page, context }) => {
+    await signInWithGoogle(page, context);
+    await createBoard(page, 'A11y Owner Hub Sizing Board');
+    await waitForBoardReady(page);
+    await addCardToFirstColumn(page, 'Owner hub sizing card');
+    const card = cardByContent(page, 'Owner hub sizing card');
+    const trigger = card.getByRole('button', { name: 'Acciones de tarjeta' });
+
+    // 375px (mobile): the trigger is a real >=44x44 hit target (FR-022).
+    // `boundingBox()` returns a sub-pixel float (observed once, under full-suite
+    // load: 35.999969482421875 for an intended, Tailwind-exact 36px box) — round
+    // to the nearest pixel before comparing, same spirit as this file's own
+    // `+1` sub-pixel-rounding tolerance on the export-sheet-width check above.
+    await page.setViewportSize({ width: 375, height: 800 });
+    await expect(trigger).toBeVisible();
+    const mobileBox = await trigger.boundingBox();
+    expect(mobileBox).not.toBeNull();
+    expect(Math.round(mobileBox!.width)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(mobileBox!.height)).toBeGreaterThanOrEqual(44);
+
+    // 1280px (desktop/pointer): >=36x36 (FR-022).
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(trigger).toBeVisible();
+    const desktopBox = await trigger.boundingBox();
+    expect(desktopBox).not.toBeNull();
+    expect(Math.round(desktopBox!.width)).toBeGreaterThanOrEqual(36);
+    expect(Math.round(desktopBox!.height)).toBeGreaterThanOrEqual(36);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

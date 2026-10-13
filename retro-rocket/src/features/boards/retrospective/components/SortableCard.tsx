@@ -83,6 +83,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
                 currentUser={currentUser}
                 canEdit={canEdit}
                 isDragging={isDragging}
+                isSortableDragging={isDragging}
                 isGroupingMode={isGroupingMode}
                 isSelected={isSelected}
                 onSelect={onSelect}

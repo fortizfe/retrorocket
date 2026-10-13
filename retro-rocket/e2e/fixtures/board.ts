@@ -11,15 +11,27 @@ export const LONG_URL =
  * Adds a card to the first column on the board. Assumes a board is already open
  * (see `createBoard` in `auth-helpers.ts`). Uses the column "add" affordance,
  * fills the textarea, and submits. Selectors mirror the working card-lifecycle spec.
+ *
+ * Scoped to the first `[data-card-column]` root (058-card-owner-action-hub, T016)
+ * rather than an unscoped page-wide text search: an unscoped `getByText('Agregar
+ * primera tarjeta').first()` matches *any* still-empty column, not necessarily the
+ * one earlier calls in the same test already added a card to — once that first
+ * column has its own card, a *different*, still-empty column (e.g. "hindered")
+ * would be the first "Agregar primera tarjeta" in DOM order and would silently
+ * receive the next card instead. Found via card-owner-actions.spec.ts (T018),
+ * which calls this helper three times in one test and asserts same-column focus
+ * handoff after delete — a second/third card landing in the wrong column broke
+ * `getPostDeleteFocusTarget`'s sibling lookup, not production code.
  */
 export async function addCardToFirstColumn(page: Page, content: string): Promise<void> {
+    const column = page.locator('[data-card-column]').first();
     // First card in an empty column uses "Agregar primera tarjeta"; subsequent
     // cards use the column header "Agregar" button.
-    const firstCardBtn = page.getByText('Agregar primera tarjeta').first();
+    const firstCardBtn = column.getByText('Agregar primera tarjeta').first();
     if (await firstCardBtn.isVisible().catch(() => false)) {
         await firstCardBtn.click();
     } else {
-        await page.getByText('Agregar', { exact: true }).first().click();
+        await column.getByText('Agregar', { exact: true }).first().click();
     }
     await page.locator('textarea').first().fill(content);
     await page.getByRole('button', { name: 'Crear tarjeta' }).click();

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { GripVertical } from 'lucide-react';
 import Card from '@/lib/components/ui/Card';
 import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
-import ColorPicker from '@/lib/components/ui/ColorPicker';
 import CardContent from '@/features/boards/retrospective/components/CardContent';
 import CardHeader from '@/features/boards/retrospective/components/CardHeader';
 import CardVoteControl from '@/features/boards/retrospective/components/CardVoteControl';
@@ -11,6 +11,7 @@ import CardFooter from '@/features/boards/retrospective/components/CardFooter';
 import LikeButton from '@/features/boards/retrospective/components/LikeButton';
 import EmojiReactions from '@/features/boards/retrospective/components/EmojiReactions';
 import CardMenu from '@/features/boards/retrospective/components/CardMenu';
+import OwnerActionMenu from '@/features/boards/retrospective/components/OwnerActionMenu';
 import { SentimentBadge, useSentimentContext } from '@/features/boards/sentiment';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/types/card';
@@ -18,7 +19,8 @@ import { Participant } from '@/features/boards/types/participant';
 
 import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 import { groupReactions, hasUserLiked, resolveDisplayName } from '@/lib/utils/cardHelpers';
-import { getCardStyling, validateColor } from '@/lib/utils/cardColors';
+import { getCardStyling, validateColor, getColorConfig } from '@/lib/utils/cardColors';
+import { getPostDeleteFocusTarget } from '@/features/boards/retrospective/utils/postDeleteFocus';
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 
@@ -42,6 +44,10 @@ interface DraggableCardProps {
     currentUser?: string;
     canEdit?: boolean;
     isDragging?: boolean;
+    /** From `SortableCard`'s `useSortable().isDragging` (058-card-owner-action-hub,
+     * T014/T015) — forwarded to `OwnerActionMenu` as `isDragging`, a separate signal
+     * from `isDragging` above, which styles this drag-overlay copy of the card. */
+    isSortableDragging?: boolean;
     // Props para elementos de acción
     participants?: Participant[];
     canConvertToAction?: boolean;
@@ -60,6 +66,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     currentUser = 'anonymous',
     canEdit = true,
     isDragging = false,
+    isSortableDragging = false,
     participants = [],
     canConvertToAction = false,
     onConvertToAction,
@@ -67,8 +74,18 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const { t } = useLanguage();
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(card.content);
-    const [isDeleting, setIsDeleting] = useState(false);
+    // Optimistic colour (research.md §5, data-model.md "DraggableCard
+    // additions"): shown immediately on selection, cleared once `card.color`
+    // catches up (success) or reverted + toasted on rejection.
+    const [pendingColor, setPendingColor] = useState<CardColor | null>(null);
+    // Set when edit mode ends (Save/Cancel) so the remounted hub trigger
+    // takes focus once, then cleared (research.md §7 "Edit return").
+    const [restoreTriggerFocus, setRestoreTriggerFocus] = useState(false);
+    // Polite live region announcing a colour change — lives on the card
+    // itself (not inside the hub's panel, which unmounts on select).
+    const [colorAnnouncement, setColorAnnouncement] = useState('');
     const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
 
     // Focus the textarea when it mounts in response to an explicit user action
     // (clicking edit), not via the autoFocus prop (jsx-a11y/no-autofocus).
@@ -77,6 +94,15 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             editTextareaRef.current?.focus();
         }
     }, [isEditing]);
+
+    // Clear the optimistic pin once the real-time sync delivers the same
+    // value on `card.color` — avoids a flash back to the old colour before
+    // sync arrives, and avoids masking a later, unrelated sync update.
+    useEffect(() => {
+        if (pendingColor !== null && card.color === pendingColor) {
+            setPendingColor(null);
+        }
+    }, [card.color, pendingColor]);
     const { enabled, ready, getSentiment, shouldShowBadge, overrideSentiment } = useSentimentContext();
     const { isFacilitator, retrospective } = useBoardData();
     // spec 051-anonymous-board-mode, US2 (FR-003, SC-002): while the board is
@@ -93,8 +119,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const isLiked = hasUserLiked(card.likes ?? [], currentUser);
     const groupedReactions = groupReactions(card.reactions ?? [], participants, t('retrospective.grouping.unknownAuthor'));
 
-    // Get card color styling with validation
-    const cardColor = validateColor(card.color);
+    // Get card color styling with validation — `pendingColor` (optimistic,
+    // research.md §5) takes priority over the synced `card.color` until it
+    // clears (see the effect above).
+    const cardColor = pendingColor ?? validateColor(card.color);
     const cardStyling = getCardStyling(cardColor);
 
     const handleSaveEdit = async () => {
@@ -102,29 +130,21 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             try {
                 await onUpdate(card.id, { content: editContent.trim() });
                 setIsEditing(false);
+                setRestoreTriggerFocus(true);
             } catch (error) {
                 console.error('Error updating card:', error);
             }
         } else {
             setIsEditing(false);
             setEditContent(card.content);
+            setRestoreTriggerFocus(true);
         }
     };
 
     const handleCancelEdit = () => {
         setIsEditing(false);
         setEditContent(card.content);
-    };
-
-    const handleDelete = async () => {
-        if (!onDelete) return;
-        setIsDeleting(true);
-        try {
-            await onDelete(card.id);
-        } catch (error) {
-            console.error('Error deleting card:', error);
-            setIsDeleting(false);
-        }
+        setRestoreTriggerFocus(true);
     };
 
     const handleVote = async (increment: boolean) => {
@@ -160,14 +180,31 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
         handleRemoveReaction();
     };
 
-    const handleColorChange = async (color: CardColor) => {
-        if (onUpdate) {
-            try {
-                await onUpdate(card.id, { color });
-            } catch (error) {
-                console.error('Error updating card color:', error);
-            }
+    // Optimistic colour update (research.md §5): the card repaints immediately
+    // via `pendingColor`; a rejection reverts it and shows a localized toast.
+    const handleColorChangeViaHub = async (color: CardColor) => {
+        setPendingColor(color);
+        setColorAnnouncement(
+            t('retrospective.card.ownerActions.colorChanged', { color: t(getColorConfig(color).nameKey) })
+        );
+        try {
+            await onUpdate?.(card.id, { color });
+        } catch (error) {
+            console.error('Error updating card color:', error);
+            setPendingColor(null);
+            toast.error(t('retrospective.card.ownerActions.colorError'));
         }
+    };
+
+    // Resolves the post-delete focus target from the live DOM *before*
+    // awaiting the delete (while the card is still there), and focuses it
+    // only once the delete actually resolves (research.md §7). A rejection
+    // propagates to `OwnerActionMenu`'s own catch, which shows the error
+    // toast and returns to `confirmingDelete` — this handler does not swallow it.
+    const handleDeleteViaHub = async (): Promise<void> => {
+        const focusTarget = rootRef.current ? getPostDeleteFocusTarget(rootRef.current) : null;
+        await onDelete?.(card.id);
+        focusTarget?.focus();
     };
 
     const isOwner = currentUser === card.createdBy;
@@ -198,8 +235,11 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
         // wrapping a single always-present child does nothing, and misleadingly implies
         // this component owns the exit-animation boundary when it doesn't (spec 028 audit).
         <motion.div
+            ref={rootRef}
             layout
             data-testid="draggable-card"
+            tabIndex={-1}
+            data-card-focus-target
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
@@ -207,34 +247,30 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             // submitted by this participant or synced in live from another —
             // should read as settling into place, not the weak default tween.
             transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-            className={`group relative min-w-0 rounded-2xl transition-[transform,box-shadow,border-color] duration-200 ${isDragging ? 'rotate-2 shadow-2xl border-info-fg' : 'mb-2 shadow-md hover:shadow-lg'} ${cardStyling}`}
+            className={`group relative min-w-0 rounded-2xl transition-[transform,box-shadow,border-color] duration-200 focus-visible:ring-2 focus-visible:ring-focus ${isDragging ? 'rotate-2 shadow-2xl border-info-fg' : 'mb-2 shadow-md hover:shadow-lg'} ${cardStyling}`}
         >
+            {/* Polite live region (data-model.md "DraggableCard additions") —
+                stays mounted on the card itself, not inside OwnerActionMenu's
+                panel, which unmounts as soon as a colour is picked. */}
+            <div aria-live="polite" className="sr-only">{colorAnnouncement}</div>
             <Card
                 variant="elevated"
                 hover={!isEditing && !isDragging}
                 customBackground={true}
                 className={`p-2 group relative rounded-2xl transition-[box-shadow,border-color] duration-200 ${isDragging ? 'shadow-2xl border-info-fg' : ''} ${cardStyling}`}
             >
-                    {/* Drag handle y Color picker compactos. The drag activator is a
-                        dedicated, keyboard-focusable handle (not the whole card) — see
-                        DragHandleProps.
-                        The color picker trigger is persistently visible (no opacity
-                        gating) — spec 037, FR-011a: today's touch devices produce no
-                        hover event, so hiding it behind group-hover made it
-                        undiscoverable there, matching the always-visible-trigger
-                        precedent already established by EmojiReactions.tsx's own
-                        "add reaction" button on this same card. The drag handle keeps
-                        its hover/`focus-within` reveal — it has no touch equivalent to
-                        provide and remains a deliberate, precedented exception. */}
+                    {/* Drag handle. The drag activator is a dedicated,
+                        keyboard-focusable handle (not the whole card) — see
+                        DragHandleProps. The owner colour control moved into
+                        the footer's OwnerActionMenu hub (058-card-owner-
+                        action-hub) — this corner now holds only the drag
+                        handle, which keeps its hover/`focus-within` reveal
+                        (it has no touch equivalent to provide and remains a
+                        deliberate, precedented exception; spec 037's
+                        always-visible-trigger rule applies to the owner hub
+                        now, not to this handle). */}
                     {!isEditing && (canEdit || dragHandleProps) && (
                         <div className="absolute top-1 right-1 flex items-center gap-1">
-                            {canEdit && (
-                                <ColorPicker
-                                    selectedColor={cardColor}
-                                    onColorChange={handleColorChange}
-                                    size="sm"
-                                />
-                            )}
                             <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                 {dragHandleProps ? (
                                     <button
@@ -313,22 +349,36 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         createdAt={card.createdAt}
                         canEdit={canEditCard}
                         isEditing={isEditing}
-                        isDeleting={isDeleting}
                         canSave={!!editContent.trim()}
-                        onEdit={() => setIsEditing(true)}
-                        onDelete={handleDelete}
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
-                        actions={canConvertToAction && onConvertToAction && !isEditing ? (
+                        actions={!isEditing && (canEditCard || (canConvertToAction && onConvertToAction)) ? (
                             // Always visible — never hover-only (research.md §3, FR-012),
                             // same defect class already fixed in CardFooter's edit/delete row.
-                            <div>
-                                <CardMenu
-                                    card={card}
-                                    participants={participants}
-                                    canConvertToAction={canConvertToAction}
-                                    onConvertToAction={onConvertToAction}
-                                />
+                            // Order: OwnerActionMenu (058-card-owner-action-hub, contracts
+                            // §4) before the facilitator's convert-to-action CardMenu —
+                            // the two controls are independent and never merged (US2).
+                            <div className="flex items-center gap-1">
+                                {canEditCard && (
+                                    <OwnerActionMenu
+                                        cardId={card.id}
+                                        color={cardColor}
+                                        onEdit={() => setIsEditing(true)}
+                                        onColorChange={handleColorChangeViaHub}
+                                        onDelete={handleDeleteViaHub}
+                                        isDragging={isSortableDragging}
+                                        restoreFocus={restoreTriggerFocus}
+                                        onFocusRestored={() => setRestoreTriggerFocus(false)}
+                                    />
+                                )}
+                                {canConvertToAction && onConvertToAction && (
+                                    <CardMenu
+                                        card={card}
+                                        participants={participants}
+                                        canConvertToAction={canConvertToAction}
+                                        onConvertToAction={onConvertToAction}
+                                    />
+                                )}
                             </div>
                         ) : undefined}
                     />

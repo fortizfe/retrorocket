@@ -29,7 +29,11 @@ vi.mock('@/features/boards/retrospective/components/RetrospectiveBoard', () => (
     // `retrospective` object mapped by RetrospectivePage without over-mocking
     // the whole board component (051-anonymous-board-mode).
     default: (props: any) => (
-        <div data-testid="retrospective-board" data-is-anonymous={String(props?.retrospective?.isAnonymous)} />
+        <div
+            data-testid="retrospective-board"
+            data-is-anonymous={String(props?.retrospective?.isAnonymous)}
+            data-current-user={String(props?.currentUser)}
+        />
     ),
 }));
 
@@ -96,11 +100,12 @@ const setupMocks = ({
     board = mockBoard,
     isReady = true,
     fullName = 'Alice',
+    uid = 'user-1',
 } = {}) => {
     mockUseRetrospectiveRealtimeSync.mockReturnValue({ board, loading, error, notFound } as any);
 
     mockUseCurrentUser.mockReturnValue({
-        uid: 'user-1',
+        uid,
         fullName,
         isReady,
         email: null,
@@ -179,6 +184,25 @@ describe('RetrospectivePage', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('retrospective-board')).toHaveAttribute('data-is-anonymous', 'true');
+        });
+    });
+
+    // 058-card-owner-action-hub, T036: `card.createdBy`/`likes[].userId`/
+    // `reactions[].userId` are always the Firebase uid (server-authoritative,
+    // `createdBy: session.sub`), never a display name — so RetrospectivePage must
+    // pass the uid, not the display name, as `currentUser`. Using a fixture where
+    // uid and fullName are deliberately different shapes (unlike the other tests'
+    // 'user-1'/'Alice' pair, which could coincidentally still pass a broken
+    // implementation if someone "fixed" fullName to look uid-shaped) makes the
+    // regression unambiguous.
+    it('passes the uid (not the display name) as currentUser to RetrospectiveBoard', async () => {
+        setupMocks({ uid: 'uid-firebase-abc123', fullName: 'Grace Hopper' });
+        await renderPage();
+
+        await waitFor(() => {
+            const boardEl = screen.getByTestId('retrospective-board');
+            expect(boardEl).toHaveAttribute('data-current-user', 'uid-firebase-abc123');
+            expect(boardEl).not.toHaveAttribute('data-current-user', 'Grace Hopper');
         });
     });
 });

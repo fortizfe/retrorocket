@@ -1,0 +1,128 @@
+# Agent Assignments
+# Feature: 058-card-owner-action-hub
+# Generated: 2026-10-12
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/**."
+  - name: "docs-agent"
+    source: "project"
+    description: "Documentation expert for RetroRocket. Use PROACTIVELY to analyze a shipped or in-progress feature and write/maintain end-user-facing documentation."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, hooks, styling, i18n, and design/motion (Apple HIG)."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature needs tests written before implementation, and for Vitest, Playwright E2E, and accessibility (axe-core/WCAG 2.1 AA) coverage."
+
+assignments:
+  T001:
+    agent: "qa-agent"
+    reason: "Baseline run of type-check, lint and tests; record failures that already exist"
+  T002:
+    agent: "frontend-agent"
+    reason: "i18n locale keys (es.json), frontend-owned per constitution i18n standard"
+  T003:
+    agent: "frontend-agent"
+    reason: "i18n locale keys (en.json), frontend-owned per constitution i18n standard"
+  T004:
+    agent: "qa-agent"
+    reason: "Debug/fix locale-parity test"
+  T005:
+    agent: "qa-agent"
+    reason: "TDD: failing tests for postDeleteFocus helper before implementation"
+  T006:
+    agent: "qa-agent"
+    reason: "TDD: failing OwnerActionMenu tests covering contract B1-B9 and accessibility table"
+  T007:
+    agent: "qa-agent"
+    reason: "TDD: rewrite CardFooter tests to new contract"
+  T008:
+    agent: "qa-agent"
+    reason: "TDD: update DraggableCard tests (gating, optimistic colour, focus)"
+  T009:
+    agent: "frontend-agent"
+    reason: "Pure DOM helper under src/features/boards/retrospective/utils"
+  T010:
+    agent: "frontend-agent"
+    reason: "Principle IX design decisions via apple-design/emil-design-eng skills"
+  T011:
+    agent: "frontend-agent"
+    reason: "Principle IX motion decisions via animate skill"
+  T012:
+    agent: "frontend-agent"
+    reason: "New OwnerActionMenu UI component (Floating UI + Framer Motion, a11y)"
+  T013:
+    agent: "frontend-agent"
+    reason: "CardFooter component simplification"
+  T014:
+    agent: "frontend-agent"
+    reason: "Forward sortable drag state through SortableCard/SelectableCard"
+  T015:
+    agent: "frontend-agent"
+    reason: "DraggableCard rework: header picker removal, optimistic colour, focus, footer actions"
+  T016:
+    agent: "frontend-agent"
+    reason: "Marker attributes in GroupableColumn component"
+  T017:
+    agent: "qa-agent"
+    reason: "Integration test for post-delete focus in DragDropColumn"
+  T018:
+    agent: "qa-agent"
+    reason: "Playwright E2E for owner actions scenarios"
+  T019:
+    agent: "frontend-agent"
+    reason: "Fix type/lint failures and remaining CardFooter prop references in src/"
+  T020:
+    agent: "qa-agent"
+    reason: "TDD: facilitator coexistence cases in DraggableCard tests"
+  T021:
+    agent: "qa-agent"
+    reason: "Playwright E2E facilitator scenario"
+  T022:
+    agent: "frontend-agent"
+    reason: "Footer actions composition; verify CardMenu/ColorPicker untouched"
+  T023:
+    agent: "qa-agent"
+    reason: "Regression run of CardMenu/ActionItemsColumn suites"
+  T024:
+    agent: "qa-agent"
+    reason: "WCAG contrast test across 15 colours x 2 themes"
+  T025:
+    agent: "qa-agent"
+    reason: "TDD: sizing and motion unit cases"
+  T026:
+    agent: "qa-agent"
+    reason: "axe-core scans in 3 panel states + target-size measurement (Playwright)"
+  T027:
+    agent: "qa-agent"
+    reason: "Playwright: reduced motion, layout shift, viewport containment"
+  T028:
+    agent: "frontend-agent"
+    reason: "Styling: contrast fallback token in OwnerActionMenu"
+  T029:
+    agent: "frontend-agent"
+    reason: "Sizing/motion adjustments + review-animations skill (Principle IX)"
+  T030:
+    agent: "qa-agent"
+    reason: "Coverage threshold verification"
+  T031:
+    agent: "qa-agent"
+    reason: "Full Playwright E2E suite run"
+  T032:
+    agent: "qa-agent"
+    reason: "Manual quickstart validation scenarios #1-19"
+  T033:
+    agent: "frontend-agent"
+    reason: "i18n key usage check in locales"
+  T034:
+    agent: "docs-agent"
+    reason: "End-user guide copy for cards-and-colors topic"
+  T035:
+    agent: "default"
+    reason: "Cross-cutting PR description, no specialized agent needed"
+  T036:
+    agent: "frontend-agent"
+    reason: "Page-level currentUser identity fix (uid vs display name) in src/pages and board components; added after T018 found the pre-existing bug"
