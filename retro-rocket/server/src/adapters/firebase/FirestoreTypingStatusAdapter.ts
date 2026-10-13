@@ -24,4 +24,16 @@ export class FirestoreTypingStatusAdapter implements TypingStatusPort {
         }
         await docRef.set({ userId, username, retrospectiveId, column, timestamp: FieldValue.serverTimestamp() });
     }
+
+    async clearAllForUser(retrospectiveId: string, userId: string): Promise<void> {
+        const snap = await this.db
+            .collection(TYPING_STATUS)
+            .where('retrospectiveId', '==', retrospectiveId)
+            .where('userId', '==', userId)
+            .get();
+        if (snap.empty) return;
+        const batch = this.db.batch();
+        for (const doc of snap.docs) batch.delete(doc.ref);
+        await batch.commit();
+    }
 }

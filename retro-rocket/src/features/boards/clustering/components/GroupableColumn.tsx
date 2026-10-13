@@ -286,7 +286,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     const totalItems = ungroupedCards.length + columnGroups.length;
 
     return (
-        <div className="flex flex-col h-full min-w-0">
+        <div className="flex flex-col h-full min-w-0" data-card-column>
             {/* Column Header — no background of its own: this column already sits
                 inside RetrospectiveBoard.tsx's translucent, role-tinted gradient
                 panel (feature 033, "Layered Depth"), so a second opaque card here
@@ -357,6 +357,7 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         disabled={isCreating || !currentUser}
                         className="flex items-center space-x-1"
                         aria-label={t('retrospective.columns.add')}
+                        data-add-card-trigger
                     >
                         <Plus size={14} />
                         <span className="hidden xl:inline">{t('retrospective.columns.add')}</span>

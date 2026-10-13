@@ -1,14 +1,38 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import toast from 'react-hot-toast';
 import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
 import { Card as CardType, CardColor, EmojiReaction } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
+import { BoardDataContext, EMPTY_BOARD } from '@/features/boards/retrospective/contexts/useBoardData';
+import type { Retrospective } from '@/features/boards/types/retrospective';
+import { getPostDeleteFocusTarget } from '@/features/boards/retrospective/utils/postDeleteFocus';
 
-// Mock framer-motion
+/**
+ * T008 (058-card-owner-action-hub, RED phase): rewritten against the new contract —
+ * `DraggableCard` no longer renders a header `ColorPicker` or footer Edit/Delete
+ * buttons directly; every owner action (edit, colour, delete) routes through the new
+ * `OwnerActionMenu` hub (contracts/owner-action-menu.md §4; data-model.md). Since
+ * `OwnerActionMenu` itself is covered by its own unit tests (OwnerActionMenu.test.tsx,
+ * T006), it is mocked here as a thin stand-in that exposes its props as clickable
+ * controls — these tests verify *DraggableCard's wiring* into the hub (gating,
+ * optimistic colour, focus handoff, post-delete focus), not the hub's own internals.
+ *
+ * Almost every test in this file is expected to fail against today's
+ * `DraggableCard.tsx` (RED): it never renders `OwnerActionMenu` at all yet (T015's
+ * job), still shows the header `ColorPicker`, and still wires `CardFooter`'s removed
+ * `onEdit`/`onDelete`/`isDeleting` props directly.
+ */
+
+// Mock framer-motion. `motion.div` forwards its ref (via forwardRef, matching the
+// TextareaWithEmoji mock below) so T015's root-ref-based post-delete-focus wiring has
+// a real DOM node to call `getPostDeleteFocusTarget` against.
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        div: React.forwardRef<HTMLDivElement, any>(({ children, ...props }, ref) => (
+            <div ref={ref} {...props}>{children}</div>
+        )),
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -32,6 +56,19 @@ vi.mock('@/lib/hooks/useLanguage', () => ({
         t: (key: string) => key,
         currentLanguage: 'en',
     }),
+}));
+
+// Local mock (overriding src/test/setup.ts's global one) so this file can assert
+// calls, matching the established pattern (useJoinRetrospective.test.ts).
+vi.mock('react-hot-toast', () => ({
+    default: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
+}));
+
+// `getPostDeleteFocusTarget` is a pure DOM helper with its own unit tests
+// (postDeleteFocus.test.ts, T005) — mocked here so these tests control exactly what
+// it returns without needing a real [data-card-column] DOM tree.
+vi.mock('@/features/boards/retrospective/utils/postDeleteFocus', () => ({
+    getPostDeleteFocusTarget: vi.fn(),
 }));
 
 // Mock UI components
@@ -70,16 +107,6 @@ vi.mock('@/lib/components/ui/TextareaWithEmoji', () => ({
                 {...props}
             />
         )
-    ),
-}));
-
-vi.mock('@/lib/components/ui/ColorPicker', () => ({
-    default: ({ selectedColor: _selectedColor, onColorChange, ...props }: any) => (
-        <div data-testid="color-picker" {...props}>
-            <button onClick={() => onColorChange?.('blue' as CardColor)}>
-                Change Color
-            </button>
-        </div>
     ),
 }));
 
@@ -131,6 +158,52 @@ vi.mock('@/features/boards/retrospective/components/CardMenu', () => ({
     ),
 }));
 
+// `OwnerActionMenu` carries its own full behavioural test suite
+// (OwnerActionMenu.test.tsx, T006) — this stand-in exposes exactly its documented
+// props (contracts/owner-action-menu.md §1) as plain controls, and mimics its
+// `restoreFocus` → focus-the-trigger-once → `onFocusRestored` contract (B-restore),
+// so DraggableCard's own focus-handoff wiring (set on Save/Cancel, T015) is verified
+// end to end rather than just "was the prop truthy".
+vi.mock('@/features/boards/retrospective/components/OwnerActionMenu', () => {
+    const OwnerActionMenuStub = ({ cardId, color, onEdit, onColorChange, onDelete, isDragging, restoreFocus, onFocusRestored }: any) => {
+        const triggerRef = React.useRef<HTMLButtonElement>(null);
+        React.useEffect(() => {
+            if (restoreFocus) {
+                triggerRef.current?.focus();
+                onFocusRestored?.();
+            }
+        }, [restoreFocus, onFocusRestored]);
+
+        return (
+            <div
+                data-testid="owner-action-menu"
+                data-card-id={cardId}
+                data-color={color}
+                data-dragging={String(!!isDragging)}
+            >
+                <button
+                    ref={triggerRef}
+                    data-testid="owner-trigger"
+                    aria-label="retrospective.card.ownerActions.trigger"
+                >
+                    Owner actions
+                </button>
+                <button data-testid="owner-edit" onClick={onEdit}>Edit via hub</button>
+                <button data-testid="owner-color" onClick={() => onColorChange?.('pastelGreen' as CardColor)}>
+                    Pick green via hub
+                </button>
+                {/* Mirrors OwnerActionMenu's real contract (contracts/owner-action-menu.md
+                    B6/B7): the real component's `handleConfirmDelete` awaits `onDelete()`
+                    inside its own try/catch, so a rejection never escapes to an unhandled
+                    promise rejection — only `DraggableCard`'s wiring up to that catch is
+                    under test here, not the hub's own retry/toast behaviour (OwnerActionMenu.test.tsx). */}
+                <button data-testid="owner-delete" onClick={() => { void onDelete?.().catch(() => { }); }}>Delete via hub</button>
+            </div>
+        );
+    };
+    return { default: OwnerActionMenuStub };
+});
+
 // Mock card helpers, keeping the real resolveAuthorDisplayName so these tests
 // exercise the actual author-name resolution (spec 020-user-display-name-fix)
 // rather than a stand-in.
@@ -147,8 +220,22 @@ vi.mock('@/lib/utils/cardHelpers', async () => {
 // Mock card colors
 vi.mock('@/lib/utils/cardColors', () => ({
     getCardStyling: vi.fn(() => 'bg-blue-100'),
-    validateColor: vi.fn((color) => color || 'blue'),
+    validateColor: vi.fn((color) => color || 'pastelBlue'),
+    getColorConfig: vi.fn((color: string) => ({ nameKey: `colors.${color}` })),
 }));
+
+/** Deferred promise — lets a test control exactly when an async prop (onUpdate,
+ * onDelete) settles, to probe the optimistic-colour revert and post-delete-focus
+ * timing guarantees. */
+function createDeferred<T = void>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
 
 describe('DraggableCard', () => {
     const mockCard: CardType = {
@@ -156,7 +243,7 @@ describe('DraggableCard', () => {
         retrospectiveId: 'retro-1',
         column: 'helped',
         content: 'Test card content',
-        color: 'blue' as CardColor,
+        color: 'pastelBlue' as CardColor,
         votes: 3,
         likes: [
             { userId: 'user1', username: 'User One', timestamp: new Date() },
@@ -197,6 +284,17 @@ describe('DraggableCard', () => {
         }
     ];
 
+    const anonymousRetrospective: Retrospective = {
+        id: 'retro-1',
+        title: 'Anonymous retro',
+        createdBy: 'user1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        participantCount: 2,
+        isActive: true,
+        isAnonymous: true,
+    };
+
     const defaultProps = {
         card: mockCard,
         onUpdate: vi.fn(),
@@ -215,6 +313,7 @@ describe('DraggableCard', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(getPostDeleteFocusTarget).mockReturnValue(null);
     });
 
     describe('Rendering', () => {
@@ -244,31 +343,6 @@ describe('DraggableCard', () => {
             expect(screen.getByTestId('emoji-reactions')).toBeInTheDocument();
         });
 
-        it('shows edit controls for card owner', () => {
-            render(<DraggableCard {...defaultProps} />);
-
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            expect(editButton).toBeInTheDocument();
-        });
-
-        it('hides edit controls for non-owner', () => {
-            render(<DraggableCard {...defaultProps} currentUser="user2" />);
-
-            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
-        });
-
-        it('shows delete button for card owner', () => {
-            render(<DraggableCard {...defaultProps} />);
-
-            expect(screen.getByLabelText('retrospective.card.deleteCard')).toBeInTheDocument();
-        });
-
-        it('shows color picker when can edit', () => {
-            render(<DraggableCard {...defaultProps} />);
-
-            expect(screen.getByTestId('color-picker')).toBeInTheDocument();
-        });
-
         it('shows card menu when can convert to action', () => {
             render(<DraggableCard {...defaultProps} />);
 
@@ -283,65 +357,166 @@ describe('DraggableCard', () => {
         });
     });
 
-    describe('Edit functionality', () => {
-        it('enters edit mode when edit button is clicked', () => {
+    describe('Owner Action Hub gating (FR-001: single gate, canEdit && isOwner)', () => {
+        it('shows the hub trigger for the card owner when canEdit is true', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
+            expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument();
+        });
+
+        it('hides the hub for a non-owner', () => {
+            render(<DraggableCard {...defaultProps} currentUser="user2" />);
+
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        });
+
+        it('hides the hub for the owner when canEdit is false (e.g. grouping mode, read-only preview)', () => {
+            render(<DraggableCard {...defaultProps} canEdit={false} />);
+
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        });
+
+        it("hides the hub on another participant's card on an anonymous board", () => {
+            render(
+                <BoardDataContext.Provider value={{ ...EMPTY_BOARD, retrospective: anonymousRetrospective }}>
+                    <DraggableCard {...defaultProps} currentUser="user2" />
+                </BoardDataContext.Provider>
+            );
+
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        });
+
+        it('shows the hub for the owner even on an anonymous board', () => {
+            render(
+                <BoardDataContext.Provider value={{ ...EMPTY_BOARD, retrospective: anonymousRetrospective }}>
+                    <DraggableCard {...defaultProps} currentUser="user1" />
+                </BoardDataContext.Provider>
+            );
+
+            expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument();
+        });
+
+        it('never shows a header colour control, for any user — ownership is checked only once, by the hub (FR-002)', () => {
+            render(<DraggableCard {...defaultProps} currentUser="user2" />);
+            expect(screen.queryByTestId('color-picker')).not.toBeInTheDocument();
+
+            render(<DraggableCard {...defaultProps} currentUser="user1" />);
+            expect(screen.queryByTestId('color-picker')).not.toBeInTheDocument();
+        });
+
+        it('hides the hub while the card is being edited', () => {
+            render(<DraggableCard {...defaultProps} />);
+            fireEvent.click(screen.getByTestId('owner-edit'));
+
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        });
+
+        it('forwards isSortableDragging to the hub as isDragging', () => {
+            render(<DraggableCard {...(defaultProps as any)} isSortableDragging />);
+
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-dragging', 'true');
+        });
+    });
+
+    // T020 (058-card-owner-action-hub, US2): the facilitator's convert-to-action
+    // `CardMenu` must stay in the footer, work the same, and never be merged into
+    // the owner hub (quickstart #11, FR-005, FR-016, SC-010). `CardMenu` itself is
+    // mocked (see the top-of-file mock) the same way `OwnerActionMenu` is — these
+    // tests verify DraggableCard's *composition* of the two independent controls,
+    // not either control's own internals (CardMenu.test.tsx / OwnerActionMenu.test.tsx
+    // own that, including the actual Settings2-vs-MoreVertical icon choice, which a
+    // mocked integration test like this one cannot assert).
+    describe('Facilitator convert-to-action coexistence (US2, FR-005, FR-016)', () => {
+        it("shows only the convert-to-action control, and no owner trigger, when a facilitator who isn't the card's owner views it", () => {
+            render(<DraggableCard {...defaultProps} currentUser="user2" canConvertToAction onConvertToAction={vi.fn()} />);
+
+            expect(screen.getByTestId('convert-to-action')).toBeInTheDocument();
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        });
+
+        it('shows both controls, as two distinct elements, on the facilitator\'s own card — owner trigger first', () => {
+            render(<DraggableCard {...defaultProps} currentUser="user1" canConvertToAction onConvertToAction={vi.fn()} />);
+
+            const ownerMenu = screen.getByTestId('owner-action-menu');
+            const cardMenu = screen.getByTestId('card-menu');
+            expect(ownerMenu).toBeInTheDocument();
+            expect(cardMenu).toBeInTheDocument();
+            expect(ownerMenu).not.toBe(cardMenu);
+
+            // Order: OwnerActionMenu renders before CardMenu in document order
+            // (contracts/owner-action-menu.md §4's documented actions order).
+            expect(
+                ownerMenu.compareDocumentPosition(cardMenu) & Node.DOCUMENT_POSITION_FOLLOWING
+            ).toBeTruthy();
+
+            // Two independent triggers, never the same control standing in for both.
+            expect(screen.getByTestId('owner-trigger')).not.toBe(screen.getByTestId('convert-to-action'));
+        });
+
+        it('never renders the convert-to-action control inside the owner hub panel — the two stay independent (FR-016)', () => {
+            render(<DraggableCard {...defaultProps} currentUser="user1" canConvertToAction onConvertToAction={vi.fn()} />);
+
+            const ownerMenu = screen.getByTestId('owner-action-menu');
+            expect(within(ownerMenu).queryByTestId('convert-to-action')).not.toBeInTheDocument();
+        });
+
+        it('hides both the owner hub and the convert-to-action control while editing', () => {
+            render(<DraggableCard {...defaultProps} currentUser="user1" canConvertToAction onConvertToAction={vi.fn()} />);
+
+            fireEvent.click(screen.getByTestId('owner-edit'));
+
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+            expect(screen.queryByTestId('card-menu')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Edit via the hub (FR-009)', () => {
+        it('enters edit mode when "Edit card" is chosen from the hub', () => {
+            render(<DraggableCard {...defaultProps} />);
+
+            fireEvent.click(screen.getByTestId('owner-edit'));
 
             expect(screen.getByTestId('textarea-with-emoji')).toBeInTheDocument();
             expect(screen.getByText('retrospective.card.save')).toBeInTheDocument();
             expect(screen.getByText('retrospective.card.cancel')).toBeInTheDocument();
         });
 
-        it('exits edit mode when cancel button is clicked', () => {
+        it('exits edit mode, refocuses the hub trigger, when Cancel is clicked', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            // Enter edit mode
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
-
-            // Cancel edit
-            const cancelButton = screen.getByText('retrospective.card.cancel');
-            fireEvent.click(cancelButton);
+            fireEvent.click(screen.getByTestId('owner-edit'));
+            fireEvent.click(screen.getByText('retrospective.card.cancel'));
 
             expect(screen.queryByTestId('textarea-with-emoji')).not.toBeInTheDocument();
             expect(screen.getByTestId('linkify-text')).toBeInTheDocument();
+            expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument();
+            expect(screen.getByTestId('owner-trigger')).toHaveFocus();
         });
 
-        it('saves changes when save button is clicked with modified content', async () => {
+        it('saves changes, exits edit mode, and refocuses the hub trigger when Save is clicked', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            // Enter edit mode
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
+            fireEvent.click(screen.getByTestId('owner-edit'));
 
-            // Modify content
             const textarea = screen.getByTestId('textarea-with-emoji');
             fireEvent.change(textarea, { target: { value: 'Updated content' } });
 
-            // Save changes
-            const saveButton = screen.getByText('retrospective.card.save');
-            fireEvent.click(saveButton);
+            fireEvent.click(screen.getByText('retrospective.card.save'));
 
             await waitFor(() => {
                 expect(defaultProps.onUpdate).toHaveBeenCalledWith('card-1', {
                     content: 'Updated content'
                 });
             });
+            await waitFor(() => expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument());
+            expect(screen.getByTestId('owner-trigger')).toHaveFocus();
         });
 
         it('does not save when content is unchanged', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            // Enter edit mode
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
-
-            // Save without changes
-            const saveButton = screen.getByText('retrospective.card.save');
-            fireEvent.click(saveButton);
+            fireEvent.click(screen.getByTestId('owner-edit'));
+            fireEvent.click(screen.getByText('retrospective.card.save'));
 
             expect(defaultProps.onUpdate).not.toHaveBeenCalled();
         });
@@ -349,39 +524,161 @@ describe('DraggableCard', () => {
         it('does not save when content is empty', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            // Enter edit mode
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
+            fireEvent.click(screen.getByTestId('owner-edit'));
 
-            // Clear content
             const textarea = screen.getByTestId('textarea-with-emoji');
             fireEvent.change(textarea, { target: { value: '   ' } }); // Only spaces
 
-            // Save
-            const saveButton = screen.getByText('retrospective.card.save');
-            fireEvent.click(saveButton);
+            fireEvent.click(screen.getByText('retrospective.card.save'));
 
             expect(defaultProps.onUpdate).not.toHaveBeenCalled();
         });
-    });
 
-    describe('Delete functionality', () => {
-        it('calls onDelete when delete button is clicked', async () => {
+        it('does not start editing on double-click of the card content — "Edit card" in the hub is the only way in', () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
-            fireEvent.click(deleteButton);
+            fireEvent.doubleClick(screen.getByTestId('linkify-text'));
 
-            expect(defaultProps.onDelete).toHaveBeenCalledWith('card-1');
+            expect(screen.queryByTestId('textarea-with-emoji')).not.toBeInTheDocument();
         });
 
-        it('shows loading state when deleting', () => {
+        it('handles error in update operation', async () => {
+            const mockUpdateWithError = vi.fn().mockRejectedValue(new Error('Update failed'));
+
+            render(<DraggableCard {...defaultProps} onUpdate={mockUpdateWithError} />);
+
+            fireEvent.click(screen.getByTestId('owner-edit'));
+
+            const textarea = screen.getByTestId('textarea-with-emoji');
+            fireEvent.change(textarea, { target: { value: 'Updated content' } });
+
+            fireEvent.click(screen.getByText('retrospective.card.save'));
+
+            await waitFor(() => {
+                expect(mockUpdateWithError).toHaveBeenCalledWith('card-1', {
+                    content: 'Updated content'
+                });
+            });
+        });
+    });
+
+    describe('Delete via the hub, with post-delete focus (FR-012)', () => {
+        it('calls onDelete via the hub', async () => {
             render(<DraggableCard {...defaultProps} />);
 
-            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
-            fireEvent.click(deleteButton);
+            fireEvent.click(screen.getByTestId('owner-delete'));
 
-            expect(screen.getByText('Loading...')).toBeInTheDocument();
+            await waitFor(() => expect(defaultProps.onDelete).toHaveBeenCalledWith('card-1'));
+        });
+
+        it('resolves the post-delete focus target before awaiting onDelete, and focuses it only once onDelete resolves', async () => {
+            const focusTarget = document.createElement('button');
+            document.body.appendChild(focusTarget);
+            vi.mocked(getPostDeleteFocusTarget).mockReturnValue(focusTarget);
+
+            const deferred = createDeferred<void>();
+            const onDelete = vi.fn(() => deferred.promise);
+
+            render(<DraggableCard {...defaultProps} onDelete={onDelete} />);
+            fireEvent.click(screen.getByTestId('owner-delete'));
+
+            expect(getPostDeleteFocusTarget).toHaveBeenCalledTimes(1);
+            expect(getPostDeleteFocusTarget).toHaveBeenCalledWith(expect.any(HTMLElement));
+            expect(focusTarget).not.toHaveFocus();
+
+            await act(async () => {
+                deferred.resolve();
+                await deferred.promise;
+            });
+
+            expect(focusTarget).toHaveFocus();
+            document.body.removeChild(focusTarget);
+        });
+
+        it('handles error in delete operation', async () => {
+            const mockDeleteWithError = vi.fn().mockRejectedValue(new Error('Delete failed'));
+
+            render(<DraggableCard {...defaultProps} onDelete={mockDeleteWithError} />);
+
+            fireEvent.click(screen.getByTestId('owner-delete'));
+
+            await waitFor(() => {
+                expect(mockDeleteWithError).toHaveBeenCalledWith('card-1');
+            });
+            // The rejection propagates to OwnerActionMenu's own catch (contracts
+            // §1 B7), not to DraggableCard — so the card stays mounted, onDelete
+            // is called exactly once (no retry loop / crash), and nothing else
+            // throws out of this handler (no unhandled rejection, asserted by the
+            // absence of a Vitest "Unhandled Errors" report for this file).
+            expect(mockDeleteWithError).toHaveBeenCalledTimes(1);
+            expect(screen.getByTestId('draggable-card')).toBeInTheDocument();
+        });
+    });
+
+    describe('Optimistic colour update via the hub (FR-008, research.md §5)', () => {
+        it("repaints the card immediately via the optimistic pendingColor, reflected in the hub's color prop", () => {
+            const deferred = createDeferred<void>();
+            const onUpdate = vi.fn(() => deferred.promise);
+            render(<DraggableCard {...defaultProps} onUpdate={onUpdate} />);
+
+            const before = screen.getByTestId('owner-action-menu').getAttribute('data-color');
+            expect(before).not.toBe('pastelGreen');
+
+            fireEvent.click(screen.getByTestId('owner-color'));
+
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', 'pastelGreen');
+            expect(onUpdate).toHaveBeenCalledWith('card-1', { color: 'pastelGreen' });
+        });
+
+        it('reverts the optimistic colour and shows a localized error toast when onUpdate rejects', async () => {
+            const onUpdate = vi.fn().mockRejectedValue(new Error('network error'));
+            render(<DraggableCard {...defaultProps} onUpdate={onUpdate} />);
+            const original = screen.getByTestId('owner-action-menu').getAttribute('data-color');
+
+            fireEvent.click(screen.getByTestId('owner-color'));
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', 'pastelGreen');
+
+            await waitFor(() => {
+                expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', original);
+            });
+            expect(toast.error).toHaveBeenCalledWith('retrospective.card.ownerActions.colorError');
+        });
+
+        it('clears the optimistic pendingColor once the card.color prop catches up (no stale pin after real-time sync)', () => {
+            const onUpdate = vi.fn().mockResolvedValue(undefined);
+            const { rerender } = render(<DraggableCard {...defaultProps} onUpdate={onUpdate} />);
+
+            fireEvent.click(screen.getByTestId('owner-color'));
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', 'pastelGreen');
+
+            // Real-time sync delivers the new colour on the `card` prop itself.
+            rerender(<DraggableCard {...defaultProps} card={{ ...mockCard, color: 'pastelGreen' as CardColor }} onUpdate={onUpdate} />);
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', 'pastelGreen');
+
+            // A later, unrelated real-time update away from pastelGreen must be reflected
+            // immediately — if pendingColor had not cleared, it would still pin the hub to
+            // 'pastelGreen' here, masking the new synced value.
+            rerender(<DraggableCard {...defaultProps} card={{ ...mockCard, color: 'pastelRed' as CardColor }} onUpdate={onUpdate} />);
+            expect(screen.getByTestId('owner-action-menu')).toHaveAttribute('data-color', 'pastelRed');
+        });
+
+        it('announces the colour change in a polite live region that stays mounted on the card', async () => {
+            render(<DraggableCard {...defaultProps} onUpdate={vi.fn().mockResolvedValue(undefined)} />);
+
+            fireEvent.click(screen.getByTestId('owner-color'));
+
+            const announcement = await screen.findByText('retrospective.card.ownerActions.colorChanged');
+            expect(announcement).toHaveAttribute('aria-live', 'polite');
+        });
+    });
+
+    describe('Root element (for post-delete focus)', () => {
+        it('gives the card root element tabIndex=-1 and the data-card-focus-target marker', () => {
+            render(<DraggableCard {...defaultProps} />);
+
+            const cardRoot = screen.getByTestId('draggable-card');
+            expect(cardRoot).toHaveAttribute('tabindex', '-1');
+            expect(cardRoot).toHaveAttribute('data-card-focus-target');
         });
     });
 
@@ -435,19 +732,6 @@ describe('DraggableCard', () => {
         });
     });
 
-    describe('Color functionality', () => {
-        it('handles color change', async () => {
-            render(<DraggableCard {...defaultProps} />);
-
-            const changeColorButton = screen.getByText('Change Color');
-            fireEvent.click(changeColorButton);
-
-            expect(defaultProps.onUpdate).toHaveBeenCalledWith('card-1', {
-                color: 'blue'
-            });
-        });
-    });
-
     describe('Action conversion functionality', () => {
         it('handles converting card to action item', async () => {
             render(<DraggableCard {...defaultProps} />);
@@ -477,41 +761,6 @@ describe('DraggableCard', () => {
                 expect(node.className).not.toMatch(/\bopacity-0\b/);
                 node = node.parentElement;
             }
-        });
-    });
-
-    describe('Permission handling', () => {
-        it('hides edit controls when canEdit is false', () => {
-            render(<DraggableCard {...defaultProps} canEdit={false} />);
-
-            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
-            expect(screen.queryByTestId('color-picker')).not.toBeInTheDocument();
-        });
-
-        it('shows delete button only for card owner', () => {
-            render(<DraggableCard {...defaultProps} currentUser="user2" />);
-
-            expect(screen.queryByLabelText('retrospective.card.deleteCard')).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Color picker touch reachability (spec 037, FR-011a)', () => {
-        it('keeps the color-picker trigger persistently visible — no hover-gating opacity classes on its wrapper', () => {
-            render(<DraggableCard {...defaultProps} />);
-
-            const colorPicker = screen.getByTestId('color-picker');
-            const cluster = colorPicker.closest('.absolute.top-1.right-1');
-            expect(cluster).not.toBeNull();
-            expect(cluster?.className).not.toMatch(/opacity-0/);
-        });
-
-        it('still hover/focus-gates the drag handle — a deliberate, precedented exception (no touch equivalent to provide)', () => {
-            const { container } = render(<DraggableCard {...defaultProps} />);
-
-            const gripWrapper = container.querySelector('.cursor-grab')?.parentElement;
-            expect(gripWrapper?.className).toMatch(/opacity-0/);
-            expect(gripWrapper?.className).toMatch(/group-hover:opacity-100/);
-            expect(gripWrapper?.className).toMatch(/focus-within:opacity-100/);
         });
     });
 
@@ -582,46 +831,10 @@ describe('DraggableCard', () => {
             expect(screen.getByTestId('emoji-reactions')).toBeInTheDocument();
         });
 
-        it('handles anonymous user correctly', () => {
+        it('hides the hub for an anonymous current user (never the owner of anyone else\'s card)', () => {
             render(<DraggableCard {...defaultProps} currentUser="anonymous" />);
 
-            expect(screen.queryByLabelText('retrospective.card.editCard')).not.toBeInTheDocument();
-            expect(screen.queryByLabelText('retrospective.card.deleteCard')).not.toBeInTheDocument();
-        });
-
-        it('handles error in update operation', async () => {
-            const mockUpdateWithError = vi.fn().mockRejectedValue(new Error('Update failed'));
-
-            render(<DraggableCard {...defaultProps} onUpdate={mockUpdateWithError} />);
-
-            // Enter edit mode and make changes
-            const editButton = screen.getByLabelText('retrospective.card.editCard');
-            fireEvent.click(editButton);
-
-            const textarea = screen.getByTestId('textarea-with-emoji');
-            fireEvent.change(textarea, { target: { value: 'Updated content' } });
-
-            const saveButton = screen.getByText('retrospective.card.save');
-            fireEvent.click(saveButton);
-
-            await waitFor(() => {
-                expect(mockUpdateWithError).toHaveBeenCalledWith('card-1', {
-                    content: 'Updated content'
-                });
-            });
-        });
-
-        it('handles error in delete operation', async () => {
-            const mockDeleteWithError = vi.fn().mockRejectedValue(new Error('Delete failed'));
-
-            render(<DraggableCard {...defaultProps} onDelete={mockDeleteWithError} />);
-
-            const deleteButton = screen.getByLabelText('retrospective.card.deleteCard');
-            fireEvent.click(deleteButton);
-
-            await waitFor(() => {
-                expect(mockDeleteWithError).toHaveBeenCalledWith('card-1');
-            });
+            expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
         });
     });
 });

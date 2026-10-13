@@ -521,6 +521,19 @@
       "dragHandle": "Move card (drag)",
       "colorPicker": {
         "panelLabel": "Choose a color"
+      },
+      "ownerActions": {
+        "trigger": "Card actions",
+        "edit": "Edit card",
+        "colorGroup": "Change colour",
+        "delete": "Delete card",
+        "deleteConfirmMessage": "Delete this card? This can't be undone.",
+        "deleteConfirm": "Delete",
+        "deleteCancel": "Cancel",
+        "deleting": "Deleting…",
+        "deleteError": "Couldn't delete the card. Please try again.",
+        "colorError": "Couldn't change the colour. Please try again.",
+        "colorChanged": "Colour changed to {{color}}"
       }
     },
     "board": {
@@ -869,9 +882,9 @@
         "summary": "Add, edit, and color-code cards to organize your team's feedback.",
         "body": [
           "To add a card, use the add-card control in the column you want to write in, type your feedback, and submit it. You can use line breaks and paste links — links stay clickable once posted.",
-          "Every card shows its edit and delete controls at all times, not just when you hover over it, so you can fix a typo or remove a card whenever you need to.",
-          "Only the person who created a card can edit or delete it — not even the board's facilitator can edit or delete someone else's card.",
-          "Each card has a color picker in its top corner. Use color to visually group related ideas or highlight what matters most — the color is entirely up to you and doesn't change anything else about the card.",
+          "On cards you created, you'll always see a \"Card actions\" button (the settings icon) at the bottom of the card. Tapping it opens a menu with \"Edit card\", \"Change colour\" and \"Delete card\".",
+          "Only the person who created a card can edit or delete it — not even the board's facilitator can edit or delete someone else's card, so that button only shows up on your own cards.",
+          "To delete a card, choose \"Delete card\" from the menu: you'll be asked to confirm before it's actually removed, so you don't delete something by accident. From the same menu you can also pick a new colour for the card — use colour to visually group related ideas or highlight what matters most, it's entirely up to you and doesn't change anything else about the card.",
           "Cards can be dragged and dropped to reorder them within a column, using the drag handle that appears when you hover over the card."
         ]
       },

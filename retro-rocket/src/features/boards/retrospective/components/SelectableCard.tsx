@@ -18,6 +18,11 @@ interface SelectableCardProps {
     currentUser?: string;
     canEdit?: boolean;
     isDragging?: boolean;
+    /** From `SortableCard`'s `useSortable().isDragging` — forwarded to
+     * `DraggableCard`'s `OwnerActionMenu` as `isDragging` (058, T014). A
+     * separate signal from `isDragging` above, which styles the drag-overlay
+     * copy of the card. */
+    isSortableDragging?: boolean;
     isGroupingMode?: boolean;
     isSelected?: boolean;
     onSelect?: (cardId: string) => void;
@@ -39,6 +44,7 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
     currentUser,
     canEdit = true,
     isDragging = false,
+    isSortableDragging,
     isGroupingMode = false,
     isSelected = false,
     onSelect,
@@ -98,6 +104,7 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
                 currentUser={currentUser}
                 canEdit={canEdit && !isGroupingMode} // Disable editing in grouping mode
                 isDragging={isDragging}
+                isSortableDragging={isSortableDragging}
                 participants={participants}
                 canConvertToAction={canConvertToAction}
                 onConvertToAction={onConvertToAction}

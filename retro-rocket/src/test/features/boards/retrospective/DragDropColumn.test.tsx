@@ -1,5 +1,6 @@
+import React, { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DragDropColumn from '@/features/boards/retrospective/components/DragDropColumn';
 import { Card } from '@/features/boards/types/card';
@@ -12,10 +13,47 @@ import { Participant } from '@/features/boards/types/participant';
 // the point where a card is removed from this list (design audit finding, spec 028:
 // it was previously nested one level too deep, inside DraggableCard itself, where it
 // never got to see a real unmount).
+//
+// `motion.div` is also provided (058-card-owner-action-hub, T017) — forwardRef
+// passthrough stripping nothing (every prop, including motion-only ones, just lands
+// on the DOM node; jsdom ignores the ones it doesn't understand) — so the real,
+// unmocked `DraggableCard` and `OwnerActionMenu` used by the T017 integration test
+// below have a real root node to query/focus and a real animated panel to open.
 vi.mock('framer-motion', () => ({
+    motion: {
+        div: React.forwardRef<HTMLDivElement, any>(({ children, ...props }, ref) => (
+            <div ref={ref} {...props}>{children}</div>
+        )),
+        // LikeButton and EmojiReactions (both real in the T017 integration test
+        // below) render `motion.button` unconditionally.
+        button: React.forwardRef<HTMLButtonElement, any>(({ children, ...props }, ref) => (
+            <button ref={ref} {...props}>{children}</button>
+        )),
+    },
     AnimatePresence: ({ children }: { children: React.ReactNode }) => (
         <div data-testid="card-list-animate-presence">{children}</div>
     ),
+}));
+
+// Needed only by the T017 integration test below, which renders the real
+// `DraggableCard` → `OwnerActionMenu` chain (bypassing the trivial `DraggableCard`
+// mock further down, via `vi.importActual`) — every other test in this file renders
+// the mocked `SortableCard`/`DraggableCard` stubs and never reaches `useLanguage` or
+// `react-i18next` at all, so this is purely additive.
+vi.mock('@/lib/hooks/useLanguage', () => ({
+    useLanguage: () => ({ t: (key: string) => key, currentLanguage: 'en' }),
+}));
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => key,
+        i18n: { changeLanguage: () => new Promise(() => { }) },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => { } },
+}));
+
+vi.mock('react-hot-toast', () => ({
+    default: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
 }));
 
 // Mock @dnd-kit libraries
@@ -512,5 +550,68 @@ describe('DragDropColumn', () => {
             expect(dragOverlay).toBeInTheDocument();
             expect(dragOverlay).toBeEmptyDOMElement();
         });
+    });
+
+    describe('Post-delete focus across the real hub (T017, 058-card-owner-action-hub)', () => {
+        /**
+         * T017: confirms T009 (`getPostDeleteFocusTarget`), T015 (`DraggableCard`'s
+         * wiring into the hub) and T016 (`GroupableColumn`'s `data-card-column` /
+         * `data-add-card-trigger` markers) work together end to end. This describe
+         * block renders the REAL `DraggableCard` → `OwnerActionMenu` chain — bypassing
+         * the trivial `DraggableCard` mock registered above (which every other test in
+         * this file uses) via `vi.importActual` — wrapped in a plain
+         * `[data-card-column]` element (contracts/owner-action-menu.md §6: that marker
+         * is `GroupableColumn`'s to render, not `DragDropColumn`'s, so this test adds
+         * it itself rather than standing up the whole grouping column).
+         */
+        it("deletes the first of two owned cards through the real hub (trigger → Delete card → Confirm) and moves focus to the remaining card's root", async () => {
+            // Several real userEvent interactions against the real Floating UI /
+            // OwnerActionMenu stack (not the trivial stubs the rest of this file
+            // uses) — comfortably under 5s alone, but can exceed the default
+            // testTimeout under full-suite parallel load.
+            const user = userEvent.setup();
+            const { default: RealDraggableCard } = await vi.importActual<
+                typeof import('@/features/boards/retrospective/components/DraggableCard')
+            >('@/features/boards/retrospective/components/DraggableCard');
+
+            const cardA: Card = { ...mockCards[0], id: 'owned-card-a', createdBy: 'user1' };
+            const cardB: Card = { ...mockCards[1], id: 'owned-card-b', createdBy: 'user1' };
+
+            // A tiny stateful host, standing in for GroupableColumn/DragDropColumn: the
+            // real parent-level responsibility of actually removing a deleted card from
+            // the rendered list once the delete call resolves (DraggableCard's own
+            // `handleDeleteViaHub` only awaits `onDelete` and then focuses the
+            // already-resolved target — it never removes anything from the DOM itself).
+            const TestColumn: React.FC = () => {
+                const [cards, setCards] = useState([cardA, cardB]);
+                const handleDelete = async (cardId: string) => {
+                    setCards((prev) => prev.filter((c) => c.id !== cardId));
+                };
+                return (
+                    <div data-card-column>
+                        {cards.map((card) => (
+                            <RealDraggableCard key={card.id} card={card} currentUser="user1" canEdit onDelete={handleDelete} />
+                        ))}
+                    </div>
+                );
+            };
+
+            render(<TestColumn />);
+
+            const triggers = screen.getAllByRole('button', { name: 'retrospective.card.ownerActions.trigger' });
+            expect(triggers).toHaveLength(2);
+
+            await user.click(triggers[0]);
+            await user.click(await screen.findByRole('menuitem', { name: 'retrospective.card.ownerActions.delete' }));
+            await user.click(await screen.findByRole('menuitem', { name: 'retrospective.card.ownerActions.deleteConfirm' }));
+
+            await waitFor(() => {
+                expect(screen.queryByText(cardA.content)).not.toBeInTheDocument();
+            });
+
+            const remainingCard = screen.getByText(cardB.content).closest('[data-card-focus-target]');
+            expect(remainingCard).not.toBeNull();
+            await waitFor(() => expect(remainingCard).toHaveFocus());
+        }, 15000);
     });
 });

@@ -1,36 +1,36 @@
 import React from 'react';
-import { Trash2, Edit2 } from 'lucide-react';
 import Button from '@/lib/components/ui/Button';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 
 interface CardFooterProps {
     createdAt?: Date;
+    /** Owner may edit (renders Save/Cancel while editing). */
     canEdit: boolean;
     isEditing: boolean;
-    isDeleting: boolean;
     /** Whether the edited content is savable (non-empty). */
     canSave: boolean;
-    onEdit: () => void;
-    onDelete: () => void;
     onSave: () => void;
     onCancel: () => void;
-    /** Optional extra actions (e.g. convert-to-action menu). */
+    /** Trailing controls: OwnerActionMenu and/or the facilitator CardMenu
+     * (058-card-owner-action-hub, contracts/owner-action-menu.md §3). */
     actions?: React.ReactNode;
 }
 
 /**
- * Card footer: a locale-aware timestamp plus edit/delete (or save/cancel while
- * editing) actions. The date is formatted with the active i18next language rather
- * than a hardcoded locale, and all labels are localized.
+ * Card footer: a locale-aware timestamp, Save/Cancel while editing, and a
+ * trailing `actions` slot the caller composes (DraggableCard.tsx).
+ *
+ * 058-card-owner-action-hub: the footer no longer owns Edit/Delete directly
+ * — those moved into `OwnerActionMenu`, reached through the `actions` slot,
+ * so ownership is checked exactly once instead of being re-derived here.
+ * The date is formatted with the active i18next language rather than a
+ * hardcoded locale, and all labels are localized.
  */
 const CardFooter: React.FC<CardFooterProps> = ({
     createdAt,
     canEdit,
     isEditing,
-    isDeleting,
     canSave,
-    onEdit,
-    onDelete,
     onSave,
     onCancel,
     actions,
@@ -50,42 +50,17 @@ const CardFooter: React.FC<CardFooterProps> = ({
         <div className="flex items-center justify-between">
             <div className="text-xs text-text-muted">{formattedDate}</div>
             <div className="flex items-center gap-1">
-                {canEdit && (
+                {isEditing && canEdit && (
                     // Always visible — never hover-only (research.md §3, FR-012):
                     // this board is used live, often on shared screens/tablets with
-                    // no hover input, so edit/delete must be reachable at rest.
+                    // no hover input, so Save/Cancel must be reachable at rest.
                     <div className="flex items-center gap-1">
-                        {isEditing ? (
-                            <>
-                                <Button size="sm" variant="primary" onClick={onSave} disabled={!canSave}>
-                                    {t('retrospective.card.save')}
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={onCancel}>
-                                    {t('retrospective.card.cancel')}
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={onEdit}
-                                    aria-label={t('retrospective.card.editCard')}
-                                >
-                                    <Edit2 size={12} />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={onDelete}
-                                    loading={isDeleting}
-                                    aria-label={t('retrospective.card.deleteCard')}
-                                    className="text-error-fg hover:text-error-fg"
-                                >
-                                    <Trash2 size={12} />
-                                </Button>
-                            </>
-                        )}
+                        <Button size="sm" variant="primary" onClick={onSave} disabled={!canSave}>
+                            {t('retrospective.card.save')}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={onCancel}>
+                            {t('retrospective.card.cancel')}
+                        </Button>
                     </div>
                 )}
                 {actions}

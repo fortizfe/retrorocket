@@ -522,6 +522,19 @@
       "dragHandle": "Mover tarjeta (arrastrar)",
       "colorPicker": {
         "panelLabel": "Elegir un color"
+      },
+      "ownerActions": {
+        "trigger": "Acciones de tarjeta",
+        "edit": "Editar tarjeta",
+        "colorGroup": "Cambiar color",
+        "delete": "Eliminar tarjeta",
+        "deleteConfirmMessage": "¿Eliminar esta tarjeta? Esta acción no se puede deshacer.",
+        "deleteConfirm": "Eliminar",
+        "deleteCancel": "Cancelar",
+        "deleting": "Eliminando…",
+        "deleteError": "No se pudo eliminar la tarjeta. Inténtalo de nuevo.",
+        "colorError": "No se pudo cambiar el color. Inténtalo de nuevo.",
+        "colorChanged": "Color cambiado a {{color}}"
       }
     },
     "board": {
@@ -893,9 +906,9 @@
         "summary": "Añade, edita y colorea tarjetas para organizar el feedback de tu equipo.",
         "body": [
           "Para añadir una tarjeta, usa el control de añadir en la columna donde quieras escribir, redacta tu comentario y envíalo. Puedes usar saltos de línea y pegar enlaces — los enlaces se quedan clicables una vez publicados.",
-          "Cada tarjeta muestra siempre sus controles de editar y borrar, no solo al pasar el cursor por encima, así puedes corregir una errata o eliminar una tarjeta cuando lo necesites.",
-          "Solo quien creó una tarjeta puede editarla o borrarla — ni siquiera el facilitador del tablero puede editar o borrar una tarjeta de otra persona.",
-          "Cada tarjeta tiene un selector de color en su esquina superior. Úsalo para agrupar visualmente ideas relacionadas o destacar lo más importante — el color es cosa tuya y no cambia nada más de la tarjeta.",
+          "En las tarjetas que has creado tú, verás siempre un botón de \"Acciones de tarjeta\" (el icono de ajustes) en la parte inferior de la tarjeta. Al pulsarlo se abre un menú con \"Editar tarjeta\", \"Cambiar color\" y \"Eliminar tarjeta\".",
+          "Solo quien creó una tarjeta puede editarla o borrarla — ni siquiera el facilitador del tablero puede editar o borrar una tarjeta de otra persona, así que ese botón solo aparece en tus propias tarjetas.",
+          "Para eliminar una tarjeta, pulsa \"Eliminar tarjeta\" en el menú: se te pedirá que confirmes antes de borrarla definitivamente, para evitar borrados accidentales. Desde el mismo menú puedes elegir un nuevo color para la tarjeta — úsalo para agrupar visualmente ideas relacionadas o destacar lo más importante, el color es cosa tuya y no cambia nada más de la tarjeta.",
           "Las tarjetas se pueden arrastrar y soltar para reordenarlas dentro de una columna, usando el asa que aparece al pasar el cursor sobre la tarjeta."
         ]
       },
