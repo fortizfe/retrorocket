@@ -4,6 +4,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import type { ClockPort, SessionServicePort } from '../../application/ports';
 import type { RealtimeConnection, RealtimeGatewayPort } from '../../application/ports/realtime';
 import type { RetrospectiveDTO } from '../../application/ports/retrospective';
+import type { TypingStatusPort } from '../../application/ports/typing';
 import { SESSION_COOKIE } from '../cookies';
 
 const PATH_PATTERN = /^\/api\/retrospectives\/([^/]+)\/live$/;
@@ -57,6 +58,10 @@ export interface RealtimeUpgradeDeps {
     clock: ClockPort;
     realtimeGateway: RealtimeGatewayPort;
     retrospectiveBoardPort: { getRetrospective(id: string): Promise<RetrospectiveDTO | null> };
+    /** 058, CI triage: clears a disconnecting participant's typing status immediately
+     * on a clean WebSocket close, as a fast path ahead of the TTL sweep (see
+     * typing.ts's TypingStatusPort doc comment). */
+    typingStatusPort: TypingStatusPort;
     /** Test-only override of the FR-005 heartbeat cadence — defaults to 30s/2 misses. */
     heartbeatIntervalMs?: number;
     maxMissedHeartbeats?: number;
@@ -132,6 +137,7 @@ async function handleUpgrade(
             retrospectiveId,
             uid,
             deps.realtimeGateway,
+            deps.typingStatusPort,
             deps.heartbeatIntervalMs ?? DEFAULT_HEARTBEAT_INTERVAL_MS,
             deps.maxMissedHeartbeats ?? DEFAULT_MAX_MISSED_HEARTBEATS,
         );
@@ -149,6 +155,7 @@ function setupConnection(
     retrospectiveId: string,
     uid: string,
     gateway: RealtimeGatewayPort,
+    typingStatusPort: TypingStatusPort,
     heartbeatIntervalMs: number,
     maxMissedHeartbeats: number,
 ): void {
@@ -191,5 +198,12 @@ function setupConnection(
     ws.on('close', () => {
         clearInterval(heartbeatTimer);
         gateway.unregister(connection);
+        // 058, CI triage: fire-and-forget — this is a fast path ahead of the TTL
+        // sweep (typing.ts's TypingStatusPort doc comment), not a required step in
+        // tearing down the connection, so a failure here must never block or throw
+        // out of the close handler. The sweep still clears it if this fails.
+        void typingStatusPort.clearAllForUser(retrospectiveId, uid).catch(() => {
+            // Swallowed deliberately — the TTL sweep remains the backstop.
+        });
     });
 }

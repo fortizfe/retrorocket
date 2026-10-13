@@ -6,6 +6,7 @@ import { attachRealtimeUpgrade, HeartbeatMonitor, type RealtimeUpgradeDeps } fro
 import type { SessionServicePort } from '../../../src/application/ports';
 import type { RealtimeGatewayPort } from '../../../src/application/ports/realtime';
 import type { RetrospectiveDTO } from '../../../src/application/ports/retrospective';
+import type { TypingStatusPort } from '../../../src/application/ports/typing';
 
 function fakeSessionService(validTokens: Record<string, string> = { 'session-u1': 'u1' }, activeTokens?: Set<string>): SessionServicePort {
     return {
@@ -21,6 +22,10 @@ function fakeSessionService(validTokens: Record<string, string> = { 'session-u1'
 
 function fakeGateway(): RealtimeGatewayPort {
     return { register: vi.fn(), unregister: vi.fn() };
+}
+
+function fakeTypingStatusPort(): TypingStatusPort {
+    return { setTypingStatus: vi.fn(), clearAllForUser: vi.fn().mockResolvedValue(undefined) };
 }
 
 function fakeBoardPort(boards: Record<string, boolean> = { 'board-1': true }) {
@@ -57,6 +62,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: gateway,
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -75,6 +81,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: fakeGateway(),
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -89,6 +96,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: fakeGateway(),
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -103,6 +111,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: fakeGateway(),
             retrospectiveBoardPort: fakeBoardPort({}),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -117,6 +126,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: fakeGateway(),
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -137,6 +147,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: gateway,
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -150,6 +161,37 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
         expect(gateway.unregister).toHaveBeenCalledTimes(1);
     });
 
+    // 058, CI triage (e2e/retrospective-board.spec.ts:1092, "typing indicator clears
+    // for the other participant when a participant disconnects while marked as
+    // typing"): clearing a disconnected participant's typing indicator for everyone
+    // else previously depended entirely on the server's TTL sweep (FirestoreRealtime-
+    // GatewayAdapter's event-driven setTimeout) actually firing within the test's
+    // window — timing-dependent and only as fast as that timer, which has no margin
+    // against a loaded CI runner delaying it. The server already knows the uid and
+    // already reacts synchronously to a clean WebSocket close (gateway.unregister
+    // above) — this proactively clears that uid's typing status on the same event, as
+    // a fast path ahead of the TTL sweep rather than instead of it.
+    it('clears the disconnecting participant\'s typing status for every column on close', async () => {
+        const typingStatusPort = fakeTypingStatusPort();
+        const { server, url } = await startServer({
+            sessionService: fakeSessionService(),
+            clock: { nowSeconds: () => 0 },
+            realtimeGateway: fakeGateway(),
+            retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort,
+        });
+        activeServer = server;
+
+        const ws = new WebSocket(`${url}/api/retrospectives/board-1/live`, { headers: { Cookie: 'rr_session=session-u1' } });
+        await new Promise<void>((resolve) => ws.on('open', () => resolve()));
+        ws.close();
+        await new Promise<void>((resolve) => ws.on('close', () => resolve()));
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+
+        expect(typingStatusPort.clearAllForUser).toHaveBeenCalledTimes(1);
+        expect(typingStatusPort.clearAllForUser).toHaveBeenCalledWith('board-1', 'u1');
+    });
+
     // 045-idle-connection-cleanup, US5/FR-007.
     it('closes with 4401 when the session is cryptographically valid but past its soft TTL', async () => {
         const { server, url } = await startServer({
@@ -157,6 +199,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
             clock: { nowSeconds: () => 0 },
             realtimeGateway: fakeGateway(),
             retrospectiveBoardPort: fakeBoardPort(),
+            typingStatusPort: fakeTypingStatusPort(),
         });
         activeServer = server;
 
@@ -184,6 +227,7 @@ describe('GET /api/retrospectives/:id/live (WebSocket upgrade)', () => {
                 clock: { nowSeconds: () => 0 },
                 realtimeGateway: gateway,
                 retrospectiveBoardPort: fakeBoardPort(),
+                typingStatusPort: fakeTypingStatusPort(),
                 heartbeatIntervalMs: 20,
                 maxMissedHeartbeats: 2,
             });

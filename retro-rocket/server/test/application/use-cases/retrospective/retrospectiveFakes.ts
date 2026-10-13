@@ -527,6 +527,9 @@ export function createRetrospectiveFakeStore(seed: {
             // FirestoreTypingStatusAdapter.ts's doc comment for why the real TTL/sweep
             // logic lives in FirestoreRealtimeGatewayAdapter instead.
         },
+        async clearAllForUser() {
+            // Same rationale as setTypingStatus above — not asserted on by any fake test.
+        },
     };
 
     return {
