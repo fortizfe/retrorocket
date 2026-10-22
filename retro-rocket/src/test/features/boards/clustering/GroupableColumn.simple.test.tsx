@@ -50,6 +50,22 @@ vi.mock('@/features/boards/retrospective/components/DragDropColumn', () => ({
     ))
 }));
 
+// spec 059 (T033): modes none/suggestions now render the interleaved ColumnItemList instead
+// of GroupedCardList. Its real children (SortableCard -> DraggableCard) need dnd/lucide
+// pieces this file deliberately mocks away, so a stand-in keeps the old observable markers:
+// one `ungrouped-card` per ungrouped card and one `group-card` per group.
+vi.mock('@/features/boards/clustering/components/ColumnItemList', () => ({
+    default: ({ items = [] }: { items?: any[] }) => (
+        <div data-testid="column-item-list">
+            {items.map((item: any) => (
+                <div key={item.id} data-testid={item.kind === 'group' ? 'group-card' : 'ungrouped-card'}>
+                    {item.kind === 'group' ? item.group.title : item.card.content}
+                </div>
+            ))}
+        </div>
+    ),
+}));
+
 // Mock GroupedCardList
 vi.mock('@/features/boards/clustering/components/GroupedCardList', () => ({
     default: vi.fn(({ groupedCards = {} }: { groupedCards?: any }) => {
@@ -223,7 +239,7 @@ describe('GroupableColumn Simple Tests', () => {
 
             render(<GroupableColumn {...mockProps} groups={groups} />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
     });
 
@@ -255,7 +271,7 @@ describe('GroupableColumn Simple Tests', () => {
 
             render(<GroupableColumn {...mockProps} groups={groups} />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
     });
 
@@ -318,7 +334,7 @@ describe('GroupableColumn Simple Tests', () => {
 
             render(<GroupableColumn {...mockProps} cards={cards} groups={groups} />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
             expect(screen.getAllByTestId('group-card')).toHaveLength(1);
         });
     });
@@ -389,7 +405,7 @@ describe('GroupableColumn Simple Tests', () => {
             const end = performance.now();
 
             expect(end - start).toBeLessThan(100);
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
     });
 });

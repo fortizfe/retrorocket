@@ -57,6 +57,18 @@ export interface GroupSuggestion {
     suggestedTitle: string;  // Short (<=35 char), non-empty, AI-derived title (spec 047)
 }
 
+// Target of a card move (spec 059)
+export type MoveTarget =
+    | { kind: 'position'; order: number }
+    | { kind: 'card'; cardId: string }
+    | { kind: 'group'; groupId: string };
+
+// Result of a card move (spec 059)
+export interface MoveCardResult {
+    createdGroupId?: string;
+    dissolvedGroupIds: string[];
+}
+
 // Card group entity
 export interface CardGroup {
     id: string;
@@ -69,6 +81,7 @@ export interface CardGroup {
     createdAt: Date;
     createdBy: string;
     order: number;           // Group order in column
+    origin?: 'manual' | 'suggestion'; // Absent = legacy suggestion group (spec 059 FR-033)
 
     // Calculated aggregations
     totalVotes?: number;     // Sum of votes from all cards

@@ -57,7 +57,12 @@ follow-ups.
   reload required.
 
 ### 🔗 Card Grouping & AI-Assisted Suggestions
-- **Manual grouping**: drag and drop a card onto another to form a group.
+- **Manual grouping**: hold a card over the middle of another card in the same
+  column until it shows "Drop to group" to form a group (drop on the top or bottom
+  edge to reorder instead). Add cards to a group, drag them out or into another
+  group, and click a group's title to rename it. Also works without a mouse
+  ("Group with…" / "Move to group…" buttons, or keyboard drag with Space, the
+  arrow keys and G). Turned off in "Group by user" mode.
 - **Group suggestions**: AI-assisted clustering proposes related cards to
   group together, each with an editable, AI-generated group title.
 - **Group heads & hierarchy**: designate a lead card; clear visual indentation.

@@ -12,6 +12,8 @@ import LikeButton from '@/features/boards/retrospective/components/LikeButton';
 import EmojiReactions from '@/features/boards/retrospective/components/EmojiReactions';
 import CardMenu from '@/features/boards/retrospective/components/CardMenu';
 import OwnerActionMenu from '@/features/boards/retrospective/components/OwnerActionMenu';
+import { CardGroupingMenu } from '@/features/boards/clustering/components/CardGroupingMenu';
+import { useOptionalColumnGroupingContext } from '@/features/boards/clustering/dnd/ColumnGroupingContext';
 import { SentimentBadge, useSentimentContext } from '@/features/boards/sentiment';
 import { useLanguage } from '@/lib/hooks/useLanguage';
 import { Card as CardType, EmojiReaction, CardColor } from '@/features/boards/types/card';
@@ -210,6 +212,17 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
     const isOwner = currentUser === card.createdBy;
     const canEditCard = canEdit && isOwner;
 
+    // 059 US5 (T060): the "Group with…" / "Move to group…" picker is for every participant.
+    // The context is optional: a card rendered outside a column (DragOverlay, standalone) has
+    // none and gets no picker. A grouped card always has a candidate ("Remove from group").
+    const columnGrouping = useOptionalColumnGroupingContext();
+    const canGroup =
+        !!columnGrouping &&
+        columnGrouping.groupingEnabled &&
+        (!!card.groupId ||
+            columnGrouping.groups.length > 0 ||
+            columnGrouping.ungroupedCards.some((c) => c.id !== card.id));
+
     // Sentiment badge — shown via the SINGLE confidence rule (F3), so a badge on the
     // board is counted identically by the sentiment counts and the team-mood report.
     const sentimentBadge = React.useMemo(() => {
@@ -240,6 +253,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
             data-testid="draggable-card"
             tabIndex={-1}
             data-card-focus-target
+            data-card-id={card.id}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
@@ -279,7 +293,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                         {...dragHandleProps.attributes}
                                         {...dragHandleProps.listeners}
                                         aria-label={t('retrospective.card.dragHandle')}
-                                        className="cursor-grab active:cursor-grabbing text-text-muted rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                        className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-6 md:min-w-6 cursor-grab active:cursor-grabbing text-text-muted rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                     >
                                         <GripVertical size={14} />
                                     </button>
@@ -352,7 +366,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                         canSave={!!editContent.trim()}
                         onSave={handleSaveEdit}
                         onCancel={handleCancelEdit}
-                        actions={!isEditing && (canEditCard || (canConvertToAction && onConvertToAction)) ? (
+                        actions={!isEditing && (canEditCard || (canConvertToAction && onConvertToAction) || canGroup) ? (
                             // Always visible — never hover-only (research.md §3, FR-012),
                             // same defect class already fixed in CardFooter's edit/delete row.
                             // Order: OwnerActionMenu (058-card-owner-action-hub, contracts
@@ -379,6 +393,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
                                         onConvertToAction={onConvertToAction}
                                     />
                                 )}
+                                {canGroup && <CardGroupingMenu sourceCard={card} />}
                             </div>
                         ) : undefined}
                     />

@@ -157,3 +157,61 @@ describe('card swatch palette WCAG 2.1 AA', () => {
         });
     }
 });
+
+/**
+ * T052 (059-drag-to-group-cards): group title editor + armed-feedback contrast.
+ *
+ * Compositing: there is no existing alpha-compositing helper, so the group header
+ * (`bg-surface-raised/80 backdrop-blur-sm`) is modelled as 80% surface-raised over
+ * the head card's colour. The head card colour is unknown at test time, so we take
+ * the WORST CASE across all 15 card backgrounds (same approach as the 058 owner
+ * trigger tests). The blend is plain per-channel alpha math, not contrast math;
+ * contrastRatio is reused for all ratios.
+ */
+const HEADER_ALPHA = 0.8;
+
+function compositeOver(fg: string, bg: string, alpha: number): string {
+    const f = fg.split(' ').map(Number);
+    const b = bg.split(' ').map(Number);
+    return f.map((c, i) => Math.round(c * alpha + b[i] * (1 - alpha))).join(' ');
+}
+
+function minOver(values: Array<{ fg: string; bg: string }>): number {
+    return Math.min(...values.map(({ fg, bg }) => contrastRatio(fg, bg)));
+}
+
+describe('group title editor and armed feedback WCAG 2.1 AA (T052)', () => {
+    for (const dark of [false, true]) {
+        const theme = dark ? 'dark' : 'light';
+        const pick = (n: TokenName) => TOKENS[n][theme];
+        const headerBgs = Object.values(CARD_COLORS).map((c) =>
+            compositeOver(pick('surface-raised'), bgForSwatch(c.background, dark), HEADER_ALPHA),
+        );
+
+        describe(theme, () => {
+            it('title text-primary on header (surface-raised/80 over every card colour) >= 4.5:1', () => {
+                const worst = minOver(headerBgs.map((bg) => ({ fg: pick('text-primary'), bg })));
+                expect(worst).toBeGreaterThanOrEqual(4.5);
+            });
+            it('title text-primary on opaque input surface-raised >= 4.5:1', () => {
+                expect(contrastRatio(pick('text-primary'), pick('surface-raised'))).toBeGreaterThanOrEqual(4.5);
+            });
+            it('focus ring vs header (worst case over card colours) >= 3:1', () => {
+                const worst = minOver(headerBgs.map((bg) => ({ fg: pick('focus'), bg })));
+                expect(worst).toBeGreaterThanOrEqual(3);
+            });
+            it('focus ring vs surface-raised input >= 3:1', () => {
+                expect(contrastRatio(pick('focus'), pick('surface-raised'))).toBeGreaterThanOrEqual(3);
+            });
+            it('armed ring (ring-action) vs surface >= 3:1', () => {
+                expect(contrastRatio(pick('action'), pick('surface'))).toBeGreaterThanOrEqual(3);
+            });
+            it('insertion line (bg-action 2px) vs surface >= 3:1', () => {
+                expect(contrastRatio(pick('action'), pick('surface'))).toBeGreaterThanOrEqual(3);
+            });
+            it('badge text-inverse on bg-action >= 4.5:1', () => {
+                expect(contrastRatio(pick('text-inverse'), pick('action'))).toBeGreaterThanOrEqual(4.5);
+            });
+        });
+    }
+});

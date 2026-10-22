@@ -18,7 +18,7 @@ import { createCard, editCard, deleteCard } from '../../application/use-cases/re
 import { voteCard, toggleLike, setReaction, removeReaction } from '../../application/use-cases/retrospective/CardInteractions';
 import { setTypingStatus } from '../../application/use-cases/retrospective/SetTypingStatus';
 import { reorderCards } from '../../application/use-cases/retrospective/ReorderCards';
-import { createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, saveColumnGroupingState } from '../../application/use-cases/retrospective/CardGrouping';
+import { createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, updateCardGroup, moveCard, renormalizeColumnOrder, saveColumnGroupingState } from '../../application/use-cases/retrospective/CardGrouping';
 import { configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer } from '../../application/use-cases/retrospective/Timer';
 import { setAnonymity } from '../../application/use-cases/retrospective/Anonymity';
 import { createNote, editNote, deleteNote } from '../../application/use-cases/retrospective/FacilitatorNotes';
@@ -309,7 +309,7 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
 
     router.post('/api/retrospectives/:id/groups', async (req: Request, res: Response) => {
         const session = await requireSession(req, deps);
-        const body = req.body as { headCardId?: unknown; memberCardIds?: unknown; title?: unknown };
+        const body = req.body as { headCardId?: unknown; memberCardIds?: unknown; title?: unknown; origin?: unknown };
         const created = await createCardGroup(
             { cardGroupPort: deps.cardGroupPort, cardPort: deps.cardPort },
             {
@@ -317,6 +317,8 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
                 headCardId: String(body.headCardId ?? ''),
                 memberCardIds: Array.isArray(body.memberCardIds) ? (body.memberCardIds as string[]) : [],
                 title: typeof body.title === 'string' ? body.title : undefined,
+                // Validated by the use case (P1); an unknown value surfaces as 400 rather than being dropped.
+                origin: body.origin as import('../../application/ports/cards').GroupOrigin | undefined,
                 createdBy: session.sub,
             },
         );
@@ -325,9 +327,39 @@ export function retrospectiveRouter(deps: RetrospectiveRouterDeps): Router {
 
     router.patch('/api/groups/:id', async (req: Request, res: Response) => {
         await requireSession(req, deps);
-        const body = req.body as { isCollapsed?: unknown };
-        const updated = await setGroupCollapse({ cardGroupPort: deps.cardGroupPort }, { groupId: String(req.params.id), isCollapsed: body.isCollapsed === true });
+        // Spec 059 C3: partial update — only the fields present are applied; the use case validates types.
+        const body = (req.body ?? {}) as { isCollapsed?: unknown; title?: unknown };
+        const updated = await updateCardGroup(
+            { cardGroupPort: deps.cardGroupPort },
+            { groupId: String(req.params.id), isCollapsed: body.isCollapsed as boolean | undefined, title: body.title as string | null | undefined },
+        );
         res.status(200).json(serializeGroup(updated));
+    });
+
+    // Spec 059 C0: the single atomic move behind every drag drop and keyboard grouping menu.
+    router.post('/api/retrospectives/:id/cards/:cardId/move', async (req: Request, res: Response) => {
+        await requireSession(req, deps);
+        const body = (req.body ?? {}) as { target?: unknown };
+        const result = await moveCard(
+            { cardGroupPort: deps.cardGroupPort },
+            { retrospectiveId: String(req.params.id), cardId: String(req.params.cardId), target: body.target as import('../../application/ports/cards').MoveTarget },
+        );
+        res.status(200).json(result);
+    });
+
+    // Spec 059 C4: renormalise one column's order space when the client's precision guard trips.
+    router.post('/api/retrospectives/:id/column-order', async (req: Request, res: Response) => {
+        await requireSession(req, deps);
+        const body = (req.body ?? {}) as { columnId?: unknown; items?: unknown };
+        await renormalizeColumnOrder(
+            { cardGroupPort: deps.cardGroupPort },
+            {
+                retrospectiveId: String(req.params.id),
+                columnId: typeof body.columnId === 'string' ? body.columnId : '',
+                items: body.items as import('../../application/ports/cards').ColumnOrderItem[],
+            },
+        );
+        res.status(204).end();
     });
 
     router.delete('/api/groups/:id', async (req: Request, res: Response) => {

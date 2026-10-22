@@ -103,6 +103,8 @@ module.exports = {
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
+        'drop-arm-in': 'fadeIn 150ms cubic-bezier(0.23, 1, 0.32, 1)',
+        'drop-badge-in': 'dropBadgeIn 150ms cubic-bezier(0.23, 1, 0.32, 1)',
         'slide-up': 'slideUp 0.3s ease-out',
         'slide-down': 'slideDown 0.3s ease-out',
         'bounce-gentle': 'bounce 2s infinite',
@@ -110,6 +112,10 @@ module.exports = {
         'float': 'float 3s ease-in-out infinite',
       },
       keyframes: {
+        dropBadgeIn: {
+          '0%': { transform: 'scale(0.9)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

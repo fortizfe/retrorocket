@@ -10,16 +10,24 @@ import TextareaWithEmoji from '@/lib/components/ui/TextareaWithEmoji';
 import ColorPicker from '@/lib/components/ui/ColorPicker';
 import TypingPreview from '@/lib/components/ui/TypingPreview';
 import { GroupCard } from '@/features/boards/clustering/components/GroupCard';
+import ColumnItemList from '@/features/boards/clustering/components/ColumnItemList';
+import ColumnDndProvider from '@/features/boards/clustering/dnd/ColumnDndProvider';
+import { ColumnGroupingContext } from '@/features/boards/clustering/dnd/ColumnGroupingContext';
+import type { ColumnGroupingContextValue } from '@/features/boards/clustering/dnd/ColumnGroupingContext';
+import { buildColumnItems, computeOrder as computeColumnOrder } from '@/features/boards/clustering/dnd/columnOrder';
+import type { ColumnItem, Placement } from '@/features/boards/clustering/dnd/columnOrder';
 import ColumnHeaderMenu from '@/features/boards/clustering/components/ColumnHeaderMenu';
 import GroupedCardList from '@/features/boards/clustering/components/GroupedCardList';
 import { useTypingContext } from '@/features/boards/retrospective/contexts/useTypingContext';
 import { useLanguage } from '@/lib/hooks/useLanguage';
-import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
+import { Card as CardType, CreateCardInput, EmojiReaction, CardColor, CardGroup, GroupSuggestion, MoveTarget, MoveCardResult } from '@/features/boards/types/card';
 import { DynamicColumnConfig } from '@/features/boards/retrospective/hooks/useRetrospectiveColumns';
 import { getCardStyling, getDefaultColor } from '@/lib/utils/cardColors';
 import { useColumnGrouping } from '@/features/boards/clustering/hooks/useColumnGrouping';
 import { GroupingCriteria, ColumnGroupingStatesStore } from '@/features/boards/types/columnGrouping';
 import { Participant } from '@/features/boards/types/participant';
+import { GroupingConflictError } from '@/features/boards/clustering/hooks/useCardGroups';
+import type { ColumnOrderEntry } from '@/features/boards/clustering/hooks/useCardGroups';
 import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
 interface GroupableColumnProps {
@@ -39,6 +47,12 @@ interface GroupableColumnProps {
     onGroupToggleCollapse: (groupId: string) => Promise<void>;
     onCardRemoveFromGroup: (cardId: string) => Promise<void>;
     onSuggestionGenerate: () => Promise<GroupSuggestion[]>;
+    /** Single-write move (reorder now; group/ungroup in the grouping stories). Spec 059. */
+    onCardMove: (cardId: string, target: MoveTarget) => Promise<MoveCardResult | void>;
+    /** Inline group-title rename (`null` clears back to the default title). Spec 059. */
+    onGroupRename: (groupId: string, title: string | null) => Promise<void>;
+    /** Precision-guard renormalisation of the whole column's order (spec 059, research §14). */
+    onColumnRenormalize: (columnId: string, items: ColumnOrderEntry[]) => Promise<void>;
     currentUser?: string;
     retrospectiveId: string;
     /** Sourced from useRetrospectiveRealtimeSync's board state (feature 019, US4). */
@@ -66,6 +80,9 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
     onGroupToggleCollapse,
     onCardRemoveFromGroup,
     onSuggestionGenerate,
+    onCardMove,
+    onGroupRename,
+    onColumnRenormalize,
     currentUser,
     retrospectiveId,
     columnGroupingStates,
@@ -285,7 +302,82 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
 
     const totalItems = ungroupedCards.length + columnGroups.length;
 
+    // --- Drag/grouping orchestration (spec 059, T033) -------------------------------------
+    // Grouping is a mode-`none`/`suggestions` capability: in `user` mode cards stay in their
+    // author sections and only reorder inside them (B8, FR-010).
+    const groupingEnabled = displayGroupingCriteria !== 'user';
+    const columnItems = React.useMemo(
+        () => buildColumnItems(cards, groups, column.id),
+        [cards, groups, column.id],
+    );
+    const [pendingEditGroupId, setPendingEditGroupId] = useState<string | null>(null);
+    const consumePendingEdit = React.useCallback(() => setPendingEditGroupId(null), []);
+
+    // A started-but-unfinished renormalisation; requestMove awaits it so the placement is
+    // always written AFTER the column has been respaced (B9).
+    const renormalizeRef = useRef<Promise<void> | null>(null);
+
+    const computeOrder = React.useCallback((placement: Placement): number => {
+        const result = computeColumnOrder(columnItems, placement);
+        if ('order' in result) return result.order;
+
+        const pending = Promise.resolve(onColumnRenormalize(column.id, result.renormalize));
+        pending.catch(() => { /* surfaced to the caller through requestMove's await */ });
+        renormalizeRef.current = pending;
+
+        // The midpoint is computed on the respaced column the server will hold.
+        const respaced = new Map(result.renormalize.map(entry => [`${entry.kind}:${entry.id}`, entry.order]));
+        const renormalized: ColumnItem[] = columnItems.map((item): ColumnItem => {
+            const order = respaced.get(item.id);
+            if (order === undefined) return item;
+            return item.kind === 'card'
+                ? { ...item, card: { ...item.card, order } }
+                : { ...item, group: { ...item.group, order } };
+        });
+        const again = computeColumnOrder(renormalized, placement);
+        return 'order' in again ? again.order : 0;
+    }, [columnItems, onColumnRenormalize, column.id]);
+
+    const requestMove = React.useCallback(async (sourceCardId: string, target: MoveTarget): Promise<MoveCardResult | void> => {
+        // B8 backstop: in the displayed mode `user` nothing may be grouped, whatever the
+        // caller (drag, menu, stale closure). A plain position move is still allowed.
+        if (!groupingEnabled && (target.kind === 'card' || target.kind === 'group')) return;
+        const pending = renormalizeRef.current;
+        renormalizeRef.current = null;
+        if (pending) await pending;
+        try {
+            const result = await onCardMove(sourceCardId, target);
+            // Only a drop that created a group opens its title for editing, and only here:
+            // the other clients learn of the group through the board sync, never this state.
+            if (result && result.createdGroupId) setPendingEditGroupId(result.createdGroupId);
+            return result;
+        } catch (error) {
+            // X1: someone else changed the card or group first. Non-blocking; the board
+            // keeps showing server truth. The provider announces it to screen readers.
+            if (error instanceof GroupingConflictError) toast.error(t('retrospective.dragGroup.conflict'));
+            throw error;
+        }
+    }, [onCardMove, t, groupingEnabled]);
+
+    const groupingContext = React.useMemo<ColumnGroupingContextValue>(() => ({
+        columnId: column.id,
+        groupingEnabled,
+        items: columnItems,
+        groups: columnGroups,
+        ungroupedCards,
+        armedTargetId: null,
+        insertionLine: null,
+        busyTargetId: null,
+        pendingEditGroupId,
+        consumePendingEdit,
+        requestMove,
+        computeOrder,
+        // columnGroups/ungroupedCards are derived each render from cards/groups/column.id.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [column.id, groupingEnabled, columnItems, groups, cards, pendingEditGroupId, consumePendingEdit, requestMove, computeOrder]);
+
     return (
+        <ColumnGroupingContext.Provider value={groupingContext}>
         <div className="flex flex-col h-full min-w-0" data-card-column>
             {/* Column Header — no background of its own: this column already sits
                 inside RetrospectiveBoard.tsx's translucent, role-tinted gradient
@@ -329,6 +421,23 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         excludeUserGrouping={isAnonymousBoard}
                         onGroupingChange={(criteria: GroupingCriteria) => {
                             const previousCriteria = columnState.criteria;
+
+                            // FR-033 safeguard (spec 059, T074): leaving AI suggestions undoes
+                            // EVERY group in the column, including hand-made ones, so ask first
+                            // and persist nothing on cancel. window.confirm is kept on purpose:
+                            // natively keyboard/screen-reader operable and the same idiom as
+                            // GroupCard's disband confirm (apple-design: a destructive,
+                            // rare, interrupting decision earns a modal; legacy groups without
+                            // `origin` are treated as suggestion groups and do not trigger it).
+                            if (
+                                previousCriteria === 'suggestions' &&
+                                criteria !== previousCriteria &&
+                                columnGroups.some((g) => g.origin === 'manual') &&
+                                !window.confirm(t('retrospective.grouping.confirmTeardown', { count: columnGroups.length }))
+                            ) {
+                                return;
+                            }
+
                             setGroupingCriteria(column.id, criteria);
 
                             // Handle special grouping modes
@@ -365,8 +474,8 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                 </div>
             </div>
 
-            {/* Cards Container */}
-            <div className="flex-1 space-y-0 overflow-y-auto">
+            {/* Cards Container — also the column's catch-all droppable (ColumnDndProvider). */}
+            <ColumnDndProvider className="flex-1 space-y-0 overflow-y-auto" onCardsReorder={onCardsReorder}>
                 {/* New Card Form */}
                 <AnimatePresence>
                     {isCreating && (
@@ -439,52 +548,80 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                     isAnonymous={isAnonymousBoard}
                 />
 
-                {/* Groups — AnimatePresence must directly parent this list for a disbanded
-                    group to exit-animate (design audit finding, spec 028; same class as
-                    DAF-001). */}
-                <AnimatePresence>
-                    {columnGroups.map(group => {
-                        const groupCards = cards.filter(card =>
-                            card.id === group.headCardId || group.memberCardIds.includes(card.id)
-                        );
+                {displayGroupingCriteria === 'user' ? (
+                    <>
+                        {/* Mode user: groups above the author sections, as before. AnimatePresence
+                            must directly parent this list for a disbanded group to exit-animate
+                            (design audit finding, spec 028; same class as DAF-001). */}
+                        <AnimatePresence>
+                            {[...columnGroups].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(group => {
+                                const groupCards = cards.filter(card =>
+                                    card.id === group.headCardId || group.memberCardIds.includes(card.id)
+                                );
 
-                        return (
-                            <div key={group.id} className="mb-3">
-                                <GroupCard
-                                    group={group}
-                                    cards={groupCards}
-                                    onToggleCollapse={onGroupToggleCollapse}
-                                    onDisbandGroup={onGroupDisband}
-                                    onRemoveCardFromGroup={onCardRemoveFromGroup}
-                                    onCardUpdate={onCardUpdate}
-                                    onCardVote={onCardVote}
-                                    onCardLike={onCardLike}
-                                    onCardReaction={onCardReaction}
-                                    onCardReactionRemove={onCardReactionRemove}
-                                    currentUserId={currentUser}
-                                    isReadOnly={false}
-                                />
-                            </div>
-                        );
-                    })}
-                </AnimatePresence>
+                                return (
+                                    <div key={group.id} className="mb-3">
+                                        <GroupCard
+                                            group={group}
+                                            cards={groupCards}
+                                            onToggleCollapse={onGroupToggleCollapse}
+                                            onDisbandGroup={onGroupDisband}
+                                            onRemoveCardFromGroup={onCardRemoveFromGroup}
+                                            onCardUpdate={onCardUpdate}
+                                            onCardVote={onCardVote}
+                                            onCardLike={onCardLike}
+                                            onCardReaction={onCardReaction}
+                                            onCardReactionRemove={onCardReactionRemove}
+                                            currentUserId={currentUser}
+                                            isReadOnly={false}
+                                            autoEditTitle={pendingEditGroupId === group.id}
+                                            onAutoEditConsumed={consumePendingEdit}
+                                            onRenameGroup={onGroupRename}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </AnimatePresence>
 
-                {/* Ungrouped Cards with New Grouping */}
-                <GroupedCardList
-                    groupedCards={processedUngroupedCards}
-                    groupBy={displayGroupingCriteria}
-                    onCardUpdate={onCardUpdate}
-                    onCardDelete={onCardDelete}
-                    onCardVote={onCardVote}
-                    onCardLike={onCardLike}
-                    onCardReaction={onCardReaction}
-                    onCardReactionRemove={onCardReactionRemove}
-                    onCardsReorder={onCardsReorder}
-                    currentUser={currentUser}
-                    participants={participants}
-                    canConvertToAction={canConvertToAction}
-                    onConvertToAction={onConvertToAction}
-                />
+                        {/* Author sections: reorder stays confined to each section (B8). */}
+                        <GroupedCardList
+                            groupedCards={processedUngroupedCards}
+                            groupBy={displayGroupingCriteria}
+                            onCardUpdate={onCardUpdate}
+                            onCardDelete={onCardDelete}
+                            onCardVote={onCardVote}
+                            onCardLike={onCardLike}
+                            onCardReaction={onCardReaction}
+                            onCardReactionRemove={onCardReactionRemove}
+                            onCardsReorder={onCardsReorder}
+                            currentUser={currentUser}
+                            participants={participants}
+                            canConvertToAction={canConvertToAction}
+                            onConvertToAction={onConvertToAction}
+                        />
+                    </>
+                ) : (
+                    /* Modes none/suggestions: groups and ungrouped cards interleaved in one
+                       sortable list (FR-034/FR-035). */
+                    <ColumnItemList
+                        items={columnItems}
+                        cards={columnCards}
+                        onCardUpdate={onCardUpdate}
+                        onCardDelete={onCardDelete}
+                        onCardVote={onCardVote}
+                        onCardLike={onCardLike}
+                        onCardReaction={onCardReaction}
+                        onCardReactionRemove={onCardReactionRemove}
+                        currentUser={currentUser}
+                        participants={participants}
+                        canConvertToAction={canConvertToAction}
+                        onConvertToAction={onConvertToAction}
+                        onGroupToggleCollapse={onGroupToggleCollapse}
+                        onGroupDisband={onGroupDisband}
+                        onCardRemoveFromGroup={onCardRemoveFromGroup}
+                        onRenameGroup={onGroupRename}
+                    />
+                )}
 
                 {/* Empty State */}
                 <AnimatePresence>
@@ -514,8 +651,9 @@ const GroupableColumn: React.FC<GroupableColumnProps> = ({
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div>
+            </ColumnDndProvider>
         </div>
+        </ColumnGroupingContext.Provider>
     );
 };
 

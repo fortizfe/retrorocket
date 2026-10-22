@@ -129,7 +129,10 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
         disbandGroup,
         removeFromGroup,
         toggleGroupCollapse,
-        findSuggestions
+        findSuggestions,
+        moveCard,
+        renameGroup,
+        renormalizeColumn
     } = useCardGroups({
         retrospectiveId: retrospective.id,
         cards,
@@ -291,6 +294,9 @@ const RetrospectiveBoard: React.FC<RetrospectiveBoardProps> = ({
                                     onGroupDisband={disbandGroup}
                                     onGroupToggleCollapse={toggleGroupCollapse}
                                     onCardRemoveFromGroup={removeFromGroup}
+                                    onCardMove={moveCard}
+                                    onGroupRename={renameGroup}
+                                    onColumnRenormalize={renormalizeColumn}
                                     onSuggestionGenerate={() => findSuggestions(column.id, {
                                         // 0.6 was tuned for the removed blended
                                         // Levenshtein/Jaccard text score; cosine

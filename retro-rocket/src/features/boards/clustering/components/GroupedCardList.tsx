@@ -108,7 +108,10 @@ const GroupedCardList: React.FC<GroupedCardListProps> = ({
 
                             {/* Cards in this group */}
                             <div className="pl-6 border-l-2 border-border-default">
+                                {/* `section:<author>` id: the column's ColumnDndProvider confines
+                                    reorders to this container (spec 059, B8). */}
                                 <DragDropColumn
+                                    id={`section:${groupName}`}
                                     cards={cardsInGroup}
                                     column={cardsInGroup[0]?.column || 'what-went-well'} // Use column from first card or default
                                     onCardUpdate={onCardUpdate}
