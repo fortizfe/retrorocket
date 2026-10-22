@@ -10,6 +10,10 @@
  * regardless of which operation triggered it.
  */
 
+import type { MoveTarget, MoveCardResult } from '@/features/boards/types/card';
+
+export type { MoveTarget, MoveCardResult };
+
 const RETROSPECTIVES = '/api/retrospectives';
 const CARDS = '/api/cards';
 const GROUPS = '/api/groups';
@@ -84,6 +88,8 @@ export interface CardGroup {
     createdAt: Date;
     createdBy: string;
     order: number;
+    /** Absent = legacy suggestion group (spec 059). */
+    origin?: 'manual' | 'suggestion';
 }
 
 export interface ActionItem {
@@ -426,6 +432,38 @@ export async function createCardGroup(retrospectiveId: string, params: CreateCar
 export async function setGroupCollapse(groupId: string, isCollapsed: boolean): Promise<CardGroup> {
     const dto = await requestJson<CardGroupDTO>(`${GROUPS}/${encodeURIComponent(groupId)}`, 'PATCH', { isCollapsed });
     return cardGroupFromDTO(dto);
+}
+
+export interface CardGroupPatch {
+    /** `null` (or blank) clears the stored title so the localized default shows. */
+    title?: string | null;
+    isCollapsed?: boolean;
+}
+
+/** PATCH /api/groups/:id — partial update; only the provided fields are applied (spec 059, C3). */
+export async function updateCardGroup(groupId: string, patch: CardGroupPatch): Promise<CardGroup> {
+    const dto = await requestJson<CardGroupDTO>(`${GROUPS}/${encodeURIComponent(groupId)}`, 'PATCH', patch);
+    return cardGroupFromDTO(dto);
+}
+
+/** POST /api/retrospectives/:id/cards/:cardId/move — single atomic move: reorder, group or ungroup (spec 059, C0). */
+export async function moveCard(retrospectiveId: string, cardId: string, target: MoveTarget): Promise<MoveCardResult> {
+    return requestJson<MoveCardResult>(
+        `${RETROSPECTIVES}/${encodeURIComponent(retrospectiveId)}/cards/${encodeURIComponent(cardId)}/move`,
+        'POST',
+        { target },
+    );
+}
+
+export interface ColumnOrderItem {
+    kind: 'card' | 'group';
+    id: string;
+    order: number;
+}
+
+/** POST /api/retrospectives/:id/column-order — renormalize one column's order space in one transaction (spec 059, C4). */
+export async function renormalizeColumnOrder(retrospectiveId: string, columnId: string, items: ColumnOrderItem[]): Promise<void> {
+    await requestJson<void>(`${RETROSPECTIVES}/${encodeURIComponent(retrospectiveId)}/column-order`, 'POST', { columnId, items });
 }
 
 /** DELETE /api/groups/:id — disband (FR-011). */

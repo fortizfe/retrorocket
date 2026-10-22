@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLanguage } from '@/lib/hooks/useLanguage';
 import { exportRetrospectiveToPdf, ExportOptions, RetrospectiveExportData } from '@/features/boards/export/services/pdfExportService';
 import { Retrospective } from '@/features/boards/types/retrospective';
 import { Card, CardGroup } from '@/features/boards/types/card';
@@ -26,6 +27,7 @@ export const useExportPdf = ({
     participants,
     facilitatorNotes
 }: UseExportPdfProps): UseExportPdfReturn => {
+    const { t } = useLanguage();
     const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +44,8 @@ export const useExportPdf = ({
                 cards,
                 groups,
                 participants,
-                facilitatorNotes
+                facilitatorNotes,
+                labels: { defaultGroupTitle: t('retrospective.groupCard.defaultGroupTitle') }
             };
 
             // Default options

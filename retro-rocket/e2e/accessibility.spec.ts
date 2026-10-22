@@ -4,6 +4,15 @@ import { signInWithGoogle, signInAs, createBoard, createBoardViaApi } from './fi
 import { addCardToFirstColumn, cardByContent, openReactionPicker } from './fixtures/board';
 import { registerAndConnectMcpClient, revokeMcpConnectionsForClient } from './fixtures/mcp';
 import { getDisplayNameInput } from './fixtures/profile';
+import {
+    DEFAULT_GROUP_TITLE,
+    HOLD_MS,
+    beginDrag,
+    groupRoot,
+    groupTitleButton,
+    seedGroup,
+    seedGroupingBoard,
+} from './fixtures/cardGrouping';
 
 /**
  * WCAG 2.1 AA audit gate (FR-013 / SC-003).
@@ -1696,5 +1705,123 @@ for (const theme of THEMES) {
         await applyThemeClass(page, theme);
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
         await expectNoViolations(page, `/guide/anonymous-mode (${theme})`);
+    });
+}
+
+// --- Drag-to-group cards (spec 059, T076 / SC-007) ----------------------------------------
+// Armed drop target, inline group-title editor, untitled-group default title, the
+// CardGroupingMenu variants and member drag handles, each scanned in BOTH themes.
+
+/** Seeds a board in 'none' grouping mode and opens it as a distinct participant. */
+async function openGroupingBoardForScan(
+    page: Page,
+    context: import('@playwright/test').BrowserContext,
+    request: import('@playwright/test').APIRequestContext,
+    theme: Theme,
+    tag: string,
+    cards: string[],
+    groups: Array<{ members: string[]; title?: string }> = [],
+): Promise<Awaited<ReturnType<typeof seedGroupingBoard>>> {
+    const board = await seedGroupingBoard(request, `a11y-${tag}-${theme}`, cards, 'none');
+    for (const g of groups) {
+        await seedGroup(request, board.boardId, g.members.map((m) => board.cardIds[m]), g.title);
+    }
+    await forceTheme(page, theme);
+    await signInWithGoogle(page, context);
+    await page.goto(`/retro/${board.boardId}`);
+    await waitForBoardReady(page);
+    await expect(cardByContent(page, cards[0])).toBeVisible({ timeout: 15_000 });
+    await applyThemeClass(page, theme);
+    return board;
+}
+
+for (const theme of THEMES) {
+    test(`armed drop target (mid-drag) has no WCAG 2.1 AA violations (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'armed', ['Armed source card', 'Armed target card']);
+
+        await expect(cardByContent(page, 'Armed target card')).toBeVisible();
+        await page.waitForTimeout(800); // let the board's entrance animations settle: drag geometry is measured once at pick-up
+        const session = await beginDrag(page, cardByContent(page, 'Armed source card'), cardByContent(page, 'Armed target card'), {
+            zone: 'center',
+            holdMs: HOLD_MS,
+        });
+        await expect(page.locator('[data-group-target="armed"]', { hasText: 'Armed target card' })).toBeVisible();
+        await expect(page.getByText('Soltar para agrupar')).toBeVisible();
+        // The overlay is portalled to document.body, outside the themed app root's subtree
+        // assumptions: it must still resolve the active theme's surface, not the light one.
+        const overlayTheme = await page.evaluate(() => {
+            const cards = Array.from(document.querySelectorAll('body > div [data-testid="draggable-card"], [data-testid="draggable-card"]')) as HTMLElement[];
+            const overlay = cards.find((el) => getComputedStyle(el.closest('[style*="position: fixed"]') ?? el).position === 'fixed') ?? cards[cards.length - 1];
+            const bg = (el: HTMLElement | null) => {
+                for (let e: HTMLElement | null = el; e; e = e.parentElement) {
+                    const c = getComputedStyle(e).backgroundColor;
+                    if (c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent') return c;
+                }
+                return 'none';
+            };
+            return { bg: bg(overlay), isDark: document.documentElement.classList.contains('dark'), underBody: !!overlay.closest('body') };
+        });
+        const lum = (rgb: string) => {
+            const m = rgb.match(/\d+(\.\d+)?/g)?.map(Number) ?? [255, 255, 255];
+            return (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255;
+        };
+        expect(overlayTheme.isDark).toBe(theme === 'dark');
+        if (theme === 'dark') expect(lum(overlayTheme.bg), `portalled overlay background ${overlayTheme.bg} should be a dark surface`).toBeLessThan(0.5);
+        await expectNoViolations(page, `armed group target mid-drag (${theme})`);
+        await session.drop();
+    });
+
+    test(`inline group title editor in edit mode has no WCAG 2.1 AA violations (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'editor', ['Editor one', 'Editor two'], [
+            { members: ['Editor one', 'Editor two'], title: 'Named group' },
+        ]);
+
+        await groupTitleButton(page, 'Named group').click();
+        const input = page.getByRole('textbox', { name: 'Título del grupo' });
+        await expect(input).toBeFocused();
+        await expectNoViolations(page, `group title editor, edit mode (${theme})`);
+    });
+
+    test(`untitled group default title keeps >= 4.5:1 contrast and has no violations (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'untitled', ['Untitled one', 'Untitled two'], [
+            { members: ['Untitled one', 'Untitled two'] },
+        ]);
+
+        const titleButton = groupTitleButton(page, DEFAULT_GROUP_TITLE);
+        await expect(titleButton).toBeVisible();
+        await expectNoViolations(page, `untitled group default title (${theme})`);
+        // Explicit axe pass restricted to the title so a failure names the offending node.
+        const results = await new AxeBuilder({ page })
+            .include('h3')
+            .withRules(['color-contrast'])
+            .analyze();
+        expect(results.violations, 'untitled group header contrast').toEqual([]);
+    });
+
+    test(`CardGroupingMenu "Group with…" open has no WCAG 2.1 AA violations (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'menu1', ['Menu one', 'Menu two', 'Menu three'], []);
+        await cardByContent(page, 'Menu one').getByRole('button', { name: /Agrupar con/ }).click();
+        await expect(page.getByRole('listbox', { name: 'Agrupar esta tarjeta con' })).toBeVisible();
+        await expectNoViolations(page, `CardGroupingMenu group-with open (${theme})`);
+    });
+
+    test(`CardGroupingMenu "Move to group…" open has no WCAG 2.1 AA violations (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'menu2', ['Move one', 'Move two', 'Move three'], [
+            { members: ['Move one', 'Move two'], title: 'Move group' },
+        ]);
+        await cardByContent(page, 'Move one').getByRole('button', { name: /Mover a grupo/ }).click();
+        await expect(page.getByRole('listbox', { name: 'Mover esta tarjeta a' })).toBeVisible();
+        await expect(page.getByRole('option', { name: /Quitar del grupo/ })).toBeVisible();
+        await expectNoViolations(page, `CardGroupingMenu move-to-group open (${theme})`);
+    });
+
+        test(`group member drag handles have no WCAG 2.1 AA violations, focused and unfocused (${theme})`, async ({ page, context, request }) => {
+        await openGroupingBoardForScan(page, context, request, theme, 'handles', ['Handle one', 'Handle two'], [
+            { members: ['Handle one', 'Handle two'], title: 'Handle group' },
+        ]);
+        const handles = groupRoot(page, 'Handle group').getByRole('button', { name: 'Mover tarjeta (arrastrar)' });
+        await expect(handles).toHaveCount(2);
+        await handles.last().focus(); // reveals the handle (focus-within) with its focus ring
+        await expectNoViolations(page, `group member drag handles, focused (${theme})`);
     });
 }

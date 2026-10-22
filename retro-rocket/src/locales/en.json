@@ -284,17 +284,22 @@
       "unknownAuthor": "Unknown author",
       "menuTrigger": "Group cards",
       "menuLabel": "Grouping options",
-      "disbandOnSwitchError": "Some groups couldn't be dissolved. Please try again."
+      "disbandOnSwitchError": "Some groups couldn't be dissolved. Please try again.",
+      "confirmTeardown": "Leaving AI suggestions mode will undo the {{count}} groups in this column, including ones created manually. Continue?"
     },
     "groupCard": {
       "confirmUngroupCards": "Are you sure you want to ungroup these {{totalCards}} cards?",
-      "groupOfCards": "Group of {{totalCards}} cards",
       "cardsCount": "{{totalCards}} cards",
       "votesCount": "{{count}} votes",
       "likesCount": "{{count}} likes",
       "ungroupCards": "Ungroup cards",
       "primaryCard": "Primary",
-      "moreCards": "+{{count}} more"
+      "moreCards": "+{{count}} more",
+      "defaultGroupTitle": "New group",
+      "toggleGroup": "Show or hide cards in {{title}}",
+      "renameGroupLabel": "Rename group: {{title}}",
+      "groupTitleInputLabel": "Group title",
+      "renameError": "Couldn't rename the group"
     },
     "likeButton": {
       "likeCard": "Like this card",
@@ -543,6 +548,31 @@
     "anonymous": {
       "indicator": "Anonymous board",
       "indicatorDescription": "Card authors are hidden from every participant while this board is anonymous."
+    },
+    "dragGroup": {
+      "dropToGroup": "Drop to group",
+      "groupWith": "Group with…",
+      "moveToGroup": "Move to group…",
+      "removeFromGroup": "Remove from group",
+      "pickerTitle": "Group this card with",
+      "moveTitle": "Move this card to",
+      "pickerGroupOption": "{{title}} ({{count}} cards)",
+      "conflict": "That card or group changed. Nothing was grouped.",
+      "a11y": {
+        "instructions": "To pick up a card, press Space. Use the arrow keys to move it. Press G to switch between reordering and grouping. Press Space again to drop, or Escape to cancel.",
+        "pickedUp": "Card picked up.",
+        "overTargetGroup": "Over card \"{{label}}\". Drop to create a group with both cards.",
+        "overGroupGroup": "Over group \"{{label}}\". Drop to add the card.",
+        "overTargetReorder": "Position {{position}} of {{total}}.",
+        "ownGroup": "Over its own group. Release to cancel.",
+        "outside": "Outside the column. Release to cancel.",
+        "groupCreated": "Group created.",
+        "addedToGroup": "Added to group \"{{label}}\".",
+        "removedFromGroup": "Card removed from the group.",
+        "groupDissolved": "Group dissolved.",
+        "reordered": "Card moved to position {{position}}.",
+        "cancelled": "Drag cancelled. Card returned to its position."
+      }
     }
   },
   "datePicker": {
@@ -908,7 +938,13 @@
           "\"Group by user\" clusters together the cards written by the same person, and is the default for every column. This option is hidden automatically on anonymous boards, since it would reveal who wrote what — an anonymous column shows the plain list instead, until anonymous mode is turned off again.",
           "\"Suggested groupings\" asks RetroRocket's AI to scan the column's cards and propose clusters of similar or related ideas, each with a suggested title and a similarity score.",
           "For every suggestion you can preview the cards it includes, edit the suggested title, and either create the group or discard the suggestion — nothing is grouped automatically without your confirmation.",
-          "Once a group exists, you can collapse it to save space, remove individual cards from it, or disband the whole group back into separate cards."
+          "Once a group exists, you can collapse it to save space, remove individual cards from it, or disband the whole group back into separate cards.",
+        "You can also group cards by dragging them, with no AI involved. Drag a card and hold it over the middle of another card in the same column until that card lifts and shows \"Drop to group\", then let go. A new group appears in that card's place, with its title ready to type.",
+        "To just reorder instead, drop the card on the top or bottom edge of another card.",
+        "To add a card to an existing group, hold it over the middle of the group until it shows \"Drop to group\". To take a card out of a group, drag it to a spot in the column; to move it to another group, drag it onto that group. A group left with a single card is undone automatically.",
+        "To rename a group, click its title, type a new one, and press Enter to save or Escape to cancel. If you clear the title, it goes back to \"New group\".",
+        "No mouse? Use the card's \"Group with…\" button (or \"Move to group…\" for a card already in a group, which also offers \"Remove from group\") and pick a card or group from the list. You can also drag with the keyboard: press Space to pick a card up, move it with the arrow keys, press G to switch between reordering and grouping, and press Space again to drop it.",
+        "Good to know: dragging only works within the same column, and it is turned off while a column is set to \"Group by user\". If a column has groups you made by hand and you switch it away from \"Suggested groupings\", RetroRocket asks you to confirm first, because switching undoes all of that column's groups."
         ]
       },
       "anonymousMode": {

@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, beforeEach, expect, type Mock } from 'vitest';
+import { vi, describe, it, beforeEach, afterEach, expect, type Mock } from 'vitest';
 import toast from 'react-hot-toast';
 import GroupableColumn from '@/features/boards/clustering/components/GroupableColumn';
-import { Card, CardGroup } from '@/features/boards/types/card';
+import { Card, CardGroup, MoveCardResult } from '@/features/boards/types/card';
+import { GroupingConflictError } from '@/features/boards/clustering/hooks/useCardGroups';
 import { ColumnConfig, Retrospective } from '@/features/boards/types/retrospective';
 import { useBoardData } from '@/features/boards/retrospective/contexts/useBoardData';
 
@@ -150,13 +151,68 @@ vi.mock('@/features/boards/clustering/components/ColumnHeaderMenu', () => ({
 }));
 
 vi.mock('@/features/boards/clustering/components/GroupedCardList', () => ({
-    default: ({ cards, groupBy }: any) => (
+    default: ({ cards, groupBy, onCardsReorder }: any) => (
         <div data-testid="grouped-card-list" data-group-by={groupBy}>
+            {/* spec 059, T028 (B8): lets a test trigger the section-local reorder callback
+                GroupableColumn hands down in mode 'user'. */}
+            <button
+                data-testid="grouped-list-reorder"
+                onClick={() => onCardsReorder?.([{ cardId: 'u2', order: 0, column: 'helped' }])}
+            >
+                reorder-in-section
+            </button>
             {cards?.map((card: any) => (
                 <div key={card.id} data-testid={`card-${card.id}`}>
                     Card: {card.content}
                 </div>
             ))}
+        </div>
+    ),
+}));
+
+// spec 059-drag-to-group-cards, T028 (B8/B9). ColumnDndProvider owns the real DndContext,
+// sensors and intent tracking (covered by its own tests); jsdom cannot simulate dnd-kit
+// pointer drops. So here it is replaced by a stub that CAPTURES the ColumnGroupingContext
+// value GroupableColumn provides, letting tests drive exactly what the provider does on a
+// drop: `ctx.computeOrder(placement)` then `ctx.requestMove(sourceId, target)`.
+// The factory imports the context module lazily so that this file keeps loading (and the
+// pre-existing tests keep running) before the new modules exist.
+const dndHarness = vi.hoisted(() => ({ ctx: { current: null as any } }));
+vi.mock('@/features/boards/clustering/dnd/ColumnDndProvider', async () => {
+    // Path held in a variable on purpose: a literal specifier would make Vite's static
+    // import analysis fail this whole file while the module does not exist yet.
+    const contextModulePath = '@/features/boards/clustering/dnd/ColumnGroupingContext';
+    const { useColumnGroupingContext } = await vi.importActual<any>(contextModulePath);
+    const Stub = ({ children }: any) => {
+        dndHarness.ctx.current = useColumnGroupingContext();
+        return <div data-testid="column-dnd-provider">{children}</div>;
+    };
+    return { ColumnDndProvider: Stub, default: Stub };
+});
+
+// ColumnItemList is covered by ColumnItemList.test.tsx; here it only needs to prove that
+// GroupableColumn renders it in modes none/suggestions and forwards onRenameGroup.
+vi.mock('@/features/boards/clustering/components/ColumnItemList', () => ({
+    default: ({ items, onRenameGroup, onGroupToggleCollapse, onGroupDisband }: any) => (
+        <div data-testid="column-item-list" data-item-ids={(items ?? []).map((i: any) => i.id).join(',')}>
+            <button data-testid="item-list-rename" onClick={() => onRenameGroup?.('g1', 'New title')}>rename</button>
+            {/* The real list renders each group inside its own AnimatePresence boundary
+                (spec 028); this stand-in keeps one so the boundary assertion still holds. */}
+            <div data-testid="animate-presence">
+                {(items ?? []).filter((i: any) => i.kind === 'group').map((i: any) => (
+                    <div
+                        key={i.id}
+                        data-testid="group-card"
+                        data-group-id={i.group.id}
+                        // spec 059 T037: mirrors what the real list does (autoEditTitle = pendingEditGroupId === group.id)
+                        data-auto-edit={String(dndHarness.ctx.current?.pendingEditGroupId === i.group.id)}
+                    >
+                        <span>Group: {i.group.title}</span>
+                        <button onClick={() => onGroupToggleCollapse?.(i.group.id)}>Toggle</button>
+                        <button onClick={() => onGroupDisband?.(i.group.id)}>Disband</button>
+                    </div>
+                ))}
+            </div>
         </div>
     ),
 }));
@@ -174,7 +230,10 @@ vi.mock('@/features/boards/retrospective/contexts/useTypingContext', () => ({
 
 vi.mock('@/lib/hooks/useLanguage', () => ({
     useLanguage: () => ({
-        t: (key: string) => key,
+        // spec 059 T073: the teardown confirmation's {{count}} must be observable, so this one
+        // key renders as `<key>:<count>`; every other key stays an identity translation.
+        t: (key: string, params?: { count?: number }) =>
+            key === 'retrospective.grouping.confirmTeardown' ? `${key}:${params?.count}` : key,
     }),
 }));
 
@@ -779,7 +838,7 @@ describe('GroupableColumn', () => {
 
             await waitFor(() => expect(mockOnGroupDisband).toHaveBeenCalledTimes(1));
             expect(mockOnGroupDisband).toHaveBeenCalledWith('group-1');
-            await waitFor(() => expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'none'));
+            await waitFor(() => expect(screen.getByTestId('column-item-list')).toBeInTheDocument());
 
             // Simulate the parent applying the realtime-synced result of the disband.
             rerender(<GroupableColumn {...defaultProps} onGroupDisband={mockOnGroupDisband} groups={[]} />);
@@ -1022,7 +1081,7 @@ describe('GroupableColumn', () => {
         it('should respect canConvertToAction prop', () => {
             render(<GroupableColumn {...defaultProps} canConvertToAction={true} />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
 
         it('should pass participants to child components', () => {
@@ -1033,7 +1092,7 @@ describe('GroupableColumn', () => {
 
             render(<GroupableColumn {...defaultProps} participants={participants} />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
 
         it('should handle onConvertToAction callback', () => {
@@ -1045,7 +1104,7 @@ describe('GroupableColumn', () => {
                 onConvertToAction={mockOnConvertToAction}
             />);
 
-            expect(screen.getByTestId('grouped-card-list')).toBeInTheDocument();
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
         });
     });
 
@@ -1095,7 +1154,8 @@ describe('GroupableColumn', () => {
             render(<GroupableColumn {...defaultProps} columnGroupingStates={persistedUserGrouping} />);
 
             expect(screen.getByText('Current: none')).toBeInTheDocument();
-            expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'none');
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
+            expect(screen.queryByTestId('grouped-card-list')).not.toBeInTheDocument();
             // The override is display-time only (research.md §5) — the persisted
             // 'user' choice in columnGroupingStates must never be overwritten.
             expect(mockSetGroupingCriteria).not.toHaveBeenCalled();
@@ -1205,6 +1265,669 @@ describe('GroupableColumn', () => {
             const nodeAfterToggleOff = screen.getByTestId('typing-preview');
             expect(nodeAfterToggleOff).toBe(nodeBeforeToggle);
             expect(nodeAfterToggleOff).toHaveAttribute('data-anonymous', 'false');
+        });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// spec 059-drag-to-group-cards, T028: B8 / B9 regression + new GroupableColumn props
+// (onCardMove, onGroupRename, onColumnRenormalize). Contract: contracts/drag-group-ui.md,
+// research.md §12 (requestMove is the single path), §14 (midpoint + precision guard).
+// ---------------------------------------------------------------------------
+describe('GroupableColumn drag orchestration (spec 059, B8/B9)', () => {
+    const column: ColumnConfig = { id: 'helped', title: 'What went well?', description: 'd', color: 'blue', icon: '👍' };
+    const t0 = new Date('2026-01-01');
+    const mk = (id: string, order: number, extra: Partial<Card> = {}): Card => ({
+        id, content: id, retrospectiveId: 'retro-1', column: 'helped', createdBy: 'user-1',
+        color: 'pastelBlue', createdAt: t0, updatedAt: t0, order, ...extra,
+    });
+    // display order: u1(10), u2(20), group g1(25), u3(30)  -> interleaved column items
+    const cards059: Card[] = [
+        mk('u1', 10), mk('u2', 20), mk('u3', 30),
+        mk('gh', 0, { groupId: 'g1', isGroupHead: true }), mk('gm', 0, { groupId: 'g1', groupOrder: 1 }),
+    ];
+    const groups059: CardGroup[] = [{
+        id: 'g1', retrospectiveId: 'retro-1', column: 'helped', title: 'G', headCardId: 'gh',
+        memberCardIds: ['gm'], isCollapsed: false, createdAt: t0, createdBy: 'user-1', order: 25,
+    }];
+
+    const baseProps = () => ({
+        column,
+        cards: cards059,
+        groups: groups059,
+        onCardCreate: vi.fn(), onCardUpdate: vi.fn(), onCardDelete: vi.fn(), onCardVote: vi.fn(),
+        onCardLike: vi.fn(), onCardReaction: vi.fn(), onCardReactionRemove: vi.fn(),
+        onCardsReorder: vi.fn(), onGroupCreate: vi.fn(), onGroupDisband: vi.fn(),
+        onGroupToggleCollapse: vi.fn(), onCardRemoveFromGroup: vi.fn(),
+        onSuggestionGenerate: vi.fn(() => []),
+        onCardMove: vi.fn(async (): Promise<MoveCardResult> => ({ dissolvedGroupIds: [] })),
+        onGroupRename: vi.fn(async () => { }),
+        onColumnRenormalize: vi.fn(async () => { }),
+        currentUser: 'user-1', retrospectiveId: 'retro-1', participants: [], canConvertToAction: false,
+    });
+    const modeState = (criteria: 'none' | 'suggestions' | 'user') =>
+        ({ helped: { criteria, activeGroups: [] } }) as any;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        dndHarness.ctx.current = null;
+        mockUseBoardData.mockReturnValue({
+            cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+            retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+            participants: [], timer: null, myFacilitatorNotes: [],
+        });
+    });
+
+    describe.each(['none', 'suggestions'] as const)('mode %s (B9)', (mode) => {
+        it('renders the interleaved ColumnItemList (groups + ungrouped cards in column order) instead of GroupedCardList', () => {
+            render(<GroupableColumn {...baseProps()} columnGroupingStates={modeState(mode)} />);
+
+            expect(screen.getByTestId('column-item-list')).toHaveAttribute(
+                'data-item-ids', 'card:u1,card:u2,group:g1,card:u3'
+            );
+            expect(screen.queryByTestId('grouped-card-list')).not.toBeInTheDocument();
+        });
+
+        it('provides a grouping context scoped to the column with grouping enabled', () => {
+            render(<GroupableColumn {...baseProps()} columnGroupingStates={modeState(mode)} />);
+
+            const ctx = dndHarness.ctx.current;
+            expect(ctx).not.toBeNull();
+            expect(ctx.columnId).toBe('helped');
+            expect(ctx.groupingEnabled).toBe(true);
+            expect(ctx.items.map((i: any) => i.id)).toEqual(['card:u1', 'card:u2', 'group:g1', 'card:u3']);
+        });
+
+        it('a reorder drop calls onCardMove(cardId, { kind: "position", order }) with the midpoint order', async () => {
+            const props = baseProps();
+            render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+            const ctx = dndHarness.ctx.current;
+            expect(ctx).not.toBeNull();
+
+            // drop u3 between u2 (20) and the group g1 (25)
+            await act(async () => {
+                const order = ctx.computeOrder({ beforeId: 'card:u2', afterId: 'group:g1' });
+                await ctx.requestMove('u3', { kind: 'position', order });
+            });
+
+            expect(props.onCardMove).toHaveBeenCalledTimes(1);
+            expect(props.onCardMove).toHaveBeenCalledWith('u3', { kind: 'position', order: 22.5 });
+            expect(props.onColumnRenormalize).not.toHaveBeenCalled();
+            expect(props.onCardsReorder).not.toHaveBeenCalled(); // no more full-column /cards/reorder rewrite
+        });
+
+        it('dropping at the start / end of the column uses b-1 / a+1', async () => {
+            const props = baseProps();
+            render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+            const ctx = dndHarness.ctx.current;
+            expect(ctx).not.toBeNull();
+
+            await act(async () => {
+                await ctx.requestMove('u3', { kind: 'position', order: ctx.computeOrder({ afterId: 'card:u1' }) });
+                await ctx.requestMove('u1', { kind: 'position', order: ctx.computeOrder({ beforeId: 'card:u3' }) });
+            });
+
+            expect(props.onCardMove).toHaveBeenNthCalledWith(1, 'u3', { kind: 'position', order: 9 });
+            expect(props.onCardMove).toHaveBeenNthCalledWith(2, 'u1', { kind: 'position', order: 31 });
+        });
+
+        it('when the precision guard trips, onColumnRenormalize(columnId, items) runs FIRST, then onCardMove with the order computed on the renormalised column', async () => {
+            const props = baseProps();
+            const tight = [mk('u1', 10), mk('u2', 10.0005), mk('u3', 30), cards059[3], cards059[4]];
+            render(<GroupableColumn {...props} cards={tight} columnGroupingStates={modeState(mode)} />);
+            const ctx = dndHarness.ctx.current;
+            expect(ctx).not.toBeNull();
+
+            await act(async () => {
+                const order = ctx.computeOrder({ beforeId: 'card:u1', afterId: 'card:u2' });
+                await ctx.requestMove('u3', { kind: 'position', order });
+            });
+
+            // every column item, display order, raw ids, spaced 1024 apart (columnOrder contract)
+            expect(props.onColumnRenormalize).toHaveBeenCalledTimes(1);
+            expect(props.onColumnRenormalize).toHaveBeenCalledWith('helped', [
+                { kind: 'card', id: 'u1', order: 1024 },
+                { kind: 'card', id: 'u2', order: 2048 },
+                { kind: 'group', id: 'g1', order: 3072 },
+                { kind: 'card', id: 'u3', order: 4096 },
+            ]);
+            expect(props.onCardMove).toHaveBeenCalledTimes(1);
+            expect(props.onCardMove).toHaveBeenCalledWith('u3', { kind: 'position', order: 1536 });
+
+            const renormalizeCall = (props.onColumnRenormalize as Mock).mock.invocationCallOrder[0];
+            const moveCall = (props.onCardMove as Mock).mock.invocationCallOrder[0];
+            expect(renormalizeCall).toBeLessThan(moveCall);
+        });
+
+        it('forwards onGroupRename to the item list as onRenameGroup(groupId, title)', async () => {
+            const props = baseProps();
+            render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+
+            fireEvent.click(screen.getByTestId('item-list-rename'));
+
+            expect(props.onGroupRename).toHaveBeenCalledWith('g1', 'New title');
+        });
+
+        describe('drop on a card target (spec 059, T037: B5 / X1)', () => {
+            const g2: CardGroup = { ...groups059[0], id: 'g2', headCardId: 'u1', memberCardIds: [], order: 5 };
+
+            it('B5: requestMove(src, {kind:"card", cardId}) forwards to onCardMove(src, target) unchanged', async () => {
+                const props = baseProps();
+                render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+
+                await act(async () => {
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' });
+                });
+
+                expect(props.onCardMove).toHaveBeenCalledTimes(1);
+                expect(props.onCardMove).toHaveBeenCalledWith('u1', { kind: 'card', cardId: 'u2' });
+            });
+
+            it('a resolved createdGroupId sets pendingEditGroupId; only the matching group gets autoEditTitle', async () => {
+                const props = baseProps();
+                props.onCardMove = vi.fn(async () => ({ createdGroupId: 'g1', dissolvedGroupIds: [] })) as never;
+                render(
+                    <GroupableColumn {...props} groups={[...groups059, g2]} columnGroupingStates={modeState(mode)} />
+                );
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBeNull();
+
+                await act(async () => {
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' });
+                });
+
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBe('g1');
+                const groupsInList = screen.getAllByTestId('group-card');
+                expect(groupsInList.find((el) => el.getAttribute('data-group-id') === 'g1')).toHaveAttribute('data-auto-edit', 'true');
+                expect(groupsInList.find((el) => el.getAttribute('data-group-id') === 'g2')).toHaveAttribute('data-auto-edit', 'false');
+            });
+
+            it('consumePendingEdit() clears pendingEditGroupId', async () => {
+                const props = baseProps();
+                props.onCardMove = vi.fn(async () => ({ createdGroupId: 'g1', dissolvedGroupIds: [] })) as never;
+                render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+                await act(async () => {
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' });
+                });
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBe('g1');
+
+                act(() => dndHarness.ctx.current.consumePendingEdit());
+
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBeNull();
+            });
+
+            it('no createdGroupId (add to existing group / reorder / void result) leaves pendingEditGroupId null', async () => {
+                const props = baseProps();
+                props.onCardMove = vi.fn(async () => ({ dissolvedGroupIds: [] })) as never;
+                render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+
+                await act(async () => {
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'group', groupId: 'g1' });
+                });
+
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBeNull();
+            });
+
+            it('X1: a GroupingConflictError shows the retrospective.dragGroup.conflict toast and sets no pending edit', async () => {
+                const props = baseProps();
+                props.onCardMove = vi.fn(async () => { throw new GroupingConflictError('409'); }) as never;
+                render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+
+                await act(async () => {
+                    // requestMove may swallow the conflict after surfacing it or rethrow; both are fine.
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' }).catch(() => { });
+                });
+
+                // Note: setup.ts mocks react-hot-toast with only success/error/loading/dismiss
+                // (the default export is not callable), so the non-blocking toast is toast.error.
+                expect(toast.error as Mock).toHaveBeenCalledWith('retrospective.dragGroup.conflict');
+                expect(dndHarness.ctx.current.pendingEditGroupId).toBeNull();
+            });
+
+            it('a non-conflict failure does not show the conflict toast', async () => {
+                const props = baseProps();
+                props.onCardMove = vi.fn(async () => { throw new Error('network'); }) as never;
+                vi.spyOn(console, 'error').mockImplementation(() => { });
+                render(<GroupableColumn {...props} columnGroupingStates={modeState(mode)} />);
+
+                await act(async () => {
+                    await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' }).catch(() => { });
+                });
+
+                expect(toast.error as Mock).not.toHaveBeenCalledWith('retrospective.dragGroup.conflict');
+            });
+        });
+    });
+
+    describe('mode user (B8): reorder stays inside the author section', () => {
+        it('renders GroupedCardList, not the interleaved ColumnItemList', () => {
+            render(<GroupableColumn {...baseProps()} columnGroupingStates={modeState('user')} />);
+
+            expect(screen.getByTestId('grouped-card-list')).toHaveAttribute('data-group-by', 'user');
+            expect(screen.queryByTestId('column-item-list')).not.toBeInTheDocument();
+        });
+
+        it('still routes section reorders to onCardsReorder (/cards/reorder) and never to onCardMove', () => {
+            const props = baseProps();
+            render(<GroupableColumn {...props} columnGroupingStates={modeState('user')} />);
+
+            fireEvent.click(screen.getByTestId('grouped-list-reorder'));
+
+            expect(props.onCardsReorder).toHaveBeenCalledWith([{ cardId: 'u2', order: 0, column: 'helped' }]);
+            expect(props.onCardMove).not.toHaveBeenCalled();
+            expect(props.onColumnRenormalize).not.toHaveBeenCalled();
+        });
+
+        it('disables grouping in the column context (no group intent, FR-010)', () => {
+            render(<GroupableColumn {...baseProps()} columnGroupingStates={modeState('user')} />);
+
+            // The context is still provided (member/menu components may read it) but grouping is off.
+            expect(dndHarness.ctx.current).not.toBeNull();
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(false);
+        });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// spec 059-drag-to-group-cards, T045 (US4): B8 + anonymous board.
+// CONTRACTS FIXED HERE:
+//  - `groupingEnabled` in the provided ColumnGroupingContext derives from the DISPLAYED mode
+//    (`displayGroupingCriteria !== 'user'`), never from the persisted criteria.
+//  - `ctx.requestMove(src, {kind:'card'|'group'})` while grouping is disabled is REFUSED:
+//    `onCardMove` is never called (the returned promise may resolve or reject; tests tolerate both).
+// ---------------------------------------------------------------------------
+describe('GroupableColumn grouping gate (spec 059, T045: B8 / anonymous)', () => {
+    const column: ColumnConfig = { id: 'helped', title: 'What went well?', description: 'd', color: 'blue', icon: '👍' };
+    const t0 = new Date('2026-01-01');
+    const mk = (id: string, order: number, extra: Partial<Card> = {}): Card => ({
+        id, content: id, retrospectiveId: 'retro-1', column: 'helped', createdBy: 'user-1',
+        color: 'pastelBlue', createdAt: t0, updatedAt: t0, order, ...extra,
+    });
+    const cardsG: Card[] = [
+        mk('u1', 10), mk('u2', 20),
+        mk('gh', 0, { groupId: 'g1', isGroupHead: true }), mk('gm', 0, { groupId: 'g1', groupOrder: 1 }),
+    ];
+    const groupsG: CardGroup[] = [{
+        id: 'g1', retrospectiveId: 'retro-1', column: 'helped', title: 'G', headCardId: 'gh',
+        memberCardIds: ['gm'], isCollapsed: false, createdAt: t0, createdBy: 'user-1', order: 25,
+    }];
+    const props = () => ({
+        column, cards: cardsG, groups: groupsG,
+        onCardCreate: vi.fn(), onCardUpdate: vi.fn(), onCardDelete: vi.fn(), onCardVote: vi.fn(),
+        onCardLike: vi.fn(), onCardReaction: vi.fn(), onCardReactionRemove: vi.fn(),
+        onCardsReorder: vi.fn(), onGroupCreate: vi.fn(), onGroupDisband: vi.fn(),
+        onGroupToggleCollapse: vi.fn(), onCardRemoveFromGroup: vi.fn(),
+        onSuggestionGenerate: vi.fn(() => []),
+        onCardMove: vi.fn(async (): Promise<MoveCardResult> => ({ dissolvedGroupIds: [] })),
+        onGroupRename: vi.fn(async () => { }),
+        onColumnRenormalize: vi.fn(async () => { }),
+        currentUser: 'user-1', retrospectiveId: 'retro-1', participants: [], canConvertToAction: false,
+    });
+    const state = (criteria: 'none' | 'suggestions' | 'user') =>
+        ({ helped: { criteria, activeGroups: [] } }) as any;
+    const board = (isAnonymous: boolean) =>
+        mockUseBoardData.mockReturnValue({
+            cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+            retrospective: { id: 'retro-1', isAnonymous } as Retrospective,
+            participants: [], timer: null, myFacilitatorNotes: [],
+        });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        dndHarness.ctx.current = null;
+        board(false);
+    });
+
+    describe('B8: displayed mode "user" (non-anonymous board)', () => {
+        it('exposes groupingEnabled === false in the context', () => {
+            render(<GroupableColumn {...props()} columnGroupingStates={state('user')} />);
+
+            expect(dndHarness.ctx.current).not.toBeNull();
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(false);
+        });
+
+        it.each([
+            ['card', { kind: 'card', cardId: 'u2' }],
+            ['group', { kind: 'group', groupId: 'g1' }],
+        ])('refuses requestMove(src, {kind:"%s"}) without calling onCardMove', async (_label, target) => {
+            const p = props();
+            render(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+
+            await act(async () => {
+                await Promise.resolve(dndHarness.ctx.current.requestMove('u1', target)).catch(() => { });
+            });
+
+            expect(p.onCardMove).not.toHaveBeenCalled();
+        });
+
+        it('also refuses a grouped member being moved into another group', async () => {
+            const p = props();
+            render(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+
+            await act(async () => {
+                await Promise.resolve(dndHarness.ctx.current.requestMove('gm', { kind: 'card', cardId: 'u1' })).catch(() => { });
+            });
+
+            expect(p.onCardMove).not.toHaveBeenCalled();
+        });
+
+        it('does not toast a conflict for a refused move (it is not a server conflict)', async () => {
+            const p = props();
+            render(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+
+            await act(async () => {
+                await Promise.resolve(dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' })).catch(() => { });
+            });
+
+            expect(toast.error as Mock).not.toHaveBeenCalledWith('retrospective.dragGroup.conflict');
+        });
+    });
+
+    describe.each(['none', 'suggestions'] as const)('control: displayed mode "%s"', (mode) => {
+        it('has groupingEnabled === true and forwards a group move to onCardMove', async () => {
+            const p = props();
+            render(<GroupableColumn {...p} columnGroupingStates={state(mode)} />);
+
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(true);
+            await act(async () => {
+                await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' }).catch(() => { });
+            });
+
+            expect(p.onCardMove).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('anonymous board whose persisted mode is "user" (displayed as none)', () => {
+        it('has groupingEnabled === true, because grouping derives from the displayed mode', () => {
+            board(true);
+            render(<GroupableColumn {...props()} columnGroupingStates={state('user')} />);
+
+            expect(screen.getByText('Current: none')).toBeInTheDocument();
+            expect(dndHarness.ctx.current).not.toBeNull();
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(true);
+        });
+
+        it('renders the interleaved ColumnItemList (not GroupedCardList) and accepts card moves', async () => {
+            board(true);
+            const p = props();
+            render(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+
+            expect(screen.getByTestId('column-item-list')).toBeInTheDocument();
+            expect(screen.queryByTestId('grouped-card-list')).not.toBeInTheDocument();
+
+            await act(async () => {
+                await dndHarness.ctx.current.requestMove('u1', { kind: 'card', cardId: 'u2' }).catch(() => { });
+            });
+
+            expect(p.onCardMove).toHaveBeenCalledTimes(1);
+            expect(mockSetGroupingCriteria).not.toHaveBeenCalled();
+        });
+
+        it('regression: the same persisted "user" mode on a non-anonymous board stays disabled', () => {
+            board(false);
+            render(<GroupableColumn {...props()} columnGroupingStates={state('user')} />);
+
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(false);
+        });
+
+        it('flips live when the board toggles anonymous mode', () => {
+            board(false);
+            const p = props();
+            const { rerender } = render(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(false);
+
+            board(true);
+            rerender(<GroupableColumn {...p} columnGroupingStates={state('user')} />);
+
+            expect(dndHarness.ctx.current.groupingEnabled).toBe(true);
+        });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// spec 059-drag-to-group-cards, T073 (FR-033, S1-S4): leaving "suggestions" while the column
+// has MANUAL groups asks for confirmation BEFORE anything is persisted.
+//
+// CONTRACTS FIXED BY THIS BLOCK:
+//  - The confirmation is `window.confirm(t('retrospective.grouping.confirmTeardown',
+//    { count }))`, `count` = ALL of the column's groups (manual, suggestion and legacy), the
+//    same idiom GroupCard uses for its disband. In this file `t` renders that key as
+//    `<key>:<count>`.
+//  - Trigger: previous criteria === 'suggestions', new criteria differs, and at least one of
+//    the column's groups has `origin === 'manual'`. A missing `origin` is a legacy suggestion
+//    group, NOT manual.
+//  - Order: confirm -> setGroupingCriteria -> disband of every group. Cancel persists nothing:
+//    no setGroupingCriteria, no disband, the selector keeps showing "suggestions".
+//  - Any other transition (none -> user, anything -> suggestions) never asks.
+// ---------------------------------------------------------------------------
+describe('GroupableColumn mode-switch safeguard (spec 059, T073: S1-S4)', () => {
+    const CONFIRM_KEY = 'retrospective.grouping.confirmTeardown';
+    const t0 = new Date('2026-01-01');
+    const column: ColumnConfig = { id: 'helped', title: 'What went well?', description: 'd', color: 'blue', icon: '👍' };
+    const mkCard = (id: string, order: number, extra: Partial<Card> = {}): Card => ({
+        id, content: id, retrospectiveId: 'retro-1', column: 'helped', createdBy: 'user-1',
+        color: 'pastelBlue', createdAt: t0, updatedAt: t0, order, ...extra,
+    });
+    const mkGroup = (id: string, head: string, members: string[], extra: Partial<CardGroup> = {}): CardGroup => ({
+        id, retrospectiveId: 'retro-1', column: 'helped', title: id, headCardId: head, memberCardIds: members,
+        isCollapsed: false, createdAt: t0, createdBy: 'user-1', order: 1, ...extra,
+    });
+    const cards = [
+        mkCard('c1', 1), mkCard('c2', 2, { groupId: 'g-manual' }), mkCard('c3', 3, { groupId: 'g-manual' }),
+        mkCard('c4', 4, { groupId: 'g-legacy' }), mkCard('c5', 5, { groupId: 'g-legacy' }),
+    ];
+    const manualGroup = mkGroup('g-manual', 'c2', ['c3'], { origin: 'manual' });
+    const legacyGroup = mkGroup('g-legacy', 'c4', ['c5']); // no origin
+    const suggestionGroup = mkGroup('g-sugg', 'c4', ['c5'], { origin: 'suggestion' });
+
+    let confirmSpy: ReturnType<typeof vi.spyOn>;
+    let onGroupDisband: Mock;
+
+    const renderColumn = (groups: CardGroup[]) => {
+        onGroupDisband = vi.fn().mockResolvedValue(undefined);
+        return render(
+            <GroupableColumn
+                column={column} cards={cards} groups={groups}
+                onCardCreate={vi.fn()} onCardUpdate={vi.fn()} onCardDelete={vi.fn()} onCardVote={vi.fn()}
+                onCardLike={vi.fn()} onCardReaction={vi.fn()} onCardReactionRemove={vi.fn()}
+                onCardsReorder={vi.fn()} onGroupCreate={vi.fn()} onGroupDisband={onGroupDisband}
+                onGroupToggleCollapse={vi.fn()} onCardRemoveFromGroup={vi.fn()}
+                onSuggestionGenerate={vi.fn(() => [])}
+                currentUser="user-1" retrospectiveId="retro-1" participants={[]} canConvertToAction={false}
+            />,
+        );
+    };
+    /** Real transition none -> suggestions through the stateful useColumnGrouping mock. */
+    const enterSuggestions = async (user: ReturnType<typeof userEvent.setup>) => {
+        await user.click(screen.getByText('Group by Suggestions'));
+        await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+        mockSetGroupingCriteria.mockClear();
+        confirmSpy.mockClear();
+    };
+    const settle = () => act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockUseBoardData.mockReturnValue({
+            cards: [], groups: [], actionItems: [], columnConfigs: {}, isFacilitator: false,
+            retrospective: { id: 'retro-1', isAnonymous: false } as Retrospective,
+            participants: [], timer: null, myFacilitatorNotes: [],
+        });
+        confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    });
+    afterEach(() => {
+        confirmSpy.mockRestore();
+    });
+
+    describe('S1: the confirmation comes first, with every column group counted', () => {
+        it.each([['No Grouping', 'none'], ['Group by User', 'user']])(
+            'leaving suggestions for "%s" asks window.confirm(confirmTeardown, count = ALL column groups) BEFORE setGroupingCriteria',
+            async (buttonLabel, criteria) => {
+                const user = userEvent.setup();
+                renderColumn([manualGroup, legacyGroup]);
+                await enterSuggestions(user);
+
+                await user.click(screen.getByText(buttonLabel));
+
+                await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1));
+                // 2 groups in the column (1 manual + 1 legacy): the count is not just the manual ones.
+                expect(confirmSpy).toHaveBeenCalledWith(`${CONFIRM_KEY}:2`);
+                await waitFor(() => expect(mockSetGroupingCriteria).toHaveBeenCalledWith('helped', criteria));
+                expect(confirmSpy.mock.invocationCallOrder[0]).toBeLessThan(mockSetGroupingCriteria.mock.invocationCallOrder[0]);
+            },
+        );
+
+        it('a single manual group is enough to ask (count 1)', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup]);
+            await enterSuggestions(user);
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(confirmSpy).toHaveBeenCalledWith(`${CONFIRM_KEY}:1`));
+        });
+
+        it('nothing is persisted or disbanded while the confirmation is still undecided', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup]);
+            await enterSuggestions(user);
+            let seenAtConfirm: { persisted: number; disbanded: number } | null = null;
+            confirmSpy.mockImplementation(() => {
+                seenAtConfirm = { persisted: mockSetGroupingCriteria.mock.calls.length, disbanded: onGroupDisband.mock.calls.length };
+                return true;
+            });
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(confirmSpy).toHaveBeenCalled());
+            expect(seenAtConfirm).toEqual({ persisted: 0, disbanded: 0 });
+        });
+    });
+
+    describe('S2: confirming runs the existing flow, in order', () => {
+        it('persists the new mode, then disbands every column group (manual and legacy)', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup, legacyGroup]);
+            await enterSuggestions(user);
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(onGroupDisband).toHaveBeenCalledTimes(2));
+            expect(confirmSpy).toHaveBeenCalledWith(`${CONFIRM_KEY}:2`);
+            expect(confirmSpy.mock.invocationCallOrder[0]).toBeLessThan(mockSetGroupingCriteria.mock.invocationCallOrder[0]);
+            expect(onGroupDisband).toHaveBeenCalledWith('g-manual');
+            expect(onGroupDisband).toHaveBeenCalledWith('g-legacy');
+            expect(mockSetGroupingCriteria).toHaveBeenCalledTimes(1);
+            expect(mockSetGroupingCriteria).toHaveBeenCalledWith('helped', 'none');
+            expect(mockSetGroupingCriteria.mock.invocationCallOrder[0]).toBeLessThan(onGroupDisband.mock.invocationCallOrder[0]);
+            await waitFor(() => expect(screen.getByText('Current: none')).toBeInTheDocument());
+        });
+    });
+
+    describe('S3: cancelling persists nothing', () => {
+        it.each([['No Grouping'], ['Group by User']])(
+            'cancel on "%s": no setGroupingCriteria, no disband, selector still shows suggestions',
+            async (buttonLabel) => {
+                const user = userEvent.setup();
+                renderColumn([manualGroup, legacyGroup]);
+                await enterSuggestions(user);
+                confirmSpy.mockReturnValue(false);
+
+                await user.click(screen.getByText(buttonLabel));
+                await settle();
+
+                expect(confirmSpy).toHaveBeenCalledTimes(1);
+                expect(mockSetGroupingCriteria).not.toHaveBeenCalled();
+                expect(onGroupDisband).not.toHaveBeenCalled();
+                expect(screen.getByText('Current: suggestions')).toBeInTheDocument();
+                expect(toast.error as Mock).not.toHaveBeenCalled();
+            },
+        );
+
+        it('the groups stay rendered after a cancel', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup, legacyGroup]);
+            await enterSuggestions(user);
+            confirmSpy.mockReturnValue(false);
+
+            await user.click(screen.getByText('No Grouping'));
+            await settle();
+
+            expect(screen.getAllByTestId('group-card')).toHaveLength(2);
+        });
+
+        it('after a cancel the user can still switch for real by confirming the next time', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup]);
+            await enterSuggestions(user);
+            confirmSpy.mockReturnValueOnce(false);
+            await user.click(screen.getByText('No Grouping'));
+            await settle();
+            expect(mockSetGroupingCriteria).not.toHaveBeenCalled();
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(mockSetGroupingCriteria).toHaveBeenCalledWith('helped', 'none'));
+            await waitFor(() => expect(onGroupDisband).toHaveBeenCalledWith('g-manual'));
+        });
+    });
+
+    describe('S4: no manual groups -> today\'s flow, no confirmation', () => {
+        it('legacy groups without origin: no confirm, setGroupingCriteria then disband all', async () => {
+            const user = userEvent.setup();
+            renderColumn([legacyGroup]);
+            await enterSuggestions(user);
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(onGroupDisband).toHaveBeenCalledWith('g-legacy'));
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(mockSetGroupingCriteria).toHaveBeenCalledWith('helped', 'none');
+        });
+
+        it('groups explicitly marked origin "suggestion": no confirm', async () => {
+            const user = userEvent.setup();
+            renderColumn([suggestionGroup]);
+            await enterSuggestions(user);
+
+            await user.click(screen.getByText('Group by User'));
+
+            await waitFor(() => expect(onGroupDisband).toHaveBeenCalledWith('g-sugg'));
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(mockSetGroupingCriteria).toHaveBeenCalledWith('helped', 'user');
+        });
+
+        it('no groups at all: no confirm, the mode just switches', async () => {
+            const user = userEvent.setup();
+            renderColumn([]);
+            await enterSuggestions(user);
+
+            await user.click(screen.getByText('No Grouping'));
+
+            await waitFor(() => expect(screen.getByText('Current: none')).toBeInTheDocument());
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(onGroupDisband).not.toHaveBeenCalled();
+        });
+
+        it('manual groups but the switch does not leave suggestions (none -> user): no confirm, nothing disbanded', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup]);
+
+            await user.click(screen.getByText('Group by User'));
+
+            await waitFor(() => expect(screen.getByText('Current: user')).toBeInTheDocument());
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(onGroupDisband).not.toHaveBeenCalled();
+        });
+
+        it('manual groups and the switch ENTERS suggestions (none -> suggestions): no confirm', async () => {
+            const user = userEvent.setup();
+            renderColumn([manualGroup]);
+
+            await user.click(screen.getByText('Group by Suggestions'));
+
+            await waitFor(() => expect(screen.getByText('Current: suggestions')).toBeInTheDocument());
+            expect(confirmSpy).not.toHaveBeenCalled();
+            expect(onGroupDisband).not.toHaveBeenCalled();
         });
     });
 });

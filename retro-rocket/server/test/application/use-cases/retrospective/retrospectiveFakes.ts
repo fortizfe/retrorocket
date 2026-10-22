@@ -1,4 +1,4 @@
-import { NotFoundError, ForbiddenError } from '../../../../src/domain/errors';
+import { AppError, ConflictError, NotFoundError, ForbiddenError } from '../../../../src/domain/errors';
 import type {
     ColumnDTO,
     ColumnGroupingStates,
@@ -7,7 +7,7 @@ import type {
     ParticipantPort,
     RetrospectiveBoardPort,
 } from '../../../../src/application/ports/retrospective';
-import type { CardDTO, CardGroupDTO, CardGroupPort, CardPort, CreateCardGroupInput, CreateCardInput, ReorderUpdate } from '../../../../src/application/ports/cards';
+import type { CardDTO, CardGroupDTO, CardGroupPort, CardPort, CreateCardGroupInput, CreateCardInput, MoveCardResult, ReorderUpdate } from '../../../../src/application/ports/cards';
 import type { ActionItemDTO, ActionItemPort, CreateActionItemInput, EditActionItemInput } from '../../../../src/application/ports/actionItems';
 import type { FacilitatorNoteDTO, FacilitatorNotePort } from '../../../../src/application/ports/facilitatorNotes';
 import type { SaveSentimentResultInput, SentimentResultDTO, SentimentResultPort, SentimentType } from '../../../../src/application/ports/sentiment';
@@ -35,11 +35,27 @@ export interface FakeRetrospectiveRecord {
     isAnonymous?: boolean;
 }
 
+// 059-drag-to-group-cards (T004): the fake CardGroupPort mirrors invariants I1-I5 and the
+// moveCard transition table so use-case and route tests need no emulator.
+export type FakeCardGroupPort = CardGroupPort;
+type FakeCardGroupDTO = CardGroupDTO;
+type FakeCreateCardGroupInput = CreateCardGroupInput & { order?: number };
+
+const MAX_GROUP_TITLE_LENGTH = 60;
+
+function groupConflict(message: string): ConflictError {
+    return new ConflictError(message, 'group_conflict');
+}
+
+function invalidRequest(message: string): AppError {
+    return new AppError('invalid_request', message, 400);
+}
+
 export interface RetrospectiveFakeStore {
     retrospectiveBoardPort: RetrospectiveBoardPort;
     participantPort: ParticipantPort;
     cardPort: CardPort;
-    cardGroupPort: CardGroupPort;
+    cardGroupPort: FakeCardGroupPort;
     actionItemPort: ActionItemPort;
     facilitatorNotePort: FacilitatorNotePort;
     sentimentResultPort: SentimentResultPort;
@@ -66,7 +82,7 @@ export function createRetrospectiveFakeStore(seed: {
     const columns = [...(seed.columns ?? [])];
     const participants = new Map<string, ParticipantDTO>((seed.participants ?? []).map((p) => [p.id, { ...p }]));
     const cards = new Map<string, CardDTO>((seed.cards ?? []).map((c) => [c.id, { ...c }]));
-    const groups = new Map<string, CardGroupDTO>((seed.groups ?? []).map((g) => [g.id, { ...g }]));
+    const groups = new Map<string, FakeCardGroupDTO>((seed.groups ?? []).map((g) => [g.id, { ...g }]));
     const actionItems = new Map<string, ActionItemDTO>((seed.actionItems ?? []).map((a) => [a.id, { ...a }]));
     const facilitatorNotes = new Map<string, FacilitatorNoteDTO>((seed.facilitatorNotes ?? []).map((n) => [n.id, { ...n }]));
     const sentimentResults = new Map<string, SentimentResultDTO>((seed.sentimentResults ?? []).map((s) => [`${s.retrospectiveId}_${s.cardId}`, { ...s }]));
@@ -294,99 +310,234 @@ export function createRetrospectiveFakeStore(seed: {
         },
     };
 
-    function requireGroup(groupId: string): CardGroupDTO {
+    function requireGroup(groupId: string): FakeCardGroupDTO {
         const group = groups.get(groupId);
         if (!group) throw new NotFoundError('Group not found');
         return group;
     }
 
-    const cardGroupPort: CardGroupPort = {
+    function clearGrouping(card: CardDTO): void {
+        delete card.groupId;
+        delete card.isGroupHead;
+        delete card.groupOrder;
+    }
+
+    function groupCardIds(group: FakeCardGroupDTO): string[] {
+        return [group.headCardId, ...group.memberCardIds];
+    }
+
+    /** I1: the card must really be listed in the group it claims (and vice versa). */
+    function requireMembership(group: FakeCardGroupDTO, card: CardDTO): void {
+        if (card.groupId !== group.id || !groupCardIds(group).includes(card.id)) {
+            throw groupConflict('Card is not a member of the group');
+        }
+    }
+
+    /** I4: same retrospective and same column as the group. */
+    function requireSameColumn(retrospectiveId: string, column: string, card: CardDTO): void {
+        if (card.retrospectiveId !== retrospectiveId || card.column !== column) {
+            throw groupConflict('Card is not in the same retrospective column');
+        }
+    }
+
+    /** Next item (ungrouped card or group) of the column strictly after `order`, excluding the given ids. */
+    function nextColumnOrder(retrospectiveId: string, column: string, order: number, excludeCardIds: string[], excludeGroupIds: string[]): number | undefined {
+        const orders = [
+            ...[...cards.values()]
+                .filter((c) => c.retrospectiveId === retrospectiveId && c.column === column && !c.groupId && !excludeCardIds.includes(c.id))
+                .map((c) => c.order),
+            ...[...groups.values()]
+                .filter((g) => g.retrospectiveId === retrospectiveId && g.column === column && !excludeGroupIds.includes(g.id))
+                .map((g) => g.order),
+        ].filter((o) => o > order);
+        return orders.length > 0 ? Math.min(...orders) : undefined;
+    }
+
+    function writeGroupFields(group: FakeCardGroupDTO): void {
+        const head = cards.get(group.headCardId);
+        if (head) {
+            head.groupId = group.id;
+            head.isGroupHead = true;
+            head.groupOrder = 0;
+        }
+        group.memberCardIds.forEach((id, index) => {
+            const member = cards.get(id);
+            if (member) {
+                member.groupId = group.id;
+                member.isGroupHead = false;
+                member.groupOrder = index + 1;
+            }
+        });
+    }
+
+    /**
+     * Detaches `card` from `group` (I5): promotes a new head if needed, reindexes, and dissolves the
+     * group when fewer than 2 cards remain (the survivor takes `group.order`). Returns whether it dissolved.
+     */
+    function detach(group: FakeCardGroupDTO, card: CardDTO): boolean {
+        clearGrouping(card);
+        const remaining = groupCardIds(group).filter((id) => id !== card.id);
+        if (remaining.length < 2) {
+            groups.delete(group.id);
+            for (const id of remaining) {
+                const survivor = cards.get(id);
+                if (survivor) {
+                    clearGrouping(survivor);
+                    survivor.order = group.order;
+                    survivor.updatedAt = new Date();
+                }
+            }
+            return true;
+        }
+        group.headCardId = remaining[0]!;
+        group.memberCardIds = remaining.slice(1);
+        writeGroupFields(group);
+        return false;
+    }
+
+    function appendToGroup(group: FakeCardGroupDTO, card: CardDTO): void {
+        group.memberCardIds.push(card.id);
+        card.groupId = group.id;
+        card.isGroupHead = false;
+        card.groupOrder = group.memberCardIds.length;
+        card.updatedAt = new Date();
+    }
+
+    const cardGroupPort: FakeCardGroupPort = {
         async listGroups(retrospectiveId) {
             return [...groups.values()].filter((g) => g.retrospectiveId === retrospectiveId).map((g) => ({ ...g }));
         },
-        async createGroup(input: CreateCardGroupInput) {
-            const group: CardGroupDTO = {
+        async createGroup(input: FakeCreateCardGroupInput) {
+            const ids = [input.headCardId, ...input.memberCardIds];
+            if (input.memberCardIds.length < 1 || new Set(ids).size !== ids.length) {
+                throw invalidRequest('A group needs a head and at least one distinct member');
+            }
+            const found = ids.map((id) => requireCard(id));
+            const head = found[0]!;
+            for (const card of found) {
+                requireSameColumn(input.retrospectiveId, head.column, card);
+                if (card.groupId) throw groupConflict('Card is already in a group');
+            }
+            const group: FakeCardGroupDTO = {
                 id: nextId('group'),
                 retrospectiveId: input.retrospectiveId,
-                column: input.column,
+                column: head.column,
                 headCardId: input.headCardId,
-                memberCardIds: input.memberCardIds,
+                memberCardIds: [...input.memberCardIds],
                 title: input.title,
                 isCollapsed: false,
                 createdAt: new Date(),
                 createdBy: input.createdBy,
-                order: [...groups.values()].filter((g) => g.retrospectiveId === input.retrospectiveId).length,
+                order: input.order ?? head.order,
+                origin: input.origin ?? 'suggestion',
             };
             groups.set(group.id, group);
-            const head = cards.get(input.headCardId);
-            if (head) {
-                head.groupId = group.id;
-                head.isGroupHead = true;
-                head.groupOrder = 0;
-            }
-            input.memberCardIds.forEach((cardId, index) => {
-                const member = cards.get(cardId);
-                if (member) {
-                    member.groupId = group.id;
-                    member.isGroupHead = false;
-                    member.groupOrder = index + 1;
-                }
-            });
+            writeGroupFields(group);
             return { ...group };
         },
         async disbandGroup(groupId) {
             const group = requireGroup(groupId);
             for (const cardId of [group.headCardId, ...group.memberCardIds]) {
                 const card = cards.get(cardId);
-                if (card) {
-                    delete card.groupId;
-                    delete card.isGroupHead;
-                    delete card.groupOrder;
-                }
+                if (card) clearGrouping(card);
             }
             groups.delete(groupId);
         },
         async addCardToGroup(groupId, cardId) {
             const group = requireGroup(groupId);
-            group.memberCardIds.push(cardId);
-            const card = cards.get(cardId);
-            if (card) {
-                card.groupId = groupId;
-                card.isGroupHead = false;
-                card.groupOrder = group.memberCardIds.length;
-            }
+            const card = requireCard(cardId);
+            requireSameColumn(group.retrospectiveId, group.column, card);
+            if (card.groupId) throw groupConflict('Card is already in a group');
+            appendToGroup(group, card);
             return { ...group };
         },
         async removeCardFromGroup(groupId, cardId) {
             const group = requireGroup(groupId);
-            const card = cards.get(cardId);
-            if (card) {
-                delete card.groupId;
-                delete card.isGroupHead;
-                delete card.groupOrder;
+            const card = requireCard(cardId);
+            requireMembership(group, card);
+            // Control-based removal places the card right after its former group's slot.
+            const next = nextColumnOrder(group.retrospectiveId, group.column, group.order, [card.id], [group.id]);
+            const placedOrder = next === undefined ? group.order + 1 : (group.order + next) / 2;
+            const dissolved = detach(group, card);
+            card.order = placedOrder;
+            card.updatedAt = new Date();
+            return dissolved ? null : { ...group };
+        },
+        async moveCard(retrospectiveId, cardId, target) {
+            // M1 shape checks
+            if (target.kind === 'position' && !Number.isFinite(target.order)) throw invalidRequest('order must be a finite number');
+            if (target.kind === 'card' && target.cardId === cardId) throw invalidRequest('Cannot target the card itself');
+
+            // Reads and validation first (no writes before every check passes).
+            const source = requireCard(cardId); // M2
+            if (source.retrospectiveId !== retrospectiveId) throw new NotFoundError('Card not found');
+            const sourceGroup = source.groupId ? groups.get(source.groupId) : undefined;
+            let targetCard: CardDTO | undefined;
+            let targetGroup: FakeCardGroupDTO | undefined;
+            if (target.kind === 'card') {
+                targetCard = requireCard(target.cardId); // M3
+                requireSameColumn(retrospectiveId, source.column, targetCard); // M4
+                if (targetCard.groupId) throw groupConflict('Target card is already in a group'); // M5
+            } else if (target.kind === 'group') {
+                targetGroup = requireGroup(target.groupId); // M3
+                if (targetGroup.retrospectiveId !== retrospectiveId || targetGroup.column !== source.column) { // M4
+                    throw groupConflict('Target group is not in the same retrospective column');
+                }
+                if (sourceGroup && sourceGroup.id === targetGroup.id) throw invalidRequest('Card is already in the target group'); // M6
+            }
+            if (source.groupId) { // M7 (I1)
+                if (!sourceGroup) throw groupConflict('Card references a group that does not exist');
+                requireMembership(sourceGroup, source);
             }
 
-            if (group.headCardId === cardId) {
-                const nextHead = group.memberCardIds[0];
-                if (!nextHead) {
-                    groups.delete(groupId);
-                    return null;
-                }
-                group.headCardId = nextHead;
-                group.memberCardIds = group.memberCardIds.slice(1);
-                const newHeadCard = cards.get(nextHead);
-                if (newHeadCard) {
-                    newHeadCard.isGroupHead = true;
-                    newHeadCard.groupOrder = 0;
-                }
-            } else {
-                group.memberCardIds = group.memberCardIds.filter((id) => id !== cardId);
-                if (group.memberCardIds.length === 0 && !group.headCardId) {
-                    groups.delete(groupId);
-                    return null;
-                }
+            const result: MoveCardResult = { dissolvedGroupIds: [] };
+            if (sourceGroup && detach(sourceGroup, source)) result.dissolvedGroupIds.push(sourceGroup.id);
+
+            if (target.kind === 'position') {
+                source.order = target.order;
+            } else if (targetCard) {
+                const group: FakeCardGroupDTO = {
+                    id: nextId('group'),
+                    retrospectiveId,
+                    column: targetCard.column,
+                    headCardId: targetCard.id,
+                    memberCardIds: [source.id],
+                    isCollapsed: false,
+                    createdAt: new Date(),
+                    createdBy: targetCard.createdBy,
+                    order: targetCard.order,
+                    origin: 'manual',
+                };
+                groups.set(group.id, group);
+                writeGroupFields(group);
+                result.createdGroupId = group.id;
+            } else if (targetGroup) {
+                appendToGroup(targetGroup, source);
             }
+            source.updatedAt = new Date();
+            return result;
+        },
+        async setGroupTitle(groupId, title) {
+            const group = requireGroup(groupId);
+            const trimmed = title?.trim() ?? '';
+            if (trimmed.length > MAX_GROUP_TITLE_LENGTH) throw invalidRequest(`Title must be at most ${MAX_GROUP_TITLE_LENGTH} characters`);
+            if (trimmed === '') delete group.title;
+            else group.title = trimmed;
             return { ...group };
+        },
+        async renormalizeColumnOrder(retrospectiveId, columnId, items) {
+            const ids = items.map((i) => `${i.kind}:${i.id}`);
+            if (items.length < 1 || items.length > 500 || new Set(ids).size !== ids.length || items.some((i) => !Number.isFinite(i.order))) {
+                throw invalidRequest('Invalid column order items'); // R1
+            }
+            const resolved = items.map((item) => {
+                const entity = item.kind === 'card' ? cards.get(item.id) : groups.get(item.id);
+                if (!entity || entity.retrospectiveId !== retrospectiveId) throw new NotFoundError('Item not found'); // R2
+                if (entity.column !== columnId) throw groupConflict('Item is not in the column'); // R3
+                if (item.kind === 'card' && (entity as CardDTO).groupId) throw groupConflict('Card is grouped');
+                return { entity, order: item.order };
+            });
+            for (const { entity, order } of resolved) entity.order = order;
         },
         async setGroupCollapse(groupId, isCollapsed) {
             const group = requireGroup(groupId);

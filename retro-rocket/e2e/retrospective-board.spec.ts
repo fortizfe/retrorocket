@@ -409,22 +409,24 @@ test('grouping cards, adding/removing a member, and disbanding propagate live to
     expect(createGroupRes.ok()).toBeTruthy();
     const { id: groupId } = (await createGroupRes.json()) as { id: string };
 
-    await expect(pageB.getByText('Grupo de 2 tarjetas')).toBeVisible({ timeout: 10_000 });
+    // 059: an untitled group no longer reads "Grupo de N tarjetas" (it shows the localized default
+    // title); the member count is its own "N tarjetas" line.
+    await expect(pageB.getByText('2 tarjetas', { exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Add a third card to the group — live count updates to 3.
     const addRes = await pageA.request.post(`/api/groups/${groupId}/cards`, { data: { cardId: extraId } });
     expect(addRes.ok()).toBeTruthy();
-    await expect(pageB.getByText('Grupo de 3 tarjetas')).toBeVisible({ timeout: 10_000 });
+    await expect(pageB.getByText('3 tarjetas', { exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Remove that member — live count drops back to 2.
     const removeRes = await pageA.request.delete(`/api/groups/${groupId}/cards/${extraId}`);
     expect(removeRes.ok()).toBeTruthy();
-    await expect(pageB.getByText('Grupo de 2 tarjetas')).toBeVisible({ timeout: 10_000 });
+    await expect(pageB.getByText('2 tarjetas', { exact: true })).toBeVisible({ timeout: 10_000 });
 
     // Disband — the group header disappears live and both cards render individually.
     const disbandRes = await pageA.request.delete(`/api/groups/${groupId}`);
     expect(disbandRes.ok()).toBeTruthy();
-    await expect(pageB.getByText('Grupo de 2 tarjetas')).not.toBeVisible({ timeout: 10_000 });
+    await expect(pageB.getByText('2 tarjetas', { exact: true })).not.toBeVisible({ timeout: 10_000 });
     await expect(cardByContent(pageB, 'Group Head Card')).toBeVisible();
     await expect(cardByContent(pageB, 'Group Member Card')).toBeVisible();
 
@@ -1784,7 +1786,7 @@ test('pre-existing data (written in the old, pre-migration document shape) loads
     await page.goto(`/retro/${boardId}`);
     await expect(page.getByText('E2E Legacy Data Board')).toBeVisible({ timeout: 30_000 });
     await expect(cardByContent(page, 'Legacy head card')).toBeVisible();
-    await expect(page.getByText('Grupo de 2 tarjetas')).toBeVisible();
+    await expect(page.getByText('2 tarjetas', { exact: true })).toBeVisible();
     await expect(page.getByText('Legacy action item')).toBeVisible();
 });
 

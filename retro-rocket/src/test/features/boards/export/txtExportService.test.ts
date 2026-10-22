@@ -407,3 +407,65 @@ describe('TxtExportService', () => {
         });
     });
 });
+
+/**
+ * T050 (spec 059-drag-to-group-cards, US2): untitled groups export the LOCALIZED default title.
+ *
+ * CONTRACT: `RetrospectiveTxtData` (and `RetrospectiveExportData` for PDF, `RetrospectiveDocxData`
+ * for DOCX) gain an optional `labels?: { defaultGroupTitle: string }`. Callers resolve it with
+ * `t('retrospective.groupCard.defaultGroupTitle')`. For a group whose title is absent, empty or
+ * whitespace-only, the service uses `labels.defaultGroupTitle` instead of its hardcoded Spanish
+ * fallback ("Grupo N" in TXT). Titled groups are unaffected. TXT upper-cases group titles in the
+ * header, so assertions are case-insensitive.
+ */
+describe('TxtExportService untitled group fallback (spec 059, T050)', () => {
+    const LABEL = 'Unnamed bucket';
+    const base = (): RetrospectiveTxtData => ({
+        retrospective: {
+            id: 'retro-1', title: 'R', description: 'd', createdAt: new Date('2024-01-01'),
+            updatedAt: new Date('2024-01-01'), createdBy: 'u1', participantCount: 1, isActive: true,
+        } as RetrospectiveTxtData['retrospective'],
+        cards: [
+            { id: 'c1', retrospectiveId: 'retro-1', column: 'helped', content: 'Head', createdBy: 'u1', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'), groupId: 'g1' },
+            { id: 'c2', retrospectiveId: 'retro-1', column: 'helped', content: 'Member', createdBy: 'u1', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'), groupId: 'g1' },
+        ] as RetrospectiveTxtData['cards'],
+        groups: [{
+            id: 'g1', retrospectiveId: 'retro-1', column: 'helped', headCardId: 'c1', memberCardIds: ['c2'],
+            isCollapsed: false, createdAt: new Date('2024-01-01'), createdBy: 'u1', order: 1,
+        }] as RetrospectiveTxtData['groups'],
+        participants: [],
+    });
+    const run = async (data: RetrospectiveTxtData) => {
+        vi.clearAllMocks();
+        await new TxtExportService().exportRetrospective(data, { includeGroupDetails: true });
+        const blob = vi.mocked(saveAs).mock.calls[0][0] as Blob;
+        return blob.text();
+    };
+
+    it.each([
+        ['absent', undefined],
+        ['empty', ''],
+        ['whitespace-only', '   '],
+    ])('uses labels.defaultGroupTitle for a group with an %s title', async (_n, title) => {
+        const data = base();
+        data.groups[0].title = title as string | undefined;
+        (data as RetrospectiveTxtData & { labels: { defaultGroupTitle: string } }).labels = { defaultGroupTitle: LABEL };
+
+        const content = await run(data);
+
+        expect(content.toUpperCase()).toContain(LABEL.toUpperCase());
+        expect(content).not.toContain('GRUPO 1');
+        expect(content).not.toContain('Grupo 1');
+    });
+
+    it('keeps a real group title and does not leak the default label', async () => {
+        const data = base();
+        data.groups[0].title = 'Mi titulo real';
+        (data as RetrospectiveTxtData & { labels: { defaultGroupTitle: string } }).labels = { defaultGroupTitle: LABEL };
+
+        const content = await run(data);
+
+        expect(content.toUpperCase()).toContain('MI TITULO REAL');
+        expect(content.toUpperCase()).not.toContain(LABEL.toUpperCase());
+    });
+});

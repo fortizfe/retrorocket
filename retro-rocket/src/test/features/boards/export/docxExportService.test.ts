@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { DocxExportService } from '@/features/boards/export/services/docxExportService';
 import { Card, CardColor } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
@@ -96,5 +98,65 @@ describe('DocxExportService', () => {
 
             expect(metadata).toContain('Autor: Jane Smith');
         });
+    });
+});
+
+/**
+ * T050 (spec 059, US2): untitled groups export the localized default title in the DOCX.
+ * CONTRACT: `RetrospectiveDocxData.labels?: { defaultGroupTitle: string }` (see the TXT test header).
+ *
+ * Harness: `file-saver` is mocked (hoisted; the pre-existing tests never call saveAs), the produced
+ * .docx Blob is unzipped with JSZip and `word/document.xml` is searched for the group heading text.
+ */
+vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
+
+describe('DocxExportService untitled group fallback (spec 059, T050)', () => {
+    const LABEL = 'Unnamed bucket';
+    const t0 = new Date('2024-01-01');
+    const build = (title: string | undefined, labels?: { defaultGroupTitle: string }) => ({
+        retrospective: { id: 'r1', title: 'R', description: 'd', createdAt: t0, updatedAt: t0, createdBy: 'u1', participantCount: 1, isActive: true },
+        cards: [
+            makeCard({ id: 'c1', column: 'helped', groupId: 'g1', content: 'Head' }),
+            makeCard({ id: 'c2', column: 'helped', groupId: 'g1', content: 'Member' }),
+        ],
+        groups: [{ id: 'g1', retrospectiveId: 'r1', column: 'helped', title, headCardId: 'c1', memberCardIds: ['c2'], isCollapsed: false, createdAt: t0, createdBy: 'u1', order: 1 }],
+        participants: [],
+        ...(labels ? { labels } : {}),
+    }) as any;
+
+    const exportXml = async (data: unknown) => {
+        vi.mocked(saveAs).mockClear();
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+        await new DocxExportService().exportRetrospective(data as any, { includeGroupDetails: true });
+        logSpy.mockRestore();
+        warnSpy.mockRestore();
+        const blob = vi.mocked(saveAs).mock.calls[0][0] as Blob;
+        const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsArrayBuffer(blob);
+        });
+        const zip = await JSZip.loadAsync(buffer);
+        return zip.file('word/document.xml')!.async('string');
+    };
+
+    it.each([
+        ['absent', undefined],
+        ['empty', ''],
+        ['whitespace-only', '   '],
+    ])('uses labels.defaultGroupTitle for a group with an %s title', async (_n, title) => {
+        const xml = await exportXml(build(title, { defaultGroupTitle: LABEL }));
+
+        expect(xml).toContain(LABEL);
+        expect(xml).not.toContain('Grupo de ');
+    });
+
+    it('keeps a real group title and does not leak the default label', async () => {
+        const xml = await exportXml(build('Mi titulo real', { defaultGroupTitle: LABEL }));
+
+        expect(xml).toContain('Mi titulo real');
+        expect(xml).not.toContain(LABEL);
     });
 });

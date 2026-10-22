@@ -8,6 +8,7 @@ import { Participant } from '@/features/boards/types/participant';
 import { BoardDataContext, EMPTY_BOARD } from '@/features/boards/retrospective/contexts/useBoardData';
 import type { Retrospective } from '@/features/boards/types/retrospective';
 import { getPostDeleteFocusTarget } from '@/features/boards/retrospective/utils/postDeleteFocus';
+import { ColumnGroupingContext } from '@/features/boards/clustering/dnd/ColumnGroupingContext';
 
 /**
  * T008 (058-card-owner-action-hub, RED phase): rewritten against the new contract —
@@ -836,5 +837,199 @@ describe('DraggableCard', () => {
 
             expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
         });
+    });
+});
+
+// ---------------------------------------------------------------------------------------
+// T057 + T066 (card half) — spec 059-drag-to-group-cards, US5/US6 (RED phase)
+//
+// CONTRACTS FIXED BY THIS BLOCK:
+//  - `CardGroupingMenu` (clustering/components, NAMED export, props `{ sourceCard }`) is
+//    rendered in the footer `actions` slot next to OwnerActionMenu / CardMenu. Its own
+//    behaviour is covered by CardGroupingMenu.test.tsx, so it is a stand-in here (mocked at
+//    module level; the factory is hoisted but nothing imports the module until T060).
+//  - SOURCE of `canGroup`: `useOptionalColumnGroupingContext()` (null outside a column, e.g.
+//    in the DragOverlay -> no menu, and no throw). canGroup is true iff the context exists,
+//    `groupingEnabled` is true AND the card has a candidate:
+//       * ungrouped card (no `groupId`): `ctx.groups.length > 0` or some OTHER card in
+//         `ctx.ungroupedCards`;
+//       * grouped card (`groupId` set): always (the "Remove from group" item is a candidate).
+//  - The actions slot renders for `canEditCard || (canConvertToAction && onConvertToAction) ||
+//    canGroup`, and still never while the card is being edited.
+//  - The card root carries `data-card-id={card.id}` (next to the existing
+//    `data-card-focus-target`): CardGroupingMenu uses it to restore focus after a move.
+//  - The drag handle (rendered when `dragHandleProps` is given) has an accessible name, a
+//    visible focus ring and a 44px touch target below md (class contract `min-h-11 min-w-11`,
+//    contracts/drag-group-ui.md accessibility table: "drag handles at least 44px").
+// ---------------------------------------------------------------------------------------
+vi.mock('@/features/boards/clustering/components/CardGroupingMenu', () => ({
+    CardGroupingMenu: ({ sourceCard }: any) => (
+        <div data-testid="card-grouping-menu" data-card-id={sourceCard.id} />
+    ),
+}));
+
+describe('DraggableCard: CardGroupingMenu in the footer actions slot (spec 059, T057)', () => {
+    const t0 = new Date('2026-01-01T00:00:00.000Z');
+    const baseCard: CardType = {
+        id: 'card-1', retrospectiveId: 'retro-1', column: 'helped', content: 'Test card content',
+        color: 'pastelBlue' as CardColor, votes: 0, likes: [], reactions: [], order: 1,
+        createdBy: 'user1', createdAt: t0, updatedAt: t0,
+    };
+    const other: CardType = { ...baseCard, id: 'card-2', createdBy: 'user2' };
+    const grouped: CardType = { ...baseCard, groupId: 'g1', groupOrder: 1 };
+    const group = {
+        id: 'g1', retrospectiveId: 'retro-1', column: 'helped', headCardId: 'x', memberCardIds: ['card-1'],
+        isCollapsed: false, createdAt: t0, createdBy: 'user1', order: 1,
+    };
+
+    const props = {
+        card: baseCard,
+        onUpdate: vi.fn(), onDelete: vi.fn(), onVote: vi.fn(), onLike: vi.fn(),
+        onReaction: vi.fn(), onReactionRemove: vi.fn(),
+        currentUser: 'user2', // NOT the owner by default
+        canEdit: true,
+        isDragging: false,
+        participants: [] as Participant[],
+    };
+
+    function ctxValue(overrides: Record<string, unknown> = {}) {
+        return {
+            columnId: 'helped', groupingEnabled: true, items: [], groups: [], ungroupedCards: [baseCard, other],
+            armedTargetId: null, insertionLine: null, busyTargetId: null, pendingEditGroupId: null,
+            consumePendingEdit: vi.fn(), requestMove: vi.fn(), computeOrder: vi.fn(() => 0),
+            ...overrides,
+        };
+    }
+    const inColumn = (ui: React.ReactElement, ctx: Record<string, unknown> = ctxValue()) => (
+        <ColumnGroupingContext.Provider value={ctx as never}>{ui}</ColumnGroupingContext.Provider>
+    );
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.mocked(getPostDeleteFocusTarget).mockReturnValue(null);
+    });
+
+    it('renders the grouping menu for a participant who is neither the owner nor the facilitator (G1)', () => {
+        render(inColumn(<DraggableCard {...props} />));
+
+        expect(screen.getByTestId('card-grouping-menu')).toHaveAttribute('data-card-id', 'card-1');
+        expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('card-menu')).not.toBeInTheDocument();
+    });
+
+    it('renders it alongside the owner hub and the facilitator CardMenu, in the same container, without displacing them', () => {
+        render(inColumn(
+            <DraggableCard {...props} currentUser="user1" canConvertToAction onConvertToAction={vi.fn()} participants={[]} />,
+        ));
+
+        const owner = screen.getByTestId('owner-action-menu');
+        const convert = screen.getByTestId('card-menu');
+        const grouping = screen.getByTestId('card-grouping-menu');
+        expect(owner.parentElement).toBe(convert.parentElement);
+        expect(owner.parentElement).toBe(grouping.parentElement);
+        // The pre-existing order (owner hub before the convert-to-action menu) is unchanged.
+        expect(owner.compareDocumentPosition(convert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        // Both pre-existing controls keep working.
+        expect(screen.getByTestId('owner-trigger')).toBeInTheDocument();
+        expect(screen.getByTestId('convert-to-action')).toBeInTheDocument();
+    });
+
+    it('still renders the owner hub (and no grouping menu) when grouping is disabled, e.g. mode user', () => {
+        render(inColumn(<DraggableCard {...props} currentUser="user1" />, ctxValue({ groupingEnabled: false })));
+
+        expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument();
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+    });
+
+    it('renders no footer actions at all for a plain participant when grouping is disabled', () => {
+        render(inColumn(<DraggableCard {...props} />, ctxValue({ groupingEnabled: false })));
+
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('owner-action-menu')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('card-menu')).not.toBeInTheDocument();
+    });
+
+    it('renders no grouping menu for an ungrouped card without candidates (no group, no other ungrouped card)', () => {
+        render(inColumn(<DraggableCard {...props} />, ctxValue({ groups: [], ungroupedCards: [baseCard] })));
+
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+    });
+
+    it('renders it when the only candidate is a group', () => {
+        render(inColumn(<DraggableCard {...props} />, ctxValue({ groups: [group], ungroupedCards: [baseCard] })));
+
+        expect(screen.getByTestId('card-grouping-menu')).toBeInTheDocument();
+    });
+
+    it('renders it for a grouped card even without any other candidate (Remove from group is one)', () => {
+        render(inColumn(<DraggableCard {...props} card={grouped} />, ctxValue({ groups: [group], ungroupedCards: [] })));
+
+        expect(screen.getByTestId('card-grouping-menu')).toHaveAttribute('data-card-id', 'card-1');
+    });
+
+    it('renders no grouping menu without a column context (DragOverlay, standalone) and does not throw', () => {
+        expect(() => render(<DraggableCard {...props} />)).not.toThrow();
+
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+    });
+
+    it('keeps the owner hub working without a column context', () => {
+        render(<DraggableCard {...props} currentUser="user1" />);
+
+        expect(screen.getByTestId('owner-action-menu')).toBeInTheDocument();
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+    });
+
+    it('hides the grouping menu together with the other actions while the card is being edited', () => {
+        render(inColumn(<DraggableCard {...props} currentUser="user1" />));
+        expect(screen.getByTestId('card-grouping-menu')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('owner-edit'));
+
+        expect(screen.queryByTestId('card-grouping-menu')).not.toBeInTheDocument();
+    });
+
+    it('stamps the card root with data-card-id (focus-return contract of CardGroupingMenu)', () => {
+        const { container } = render(<DraggableCard {...props} />);
+
+        const root = container.querySelector('[data-card-focus-target]');
+        expect(root).not.toBeNull();
+        expect(root).toHaveAttribute('data-card-id', 'card-1');
+    });
+});
+
+describe('DraggableCard: drag handle accessibility (spec 059, T066)', () => {
+    const t0 = new Date('2026-01-01T00:00:00.000Z');
+    const card: CardType = {
+        id: 'card-1', retrospectiveId: 'retro-1', column: 'helped', content: 'Test card content',
+        color: 'pastelBlue' as CardColor, votes: 0, likes: [], reactions: [], order: 1,
+        createdBy: 'user1', createdAt: t0, updatedAt: t0,
+    };
+    const dragHandleProps = { attributes: {} as any, listeners: undefined, setActivatorNodeRef: vi.fn() };
+
+    it('renders a handle with an accessible name when dragHandleProps is given', () => {
+        render(<DraggableCard card={card} currentUser="user1" dragHandleProps={dragHandleProps} />);
+
+        expect(screen.getByRole('button', { name: 'retrospective.card.dragHandle' })).toBeInTheDocument();
+    });
+
+    it('gives the handle a visible keyboard focus ring', () => {
+        render(<DraggableCard card={card} currentUser="user1" dragHandleProps={dragHandleProps} />);
+
+        expect(screen.getByRole('button', { name: 'retrospective.card.dragHandle' }).className).toMatch(/focus-visible:ring-2/);
+    });
+
+    it('gives the handle a 44px touch target below md (class contract: min-h-11 min-w-11)', () => {
+        render(<DraggableCard card={card} currentUser="user1" dragHandleProps={dragHandleProps} />);
+
+        const handle = screen.getByRole('button', { name: 'retrospective.card.dragHandle' });
+        expect(handle.className).toMatch(/(^|\s)min-h-11(\s|$)/);
+        expect(handle.className).toMatch(/(^|\s)min-w-11(\s|$)/);
+    });
+
+    it('renders no handle button without dragHandleProps (grouping disabled / DragOverlay)', () => {
+        render(<DraggableCard card={card} currentUser="user1" />);
+
+        expect(screen.queryByRole('button', { name: 'retrospective.card.dragHandle' })).not.toBeInTheDocument();
     });
 });

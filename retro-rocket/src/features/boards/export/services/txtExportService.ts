@@ -36,6 +36,8 @@ export interface RetrospectiveTxtData {
     // New sentiment data
     sentimentResults?: Map<string, SentimentResult>;
     teamMoodReport?: TeamMoodReport;
+    /** Localized fallback strings resolved by the caller (spec 059, T054). */
+    labels?: { defaultGroupTitle: string };
 }
 
 export class TxtExportService {
@@ -483,7 +485,7 @@ export class TxtExportService {
         lines.push('');
 
         data.groups.forEach((group, index) => {
-            const groupTitle = group.title?.trim() || `Grupo ${index + 1}`;
+            const groupTitle = group.title?.trim() || data.labels?.defaultGroupTitle || `Grupo ${index + 1}`;
 
             // Get all cards in this group
             const allCardIds = [group.headCardId, ...group.memberCardIds];

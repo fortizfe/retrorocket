@@ -58,6 +58,8 @@ export interface UnifiedExportData {
     // New sentiment analysis data
     sentimentResults?: Map<string, import('@/features/boards/types/sentiment').SentimentResult>;
     teamMoodReport?: import('@/features/boards/types/teamMood').TeamMoodReport;
+    /** Localized fallback strings resolved by the caller (spec 059, T054). */
+    labels?: { defaultGroupTitle: string };
 }
 
 export interface UseUnifiedExportState {

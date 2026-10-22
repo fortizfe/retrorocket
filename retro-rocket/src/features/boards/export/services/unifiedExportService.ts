@@ -134,7 +134,8 @@ export class UnifiedExportService {
             actionItems: data.actionItems,
             // Include sentiment data
             sentimentResults: data.sentimentResults,
-            teamMoodReport: data.teamMoodReport
+            teamMoodReport: data.teamMoodReport,
+            labels: data.labels
         };
 
         console.log(`Exporting ${pdfData.cards.length} cards to PDF`);
@@ -172,7 +173,8 @@ export class UnifiedExportService {
             actionItems: data.actionItems,
             // Include sentiment data
             sentimentResults: data.sentimentResults,
-            teamMoodReport: data.teamMoodReport
+            teamMoodReport: data.teamMoodReport,
+            labels: data.labels
         };
 
         console.log(`Exporting ${txtData.cards.length} cards to TXT`);
@@ -212,7 +214,8 @@ export class UnifiedExportService {
             actionItems: data.actionItems,
             // Include sentiment data
             sentimentResults: data.sentimentResults,
-            teamMoodReport: data.teamMoodReport
+            teamMoodReport: data.teamMoodReport,
+            labels: data.labels
         };
 
         console.log(`Exporting ${docxData.cards.length} cards to DOCX`);

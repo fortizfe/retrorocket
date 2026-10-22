@@ -1,29 +1,23 @@
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverEvent,
-    DragOverlay,
-    DragStartEvent,
-    PointerSensor,
-    KeyboardSensor,
-    useSensor,
-    useSensors,
-    closestCorners,
-} from '@dnd-kit/core';
+import { AnimatePresence } from 'framer-motion';
 import {
     SortableContext,
     verticalListSortingStrategy,
-    sortableKeyboardCoordinates,
-    arrayMove,
 } from '@dnd-kit/sortable';
+import type { SortingStrategy } from '@dnd-kit/sortable';
 import { Card, EmojiReaction } from '@/features/boards/types/card';
 import { Participant } from '@/features/boards/types/participant';
 import SortableCard from '@/features/boards/retrospective/components/SortableCard';
-import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
 
+/**
+ * A SortableContext plus the card list (spec 059, T031). The DndContext, sensors,
+ * DragOverlay and drop handling live in ColumnDndProvider, so this component is only the
+ * `section:<authorId>` list used in mode `user`; the provider routes the section reorder.
+ */
 interface DragDropColumnProps {
+    /** SortableContext id, e.g. `section:<authorId>`; the provider uses it to confine reorders. */
+    id?: string;
+    strategy?: SortingStrategy;
     cards: Card[];
     column: string; // Changed from ColumnType to string for dynamic column support
     onCardUpdate: (cardId: string, updates: Partial<Card>) => Promise<void>;
@@ -32,7 +26,8 @@ interface DragDropColumnProps {
     onCardLike: (cardId: string, userId: string, username: string) => Promise<void>;
     onCardReaction: (cardId: string, userId: string, username: string, emoji: EmojiReaction) => Promise<void>;
     onCardReactionRemove: (cardId: string, userId: string) => Promise<void>;
-    onCardsReorder: (updates: Array<{ cardId: string; order: number; column?: string }>) => Promise<void>;
+    /** Accepted for call-site compatibility only: ColumnDndProvider performs the reorder. */
+    onCardsReorder?: (updates: Array<{ cardId: string; order: number; column?: string }>) => Promise<void>;
     currentUser?: string;
     canEdit?: boolean;
     children?: React.ReactNode;
@@ -47,6 +42,8 @@ interface DragDropColumnProps {
 }
 
 const DragDropColumn: React.FC<DragDropColumnProps> = ({
+    id,
+    strategy = verticalListSortingStrategy,
     cards,
     column: _column,
     onCardUpdate,
@@ -55,7 +52,7 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
     onCardLike,
     onCardReaction,
     onCardReactionRemove,
-    onCardsReorder,
+    onCardsReorder: _onCardsReorder,
     currentUser,
     canEdit = true,
     children,
@@ -66,21 +63,6 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
     canConvertToAction,
     onConvertToAction,
 }) => {
-    const [activeCard, setActiveCard] = React.useState<Card | null>(null);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        }),
-        // Keyboard operability of drag & drop (FR-018 / Constitution VIII):
-        // arrow keys move a grabbed card; Space/Enter grabs and drops.
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
     // Sort cards by order and filter out any cards with invalid IDs
     const sortedCards = React.useMemo(() => {
         const validCards = cards.filter(card =>
@@ -91,120 +73,45 @@ const DragDropColumn: React.FC<DragDropColumnProps> = ({
         return [...validCards].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }, [cards]);
 
-    const handleDragStart = (event: DragStartEvent) => {
-        const { active } = event;
-        const card = cards.find(c => c.id === active.id);
-        setActiveCard(card || null);
-    };
-
-    const handleDragOver = (_event: DragOverEvent) => {
-        // Handle dragging between columns if needed
-        // For now, we'll focus on reordering within the same column
-    };
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveCard(null);
-
-        if (!over || active.id === over.id) {
-            return;
-        }
-
-        const activeCard = cards.find(c => c.id === active.id);
-        const overCard = cards.find(c => c.id === over.id);
-
-        if (!activeCard || !overCard) {
-            return;
-        }
-
-        // If cards are in different columns, we could handle cross-column moves here
-        if (activeCard.column !== overCard.column) {
-            // For now, we'll keep cards in their original columns
-            return;
-        }
-
-        const oldIndex = sortedCards.findIndex(c => c.id === active.id);
-        const newIndex = sortedCards.findIndex(c => c.id === over.id);
-
-        if (oldIndex !== newIndex) {
-            const newOrder = arrayMove(sortedCards, oldIndex, newIndex);
-
-            // Calculate new order values
-            const updates = newOrder.map((card, index) => ({
-                cardId: card.id,
-                order: index,
-                column: card.column
-            }));
-
-            onCardsReorder(updates);
-        }
-    };
-
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
+        <SortableContext
+            id={id}
+            items={sortedCards.map(card => `card:${card.id}`)}
+            strategy={strategy}
         >
-            <SortableContext
-                items={sortedCards.map(card => card.id)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="space-y-3">
-                    {children}
-                    {/* AnimatePresence must directly parent the list whose members mount/
-                        unmount for a card's exit animation to run at all — it was previously
-                        nested one level too deep, inside DraggableCard itself, where React
-                        unmounts the whole subtree (including that inner AnimatePresence)
-                        before it ever sees the real removal (design audit finding, spec 028). */}
-                    <AnimatePresence>
-                        {React.useMemo(() => sortedCards.map((card) => {
-                            return (
-                                <SortableCard
-                                    key={card.id}
-                                    card={card}
-                                    onUpdate={onCardUpdate}
-                                    onDelete={onCardDelete}
-                                    onVote={onCardVote}
-                                    onLike={onCardLike}
-                                    onReaction={onCardReaction}
-                                    onReactionRemove={onCardReactionRemove}
-                                    currentUser={currentUser}
-                                    canEdit={canEdit}
-                                    isGroupingMode={isGroupingMode}
-                                    isSelected={selectedCards.has(card.id)}
-                                    onSelect={onCardSelect}
-                                    participants={participants}
-                                    canConvertToAction={canConvertToAction}
-                                    onConvertToAction={onConvertToAction}
-                                />
-                            );
-                        }), [sortedCards, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
-                    </AnimatePresence>
-                </div>
-            </SortableContext>
-
-            <DragOverlay>
-                {activeCard ? (
-                    // Tactile lift (feedback + spatial consistency, research.md §4,
-                    // Direction C's "shadow intensifies while dragging" choice): a
-                    // spring, not a tween — this is gesture motion, and a spring
-                    // carries the grab's felt weight instead of a mechanical ease.
-                    <motion.div
-                        initial={{ transform: 'scale(1) translateY(0px)' }}
-                        animate={{ transform: 'scale(1.03) translateY(-4px)' }}
-                        transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
-                    >
-                        <DraggableCard
-                            card={activeCard}
-                            isDragging={true}
-                        />
-                    </motion.div>
-                ) : null}
-            </DragOverlay>
-        </DndContext>
+            <div className="space-y-3">
+                {children}
+                {/* AnimatePresence must directly parent the list whose members mount/
+                    unmount for a card's exit animation to run at all — it was previously
+                    nested one level too deep, inside DraggableCard itself, where React
+                    unmounts the whole subtree (including that inner AnimatePresence)
+                    before it ever sees the real removal (design audit finding, spec 028). */}
+                <AnimatePresence>
+                    {React.useMemo(() => sortedCards.map((card) => {
+                        return (
+                            <SortableCard
+                                key={card.id}
+                                card={card}
+                                onUpdate={onCardUpdate}
+                                onDelete={onCardDelete}
+                                onVote={onCardVote}
+                                onLike={onCardLike}
+                                onReaction={onCardReaction}
+                                onReactionRemove={onCardReactionRemove}
+                                currentUser={currentUser}
+                                canEdit={canEdit}
+                                isGroupingMode={isGroupingMode}
+                                isSelected={selectedCards.has(card.id)}
+                                onSelect={onCardSelect}
+                                participants={participants}
+                                canConvertToAction={canConvertToAction}
+                                onConvertToAction={onConvertToAction}
+                            />
+                        );
+                    }), [sortedCards, onCardUpdate, onCardDelete, onCardVote, onCardLike, onCardReaction, onCardReactionRemove, currentUser, canEdit, isGroupingMode, selectedCards, onCardSelect, participants, canConvertToAction, onConvertToAction])}
+                </AnimatePresence>
+            </div>
+        </SortableContext>
     );
 };
 

@@ -141,7 +141,8 @@ const ImprovedExportPopover: React.FC<ImprovedExportPopoverProps> = ({
             actionItems,
             // Include sentiment analysis data if available
             sentimentResults: sentimentResultsForExport,
-            teamMoodReport
+            teamMoodReport,
+            labels: { defaultGroupTitle: t('retrospective.groupCard.defaultGroupTitle') }
         };
 
         await exportRetrospective(exportData, unifiedOptions);

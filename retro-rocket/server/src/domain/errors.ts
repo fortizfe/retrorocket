@@ -34,8 +34,10 @@ export class ForbiddenError extends AppError {
 }
 
 export class ConflictError extends AppError {
-    constructor(message = 'Resource already exists') {
-        super('conflict', message, 409);
+    /** `code` defaults to the generic `'conflict'`; spec 059 passes `'group_conflict'` for
+     * card-grouping invariant violations (contracts/group-api.md) so clients can tell them apart. */
+    constructor(message = 'Resource already exists', code = 'conflict') {
+        super(code, message, 409);
         this.name = 'ConflictError';
     }
 }

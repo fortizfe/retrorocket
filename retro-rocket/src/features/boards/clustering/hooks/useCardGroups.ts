@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { CardGroup, Card, GroupSuggestion } from '@/features/boards/types/card';
+import { CardGroup, Card, GroupSuggestion, MoveTarget, MoveCardResult } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 import * as backendRetrospectiveClient from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { calculateGroupAggregations } from '@/features/boards/clustering/services/cardGroupService';
@@ -15,6 +15,17 @@ interface UseCardGroupsProps {
     groups?: CardGroup[];
 }
 
+/** A grouping write was rejected because the board changed underneath it (HTTP 409 or 404). */
+export class GroupingConflictError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'GroupingConflictError';
+    }
+}
+
+/** A column item sent to the server when renormalizing a column's order space. */
+export type ColumnOrderEntry = backendRetrospectiveClient.ColumnOrderItem;
+
 interface UseCardGroupsReturn {
     groups: CardGroup[];
     groupedCards: Card[];
@@ -29,6 +40,11 @@ interface UseCardGroupsReturn {
     removeFromGroup: (cardId: string) => Promise<void>;
     toggleGroupCollapse: (groupId: string) => Promise<void>;
 
+    // Drag-to-group operations (spec 059). 409/404 reject with GroupingConflictError.
+    moveCard: (cardId: string, target: MoveTarget) => Promise<MoveCardResult>;
+    renameGroup: (groupId: string, title: string | null) => Promise<void>;
+    renormalizeColumn: (columnId: string, items: ColumnOrderEntry[]) => Promise<void>;
+
     // AI-based grouping suggestions (spec 044), scoped to a single column (spec 049)
     findSuggestions: (columnId: string, config?: Partial<GroupingConfig>) => Promise<GroupSuggestion[]>;
     acceptSuggestion: (suggestion: GroupSuggestion) => Promise<string>;
@@ -37,6 +53,10 @@ interface UseCardGroupsReturn {
     getGroupByCardId: (cardId: string) => CardGroup | null;
     getCardsInGroup: (groupId: string) => Card[];
     getCardsByColumn: (column: ColumnType, includeGrouped?: boolean) => Card[];
+}
+
+function isConflict(err: unknown): boolean {
+    return err instanceof backendRetrospectiveClient.BackendRequestError && (err.status === 409 || err.status === 404);
 }
 
 function messageOf(error: unknown, fallback: string): string {
@@ -121,6 +141,50 @@ export const useCardGroups = ({
         [cards],
     );
 
+    const moveCard = useCallback(
+        async (cardId: string, target: MoveTarget): Promise<MoveCardResult> => {
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
+            try {
+                setError(null);
+                return await backendRetrospectiveClient.moveCard(retrospectiveId, cardId, target);
+            } catch (err) {
+                const message = messageOf(err, 'Failed to move card');
+                if (isConflict(err)) throw new GroupingConflictError(message);
+                setError(message);
+                throw new Error(message);
+            }
+        },
+        [retrospectiveId],
+    );
+
+    const renameGroup = useCallback(async (groupId: string, title: string | null): Promise<void> => {
+        try {
+            setError(null);
+            await backendRetrospectiveClient.updateCardGroup(groupId, { title });
+        } catch (err) {
+            const message = messageOf(err, 'Failed to rename group');
+            if (isConflict(err)) throw new GroupingConflictError(message);
+            setError(message);
+            throw new Error(message);
+        }
+    }, []);
+
+    const renormalizeColumn = useCallback(
+        async (columnId: string, items: ColumnOrderEntry[]): Promise<void> => {
+            if (!retrospectiveId) throw new Error('No retrospectiveId provided');
+            try {
+                setError(null);
+                await backendRetrospectiveClient.renormalizeColumnOrder(retrospectiveId, columnId, items);
+            } catch (err) {
+                const message = messageOf(err, 'Failed to renormalize column order');
+                if (isConflict(err)) throw new GroupingConflictError(message);
+                setError(message);
+                throw new Error(message);
+            }
+        },
+        [retrospectiveId],
+    );
+
     const toggleGroupCollapse = useCallback(
         async (groupId: string): Promise<void> => {
             const group = groups.find((g) => g.id === groupId);
@@ -188,6 +252,9 @@ export const useCardGroups = ({
         addToGroup,
         removeFromGroup,
         toggleGroupCollapse,
+        moveCard,
+        renameGroup,
+        renormalizeColumn,
         findSuggestions,
         acceptSuggestion,
         getGroupByCardId,

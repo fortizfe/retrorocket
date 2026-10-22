@@ -1,10 +1,78 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDraggable } from '@dnd-kit/core';
 import { ChevronDown, ChevronRight, Users, Sparkles, X } from 'lucide-react';
 import { CardGroup, Card, EmojiReaction } from '@/features/boards/types/card';
 import DraggableCard from '@/features/boards/retrospective/components/DraggableCard';
+import type { DragHandleProps } from '@/features/boards/retrospective/components/DraggableCard';
 import { getColorConfig } from '@/lib/utils/cardColors';
 import { useLanguage } from '@/lib/hooks/useLanguage';
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion';
+import { useItemDragFeedback, useOptionalColumnGroupingContext } from '@/features/boards/clustering/dnd/ColumnGroupingContext';
+import { GroupTitleEditor } from './GroupTitleEditor';
+
+/**
+ * 059-drag-to-group-cards, US3 (T065) — armed group feedback (`animate` + `apple-design`;
+ * contracts B3/B5b). Same visual language as SortableCard's armed card (see the decision
+ * block there) so a card and a group read as the same kind of drop target: `ring-2
+ * ring-action` with `ring-offset-2 ring-offset-surface` (the offset keeps the 3:1 margin in
+ * dark mode), a frosted `bg-surface-raised/80 backdrop-blur-md` veil over the content and a
+ * solid `bg-action text-text-inverse` "Drop to group" chip. The veil is aria-hidden: the
+ * live region already speaks "Over group ...", and the text chip means colour is never the
+ * only cue. Purpose: state indication, once per deliberate 180 ms dwell, so a small quick
+ * entrance. Motion: the root is already a framer `motion.div` (it owns `transform`; the
+ * dnd-kit transform lives on the wrapper in ColumnItemList), so the 1.02 scale is a
+ * property of its `animate` target: the same 180 ms strong ease-out as the card's CSS
+ * scale; framer retargets from the live value when the pointer leaves (interruptible).
+ * Not a spring: 2% of scale has no room for a visible overshoot. Reduced motion: no scale
+ * (`useReducedMotion`); ring, veil and chip stay. Veil/chip entrance reuse the cards'
+ * `animate-drop-arm-in` / `animate-drop-badge-in` keyframes; removal is instant.
+ * A new member (B5b) enters through the member list's existing AnimatePresence + layout
+ * (review-animations: its stagger is already capped at 60 ms/item, 300 ms total, within
+ * the 30-80 ms guideline, so nothing changes there).
+ */
+/**
+ * 059-drag-to-group-cards, US6 (T069) — drag handles for the head and member cards
+ * (`apple-design` + `emil-design-eng`; contracts D1/D7). Decisions:
+ *  - Reuse DraggableCard's existing handle (the same 44px touch target, `min-h-11 min-w-11
+ *    md:min-h-6 md:min-w-6`, the shared focus ring, revealed on hover AND focus-within, the
+ *    project's deliberate precedent for the sortable cards' handle) so a grouped card is grabbed
+ *    exactly like an ungrouped one: one gesture vocabulary (consistency), nothing new to learn.
+ *  - No new chrome inside the group (deference): the group's dashed frame and connector
+ *    lines already say "these belong together"; an always-visible grip on every member would
+ *    add noise to the content. The handle is a real button, so keyboard and screen-reader users
+ *    reach it with Tab (Space/Enter lifts, same K1-K5 flow).
+ *  - Source feedback: the card dims to 50% opacity while dragged, like SortableCard's source, and
+ *    the DragOverlay shows the lifted copy (spatial consistency: it visibly leaves the group).
+ *    Opacity only (cheap, not layout-affecting); no new motion, so no reduced-motion branch.
+ *  - Hooks cannot be conditional: each card renders through MemberDraggable, which always calls
+ *    useDraggable and passes `disabled` when grouping is off or the group is read-only (D7), in
+ *    which case no handle is rendered at all.
+ */
+const MemberDraggable: React.FC<{
+    card: Card;
+    groupId: string;
+    enabled: boolean;
+    children: (props: {
+        dragHandleProps: DragHandleProps | undefined;
+        isDragging: boolean;
+    }) => React.ReactNode;
+}> = ({ card, groupId, enabled, children }) => {
+    const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({
+        id: `member:${card.id}`,
+        // `card` lets the DragOverlay render the dragged member (groups carry no card objects).
+        data: { type: 'member', groupId, card },
+        disabled: !enabled,
+    });
+    return (
+        <div ref={setNodeRef} className={isDragging ? 'opacity-50' : undefined}>
+            {children({
+                dragHandleProps: enabled ? { attributes, listeners, setActivatorNodeRef } : undefined,
+                isDragging,
+            })}
+        </div>
+    );
+};
 
 interface GroupCardProps {
     group: CardGroup;
@@ -19,6 +87,14 @@ interface GroupCardProps {
     onCardReactionRemove?: (cardId: string, userId: string) => Promise<void>;
     currentUserId?: string;
     isReadOnly?: boolean;
+    /**
+     * Inline title editing wiring (spec 059). `autoEditTitle` opens the title in edit mode
+     * (this client only: set from the drop's `createdGroupId`); `onAutoEditConsumed` is called
+     * once it has. Rendered by GroupTitleEditor.
+     */
+    autoEditTitle?: boolean;
+    onAutoEditConsumed?: () => void;
+    onRenameGroup?: (groupId: string, title: string | null) => Promise<void>;
 }
 
 export const GroupCard: React.FC<GroupCardProps> = ({
@@ -34,8 +110,16 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     onCardReactionRemove,
     currentUserId,
     isReadOnly = false,
+    autoEditTitle = false,
+    onAutoEditConsumed,
+    onRenameGroup,
 }) => {
     const { t } = useLanguage();
+    const reducedMotion = useReducedMotion();
+    const grouping = useOptionalColumnGroupingContext();
+    const { isArmed, isBusy } = useItemDragFeedback(`group:${group.id}`);
+    const canDrag = !!grouping?.groupingEnabled && !isReadOnly;
+    const canRename = !!onRenameGroup && !isReadOnly;
 
     // Find head card and member cards
     const headCard = cards.find(card => card.id === group.headCardId);
@@ -48,7 +132,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     }
 
     const totalCards = 1 + memberCards.length;
-    const hasCustomTitle = group.title && group.title.trim() !== '';
+    const displayTitle = group.title?.trim() || t('retrospective.groupCard.defaultGroupTitle');
 
     // Get the primary color from the head card. Routed through
     // getColorConfig (which internally calls resolveCardColor) rather than
@@ -76,10 +160,12 @@ export const GroupCard: React.FC<GroupCardProps> = ({
         <motion.div
             layout
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: 1, scale: isArmed && !reducedMotion ? 1.02 : 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className={`relative rounded-2xl border-2 border-dashed border-border-strong bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden shadow-sm`}
+            className={`relative rounded-2xl border-2 border-dashed border-border-strong bg-gradient-to-br ${colorConfig.background} ${colorConfig.border} overflow-hidden shadow-sm ${isArmed ? 'ring-2 ring-action ring-offset-2 ring-offset-surface' : ''}`}
+            data-group-target={isArmed ? 'armed' : undefined}
+            aria-busy={isBusy ? true : undefined}
         >
             {/* Group Header */}
             <div className="p-3 border-b border-border-default bg-surface-raised/80 backdrop-blur-sm">
@@ -87,7 +173,9 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                     <div className="flex items-center space-x-2 flex-1">
                         <button
                             onClick={() => onToggleCollapse(group.id)}
-                            className="flex items-center space-x-2 text-text-secondary hover:text-text-primary transition-colors group"
+                            aria-expanded={!group.isCollapsed}
+                            aria-label={t('retrospective.groupCard.toggleGroup', { title: displayTitle })}
+                            className="flex items-center space-x-2 rounded text-text-secondary hover:text-text-primary transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                             disabled={isReadOnly}
                         >
                             {group.isCollapsed ? (
@@ -99,15 +187,15 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                         </button>
 
                         <div className="flex-1">
-                            {hasCustomTitle ? (
-                                <h3 className="text-sm font-medium text-text-primary truncate">
-                                    {group.title}
-                                </h3>
-                            ) : (
-                                <h3 className="text-sm font-medium text-text-secondary">
-                                    {t('retrospective.groupCard.groupOfCards', { totalCards })}
-                                </h3>
-                            )}
+                            <h3 className="min-w-0">
+                                <GroupTitleEditor
+                                    title={group.title}
+                                    isReadOnly={!canRename}
+                                    autoEdit={autoEditTitle}
+                                    onAutoEditConsumed={onAutoEditConsumed}
+                                    onCommit={(next) => onRenameGroup!(group.id, next)}
+                                />
+                            </h3>
                             <div className="flex items-center space-x-3 text-xs text-text-muted mt-1">
                                 <span className="flex items-center space-x-1">
                                     <span>📝</span>
@@ -175,8 +263,12 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                         </div>
                                     </div>
                                 )}
+                                <MemberDraggable card={headCard} groupId={group.id} enabled={canDrag}>
+                                    {({ dragHandleProps, isDragging }) => (
                                 <DraggableCard
                                     card={headCard}
+                                    dragHandleProps={dragHandleProps}
+                                    isSortableDragging={isDragging}
                                     onUpdate={onCardUpdate}
                                     onDelete={() => handleRemoveCard(headCard.id)}
                                     onVote={onCardVote}
@@ -187,6 +279,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                     canEdit={!isReadOnly}
                                     isDragging={false}
                                 />
+                                    )}
+                                </MemberDraggable>
                             </div>
 
                             {/* Member Cards — AnimatePresence must directly parent this list for a
@@ -201,15 +295,19 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
-                                        transition={{ delay: Math.min(index * 0.06, 0.3), duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                                        transition={{ delay: Math.min(index * 0.04, 0.12), duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                                         className="ml-4 relative"
                                     >
                                         {/* Connection line */}
                                         <div className="absolute -left-2 top-4 w-2 h-0.5 bg-border-default"></div>
                                         <div className="absolute -left-2 top-0 w-0.5 h-full bg-border-default"></div>
 
+                                        <MemberDraggable card={card} groupId={group.id} enabled={canDrag}>
+                                            {({ dragHandleProps, isDragging }) => (
                                         <DraggableCard
                                             card={card}
+                                            dragHandleProps={dragHandleProps}
+                                            isSortableDragging={isDragging}
                                             onUpdate={onCardUpdate}
                                             onDelete={() => handleRemoveCard(card.id)}
                                             onVote={onCardVote}
@@ -220,6 +318,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                                             canEdit={!isReadOnly}
                                             isDragging={false}
                                         />
+                                            )}
+                                        </MemberDraggable>
                                     </motion.div>
                                 ))}
                             </AnimatePresence>
@@ -240,6 +340,16 @@ export const GroupCard: React.FC<GroupCardProps> = ({
                             {t('retrospective.groupCard.moreCards', { count: memberCards.length })}
                         </span>
                     </div>
+                </div>
+            )}
+            {isArmed && (
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-surface-raised/80 backdrop-blur-md animate-drop-arm-in"
+                >
+                    <span className="rounded-full bg-action px-3 py-1 text-sm font-medium text-text-inverse shadow-sm motion-safe:animate-drop-badge-in">
+                        {t('retrospective.dragGroup.dropToGroup')}
+                    </span>
                 </div>
             )}
         </motion.div>

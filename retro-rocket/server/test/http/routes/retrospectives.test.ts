@@ -5,6 +5,8 @@ import type { FakeRetrospectiveRecord } from '../../application/use-cases/retros
 import type { CardDTO } from '../../../src/application/ports/cards';
 import type { ProfileRecord } from '../../../src/application/ports/profile';
 import { inMemoryProfilePort } from '../../application/use-cases/profile/profileFakes';
+import { ConflictError, NotFoundError } from '../../../src/domain/errors';
+import type { CardGroupDTO, CardGroupPort } from '../../../src/application/ports/cards';
 
 function profile(overrides: Partial<ProfileRecord> = {}): ProfileRecord {
     return {
@@ -450,20 +452,21 @@ describe('POST /api/groups/:id/cards', () => {
 });
 
 describe('DELETE /api/groups/:id/cards/:cardId', () => {
-    it('removes a card from a group, promoting a new head', async () => {
-        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
-        const created = await request(app).post('/api/retrospectives/r1/groups').set('Cookie', sessionCookieFor('u1')).send({ headCardId: 'c1', memberCardIds: ['c2'] });
+    it('removes the head from a 3-card group, promoting a new head (group survives)', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' }), card({ id: 'c3' })] });
+        const created = await request(app).post('/api/retrospectives/r1/groups').set('Cookie', sessionCookieFor('u1')).send({ headCardId: 'c1', memberCardIds: ['c2', 'c3'] });
         const res = await request(app).delete(`/api/groups/${created.body.id}/cards/c1`).set('Cookie', sessionCookieFor('u1'));
         expect(res.status).toBe(200);
         expect(res.body.headCardId).toBe('c2');
+        expect(res.body.memberCardIds).toEqual(['c3']);
     });
 
-    it('204s (group disbanded) when the last member is removed', async () => {
-        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+    it('204s and dissolves the group (I5) when a single removal leaves one card in a 2-card group', async () => {
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
         const created = await request(app).post('/api/retrospectives/r1/groups').set('Cookie', sessionCookieFor('u1')).send({ headCardId: 'c1', memberCardIds: ['c2'] });
-        await request(app).delete(`/api/groups/${created.body.id}/cards/c2`).set('Cookie', sessionCookieFor('u1'));
-        const res = await request(app).delete(`/api/groups/${created.body.id}/cards/c1`).set('Cookie', sessionCookieFor('u1'));
+        const res = await request(app).delete(`/api/groups/${created.body.id}/cards/c2`).set('Cookie', sessionCookieFor('u1'));
         expect(res.status).toBe(204);
+        expect(await deps.cardGroupPort.getGroup(created.body.id)).toBeNull();
     });
 });
 
@@ -719,5 +722,291 @@ describe('PUT /api/cards/:id/sentiment/override', () => {
         const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' })] });
         const res = await request(app).put('/api/cards/c1/sentiment/override').set('Cookie', sessionCookieFor('someone-else')).send({ sentiment: 'negative' });
         expect(res.status).toBe(403);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 059-drag-to-group-cards, T007 (red phase). The new CardGroupPort methods
+// (moveCard / setGroupTitle / renormalizeColumnOrder) are stubbed per test on top of the
+// shared fake store, so these route tests do not depend on the fake's implementation
+// (retrospectiveFakes.ts, T004). The stub is swapped in after the app is built; the router
+// reads deps.cardGroupPort at request time.
+// ---------------------------------------------------------------------------
+type NewGroupPortMethods = {
+    moveCard: ReturnType<typeof vi.fn>;
+    setGroupTitle: ReturnType<typeof vi.fn>;
+    renormalizeColumnOrder: ReturnType<typeof vi.fn>;
+};
+
+function appWithStubbedGroupPort(stubs: Partial<NewGroupPortMethods> = {}, seed: Parameters<typeof buildRetrospectiveTestApp>[0] = {}) {
+    const built = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })], ...seed });
+    const port = {
+        ...built.deps.cardGroupPort,
+        moveCard: vi.fn(async () => ({ dissolvedGroupIds: [] as string[] })),
+        setGroupTitle: vi.fn(async (groupId: string, title: string | null) => groupDto({ id: groupId, title: title ?? undefined })),
+        renormalizeColumnOrder: vi.fn(async () => undefined),
+        ...stubs,
+    };
+    built.deps.cardGroupPort = port as unknown as CardGroupPort;
+    return { ...built, port: port as typeof port & { setGroupCollapse: ReturnType<typeof vi.fn> } };
+}
+
+function groupDto(overrides: Partial<CardGroupDTO> = {}): CardGroupDTO {
+    return {
+        id: 'g1',
+        retrospectiveId: 'r1',
+        column: 'col1',
+        headCardId: 'c1',
+        memberCardIds: ['c2'],
+        isCollapsed: true,
+        createdAt: new Date(),
+        createdBy: 'u1',
+        order: 1,
+        ...overrides,
+    };
+}
+
+const groupConflict = () => new ConflictError('Cards cannot be grouped', 'group_conflict' as never);
+
+describe('POST /api/retrospectives/:id/cards/:cardId/move (C0)', () => {
+    const url = '/api/retrospectives/r1/cards/c1/move';
+
+    it('200s with { createdGroupId, dissolvedGroupIds } and forwards the target to the port', async () => {
+        const { app, port } = appWithStubbedGroupPort({ moveCard: vi.fn(async () => ({ createdGroupId: 'g9', dissolvedGroupIds: ['g1'] })) });
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ target: { kind: 'card', cardId: 'c2' } });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ createdGroupId: 'g9', dissolvedGroupIds: ['g1'] });
+        expect(port.moveCard).toHaveBeenCalledWith('r1', 'c1', { kind: 'card', cardId: 'c2' });
+    });
+
+    it('200s with an empty dissolvedGroupIds and no createdGroupId for a plain position move', async () => {
+        const { app, port } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ target: { kind: 'position', order: 1712345678.5 } });
+        expect(res.status).toBe(200);
+        expect(res.body.dissolvedGroupIds).toEqual([]);
+        expect(res.body.createdGroupId).toBeUndefined();
+        expect(port.moveCard).toHaveBeenCalledWith('r1', 'c1', { kind: 'position', order: 1712345678.5 });
+    });
+
+    it('forwards a group target', async () => {
+        const { app, port } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ target: { kind: 'group', groupId: 'g2' } });
+        expect(res.status).toBe(200);
+        expect(port.moveCard).toHaveBeenCalledWith('r1', 'c1', { kind: 'group', groupId: 'g2' });
+    });
+
+    it.each([
+        ['a missing target', {}],
+        ['an unknown target kind', { target: { kind: 'column', id: 'x' } }],
+        ['a non-finite position order', { target: { kind: 'position', order: 'NaN' } }],
+        ['a position target without order', { target: { kind: 'position' } }],
+        ['a card target without cardId', { target: { kind: 'card' } }],
+        ['a group target without groupId', { target: { kind: 'group' } }],
+        ['a card target equal to the source card (M1)', { target: { kind: 'card', cardId: 'c1' } }],
+    ])('400s invalid_request for %s (M1) without calling the port', async (_label, body) => {
+        const { app, port } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send(body);
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('invalid_request');
+        expect(port.moveCard).not.toHaveBeenCalled();
+    });
+
+    it('404s when the port reports a missing card/group (M2/M3)', async () => {
+        const { app } = appWithStubbedGroupPort({ moveCard: vi.fn(async () => { throw new NotFoundError('Card not found'); }) });
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ target: { kind: 'card', cardId: 'c2' } });
+        expect(res.status).toBe(404);
+        expect(res.body.error.code).toBe('not_found');
+    });
+
+    it('409s with error code group_conflict when the port reports a grouping conflict (M4/M5/M7)', async () => {
+        const { app } = appWithStubbedGroupPort({ moveCard: vi.fn(async () => { throw groupConflict(); }) });
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ target: { kind: 'card', cardId: 'c2' } });
+        expect(res.status).toBe(409);
+        expect(res.body.error.code).toBe('group_conflict');
+    });
+
+    it('401s without a session cookie', async () => {
+        const { app } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).send({ target: { kind: 'position', order: 1 } });
+        expect(res.status).toBe(401);
+    });
+});
+
+describe('POST /api/retrospectives/:id/column-order (C4)', () => {
+    const url = '/api/retrospectives/r1/column-order';
+    const items = [
+        { kind: 'group', id: 'g1', order: 1024 },
+        { kind: 'card', id: 'c7', order: 2048 },
+    ];
+
+    it('204s and forwards (retrospectiveId, columnId, items) to the port', async () => {
+        const { app, port } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ columnId: 'what-went-well', items });
+        expect(res.status).toBe(204);
+        expect(port.renormalizeColumnOrder).toHaveBeenCalledWith('r1', 'what-went-well', items);
+    });
+
+    it('accepts exactly 500 items', async () => {
+        const { app } = appWithStubbedGroupPort();
+        const many = Array.from({ length: 500 }, (_, i) => ({ kind: 'card', id: `c${i}`, order: i * 1024 }));
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ columnId: 'col1', items: many });
+        expect(res.status).toBe(204);
+    });
+
+    it.each([
+        ['missing columnId', { items }],
+        ['empty items', { columnId: 'col1', items: [] }],
+        ['more than 500 items', { columnId: 'col1', items: Array.from({ length: 501 }, (_, i) => ({ kind: 'card', id: `c${i}`, order: i })) }],
+        ['a non-finite order', { columnId: 'col1', items: [{ kind: 'card', id: 'c1', order: 'abc' }] }],
+        ['duplicate items', { columnId: 'col1', items: [{ kind: 'card', id: 'c1', order: 1 }, { kind: 'card', id: 'c1', order: 2 }] }],
+        ['an invalid item kind', { columnId: 'col1', items: [{ kind: 'column', id: 'c1', order: 1 }] }],
+    ])('400s (R1) for %s without calling the port', async (_label, body) => {
+        const { app, port } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send(body);
+        expect(res.status).toBe(400);
+        expect(port.renormalizeColumnOrder).not.toHaveBeenCalled();
+    });
+
+    it('404s when the port reports a missing item (R2)', async () => {
+        const { app } = appWithStubbedGroupPort({ renormalizeColumnOrder: vi.fn(async () => { throw new NotFoundError('Card not found'); }) });
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ columnId: 'col1', items });
+        expect(res.status).toBe(404);
+    });
+
+    it('409s with group_conflict when the port reports an item outside the column or grouped (R3)', async () => {
+        const { app } = appWithStubbedGroupPort({ renormalizeColumnOrder: vi.fn(async () => { throw groupConflict(); }) });
+        const res = await request(app).post(url).set('Cookie', sessionCookieFor('u1')).send({ columnId: 'col1', items });
+        expect(res.status).toBe(409);
+        expect(res.body.error.code).toBe('group_conflict');
+    });
+
+    it('401s without a session cookie', async () => {
+        const { app } = appWithStubbedGroupPort();
+        const res = await request(app).post(url).send({ columnId: 'col1', items });
+        expect(res.status).toBe(401);
+    });
+});
+
+describe('PATCH /api/groups/:id — partial update with title (C3)', () => {
+    it('{ title } only: sets the title and never touches isCollapsed', async () => {
+        const { app, port } = appWithStubbedGroupPort({}, { groups: [groupDto()] });
+        const collapse = vi.spyOn(port, 'setGroupCollapse');
+        const res = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ title: '  Deploy pain  ' });
+        expect(res.status).toBe(200);
+        expect(port.setGroupTitle).toHaveBeenCalledWith('g1', 'Deploy pain');
+        expect(collapse).not.toHaveBeenCalled();
+        expect(res.body).toMatchObject({ id: 'g1', title: 'Deploy pain' });
+    });
+
+    it('{ title } only leaves a previously collapsed group collapsed (end-to-end with the fake store)', async () => {
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })], groups: [groupDto({ isCollapsed: true })] });
+        const res = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ title: 'Renamed' });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ title: 'Renamed', isCollapsed: true });
+        expect((await deps.cardGroupPort.getGroup('g1'))?.isCollapsed).toBe(true);
+    });
+
+    it('{ isCollapsed } only does not touch the title', async () => {
+        const { app, port } = appWithStubbedGroupPort({}, { groups: [groupDto({ isCollapsed: false, title: 'Keep me' })] });
+        const res = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ isCollapsed: true });
+        expect(res.status).toBe(200);
+        expect(port.setGroupTitle).not.toHaveBeenCalled();
+        expect(res.body).toMatchObject({ isCollapsed: true, title: 'Keep me' });
+    });
+
+    it.each([
+        ['empty string', ''],
+        ['whitespace only', '   '],
+        ['null', null],
+    ])('%s title clears the stored title (port receives null)', async (_label, title) => {
+        const { app, port } = appWithStubbedGroupPort({}, { groups: [groupDto({ title: 'Old' })] });
+        const res = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ title });
+        expect(res.status).toBe(200);
+        expect(port.setGroupTitle).toHaveBeenCalledWith('g1', null);
+    });
+
+    it('accepts a 60-character title and rejects 61 with 400', async () => {
+        const { app, port } = appWithStubbedGroupPort({}, { groups: [groupDto()] });
+        const ok = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ title: 'a'.repeat(60) });
+        expect(ok.status).toBe(200);
+        port.setGroupTitle.mockClear();
+        const tooLong = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send({ title: 'a'.repeat(61) });
+        expect(tooLong.status).toBe(400);
+        expect(port.setGroupTitle).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['an empty body', {}],
+        ['a non-boolean isCollapsed', { isCollapsed: 'yes' }],
+        ['a non-string title', { title: 42 }],
+        ['only unknown fields', { foo: 'bar' }],
+    ])('400s for %s without writing', async (_label, body) => {
+        const { app, port } = appWithStubbedGroupPort({}, { groups: [groupDto()] });
+        const collapse = vi.spyOn(port, 'setGroupCollapse');
+        const res = await request(app).patch('/api/groups/g1').set('Cookie', sessionCookieFor('u1')).send(body);
+        expect(res.status).toBe(400);
+        expect(port.setGroupTitle).not.toHaveBeenCalled();
+        expect(collapse).not.toHaveBeenCalled();
+    });
+
+    it('404s when the group does not exist', async () => {
+        const { app } = appWithStubbedGroupPort({ setGroupTitle: vi.fn(async () => { throw new NotFoundError('Group not found'); }) });
+        const res = await request(app).patch('/api/groups/missing').set('Cookie', sessionCookieFor('u1')).send({ title: 'x' });
+        expect(res.status).toBe(404);
+    });
+});
+
+describe('POST /api/retrospectives/:id/groups — hardening (C1 P1)', () => {
+    const post = (app: Parameters<typeof request>[0], body: unknown) => request(app).post('/api/retrospectives/r1/groups').set('Cookie', sessionCookieFor('u1')).send(body as object);
+
+    it('400s when memberCardIds has 51 entries (cap is 50) and does not create the group', async () => {
+        const cards = Array.from({ length: 52 }, (_, i) => card({ id: `m${i}` }));
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards });
+        const res = await post(app, { headCardId: 'm0', memberCardIds: cards.slice(1, 52).map((c) => c.id) });
+        expect(res.status).toBe(400);
+        expect(await deps.cardGroupPort.listGroups('r1')).toHaveLength(0);
+    });
+
+    it('accepts exactly 50 members', async () => {
+        const cards = Array.from({ length: 51 }, (_, i) => card({ id: `m${i}` }));
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards });
+        const res = await post(app, { headCardId: 'm0', memberCardIds: cards.slice(1).map((c) => c.id) });
+        expect(res.status).toBe(201);
+    });
+
+    it('400s on duplicate members and when memberCardIds contains the head card', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        expect((await post(app, { headCardId: 'c1', memberCardIds: ['c2', 'c2'] })).status).toBe(400);
+        expect((await post(app, { headCardId: 'c1', memberCardIds: ['c1'] })).status).toBe(400);
+    });
+
+    it('400s on an invalid origin and forwards a valid one', async () => {
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        expect((await post(app, { headCardId: 'c1', memberCardIds: ['c2'], origin: 'bogus' })).status).toBe(400);
+        const spy = vi.spyOn(deps.cardGroupPort, 'createGroup');
+        const ok = await post(app, { headCardId: 'c1', memberCardIds: ['c2'], origin: 'manual' });
+        expect(ok.status).toBe(201);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ origin: 'manual' }));
+    });
+
+    it("defaults origin to 'suggestion' when omitted", async () => {
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        const spy = vi.spyOn(deps.cardGroupPort, 'createGroup');
+        const ok = await post(app, { headCardId: 'c1', memberCardIds: ['c2'] });
+        expect(ok.status).toBe(201);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ origin: 'suggestion' }));
+    });
+
+    it('400s when title is longer than 60 characters (P6)', async () => {
+        const { app } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        expect((await post(app, { headCardId: 'c1', memberCardIds: ['c2'], title: 'a'.repeat(61) })).status).toBe(400);
+    });
+
+    it('409s with group_conflict when the port reports a conflict (P3-P5)', async () => {
+        const { app, deps } = buildRetrospectiveTestApp({ retrospectives: [board()], cards: [card({ id: 'c1' }), card({ id: 'c2' })] });
+        vi.spyOn(deps.cardGroupPort, 'createGroup').mockRejectedValue(groupConflict());
+        const res = await post(app, { headCardId: 'c1', memberCardIds: ['c2'] });
+        expect(res.status).toBe(409);
+        expect(res.body.error.code).toBe('group_conflict');
     });
 });

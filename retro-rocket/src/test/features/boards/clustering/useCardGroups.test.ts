@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useCardGroups } from '@/features/boards/clustering/hooks/useCardGroups';
+import { useCardGroups, GroupingConflictError } from '@/features/boards/clustering/hooks/useCardGroups';
 import { findSemanticCardGroups } from '@/features/boards/clustering/services/semanticGroupingService';
+import { BackendRequestError } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 import { Card, CardGroup, GroupSuggestion } from '@/features/boards/types/card';
 import { ColumnType } from '@/features/boards/types/retrospective';
 
@@ -10,11 +11,19 @@ const mockDisbandCardGroup = vi.fn();
 const mockAddCardToGroup = vi.fn();
 const mockRemoveCardFromGroup = vi.fn();
 const mockSetGroupCollapse = vi.fn();
+const mockMoveCard = vi.fn();
+const mockUpdateCardGroup = vi.fn();
+const mockRenormalizeColumnOrder = vi.fn();
 
 // groups are now an INPUT (sourced from useRetrospectiveRealtimeSync via
 // RetrospectiveBoard, feature 019 US4) — this hook no longer subscribes to Firestore
 // itself; only its write delegation to backendRetrospectiveClient is under test here.
-vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', () => ({
+vi.mock('@/features/boards/retrospective/services/backendRetrospectiveClient', async (importOriginal) => ({
+    // keep the real BackendRequestError so the hook's status checks see genuine instances
+    ...(await importOriginal<typeof import('@/features/boards/retrospective/services/backendRetrospectiveClient')>()),
+    moveCard: (...args: unknown[]) => mockMoveCard(...args),
+    updateCardGroup: (...args: unknown[]) => mockUpdateCardGroup(...args),
+    renormalizeColumnOrder: (...args: unknown[]) => mockRenormalizeColumnOrder(...args),
     createCardGroup: (...args: unknown[]) => mockCreateCardGroup(...args),
     disbandCardGroup: (...args: unknown[]) => mockDisbandCardGroup(...args),
     addCardToGroup: (...args: unknown[]) => mockAddCardToGroup(...args),
@@ -468,6 +477,135 @@ describe('useCardGroups', () => {
                 await expect(
                     result.current.createGroup('card-1', [])
                 ).rejects.toThrow('At least one member card is required');
+            });
+        });
+    });
+    describe('Drag-to-group operations (spec 059)', () => {
+        const setup = () =>
+            renderHook(() => useCardGroups({ retrospectiveId: 'retro-1', cards: mockCards, currentUser: 'user-1', groups: mockGroups }));
+
+        describe('moveCard', () => {
+            it('delegates to backendRetrospectiveClient.moveCard with the retrospective id and returns the result', async () => {
+                mockMoveCard.mockResolvedValue({ createdGroupId: 'g9', dissolvedGroupIds: [] });
+                const { result } = setup();
+
+                let res: unknown;
+                await act(async () => {
+                    res = await result.current.moveCard('card-1', { kind: 'card', cardId: 'card-2' });
+                });
+
+                expect(mockMoveCard).toHaveBeenCalledWith('retro-1', 'card-1', { kind: 'card', cardId: 'card-2' });
+                expect(res).toEqual({ createdGroupId: 'g9', dissolvedGroupIds: [] });
+            });
+
+            it.each([409, 404])('rejects with GroupingConflictError on a %i', async (status) => {
+                mockMoveCard.mockRejectedValue(new BackendRequestError('conflict', status));
+                const { result } = setup();
+
+                await act(async () => {
+                    await expect(result.current.moveCard('card-1', { kind: 'group', groupId: 'group-1' })).rejects.toBeInstanceOf(GroupingConflictError);
+                });
+            });
+
+            it('rethrows other errors without wrapping them as conflicts and records the error message', async () => {
+                mockMoveCard.mockRejectedValue(new BackendRequestError('boom', 500));
+                const { result } = setup();
+
+                await act(async () => {
+                    const err = await result.current.moveCard('card-1', { kind: 'position', order: 1 }).catch((e: unknown) => e);
+                    expect(err).toBeInstanceOf(Error);
+                    expect(err).not.toBeInstanceOf(GroupingConflictError);
+                    expect((err as Error).message).toBe('boom');
+                });
+                expect(result.current.error).toBe('boom');
+            });
+
+            it('rejects when no retrospectiveId is provided, without calling the backend', async () => {
+                const { result } = renderHook(() => useCardGroups({ retrospectiveId: '', cards: mockCards }));
+
+                await act(async () => {
+                    await expect(result.current.moveCard('card-1', { kind: 'position', order: 1 })).rejects.toThrow('No retrospectiveId provided');
+                });
+                expect(mockMoveCard).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('renameGroup', () => {
+            it('delegates to updateCardGroup with the title', async () => {
+                mockUpdateCardGroup.mockResolvedValue({ ...mockGroups[0], title: 'New' });
+                const { result } = setup();
+
+                await act(async () => {
+                    await result.current.renameGroup('group-1', 'New');
+                });
+
+                expect(mockUpdateCardGroup).toHaveBeenCalledWith('group-1', { title: 'New' });
+            });
+
+            it('passes null through to clear the title', async () => {
+                mockUpdateCardGroup.mockResolvedValue(mockGroups[0]);
+                const { result } = setup();
+
+                await act(async () => {
+                    await result.current.renameGroup('group-1', null);
+                });
+
+                expect(mockUpdateCardGroup).toHaveBeenCalledWith('group-1', { title: null });
+            });
+
+            it.each([409, 404])('rejects with GroupingConflictError on a %i', async (status) => {
+                mockUpdateCardGroup.mockRejectedValue(new BackendRequestError('gone', status));
+                const { result } = setup();
+
+                await act(async () => {
+                    await expect(result.current.renameGroup('group-1', 'x')).rejects.toBeInstanceOf(GroupingConflictError);
+                });
+            });
+
+            it('rethrows other failures as plain errors', async () => {
+                mockUpdateCardGroup.mockRejectedValue(new Error('network down'));
+                const { result } = setup();
+
+                await act(async () => {
+                    const err = await result.current.renameGroup('group-1', 'x').catch((e: unknown) => e);
+                    expect(err).not.toBeInstanceOf(GroupingConflictError);
+                    expect((err as Error).message).toBe('network down');
+                });
+            });
+        });
+
+        describe('renormalizeColumn', () => {
+            const items = [
+                { kind: 'group' as const, id: 'group-1', order: 1024 },
+                { kind: 'card' as const, id: 'card-1', order: 2048 },
+            ];
+
+            it('delegates to renormalizeColumnOrder with the retrospective id', async () => {
+                mockRenormalizeColumnOrder.mockResolvedValue(undefined);
+                const { result } = setup();
+
+                await act(async () => {
+                    await result.current.renormalizeColumn('helped', items);
+                });
+
+                expect(mockRenormalizeColumnOrder).toHaveBeenCalledWith('retro-1', 'helped', items);
+            });
+
+            it.each([409, 404])('rejects with GroupingConflictError on a %i', async (status) => {
+                mockRenormalizeColumnOrder.mockRejectedValue(new BackendRequestError('moved', status));
+                const { result } = setup();
+
+                await act(async () => {
+                    await expect(result.current.renormalizeColumn('helped', items)).rejects.toBeInstanceOf(GroupingConflictError);
+                });
+            });
+        });
+
+        describe('GroupingConflictError', () => {
+            it('is an Error subclass with a stable name', () => {
+                const err = new GroupingConflictError('x');
+                expect(err).toBeInstanceOf(Error);
+                expect(err.name).toBe('GroupingConflictError');
             });
         });
     });

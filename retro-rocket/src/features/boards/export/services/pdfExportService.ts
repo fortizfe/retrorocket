@@ -57,6 +57,8 @@ export interface RetrospectiveExportData {
     // New sentiment data
     sentimentResults?: Map<string, SentimentResult>;
     teamMoodReport?: TeamMoodReport;
+    /** Localized fallback strings resolved by the caller (spec 059, T054). */
+    labels?: { defaultGroupTitle: string };
 }
 
 // Estilos para el PDF - Diseño Profesional
@@ -645,7 +647,7 @@ const createRetrospectivePDF = (data: RetrospectiveExportData, options: ExportOp
             return React.createElement(View, { key: `group-${group.id}`, style: styles.groupFrame }, [
                 React.createElement(View, { key: 'header', style: styles.groupHeader }, [
                     React.createElement(Text, { key: 'title', style: styles.groupTitle },
-                        `📁 ${group.title || 'Grupo sin título'}`
+                        `📁 ${group.title?.trim() || data.labels?.defaultGroupTitle || 'Grupo sin título'}`
                     ),
                     React.createElement(Text, { key: 'stats', style: styles.groupStats },
                         `Tarjetas: ${groupCards.length} | Votos totales: ${groupCards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0)}`

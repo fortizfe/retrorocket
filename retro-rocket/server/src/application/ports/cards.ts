@@ -76,6 +76,9 @@ export interface CardPort {
     getCard(cardId: string): Promise<CardDTO | null>;
 }
 
+/** Provenance of a group: created by a drag/menu move or by accepting a suggestion (spec 059). */
+export type GroupOrigin = 'manual' | 'suggestion';
+
 export interface CardGroupDTO {
     id: string;
     retrospectiveId: string;
@@ -87,6 +90,8 @@ export interface CardGroupDTO {
     createdAt: Date;
     createdBy: string;
     order: number;
+    /** How the group came to exist (spec 059 FR-033). Absent on legacy groups, which are treated as 'suggestion'. */
+    origin?: GroupOrigin;
 }
 
 export interface CreateCardGroupInput {
@@ -96,6 +101,28 @@ export interface CreateCardGroupInput {
     memberCardIds: string[];
     title?: string;
     createdBy: string;
+    /** Defaults to 'suggestion' at the use-case layer (spec 059 C1). */
+    origin?: GroupOrigin;
+}
+
+/** Where `CardGroupPort.moveCard` places the card (spec 059 C0, data-model § State transitions). */
+export type MoveTarget =
+    | { kind: 'position'; order: number }
+    | { kind: 'card'; cardId: string }
+    | { kind: 'group'; groupId: string };
+
+export interface MoveCardResult {
+    /** Set when the move created a new group (target kind 'card'). */
+    createdGroupId?: string;
+    /** Groups removed in the same transaction because they were left with fewer than 2 cards (I5). */
+    dissolvedGroupIds: string[];
+}
+
+/** One entry of a column renormalisation (spec 059 C4). */
+export interface ColumnOrderItem {
+    kind: 'card' | 'group';
+    id: string;
+    order: number;
 }
 
 export interface CardGroupPort {
@@ -111,6 +138,16 @@ export interface CardGroupPort {
      */
     removeCardFromGroup(groupId: string, cardId: string): Promise<CardGroupDTO | null>;
     setGroupCollapse(groupId: string, isCollapsed: boolean): Promise<CardGroupDTO>;
+    /** Sets the group title; `null` deletes it (never stored as empty). Input is already trimmed/validated by the use case (spec 059 C3). */
+    setGroupTitle(groupId: string, title: string | null): Promise<CardGroupDTO>;
+    /**
+     * Atomically moves a card: detaches it from its current group (head promotion, reindex,
+     * dissolve-at-1) then attaches it per `target`. Throws NotFoundError (M2/M3), ConflictError
+     * `group_conflict` (M4/M5/M7) or AppError `invalid_request` (M6); no writes on failure (spec 059 C0).
+     */
+    moveCard(retrospectiveId: string, cardId: string, target: MoveTarget): Promise<MoveCardResult>;
+    /** Writes every item's `order` in one transaction after validating column membership (spec 059 C4, R2/R3). */
+    renormalizeColumnOrder(retrospectiveId: string, columnId: string, items: ColumnOrderItem[]): Promise<void>;
     getGroup(groupId: string): Promise<CardGroupDTO | null>;
     /** Corrects a group's column association (self-heal repair, spec 046 FR-009) — an
      * internal primitive, not HTTP-exposed. */

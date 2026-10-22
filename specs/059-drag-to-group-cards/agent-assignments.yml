@@ -1,0 +1,260 @@
+# Agent Assignments
+# Feature: 059-drag-to-group-cards
+# Generated: 2026-10-21
+# Command: /speckit.agent-assign.assign
+
+agents_scanned:
+  - name: "backend-agent"
+    source: "project"
+    description: "Expert backend engineer for RetroRocket's Express/TypeScript/Firebase/Vercel API server. Use PROACTIVELY for any work under retro-rocket/server/** or retro-rocket/api/**."
+  - name: "docs-agent"
+    source: "project"
+    description: "Documentation expert for RetroRocket. Use PROACTIVELY to analyze a shipped or in-progress feature and write/maintain end-user-facing documentation."
+  - name: "frontend-agent"
+    source: "project"
+    description: "Expert frontend engineer for RetroRocket's React/TypeScript UI. Use PROACTIVELY for any work under retro-rocket/src/** — components, hooks, styling, i18n, and design/motion (Apple HIG)."
+  - name: "qa-agent"
+    source: "project"
+    description: "TDD/QA expert for RetroRocket. Use PROACTIVELY whenever a feature needs tests written before implementation, and for Vitest, Playwright E2E, and accessibility (axe-core/WCAG 2.1 AA) coverage."
+
+assignments:
+  T001:
+    agent: "qa-agent"
+    reason: "Baseline run of type-check, lint and both test suites; record failures that already exist"
+  T002:
+    agent: "frontend-agent"
+    reason: "i18n keys and shared types under retro-rocket/src/"
+  T003:
+    agent: "frontend-agent"
+    reason: "i18n keys and shared types under retro-rocket/src/"
+  T004:
+    agent: "backend-agent"
+    reason: "Fake CardGroupPort enforcing invariants I1-I5 (server test infrastructure)"
+  T005:
+    agent: "qa-agent"
+    reason: "Test-first server use-case, emulator adapter and route tests"
+  T006:
+    agent: "qa-agent"
+    reason: "Test-first server use-case, emulator adapter and route tests"
+  T007:
+    agent: "qa-agent"
+    reason: "Test-first server use-case, emulator adapter and route tests"
+  T008:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T009:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T010:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T011:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T012:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T013:
+    agent: "backend-agent"
+    reason: "Server errors, ports, transactional adapter, use cases and routes under retro-rocket/server/src/"
+  T014:
+    agent: "qa-agent"
+    reason: "Test-first client API tests"
+  T015:
+    agent: "frontend-agent"
+    reason: "backendRetrospectiveClient implementation"
+  T016:
+    agent: "qa-agent"
+    reason: "Test-first useCardGroups tests"
+  T017:
+    agent: "frontend-agent"
+    reason: "useCardGroups hook implementation"
+  T018:
+    agent: "qa-agent"
+    reason: "Test-first tests for pure drag/order modules"
+  T019:
+    agent: "qa-agent"
+    reason: "Test-first tests for pure drag/order modules"
+  T020:
+    agent: "qa-agent"
+    reason: "Test-first tests for pure drag/order modules"
+  T021:
+    agent: "qa-agent"
+    reason: "Test-first tests for pure drag/order modules"
+  T022:
+    agent: "frontend-agent"
+    reason: "Pure drag/order modules and useDragIntent hook (T026 includes its renderHook test)"
+  T023:
+    agent: "frontend-agent"
+    reason: "Pure drag/order modules and useDragIntent hook (T026 includes its renderHook test)"
+  T024:
+    agent: "frontend-agent"
+    reason: "Pure drag/order modules and useDragIntent hook (T026 includes its renderHook test)"
+  T025:
+    agent: "frontend-agent"
+    reason: "Pure drag/order modules and useDragIntent hook (T026 includes its renderHook test)"
+  T026:
+    agent: "frontend-agent"
+    reason: "Pure drag/order modules and useDragIntent hook (T026 includes its renderHook test)"
+  T027:
+    agent: "qa-agent"
+    reason: "Test-first interleaved list and B8/B9 regression tests"
+  T028:
+    agent: "qa-agent"
+    reason: "Test-first interleaved list and B8/B9 regression tests"
+  T029:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T030:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T031:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T032:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T033:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T034:
+    agent: "frontend-agent"
+    reason: "Structural lift: context, ColumnDndProvider, DragDropColumn, ColumnItemList, wiring"
+  T035:
+    agent: "qa-agent"
+    reason: "Full-suite and E2E regression gate"
+  T036:
+    agent: "qa-agent"
+    reason: "Test-first US1 component tests"
+  T037:
+    agent: "qa-agent"
+    reason: "Test-first US1 component tests"
+  T038:
+    agent: "qa-agent"
+    reason: "Test-first US1 component tests"
+  T039:
+    agent: "frontend-agent"
+    reason: "US1 drop resolution, armed feedback, in-place cross-fade and auto-edit (animate/apple-design)"
+  T040:
+    agent: "frontend-agent"
+    reason: "US1 drop resolution, armed feedback, in-place cross-fade and auto-edit (animate/apple-design)"
+  T041:
+    agent: "frontend-agent"
+    reason: "US1 drop resolution, armed feedback, in-place cross-fade and auto-edit (animate/apple-design)"
+  T042:
+    agent: "frontend-agent"
+    reason: "US1 drop resolution, armed feedback, in-place cross-fade and auto-edit (animate/apple-design)"
+  T043:
+    agent: "frontend-agent"
+    reason: "US1 drop resolution, armed feedback, in-place cross-fade and auto-edit (animate/apple-design)"
+  T044:
+    agent: "qa-agent"
+    reason: "Test-first US4 tests"
+  T045:
+    agent: "qa-agent"
+    reason: "Test-first US4 tests"
+  T046:
+    agent: "frontend-agent"
+    reason: "US4 outside cursor, spring-back and by-user gating"
+  T047:
+    agent: "frontend-agent"
+    reason: "US4 outside cursor, spring-back and by-user gating"
+  T048:
+    agent: "qa-agent"
+    reason: "Test-first US2 editor, GroupCard and export tests"
+  T049:
+    agent: "qa-agent"
+    reason: "Test-first US2 editor, GroupCard and export tests"
+  T050:
+    agent: "qa-agent"
+    reason: "Test-first US2 editor, GroupCard and export tests"
+  T051:
+    agent: "frontend-agent"
+    reason: "GroupTitleEditor component (apple-design/emil-design-eng)"
+  T052:
+    agent: "qa-agent"
+    reason: "Contrast assertions in cardColors.a11y.test.ts"
+  T053:
+    agent: "frontend-agent"
+    reason: "Editor integration, export default titles and i18n cleanup"
+  T054:
+    agent: "frontend-agent"
+    reason: "Editor integration, export default titles and i18n cleanup"
+  T055:
+    agent: "frontend-agent"
+    reason: "Editor integration, export default titles and i18n cleanup"
+  T056:
+    agent: "qa-agent"
+    reason: "Test-first US5 menu, footer slot and keyboard G-toggle tests"
+  T057:
+    agent: "qa-agent"
+    reason: "Test-first US5 menu, footer slot and keyboard G-toggle tests"
+  T058:
+    agent: "qa-agent"
+    reason: "Test-first US5 menu, footer slot and keyboard G-toggle tests"
+  T059:
+    agent: "frontend-agent"
+    reason: "CardGroupingMenu, footer slot and G toggle plus live region"
+  T060:
+    agent: "frontend-agent"
+    reason: "CardGroupingMenu, footer slot and G toggle plus live region"
+  T061:
+    agent: "frontend-agent"
+    reason: "CardGroupingMenu, footer slot and G toggle plus live region"
+  T062:
+    agent: "qa-agent"
+    reason: "Test-first US3 tests"
+  T063:
+    agent: "qa-agent"
+    reason: "Test-first US3 tests"
+  T064:
+    agent: "frontend-agent"
+    reason: "US3 group drop resolution and armed feedback (animate/review-animations)"
+  T065:
+    agent: "frontend-agent"
+    reason: "US3 group drop resolution and armed feedback (animate/review-animations)"
+  T066:
+    agent: "qa-agent"
+    reason: "Test-first US6 tests"
+  T067:
+    agent: "qa-agent"
+    reason: "Test-first US6 tests"
+  T068:
+    agent: "qa-agent"
+    reason: "Test-first US6 tests"
+  T069:
+    agent: "frontend-agent"
+    reason: "US6 member drag handles, D2-D6 resolution, grouped menu variant, existing controls"
+  T070:
+    agent: "frontend-agent"
+    reason: "US6 member drag handles, D2-D6 resolution, grouped menu variant, existing controls"
+  T071:
+    agent: "frontend-agent"
+    reason: "US6 member drag handles, D2-D6 resolution, grouped menu variant, existing controls"
+  T072:
+    agent: "frontend-agent"
+    reason: "US6 member drag handles, D2-D6 resolution, grouped menu variant, existing controls"
+  T073:
+    agent: "qa-agent"
+    reason: "Test-first FR-033 safeguard tests S1-S4"
+  T074:
+    agent: "frontend-agent"
+    reason: "FR-033 safeguard implementation in GroupableColumn"
+  T075:
+    agent: "qa-agent"
+    reason: "Playwright E2E and axe accessibility scans"
+  T076:
+    agent: "qa-agent"
+    reason: "Playwright E2E and axe accessibility scans"
+  T077:
+    agent: "frontend-agent"
+    reason: "review-animations pass and React Profiler performance check"
+  T078:
+    agent: "frontend-agent"
+    reason: "review-animations pass and React Profiler performance check"
+  T079:
+    agent: "docs-agent"
+    reason: "Getting Started guide entry for drag-to-group (feature 057 guide)"
+  T080:
+    agent: "qa-agent"
+    reason: "Final quality gate and PR description"

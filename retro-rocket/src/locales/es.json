@@ -277,13 +277,17 @@
     },
     "groupCard": {
       "confirmUngroupCards": "¿Estás seguro de que quieres desagrupar estas {{totalCards}} tarjetas?",
-      "groupOfCards": "Grupo de {{totalCards}} tarjetas",
       "cardsCount": "{{totalCards}} tarjetas",
       "votesCount": "{{count}} votos",
       "likesCount": "{{count}} likes",
       "ungroupCards": "Desagrupar tarjetas",
       "primaryCard": "Principal",
-      "moreCards": "+{{count}} más"
+      "moreCards": "+{{count}} más",
+      "defaultGroupTitle": "Nuevo grupo",
+      "toggleGroup": "Mostrar u ocultar las tarjetas de {{title}}",
+      "renameGroupLabel": "Renombrar grupo: {{title}}",
+      "groupTitleInputLabel": "Título del grupo",
+      "renameError": "No se pudo renombrar el grupo"
     },
     "likeButton": {
       "likeCard": "Dar like a esta tarjeta",
@@ -342,7 +346,8 @@
       "unknownAuthor": "Sin autor",
       "menuTrigger": "Agrupar tarjetas",
       "menuLabel": "Opciones de agrupación",
-      "disbandOnSwitchError": "No se pudieron disolver algunos grupos. Inténtalo de nuevo."
+      "disbandOnSwitchError": "No se pudieron disolver algunos grupos. Inténtalo de nuevo.",
+      "confirmTeardown": "Salir del modo de sugerencias deshará los {{count}} grupos de esta columna, incluidos los creados manualmente. ¿Continuar?"
     },
     "facilitator": {
       "menu": "Facilitador",
@@ -544,6 +549,31 @@
     "anonymous": {
       "indicator": "Tablero anónimo",
       "indicatorDescription": "Los nombres de los autores de las tarjetas están ocultos para todos los participantes mientras este tablero sea anónimo."
+    },
+    "dragGroup": {
+      "dropToGroup": "Soltar para agrupar",
+      "groupWith": "Agrupar con…",
+      "moveToGroup": "Mover a grupo…",
+      "removeFromGroup": "Quitar del grupo",
+      "pickerTitle": "Agrupar esta tarjeta con",
+      "moveTitle": "Mover esta tarjeta a",
+      "pickerGroupOption": "{{title}} ({{count}} tarjetas)",
+      "conflict": "La tarjeta o el grupo ha cambiado. No se agrupó nada.",
+      "a11y": {
+        "instructions": "Para coger una tarjeta, pulsa Espacio. Usa las flechas para moverla. Pulsa G para alternar entre reordenar y agrupar. Pulsa Espacio de nuevo para soltarla, o Escape para cancelar.",
+        "pickedUp": "Tarjeta seleccionada.",
+        "overTargetGroup": "Sobre la tarjeta «{{label}}». Suelta para crear un grupo nuevo con ambas tarjetas.",
+        "overGroupGroup": "Sobre el grupo «{{label}}». Suelta para añadir la tarjeta.",
+        "overTargetReorder": "Posición {{position}} de {{total}}.",
+        "ownGroup": "Sobre su propio grupo. Suelta para cancelar.",
+        "outside": "Fuera de la columna. Suelta para cancelar.",
+        "groupCreated": "Grupo creado.",
+        "addedToGroup": "Añadida al grupo «{{label}}».",
+        "removedFromGroup": "Tarjeta quitada del grupo.",
+        "groupDissolved": "Grupo deshecho.",
+        "reordered": "Tarjeta movida a la posición {{position}}.",
+        "cancelled": "Arrastre cancelado. La tarjeta volvió a su posición."
+      }
     }
   },
   "groupSuggestion": {
@@ -932,7 +962,13 @@
           "\"Agrupar por usuario\" junta las tarjetas escritas por la misma persona, y es la opción por defecto en cada columna. Esta opción se oculta automáticamente en los tableros anónimos, porque revelaría quién escribió cada tarjeta — mientras el tablero es anónimo, esa columna muestra la lista sin agrupar, hasta que el modo anónimo se desactiva de nuevo.",
           "\"Agrupaciones sugeridas\" le pide a la IA de RetroRocket que analice las tarjetas de la columna y proponga grupos de ideas parecidas o relacionadas, cada uno con un título sugerido y un porcentaje de similitud.",
           "Para cada sugerencia puedes previsualizar las tarjetas que incluye, editar el título propuesto y decidir si crear el grupo o descartar la sugerencia — nada se agrupa automáticamente sin tu confirmación.",
-          "Una vez creado un grupo, puedes colapsarlo para ahorrar espacio, quitar tarjetas sueltas de él, o deshacer todo el grupo y devolver las tarjetas a su estado individual."
+          "Una vez creado un grupo, puedes colapsarlo para ahorrar espacio, quitar tarjetas sueltas de él, o deshacer todo el grupo y devolver las tarjetas a su estado individual.",
+        "También puedes agrupar tarjetas arrastrándolas, sin IA. Arrastra una tarjeta y mantenla sobre la parte central de otra tarjeta de la misma columna hasta que esta se levante y muestre \"Soltar para agrupar\"; entonces suéltala. Aparece un grupo nuevo en el lugar de esa tarjeta, con el título listo para escribir.",
+        "Si solo quieres reordenar, suelta la tarjeta sobre el borde superior o inferior de otra tarjeta.",
+        "Para añadir una tarjeta a un grupo existente, mantenla sobre la parte central del grupo hasta que muestre \"Soltar para agrupar\". Para sacar una tarjeta de un grupo, arrástrala a un hueco de la columna; para moverla a otro grupo, arrástrala sobre ese grupo. Un grupo que se queda con una sola tarjeta se deshace automáticamente.",
+        "Para renombrar un grupo, haz clic en su título, escribe el nuevo y pulsa Enter para guardar o Escape para cancelar. Si dejas el título vacío, vuelve a \"Nuevo grupo\".",
+        "¿Sin ratón? Usa el botón \"Agrupar con…\" de la tarjeta (o \"Mover a grupo…\" si ya está en un grupo, que también ofrece \"Quitar del grupo\") y elige una tarjeta o un grupo de la lista. También puedes arrastrar con el teclado: pulsa Espacio para coger una tarjeta, muévela con las flechas, pulsa G para alternar entre reordenar y agrupar, y pulsa Espacio de nuevo para soltarla.",
+        "Conviene saber: arrastrar solo funciona dentro de la misma columna y se desactiva mientras la columna está en \"Agrupar por usuario\". Si una columna tiene grupos creados a mano y la cambias de \"Agrupaciones sugeridas\" a otro modo, RetroRocket te pide confirmación antes, porque el cambio deshace todos los grupos de esa columna."
         ]
       },
       "anonymousMode": {

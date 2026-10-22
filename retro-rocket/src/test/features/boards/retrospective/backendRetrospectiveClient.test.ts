@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getBoardState, joinBoard, createCard, editCard, deleteCard, voteCard, toggleLike, setReaction, removeReaction, setTypingStatus, reorderCards, createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, saveColumnGroupingState, configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer, setAnonymity, createNote, editNote, deleteNote, convertCardToActionItem, createActionItem, editActionItem, deleteActionItem, saveSentimentResult, saveSentimentOverride } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
+import { getBoardState, joinBoard, createCard, editCard, deleteCard, voteCard, toggleLike, setReaction, removeReaction, setTypingStatus, reorderCards, createCardGroup, disbandCardGroup, addCardToGroup, removeCardFromGroup, setGroupCollapse, moveCard, updateCardGroup, renormalizeColumnOrder, saveColumnGroupingState, configureTimer, startTimer, pauseTimer, resetTimer, deleteTimer, setAnonymity, createNote, editNote, deleteNote, convertCardToActionItem, createActionItem, editActionItem, deleteActionItem, saveSentimentResult, saveSentimentOverride } from '@/features/boards/retrospective/services/backendRetrospectiveClient';
 
 function jsonResponse(ok: boolean, status: number, body: unknown): Response {
     return { ok, status, json: async () => body } as unknown as Response;
@@ -361,6 +361,146 @@ describe('backendRetrospectiveClient', () => {
             const updated = await removeCardFromGroup('g1', 'c1');
 
             expect(updated).toBeNull();
+        });
+    });
+
+    describe('moveCard (spec 059)', () => {
+        it('POSTs the target to /api/retrospectives/:id/cards/:cardId/move and returns the result', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, { createdGroupId: 'g9', dissolvedGroupIds: ['g1'] }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            const result = await moveCard('r1', 'c1', { kind: 'card', cardId: 'c2' });
+
+            expect(fetchMock).toHaveBeenCalledWith('/api/retrospectives/r1/cards/c1/move', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: { kind: 'card', cardId: 'c2' } }),
+            });
+            expect(result).toEqual({ createdGroupId: 'g9', dissolvedGroupIds: ['g1'] });
+        });
+
+        it('sends position and group targets verbatim', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, { dissolvedGroupIds: [] }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await moveCard('r1', 'c1', { kind: 'position', order: 1712345678.5 });
+            await moveCard('r1', 'c1', { kind: 'group', groupId: 'g2' });
+
+            const bodies = fetchMock.mock.calls.map((call) => JSON.parse((call as unknown as [string, RequestInit])[1].body as string));
+            expect(bodies).toEqual([
+                { target: { kind: 'position', order: 1712345678.5 } },
+                { target: { kind: 'group', groupId: 'g2' } },
+            ]);
+        });
+
+        it('url-encodes the ids', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, { dissolvedGroupIds: [] }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await moveCard('r 1', 'c/1', { kind: 'position', order: 1 });
+
+            expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe('/api/retrospectives/r%201/cards/c%2F1/move');
+        });
+
+        it('rejects with a BackendRequestError carrying the status on 409', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(false, 409, { error: { code: 'group_conflict', message: 'conflict' } })));
+
+            await expect(moveCard('r1', 'c1', { kind: 'card', cardId: 'c2' })).rejects.toMatchObject({ name: 'BackendRequestError', status: 409, message: 'conflict' });
+        });
+    });
+
+    describe('updateCardGroup (spec 059)', () => {
+        it('PATCHes /api/groups/:id with only the provided title', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, { ...groupDto, title: 'Renamed' }));
+            vi.stubGlobal('fetch', fetchMock);
+
+            const updated = await updateCardGroup('g1', { title: 'Renamed' });
+
+            expect(fetchMock).toHaveBeenCalledWith('/api/groups/g1', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'Renamed' }),
+            });
+            expect(updated.title).toBe('Renamed');
+            expect(updated.createdAt).toEqual(new Date(groupDto.createdAt));
+        });
+
+        it('sends title: null to clear the title', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, groupDto));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await updateCardGroup('g1', { title: null });
+
+            expect((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body).toBe(JSON.stringify({ title: null }));
+        });
+
+        it('sends title and isCollapsed together when both are given', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 200, groupDto));
+            vi.stubGlobal('fetch', fetchMock);
+
+            await updateCardGroup('g1', { title: 'T', isCollapsed: true });
+
+            expect(JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toEqual({ title: 'T', isCollapsed: true });
+        });
+
+        it('rejects with the status on 404', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(false, 404, { error: { message: 'missing' } })));
+
+            await expect(updateCardGroup('g1', { title: 'x' })).rejects.toMatchObject({ status: 404 });
+        });
+    });
+
+    describe('renormalizeColumnOrder (spec 059)', () => {
+        it('POSTs columnId and items to /api/retrospectives/:id/column-order and resolves on 204', async () => {
+            const fetchMock = vi.fn(async () => jsonResponse(true, 204, {}));
+            vi.stubGlobal('fetch', fetchMock);
+            const items = [
+                { kind: 'group' as const, id: 'g1', order: 1024 },
+                { kind: 'card' as const, id: 'c7', order: 2048 },
+            ];
+
+            await expect(renormalizeColumnOrder('r1', 'col1', items)).resolves.toBeUndefined();
+
+            expect(fetchMock).toHaveBeenCalledWith('/api/retrospectives/r1/column-order', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ columnId: 'col1', items }),
+            });
+        });
+
+        it('rejects with the status on 409', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(false, 409, { error: { message: 'moved' } })));
+
+            await expect(renormalizeColumnOrder('r1', 'col1', [])).rejects.toMatchObject({ status: 409 });
+        });
+    });
+
+    describe('cardGroupFromDTO origin mapping (spec 059)', () => {
+        it('maps origin "manual" on groups in the board state', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 200, { ...boardStateDto, groups: [{ ...groupDto, origin: 'manual' }] })));
+            const state = await getBoardState('r1');
+            expect(state.groups[0].origin).toBe('manual');
+        });
+
+        it('maps origin "suggestion"', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 200, { ...boardStateDto, groups: [{ ...groupDto, origin: 'suggestion' }] })));
+            const state = await getBoardState('r1');
+            expect(state.groups[0].origin).toBe('suggestion');
+        });
+
+        it('leaves origin absent for legacy groups (callers treat absent as suggestion)', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 200, { ...boardStateDto, groups: [groupDto] })));
+            const state = await getBoardState('r1');
+            expect(state.groups[0].origin).toBeUndefined();
+        });
+
+        it('maps origin on a group returned by createCardGroup', async () => {
+            vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(true, 201, { ...groupDto, origin: 'manual' })));
+            const group = await createCardGroup('r1', { headCardId: 'c1', memberCardIds: ['c2'] });
+            expect(group.origin).toBe('manual');
         });
     });
 

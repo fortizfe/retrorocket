@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import GroupedCardList from '@/features/boards/clustering/components/GroupedCardList';
 import { Card as CardType, CardColor } from '@/features/boards/types/card';
@@ -20,7 +20,19 @@ vi.mock('lucide-react', () => ({
 }));
 
 vi.mock('@/features/boards/retrospective/components/DragDropColumn', () => ({
-    default: ({ cards }: any) => <div data-testid="drag-drop-column">{cards.length} cards</div>,
+    default: ({ cards, onCardsReorder }: any) => (
+        <div data-testid="drag-drop-column">
+            {cards.length} cards
+            {/* spec 059, T028 (B8): exposes the reorder callback each section receives. */}
+            <button
+                data-testid="section-reorder"
+                data-first-card={cards[0]?.id}
+                onClick={() => onCardsReorder?.([{ cardId: cards[0]?.id, order: 0, column: cards[0]?.column }])}
+            >
+                reorder
+            </button>
+        </div>
+    ),
 }));
 
 function makeCard(overrides: Partial<CardType> = {}): CardType {
@@ -127,5 +139,52 @@ describe('GroupedCardList — group header resolution priority (022, FR-001a)', 
 
         expect(screen.getByText('New Current Name')).toBeInTheDocument();
         expect(screen.queryByText('Old Captured Name')).not.toBeInTheDocument();
+    });
+});
+
+describe('GroupedCardList — mode user keeps section-confined reorder (spec 059, B8)', () => {
+    it('renders one DragDropColumn per author section, each reordering only its own cards through onCardsReorder', () => {
+        const onCardsReorder = vi.fn(async () => { });
+        const a1 = makeCard({ id: 'a1', createdBy: 'author-a', createdByName: 'A' });
+        const a2 = makeCard({ id: 'a2', createdBy: 'author-a', createdByName: 'A' });
+        const b1 = makeCard({ id: 'b1', createdBy: 'author-b', createdByName: 'B' });
+        render(
+            <GroupedCardList
+                {...requiredProps}
+                onCardsReorder={onCardsReorder}
+                groupedCards={{ 'author-a': [a1, a2], 'author-b': [b1] }}
+                groupBy="user"
+            />
+        );
+
+        const sections = screen.getAllByTestId('drag-drop-column');
+        expect(sections).toHaveLength(2);
+        expect(sections[0]).toHaveTextContent('2 cards'); // author-a's section holds only a1, a2
+        expect(sections[1]).toHaveTextContent('1 cards'); // author-b's section holds only b1
+
+        const buttons = screen.getAllByTestId('section-reorder');
+        fireEvent.click(buttons[1]);
+        expect(onCardsReorder).toHaveBeenCalledTimes(1);
+        expect(onCardsReorder).toHaveBeenCalledWith([{ cardId: 'b1', order: 0, column: 'col1' }]);
+    });
+
+    it('does not accept or call a position-move callback: the reorder path in user mode is /cards/reorder only', () => {
+        const onCardMove = vi.fn();
+        const onCardsReorder = vi.fn(async () => { });
+        const c = makeCard({ id: 'c1', createdBy: 'author-a', createdByName: 'A' });
+        render(
+            <GroupedCardList
+                {...requiredProps}
+                {...({ onCardMove } as object)}
+                onCardsReorder={onCardsReorder}
+                groupedCards={{ 'author-a': [c] }}
+                groupBy="user"
+            />
+        );
+
+        fireEvent.click(screen.getByTestId('section-reorder'));
+
+        expect(onCardsReorder).toHaveBeenCalledTimes(1);
+        expect(onCardMove).not.toHaveBeenCalled();
     });
 });

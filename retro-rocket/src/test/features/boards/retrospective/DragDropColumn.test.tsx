@@ -72,8 +72,8 @@ vi.mock('@dnd-kit/core', () => ({
 }));
 
 vi.mock('@dnd-kit/sortable', () => ({
-    SortableContext: ({ children, items }: any) => (
-        <div data-testid="sortable-context" data-items={JSON.stringify(items)}>
+    SortableContext: ({ children, items, id, strategy }: any) => (
+        <div data-testid="sortable-context" data-id={id} data-strategy={strategy} data-items={JSON.stringify(items)}>
             {children}
         </div>
     ),
@@ -191,12 +191,22 @@ describe('DragDropColumn', () => {
     });
 
     describe('Basic Rendering', () => {
-        it('should render DragDropColumn with DndContext', () => {
+        // spec 059 (T031): the DndContext, sensors and DragOverlay moved to ColumnDndProvider.
+        it('should render only a SortableContext (no DndContext or DragOverlay of its own)', () => {
             render(<DragDropColumn {...defaultProps} />);
 
-            expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
-            expect(screen.getByTestId('drag-overlay')).toBeInTheDocument();
+            expect(screen.queryByTestId('dnd-context')).not.toBeInTheDocument();
+            expect(screen.queryByTestId('drag-overlay')).not.toBeInTheDocument();
+        });
+
+        it('should forward id and strategy to its SortableContext (defaulting to the vertical list strategy)', () => {
+            const { rerender } = render(<DragDropColumn {...defaultProps} id="section:user1" />);
+            expect(screen.getByTestId('sortable-context')).toHaveAttribute('data-id', 'section:user1');
+            expect(screen.getByTestId('sortable-context')).toHaveAttribute('data-strategy', 'vertical-list-sorting');
+
+            rerender(<DragDropColumn {...defaultProps} id="section:user1" strategy={'custom-strategy' as never} />);
+            expect(screen.getByTestId('sortable-context')).toHaveAttribute('data-strategy', 'custom-strategy');
         });
 
         it('should render all cards in sorted order', () => {
@@ -209,15 +219,6 @@ describe('DragDropColumn', () => {
             expect(screen.getByText('First card')).toBeInTheDocument();
             expect(screen.getByText('Second card')).toBeInTheDocument();
             expect(screen.getByText('Third card')).toBeInTheDocument();
-        });
-
-        it('should configure DndContext with proper event handlers', () => {
-            render(<DragDropColumn {...defaultProps} />);
-
-            const dndContext = screen.getByTestId('dnd-context');
-            expect(dndContext).toHaveAttribute('data-drag-start', 'true');
-            expect(dndContext).toHaveAttribute('data-drag-end', 'true');
-            expect(dndContext).toHaveAttribute('data-drag-over', 'true');
         });
 
         it('should render children when provided', () => {
@@ -246,7 +247,7 @@ describe('DragDropColumn', () => {
             const itemsData = JSON.parse(sortableContext.getAttribute('data-items') || '[]');
 
             // Should be sorted by order: card-2 (order: 1), card-3 (order: 3), card-1 (order: 5)
-            expect(itemsData).toEqual(['card-2', 'card-3', 'card-1']);
+            expect(itemsData).toEqual(['card:card-2', 'card:card-3', 'card:card-1']);
         });
 
         it('should filter out cards with invalid IDs', () => {
@@ -402,7 +403,7 @@ describe('DragDropColumn', () => {
             render(<DragDropColumn {...defaultProps} currentUser={undefined} />);
 
             // Component should still render without errors
-            expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
+            expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-card-card-1')).toBeInTheDocument();
         });
 
@@ -450,7 +451,7 @@ describe('DragDropColumn', () => {
         it('should handle empty cards array', () => {
             render(<DragDropColumn {...defaultProps} cards={[]} />);
 
-            expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
+            expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
 
             // No cards should be rendered
@@ -502,7 +503,7 @@ describe('DragDropColumn', () => {
 
             render(<DragDropColumn {...minimalProps} />);
 
-            expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
+            expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-card-card-1')).toBeInTheDocument();
         });
 
@@ -524,7 +525,7 @@ describe('DragDropColumn', () => {
 
             render(<DragDropColumn {...defaultProps} cards={manyCards} />);
 
-            expect(screen.getByTestId('dnd-context')).toBeInTheDocument();
+            expect(screen.getByTestId('sortable-context')).toBeInTheDocument();
             // Just check that the first and last cards are rendered
             expect(screen.getByTestId('sortable-card-card-0')).toBeInTheDocument();
             expect(screen.getByTestId('sortable-card-card-99')).toBeInTheDocument();
@@ -543,12 +544,10 @@ describe('DragDropColumn', () => {
     });
 
     describe('DragOverlay', () => {
-        it('should render empty DragOverlay when no active card', () => {
+        it('does not render its own DragOverlay (ColumnDndProvider owns it, spec 059)', () => {
             render(<DragDropColumn {...defaultProps} />);
 
-            const dragOverlay = screen.getByTestId('drag-overlay');
-            expect(dragOverlay).toBeInTheDocument();
-            expect(dragOverlay).toBeEmptyDOMElement();
+            expect(screen.queryByTestId('drag-overlay')).not.toBeInTheDocument();
         });
     });
 

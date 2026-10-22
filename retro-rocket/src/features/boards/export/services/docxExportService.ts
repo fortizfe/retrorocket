@@ -46,6 +46,8 @@ export interface RetrospectiveDocxData {
     // New sentiment data
     sentimentResults?: Map<string, SentimentResult>;
     teamMoodReport?: TeamMoodReport;
+    /** Localized fallback strings resolved by the caller (spec 059, T054). */
+    labels?: { defaultGroupTitle: string };
 }
 
 export class DocxExportService {
@@ -64,7 +66,7 @@ export class DocxExportService {
             const headerSections = this.createDocumentHeader(data.retrospective);
             const infoSections = this.createRetrospectiveInfo(data.retrospective, data.participants, options);
             const statsSections = options.includeStatistics ? this.createStatisticsSection(data.cards, data.groups, data.actionItems) : [];
-            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective, data.sentimentResults, data.participants);
+            const contentSections = this.createColumnsContent(data.cards, data.groups, options, data.retrospective, data.sentimentResults, data.participants, data.labels?.defaultGroupTitle);
             const notesSections = (options.includeFacilitatorNotes && options.facilitatorNotes) ?
                 this.createFacilitatorNotesSection(options.facilitatorNotes) : [];
             const actionItemsSections = (options.includeActionItems && data.actionItems && data.actionItems.length > 0) ?
@@ -551,7 +553,8 @@ export class DocxExportService {
         options: DocxExportOptions,
         retrospective: Retrospective,
         sentimentResults?: Map<string, SentimentResult>,
-        participants?: Participant[]
+        participants?: Participant[],
+        defaultGroupTitle?: string
     ): Paragraph[] {
         const sections: Paragraph[] = [];
 
@@ -647,7 +650,7 @@ export class DocxExportService {
 
             // Add groups first
             columnGroups.forEach(group => {
-                sections.push(...this.createGroupSection(group, cards, options, sentimentResults, participants, retrospective.isAnonymous));
+                sections.push(...this.createGroupSection(group, cards, options, sentimentResults, participants, retrospective.isAnonymous, defaultGroupTitle));
             });
 
             // Add ungrouped cards
@@ -694,7 +697,8 @@ export class DocxExportService {
         options: DocxExportOptions,
         sentimentResults?: Map<string, SentimentResult>,
         participants?: Participant[],
-        isAnonymous?: boolean
+        isAnonymous?: boolean,
+        defaultGroupTitle?: string
     ): Paragraph[] {
         const groupCards = allCards.filter(card =>
             card.id === group.headCardId || group.memberCardIds.includes(card.id)
@@ -705,7 +709,7 @@ export class DocxExportService {
         const sections: Paragraph[] = [];
 
         // Group header
-        const groupTitle = group.title ?? `Grupo de ${groupCards.length} tarjetas`;
+        const groupTitle = group.title?.trim() || defaultGroupTitle || `Grupo de ${groupCards.length} tarjetas`;
         sections.push(
             new Paragraph({
                 children: [
